@@ -75,7 +75,7 @@ public class MetaColumn extends JqlColumn {
         return this.scale;
     }
 
-    private JqlColumn getJoinedPrimaryColumn() {
+    public JqlColumn getJoinedPrimaryColumn() {
         JqlColumnJoin fk = this.fk;
         if (fk == null) return null;
         JqlColumn pkCol = fk.loadPkSchema().getColumn(fk.getPkColumn());
