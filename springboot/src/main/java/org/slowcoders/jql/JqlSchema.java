@@ -99,7 +99,7 @@ public class JqlSchema {
                 this.jsonColumn = ci;
             }
 
-            if (!ci.isAutoIncrement() &&
+            if (!ci.isReadOnly() &&
                     ci.getValueFormat() != ValueFormat.Collection &&
                     ci.getValueFormat() != ValueFormat.Embedded) {
                 writableColumns.add(ci);
@@ -112,7 +112,7 @@ public class JqlSchema {
         return this.tableName;
     }
 
-    public JqlSchemaJoin getJoinedForeignKeys(String fieldName) {
+    public JqlSchemaJoin getSchemaJoinByFieldName(String fieldName) {
         return tableJoinMap.get(fieldName);
     }
 
@@ -130,13 +130,42 @@ public class JqlSchema {
 
         out.println("public class " + tableName + " {");
         for (JqlColumn col : allColumns) {
-            col.dumpORM(out);
+            dumpORM(col, out);
             out.println();
         }
         out.println("}");
         return baos.toString();
     }
-    
+
+    private void dumpORM(JqlColumn col, PrintStream out) {
+        if (col.getLabel() != null) {
+            out.print("\t/** ");
+            out.print(col.getLabel());
+            out.println(" */");
+        }
+        if (primaryKeys.contains(col.getColumnName())) {
+            out.println("\t@Id");
+            if (col.isReadOnly() && col.getJavaType() == Long.class) {
+                out.println("\t@GeneratedValue(strategy = GenerationType.IDENTITY)");
+            }
+        }
+        if (!col.isNullable()) {
+            out.println("\t@NotNull");
+            out.println("\t@Column(nullable = false)");
+        }
+        if (col.getPrecision() > 0) {
+            out.println("\t@Max(" + col.getPrecision() +")");
+        }
+
+        out.print("\t@Getter");
+        if (!col.isReadOnly()) {
+            out.print(" @Setter");
+        }
+        out.println();
+
+        out.println("\t" + col.getJavaType().getName() + " " + col.getFieldName() + ";");
+    }
+
     @JsonIgnore
     public List<JqlColumn> getPKColumns() {
         ArrayList<JqlColumn> pkColumns = new ArrayList<>();

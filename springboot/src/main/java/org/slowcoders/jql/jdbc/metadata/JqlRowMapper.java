@@ -76,7 +76,7 @@ public class JqlRowMapper implements RowMapper<KVEntity> {
     }
 
     private boolean resolveTableEntity(ArrayList<String> fieldPath, JqlSchema jqlSchema, String fieldName) {
-        if (jqlSchema.getJoinedForeignKeys(fieldName) != null) {
+        if (jqlSchema.getSchemaJoinByFieldName(fieldName) != null) {
             fieldPath.add(fieldName);
             return true;
         }

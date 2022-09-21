@@ -33,34 +33,6 @@ public abstract class JqlColumn {
         return schema;
     }
 
-    public void dumpORM(PrintStream out) {
-        if (getLabel() != null) {
-            out.print("\t/** ");
-            out.print(getLabel());
-            out.println(" */");
-        }
-        if (isAutoIncrement()) {
-            out.println("\t@Id");
-            out.println("\t@GeneratedValue(strategy = GenerationType.IDENTITY)");
-        }
-        if (!isNullable()) {
-            out.println("\t@NotNull");
-            out.println("\t@Column(nullable = false)");
-        }
-        if (getPrecision() > 0) {
-            out.println("\t@Max(" + getPrecision() +")");
-        }
-
-        out.print("\t@Getter");
-        if (!isReadOnly() && !isAutoIncrement()) {
-            out.print(" @Setter");
-        }
-        out.println();
-
-        out.println("\t" + getJavaType().getName() + " " + this.getFieldName() + ";");
-    }
-
-
     public Class<?> getJavaType() {
         return javaType;
     }

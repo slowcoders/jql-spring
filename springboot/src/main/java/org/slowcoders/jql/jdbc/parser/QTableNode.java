@@ -34,7 +34,7 @@ class QTableNode extends QNode {
 
     @Override
     public QNode getContainingEntity_impl(JqlQuery query, String key, boolean valueType2) {
-        JqlSchemaJoin join = schema.getJoinedForeignKeys(key);
+        JqlSchemaJoin join = schema.getSchemaJoinByFieldName(key);
         if (join == null) {
             JqlColumn column = schema.getColumn(key);
             if (column.getValueFormat() != ValueFormat.Embedded) return this;

@@ -38,7 +38,7 @@ public class JsonJql {
         }
         sb.append(")");
 
-        if (col.isReadOnly() || col.isAutoIncrement()) {
+        if (col.isReadOnly()) {
             sb.append(".readOnly()");
         }
         else if (!col.isNullable()) {

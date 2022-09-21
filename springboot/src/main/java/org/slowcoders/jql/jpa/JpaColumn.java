@@ -44,8 +44,7 @@ public class JpaColumn extends JqlColumn {
 
         this.aggregationType = resolveAggregationType(f);
 
-        this.isReadOnly = false;
-        this.isWritable = true;
+        this.isReadOnly = this.isAutoIncrement;
         this.label = null;
     }
 
