@@ -2,18 +2,12 @@ package org.slowcoders.jql;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slowcoders.jql.jdbc.metadata.JqlRowMapper;
-import org.slowcoders.jql.jpa.JpaColumn;
-import org.slowcoders.jql.util.AttributeNameConverter;
 import org.slowcoders.jql.util.KVEntity;
 import org.springframework.jdbc.core.RowMapper;
 
-import javax.persistence.Transient;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
-import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
 import java.util.*;
 
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
@@ -24,23 +18,15 @@ public class JqlSchema {
 
     private List<JqlColumn> allColumns;
     private List<JqlColumn> writableColumns;
-    private HashMap<String, JqlColumn> fieldNameMap = new HashMap<>();
-    private HashMap<String, JqlSchemaJoin> tableJoinMap = new HashMap<>();
+    private HashMap<String, JqlColumn> columnMap = new HashMap<>();
+    protected final HashMap<String, List<JqlColumn>> tableJoinMap = new HashMap<>();
 
-    private JqlColumn jsonColumn;
     private ArrayList<String> primaryKeys;
 
-    public JqlSchema(SchemaLoader schemaLoader, String tableName) {
+    public JqlSchema(SchemaLoader schemaLoader, String tableName, String jpaClassName) {
         this.tableName = tableName;
         this.schemaLoader = schemaLoader;
-        this.jpaClassName = AttributeNameConverter.camelCaseConverter.toLogicalAttributeName(this.getBaseTableName());
-    }
-
-    protected void init(Class<?> entityType) {
-        ArrayList<JqlColumn> columns = new ArrayList<>();
-        this.jpaClassName = entityType.getTypeName();
-        this.initColumns(columns, entityType);
-        this.init(columns, null);
+        this.jpaClassName = jpaClassName;
     }
 
     public final SchemaLoader getSchemaLoader() {
@@ -57,46 +43,29 @@ public class JqlSchema {
         return null;
     }
 
-    /*package*/ void initColumns(ArrayList<JqlColumn> columns, Class<?> entityType) {
-        Class<?> superClass = entityType.getSuperclass();
-        if (superClass != Object.class) {
-            initColumns(columns, superClass);
-        }
-        for (Field f : entityType.getDeclaredFields()) {
-            if ((f.getModifiers() & Modifier.TRANSIENT) == 0 &&
-                f.getAnnotation(Transient.class) != null) {
-                JqlColumn col = new JpaColumn(f, this);
-                columns.add(col);
-            }
-        }
-    }
-
-    public void init(ArrayList<JqlColumn> columns, ArrayList<String> primaryKeys) {
+    public void init(ArrayList<? extends JqlColumn> columns, ArrayList<String> primaryKeys, HashMap<String, JqlSchemaJoin> tableJoinMap2) {
         this.allColumns = Collections.unmodifiableList(columns);
         this.primaryKeys = primaryKeys;
+//        this.tableJoinMap = tableJoinMap;
         ArrayList<JqlColumn> writableColumns = new ArrayList<>();
         for (JqlColumn ci: columns) {
 
-            JqlColumnJoin fk = ci.getJoinedForeignKey();
-            if (fk != null) {
-                String joinFieldName = fk.getJoinedFieldName();
-                JqlSchemaJoin foreignKeys = tableJoinMap.get(joinFieldName);
+            JqlColumn joined_pk = ci.getJoinedPrimaryColumn();
+            if (joined_pk != null) {
+                String joinFieldName = joined_pk.getSchema().getJpaClassName();
+                List<JqlColumn> foreignKeys = tableJoinMap.get(joinFieldName);
                 if (foreignKeys == null) {
-                    foreignKeys = new JqlSchemaJoin(this.schemaLoader);
+                    foreignKeys = new ArrayList<>();
                     tableJoinMap.put(joinFieldName, foreignKeys);
                 }
-                foreignKeys.add(fk);
+                foreignKeys.add(ci);
             }
 
             String fieldName = ci.getFieldName();
-            fieldNameMap.put(ci.getFieldName(), ci);
+            columnMap.put(ci.getFieldName(), ci);
             String colName = ci.getColumnName().toLowerCase();
             if (!fieldName.equals(colName)) {
-                fieldNameMap.put(colName, ci);
-            }
-            if (ci.getJavaType() == Object.class || Map.class.isAssignableFrom(ci.getJavaType()) ||
-                    "json".equals(ci.getDBColumnType()) || "jsonb".equals(ci.getDBColumnType())) {
-                this.jsonColumn = ci;
+                columnMap.put(colName, ci);
             }
 
             if (!ci.isReadOnly() &&
@@ -112,13 +81,13 @@ public class JqlSchema {
         return this.tableName;
     }
 
-    public JqlSchemaJoin getSchemaJoinByFieldName(String fieldName) {
+    public List<JqlColumn> getJoinedForeignKeys(String fieldName) {
         return tableJoinMap.get(fieldName);
     }
 
-    public Collection<JqlSchemaJoin> getJoinList() {
-        return tableJoinMap.values();
-    }
+//    public Collection<JqlSchemaJoin> getJoinList() {
+//        return tableJoinMap.values();
+//    }
 
     public String dumpJPAEntitySchema() {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -138,24 +107,24 @@ public class JqlSchema {
     }
 
     private void dumpORM(JqlColumn col, PrintStream out) {
-        if (col.getLabel() != null) {
-            out.print("\t/** ");
-            out.print(col.getLabel());
-            out.println(" */");
-        }
-        if (primaryKeys.contains(col.getColumnName())) {
-            out.println("\t@Id");
-            if (col.isReadOnly() && col.getJavaType() == Long.class) {
-                out.println("\t@GeneratedValue(strategy = GenerationType.IDENTITY)");
-            }
-        }
-        if (!col.isNullable()) {
-            out.println("\t@NotNull");
-            out.println("\t@Column(nullable = false)");
-        }
-        if (col.getPrecision() > 0) {
-            out.println("\t@Max(" + col.getPrecision() +")");
-        }
+//        if (col.getLabel() != null) {
+//            out.print("\t/** ");
+//            out.print(col.getLabel());
+//            out.println(" */");
+//        }
+//        if (primaryKeys.contains(col.getColumnName())) {
+//            out.println("\t@Id");
+//            if (col.isAutoIncrement()) {
+//                out.println("\t@GeneratedValue(strategy = GenerationType.IDENTITY)");
+//            }
+//        }
+//        if (!col.isNullable()) {
+//            out.println("\t@NotNull");
+//            out.println("\t@Column(nullable = false)");
+//        }
+//        if (col.getPrecision() > 0) {
+//            out.println("\t@Max(" + col.getPrecision() +")");
+//        }
 
         out.print("\t@Getter");
         if (!col.isReadOnly()) {
@@ -181,55 +150,53 @@ public class JqlSchema {
     }
 
     public boolean hasColumn(String key) {
-        return fieldNameMap.containsKey(key);
+        return columnMap.containsKey(key);
     }
 
     public JqlColumn getColumn(String key) {
-        JqlColumn ci = fieldNameMap.get(key);
+        JqlColumn ci = columnMap.get(key);
         if (ci == null) {
             throw new IllegalArgumentException("unknown column: " + this.tableName + "." + key);
         }
         return ci;
     }
 
-    public Map autoArrangeColumns(Map<String, Object> metric, ObjectMapper objectMapper)  {
-        if (jsonColumn != null) {
-            HashMap<String, Object> properties = null;
-            for (Map.Entry<String, Object> entry : metric.entrySet()) {
-                String key = entry.getKey();
-                if (!this.fieldNameMap.containsKey(key)
-                 && !this.fieldNameMap.containsKey(key.toLowerCase())) {
-                    if (properties == null) {
-                        properties = new HashMap<>();
-                    }
-                    Object value = entry.getValue();
-                    properties.put(key, value);
+    public Map<String, Object> separateUnknownColumns(Map<String, Object> metric)  {
+        HashMap<String, Object> unknownProperties = null;
+        for (Map.Entry<String, Object> entry : metric.entrySet()) {
+            String key = entry.getKey();
+            if (!this.columnMap.containsKey(key)
+             && !this.columnMap.containsKey(key.toLowerCase())) {
+                if (unknownProperties == null) {
+                    unknownProperties = new HashMap<>();
                 }
-            }
-            try {
-                if (properties != null) {
-                    for (String key : properties.keySet()) {
-                        metric.remove(key);
-                    }
-                    String p$ = objectMapper.writeValueAsString(properties);
-                    metric.put(jsonColumn.getFieldName(), p$);
-                }
-            }
-            catch (Exception e) {
-                throw new RuntimeException(e);
+                Object value = entry.getValue();
+                unknownProperties.put(key, value);
             }
         }
-        return metric;
+        try {
+            if (unknownProperties != null) {
+                for (String key : unknownProperties.keySet()) {
+                    metric.remove(key);
+                }
+//                String p$ = objectMapper.writeValueAsString(unknownProperties);
+//                metric.put(jsonColumn.getFieldName(), p$);
+            }
+        }
+        catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        return unknownProperties;
     }
 
     //    @JsonIgnore
     public Iterable<JqlColumn> getReadableColumns() {
-        return this.allColumns;
+        return (Iterable) this.allColumns;
     }
 
     @JsonIgnore
     public List<JqlColumn> getWritableColumns() {
-        return writableColumns;
+        return (List)writableColumns;
     }
 
 
@@ -261,10 +228,6 @@ public class JqlSchema {
         return schemaLoader.createDDL(this);
     }
 
-    public RowMapper<KVEntity> getColumnMapRowMapper() {
-        return new JqlRowMapper(this);
-    }
-
     public String getBaseTableName() {
         return this.tableName.substring(this.tableName.indexOf('.') + 1);
     }
@@ -274,11 +237,11 @@ public class JqlSchema {
     }
 
     public String getPhysicalColumnName(String fieldName) {
-        return this.fieldNameMap.get(fieldName).getColumnName();
+        return this.columnMap.get(fieldName).getColumnName();
     }
 
     public String getLogicalAttributeName(String columnName) {
-        return this.fieldNameMap.get(columnName).getFieldName();
+        return this.columnMap.get(columnName).getFieldName();
     }
     public String[] getPhysicalColumnNames(String[] fieldNames) {
         if (fieldNames == null || fieldNames.length == 0) return null;

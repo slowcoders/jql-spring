@@ -1,118 +1,82 @@
 package org.slowcoders.jql;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.slowcoders.jql.jdbc.timescale.Aggregate;
 
-import java.io.PrintStream;
-
 public abstract class JqlColumn {
-    protected Class<?> javaType;
     protected String columnName;
     protected String fieldName;
-    protected String label;
-
-    protected boolean isAutoIncrement;
-    protected boolean isReadOnly;
-    protected boolean isWritable;
-    protected boolean isNullable;
-
-    @JsonIgnore
-    protected JqlColumnJoin fk;
-    protected boolean isPk;
+    protected Class<?> javaType;
     protected ValueFormat valueFormat;
-
-    @JsonIgnore
-    private final JqlSchema schema;
     protected Aggregate.Type aggregationType;
+
+    private final JqlSchema schema;
 
     protected JqlColumn(JqlSchema schema) {
         this.schema = schema;
+    }
+
+    protected JqlColumn(JqlSchema schema, Class<?> javaType, String fieldName, String columnName,
+                        ValueFormat valueFormat, Aggregate.Type aggregationType) {
+        this.schema = schema;
+        this.javaType = javaType;
+        this.fieldName = fieldName;
+        this.columnName = columnName;
+        this.valueFormat = valueFormat;
+        this.aggregationType = aggregationType;
     }
 
     public final JqlSchema getSchema() {
         return schema;
     }
 
-    public Class<?> getJavaType() {
+    public final Class<?> getJavaType() {
         return javaType;
     }
 
-    public String getColumnName() {
+    public final String getColumnName() {
         return columnName;
     }
 
-    public String getFieldName() {
+    public final String getFieldName() {
         return fieldName;
     }
 
-    public String getLabel() {
-        return label;
-    }
-
-    public boolean isAutoIncrement() {
-        return isAutoIncrement;
-    }
-
-    public boolean isReadOnly() {
-        return isReadOnly;
-    }
-
-//    public boolean isWritable() {
-//        return isWritable;
-//    }
-
-    public boolean isNullable() {
-        return isNullable;
-    }
-
-    public abstract int getPrecision();
-
-    public abstract int getScale();
-
-    public abstract String getDBColumnType();
-
-    public JqlColumnJoin getJoinedForeignKey() {
-        return fk;
-    }
-
-//    public JqlIndex getIndex() {
-//        return index;
-//    }
-//
-//    public boolean isPrimaryKey() {
-//        return isPk;
-//    }
-//
-    public ValueFormat getValueFormat() {
+    public final ValueFormat getValueFormat() {
         return valueFormat;
     }
 
-//    public Field getField() {
-//        return field;
-//    }
-
-    public Aggregate.Type getAggregationType() {
+    public final Aggregate.Type getAggregationType() {
         return this.aggregationType;
     }
 
+    //===========================================================
+    // Overridable Properties
+    //-----------------------------------------------------------
 
+    public boolean isReadOnly() {
+        return false;
+    }
 
-    public Object convertValueToInsert(Object v) {
-        if (v == null) return null;
+    public boolean isNullable() {
+        return true;
+    }
 
+    public boolean isAutoIncrement() {
+        return false;
+    }
 
-        if (v.getClass().isEnum()) {
-            if (this.getValueFormat() == ValueFormat.Text) {
-                return v.toString();
-            }
-            else {
-                return ((Enum)v).ordinal();
-            }
-        }
-        return v;
+    public boolean isPrimaryKey() { return false; }
+
+    public String getLabel() {
+        return null;
     }
 
     public JqlColumn getJoinedPrimaryColumn() {
         return null;
     }
+
+    public String getDBColumnType() {
+        return null;
+    }
+
 }

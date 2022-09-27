@@ -2,10 +2,7 @@ package org.slowcoders.jql.jpa;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import org.slowcoders.jql.JqlColumn;
-import org.slowcoders.jql.JqlColumnJoin;
-import org.slowcoders.jql.JqlSchema;
-import org.slowcoders.jql.ValueFormat;
+import org.slowcoders.jql.*;
 import org.slowcoders.jql.jdbc.timescale.Aggregate;
 import org.slowcoders.jql.util.AttributeNameConverter;
 import org.slowcoders.jql.util.ClassUtils;
@@ -20,6 +17,14 @@ import java.lang.reflect.Field;
 
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.NONE)
 public class JpaColumn extends JqlColumn {
+    protected boolean isReadOnly;
+    protected boolean isAutoIncrement;
+    protected boolean isNullable;
+    protected boolean isPk;
+
+    private String label;
+    protected JqlColumnJoin fk;
+
     @JsonIgnore
     protected Field field;
     public JpaColumn(Field f, JqlSchema schema) {
@@ -44,9 +49,43 @@ public class JpaColumn extends JqlColumn {
 
         this.aggregationType = resolveAggregationType(f);
 
-        this.isReadOnly = this.isAutoIncrement;
+        this.isReadOnly = gv != null;
         this.label = null;
     }
+
+    @Override
+    public boolean isReadOnly() {
+        return this.isReadOnly;
+    }
+
+    @Override
+    public boolean isNullable() {
+        return this.isNullable;
+    }
+
+    @Override
+    public boolean isAutoIncrement() {
+        return this.isAutoIncrement;
+    }
+
+    @Override
+    public boolean isPrimaryKey() { return this.isPk; }
+
+    @Override
+    public String getLabel() {
+        return this.label;
+    }
+
+    @Override
+    public JqlColumn getJoinedPrimaryColumn() {
+        throw new RuntimeException("not implemented");
+    }
+
+    @Override
+    public String getDBColumnType() {
+        return getSchema().getSchemaLoader().toColumnType(getJavaType(), field);
+    }
+
 
 
     private JqlColumnJoin resolveForeignKey(Field f) {
@@ -94,18 +133,7 @@ public class JpaColumn extends JqlColumn {
         return Aggregate.Type.None;
     }
 
-    public int getPrecision() {
-        Max max = field.getAnnotation(Max.class);
-        return max == null ? 0 : (int)max.value();
-    }
-
-    @Override
-    public int getScale() {
-        return -1;
-    }
-
-    @Override
-    public String getDBColumnType() {
-        return getSchema().getSchemaLoader().toColumnType(getJavaType(), field);
+    public JqlColumnJoin getJoinedForeignKey() {
+        return fk;
     }
 }

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slowcoders.jql.JQLRepository;
 import org.slowcoders.jql.JQLService;
 import org.slowcoders.jql.JqlSchema;
+import org.slowcoders.jql.jdbc.metadata.JdbcSchema;
 import org.slowcoders.jql.util.KVEntity;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -32,6 +33,11 @@ public class JDBCRepositoryBase<ID> extends JDBCQueryBuilder implements JQLRepos
 
     public ObjectMapper getObjectMapper() {
         return objectMapper;
+    }
+
+    @Override
+    public JdbcSchema getSchema() {
+        return (JdbcSchema)super.getSchema();
     }
 
     @Override

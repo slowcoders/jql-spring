@@ -3,6 +3,8 @@ package org.slowcoders.jql.jdbc.phoenix;
 import org.slowcoders.jql.JqlColumn;
 import org.slowcoders.jql.JqlSchema;
 import org.slowcoders.jql.SchemaLoader;
+import org.slowcoders.jql.jdbc.metadata.JdbcColumn;
+import org.slowcoders.jql.jdbc.metadata.JdbcSchema;
 import org.slowcoders.jql.util.AttributeNameConverter;
 
 import javax.validation.constraints.Max;
@@ -24,7 +26,7 @@ public class PhoenixSchemaLoader extends SchemaLoader {
 
 
     @Override
-    public JqlSchema loadSchema(String tablePath) {
+    public JdbcSchema loadSchema(String tablePath) {
         throw new RuntimeException("not implemented");
     }
 
@@ -36,7 +38,7 @@ public class PhoenixSchemaLoader extends SchemaLoader {
         List<JqlColumn> pks = schema.getPKColumns();
 
         for (JqlColumn col : schema.getReadableColumns()) {
-            sb.append(col.getColumnName()).append(" ").append(col.getDBColumnType());
+            sb.append(col.getColumnName()).append(" ").append(((JdbcColumn)col).getDBColumnType());
             if (pks.contains(col)) {
                 sb.append(" NOT NULL");
             }

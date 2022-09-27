@@ -3,6 +3,7 @@ package org.slowcoders.jql.json;
 import org.slowcoders.jql.JqlColumn;
 import org.slowcoders.jql.JqlColumnJoin;
 import org.slowcoders.jql.JqlSchema;
+import org.slowcoders.jql.jdbc.metadata.JdbcColumn;
 import org.slowcoders.jql.util.ClassUtils;
 
 import java.util.HashMap;
@@ -13,29 +14,29 @@ public class JsonJql {
         StringBuilder sb = new StringBuilder();
         sb.append("const " + schema.getTableName() + "Schema = [\n");
         for (JqlColumn col : schema.getReadableColumns()) {
-            dumpJSONSchema(sb, col);
+            dumpJSONSchema(sb, (JdbcColumn)col);
             sb.append(",\n");
         }
         sb.append("]\n");
         return sb.toString();
     }
 
-    public static String dumpJSONSchema(StringBuilder sb, JqlColumn col) {
+    public static String dumpJSONSchema(StringBuilder sb, JdbcColumn col) {
         String jsonType = getColumnType(col.getJavaType());
         if (jsonType == null) {
             throw new RuntimeException("JsonType not registered: " + col.getJavaType() + " " + col.getColumnName());
         }
 
-        String max = getPrecision(col, jsonType);
+//        String max = getPrecision(col, jsonType);
         sb.append("  ").append(col.getFieldName());
         while (sb.length() < 20) {
             sb.append(' ');
         }
         sb.append(" : jql.").append(jsonType).append("('")
                 .append(col.getLabel()).append("'");
-        if (max != null) {
-            sb.append(", ").append(max);
-        }
+//        if (max != null) {
+//            sb.append(", ").append(max);
+//        }
         sb.append(")");
 
         if (col.isReadOnly()) {
@@ -48,32 +49,12 @@ public class JsonJql {
         return sb.toString();
     }
 
-    private static String getPrecision(JqlColumn col, String jsonType) {
-        switch (jsonType) {
-            case "Boolean":
-            case "Date":
-            case "Time":
-            case "Timestamp":
-            case "Object":
-                return null;
-            case "Number":
-                break;
-            default:
-                return Integer.toString(col.getPrecision());
-        }
-        if (col.getScale() > 0) {
-            return col.getPrecision() + ", " + col.getScale();
-        }
-        else {
-            return Integer.toString(col.getPrecision());
-        }
-    }
 
 
     public static String createJoinJQL(JqlSchema schema) {
         StringBuilder sb = new StringBuilder();
         for (JqlColumn jqlColumn : schema.getReadableColumns()) {
-            JqlColumnJoin fk = jqlColumn.getJoinedForeignKey();
+            JqlColumnJoin fk = ((JdbcColumn)jqlColumn).getJoinedForeignKey();
             if (fk == null) continue;
 
             sb.append(schema.getTableName()).append("Schema.join(\"");

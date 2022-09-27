@@ -2,6 +2,7 @@ package org.slowcoders.jql.jdbc;
 
 import org.slowcoders.jql.JqlColumn;
 import org.slowcoders.jql.JqlSchema;
+import org.slowcoders.jql.ValueFormat;
 import org.slowcoders.jql.jdbc.parser.JqlParser;
 import org.slowcoders.jql.jdbc.parser.JqlQuery;
 import org.slowcoders.jql.jdbc.parser.SQLWriter;
@@ -259,11 +260,26 @@ public abstract class JDBCQueryBuilder {
             int idx = 0;
             for (JqlColumn col : columns) {
                 Object json_v = entity.get(col.getFieldName());
-                Object value = col.convertValueToInsert(json_v);
+                Object value = convertJsonValueToColumnValue(col, json_v);
                 ps.setObject(++idx, value);
             }
             ps.getGeneratedKeys();
         }
+
+        private Object convertJsonValueToColumnValue(JqlColumn col, Object v) {
+            if (v == null) return null;
+
+            if (v.getClass().isEnum()) {
+                if (col.getValueFormat() == ValueFormat.Text) {
+                    return v.toString();
+                }
+                else {
+                    return ((Enum)v).ordinal();
+                }
+            }
+            return v;
+        }
+
 
         @Override
         public int getBatchSize() {

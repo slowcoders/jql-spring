@@ -2,17 +2,23 @@ package org.slowcoders.jql.jdbc.metadata;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import org.slowcoders.jql.JqlColumn;
-import org.slowcoders.jql.JqlColumnJoin;
-import org.slowcoders.jql.JqlSchema;
-import org.slowcoders.jql.ValueFormat;
+import org.slowcoders.jql.*;
 import org.slowcoders.jql.util.ClassUtils;
 
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.NONE)
-public class MetaColumn extends JqlColumn {
+public class JdbcColumn extends JqlColumn {
+
+    protected boolean isReadOnly;
+    protected boolean isAutoIncrement;
+    protected boolean isNullable;
+    protected boolean isPk;
+
+    private String label;
+    protected JqlColumnJoin fk;
+
     protected String colTypeName;
     @JsonIgnore
     protected int colType;
@@ -24,7 +30,7 @@ public class MetaColumn extends JqlColumn {
     protected int precision;
     protected int scale;
 
-    public MetaColumn(JqlSchema schema, ResultSetMetaData md, int col, JqlColumnJoin fk, JqlIndex jqlIndex, String comment) throws SQLException {
+    public JdbcColumn(JqlSchema schema, ResultSetMetaData md, int col, JqlColumnJoin fk, JqlIndex jqlIndex, String comment) throws SQLException {
         super(schema);
         this.columnName = md.getColumnName(col);
         this.fk = fk;
@@ -59,33 +65,48 @@ public class MetaColumn extends JqlColumn {
         this.scale = md.getScale(col);
         this.displaySize = md.getColumnDisplaySize(col);
         this.isNullable = md.isNullable(col) != ResultSetMetaData.columnNoNulls;
-        this.isPk = false;
+//        this.isPk = false;
     }
 
+    @Override
+    public boolean isReadOnly() {
+        return this.isReadOnly;
+    }
+
+    @Override
+    public boolean isNullable() {
+        return this.isNullable;
+    }
+
+    @Override
+    public boolean isAutoIncrement() {
+        return this.isAutoIncrement;
+    }
+
+    @Override
+    public boolean isPrimaryKey() { return this.isPk; }
+
+    @Override
+    public String getLabel() {
+        return this.label;
+    }
+
+    @Override
     public String getDBColumnType() {
         return colTypeName;
     }
 
-    public int getPrecision() {
-        return precision;
-    }
-
-    @Override
-    public int getScale() {
-        return this.scale;
-    }
-
-    public JqlColumn getJoinedPrimaryColumn() {
+    public JdbcColumn getJoinedPrimaryColumn() {
         JqlColumnJoin fk = this.fk;
         if (fk == null) return null;
         JqlColumn pkCol = fk.loadPkSchema().getColumn(fk.getPkColumn());
-        return pkCol;
+        return (JdbcColumn)pkCol;
     }
 
     private String resolveFieldName() {
         StringBuilder sb = new StringBuilder();
-        JqlColumn col = this;
-        for (JqlColumn joinedPk; (joinedPk = col.getJoinedPrimaryColumn()) != null; ) {
+        JdbcColumn col = this;
+        for (JdbcColumn joinedPk; (joinedPk = col.getJoinedPrimaryColumn()) != null; ) {
             col = joinedPk;
             sb.append(col.getSchema().getBaseTableName()).append('.');
         }
@@ -95,4 +116,7 @@ public class MetaColumn extends JqlColumn {
         return name;
     }
 
+    public JqlColumnJoin getJoinedForeignKey() {
+        return fk;
+    }
 }

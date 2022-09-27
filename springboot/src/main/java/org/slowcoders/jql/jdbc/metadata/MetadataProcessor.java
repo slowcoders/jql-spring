@@ -1,9 +1,6 @@
 package org.slowcoders.jql.jdbc.metadata;
 
-import org.slowcoders.jql.JqlColumn;
-import org.slowcoders.jql.JqlColumnJoin;
-import org.slowcoders.jql.JqlSchema;
-import org.slowcoders.jql.SchemaLoader;
+import org.slowcoders.jql.*;
 import org.slowcoders.jql.util.AttributeNameConverter;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.ConnectionCallback;
@@ -45,16 +42,33 @@ public class MetadataProcessor extends SchemaLoader {
             schema = jdbc.execute(new ConnectionCallback<JqlSchema>() {
                 @Override
                 public JqlSchema doInConnection(Connection conn) throws SQLException, DataAccessException {
-                    JqlSchema schema = new JqlSchema(MetadataProcessor.this, tablePath);
+                    JqlSchema schema = new JdbcSchema(MetadataProcessor.this, tablePath);
                     metadataMap.put(tablePath, schema);
-                    ArrayList<JqlColumn> columns = getColumns(conn, dbSchema, tableName, schema);
+                    ArrayList<JdbcColumn> columns = getColumns(conn, dbSchema, tableName, schema);
                     ArrayList<String> primaryKeys = getPrimaryKeys(conn, dbSchema, tableName);
-                    schema.init(columns, primaryKeys);
+                    schema.init(columns, primaryKeys, getTableJoinMap(columns));
                     return schema;
                 }
             });
         }
         return schema;
+    }
+
+    public HashMap<String, JqlSchemaJoin> getTableJoinMap(ArrayList<JdbcColumn> columns) {
+        HashMap<String, JqlSchemaJoin> tableJoinMap = new HashMap<>();
+        for (JdbcColumn ci: columns) {
+            JqlColumnJoin fk = ci.getJoinedForeignKey();
+            if (fk != null) {
+                String joinFieldName = fk.getJoinedFieldName();
+                JqlSchemaJoin foreignKeys = tableJoinMap.get(joinFieldName);
+                if (foreignKeys == null) {
+                    foreignKeys = new JqlSchemaJoin(this);
+                    tableJoinMap.put(joinFieldName, foreignKeys);
+                }
+                foreignKeys.add(fk);
+            }
+        }
+        return tableJoinMap;
     }
 
     private ArrayList<String> getPrimaryKeys(Connection conn, String dbSchema, String tableName) throws SQLException {
@@ -157,11 +171,11 @@ public class MetadataProcessor extends SchemaLoader {
         return foreignKeys;
     }
 
-    private ArrayList<JqlColumn> getColumns(Connection conn, String dbSchema, String tableName, JqlSchema schema) throws SQLException {
+    private ArrayList<JdbcColumn> getColumns(Connection conn, String dbSchema, String tableName, JqlSchema schema) throws SQLException {
         HashMap<String, JqlIndex> indexes = getIndexInfos(conn, dbSchema, tableName);
         HashMap<String, JqlColumnJoin> foreignKeys = getForeignKeyInfos(conn, dbSchema, tableName);
         Map<String, String> comments = getColumnComments(conn, dbSchema, tableName);
-        ArrayList<JqlColumn> columns = new ArrayList<>();
+        ArrayList<JdbcColumn> columns = new ArrayList<>();
         String qname = dbSchema == null ? tableName : dbSchema + "." + tableName;
         ResultSet rs = conn.createStatement().executeQuery("select * from " + qname + " limit 1");
         ResultSetMetaData md = rs.getMetaData();
@@ -171,7 +185,7 @@ public class MetadataProcessor extends SchemaLoader {
             JqlColumnJoin fk = foreignKeys.get(columnName);
             JqlIndex jqlIndex = indexes.get(columnName);
             String comment = comments.get(columnName);
-            JqlColumn ci = new MetaColumn(schema, md, col, fk, jqlIndex, comment);
+            JdbcColumn ci = new JdbcColumn(schema, md, col, fk, jqlIndex, comment);
             columns.add(ci);
         }
         return columns;

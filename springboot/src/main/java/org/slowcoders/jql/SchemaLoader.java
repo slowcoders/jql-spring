@@ -1,5 +1,6 @@
 package org.slowcoders.jql;
 
+import org.slowcoders.jql.jpa.JpaSchema;
 import org.slowcoders.jql.json.JsonJql;
 import org.slowcoders.jql.util.AttributeNameConverter;
 
@@ -35,8 +36,7 @@ public abstract class SchemaLoader {
     }
 
     public JqlSchema loadSchema(Class<?> entityType, String tableName) {
-        JqlSchema schema = new JqlSchema(this, tableName);
-        schema.init(entityType);
+        JqlSchema schema = new JpaSchema(this, tableName, entityType);
         classToSchemaMap.put(entityType, schema);
         return schema;
     }

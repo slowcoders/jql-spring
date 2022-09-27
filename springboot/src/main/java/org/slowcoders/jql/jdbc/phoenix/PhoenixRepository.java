@@ -47,7 +47,7 @@ public class PhoenixRepository extends PhoenixJdbcHelper {
             connection.setAutoCommit(true);
             Statement statement = connection.createStatement();
             for (Map<String, Object> entity : entities) {
-                getSchema().autoArrangeColumns(entity, objectMapper);
+                //getSchema().autoArrangeColumns(entity, objectMapper);
                 String sql = super.build_insert(entity, false);
                 statement.executeUpdate(sql);
             }

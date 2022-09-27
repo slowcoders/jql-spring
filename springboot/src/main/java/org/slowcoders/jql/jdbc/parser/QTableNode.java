@@ -5,6 +5,8 @@ import org.slowcoders.jql.JqlSchema;
 import org.slowcoders.jql.JqlSchemaJoin;
 import org.slowcoders.jql.ValueFormat;
 
+import java.util.List;
+
 class QTableNode extends QNode {
     private final JqlSchema schema;
     private boolean fetchData;
@@ -34,17 +36,16 @@ class QTableNode extends QNode {
 
     @Override
     public QNode getContainingEntity_impl(JqlQuery query, String key, boolean valueType2) {
-        JqlSchemaJoin join = schema.getSchemaJoinByFieldName(key);
-        if (join == null) {
+        List<JqlColumn> foreignKeys = schema.getJoinedForeignKeys(key);
+        if (foreignKeys == null) {
             JqlColumn column = schema.getColumn(key);
             if (column.getValueFormat() != ValueFormat.Embedded) return this;
         }
 
         QNode entity = subEntities.get(key);
         if (entity == null) {
-            if (join != null) {
-                entity = new QTableNode(join.getJoinedTable());
-                query.addTableJoin(join);
+            if (foreignKeys != null) {
+                entity = query.addTableJoin(foreignKeys);
             }
             else {
                 entity = new QJsonNode(this, key);
