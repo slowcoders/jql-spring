@@ -6,9 +6,9 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.slowcoders.jql.parser.QOperator.*;
+import static org.slowcoders.jql.parser.Predicate.*;
 
-public abstract class QPredicate {
+abstract class PredicateParser {
 
     public Class<?> getAccessType(Object value, Class<?> fieldType) {
         return fieldType;
@@ -16,42 +16,42 @@ public abstract class QPredicate {
 
     public boolean isAttributeNameRequired() { return false; }
 
-    public abstract QExpression createPredicate(QAttribute column, Object value);
+    public abstract Predicate createPredicate(QAttribute column, Object value);
 
-    public static QPredicate getParser(String function) {
+    public static PredicateParser getParser(String function) {
         if (function == null) return EQ;
         return operators.get(function);
     }
 
-    public QExpression parse(JqlParser parser, EntityNode baseNode, Map<String, Object> filter) {
+    public Predicate parse(JqlParser parser, QueryNode baseNode, Map<String, Object> filter) {
         return null;
     }
 
-    public QExpression parse(JqlParser parser, EntityNode baseNode, Collection<Map<String, Object>> filters) {
+    public Predicate parse(JqlParser parser, QueryNode baseNode, Collection<Map<String, Object>> filters) {
         return null;
     }
 
     public boolean needFetchData() { return true; }
 
-    private static final HashMap<String, QPredicate> operators = new HashMap<>();
+    private static final HashMap<String, PredicateParser> operators = new HashMap<>();
 
     //=======================================================//
     // Operators
     // ------------------------------------------------------//
 
-    static class Compare extends QPredicate {
+    static class Compare extends PredicateParser {
         final String operator;
 
         Compare(String operator) {
             this.operator = operator;
         }
 
-        public QExpression createPredicate(QAttribute column, Object value) {
+        public Predicate createPredicate(QAttribute column, Object value) {
             return new BinaryOp(column, value.toString(), operator);
         }
     }
 
-    static abstract class CompareAny extends QPredicate {
+    static abstract class CompareAny extends PredicateParser {
         public Class<?> getAccessType(Object value, Class<?> fieldType) {
             if ((value.getClass().isArray() || value instanceof Collection)) {
                 fieldType = ClassUtils.getArrayType(fieldType);
@@ -67,11 +67,11 @@ public abstract class QPredicate {
             this.function = function;
         }
 
-        public QExpression createPredicate(QAttribute column, Object value) {
-            QExpression cond;
+        public Predicate createPredicate(QAttribute column, Object value) {
+            Predicate cond;
             Collection values = ClassUtils.asCollection(value);
             if (values != null) {
-                QuerySet or_predicates = new QuerySet(QuerySet.Conjunction.OR);
+                PredicateSet or_predicates = new PredicateSet(Conjunction.OR);
                 for (Object s : (Collection)value) {
                     cond = new BinaryOp(column, s.toString(), function);
                     or_predicates.add(cond);
@@ -87,21 +87,21 @@ public abstract class QPredicate {
 
     private static class Matches extends CompareAny {
 
-        public QExpression parse(JqlParser parser, EntityNode baseNode, Map<String, Object> filter) {
+        public Predicate parse(JqlParser parser, QueryNode baseNode, Map<String, Object> filter) {
             parser.parse(baseNode, filter);
             return baseNode;
         }
 
-        public QExpression parse(JqlParser parser, EntityNode baseNode, Collection<Map<String, Object>> filters) {
-            EntityNode or_qs = baseNode.createQuerySet(QuerySet.Conjunction.OR);
+        public Predicate parse(JqlParser parser, QueryNode baseNode, Collection<Map<String, Object>> filters) {
+            QueryNode or_qs = baseNode.createQuerySet(Conjunction.OR);
             for (Map<String, Object> filter : filters) {
                 parser.parse(or_qs, (Map)filter);
             }
             return or_qs;
         }
         
-        public QExpression createPredicate(QAttribute column, Object value) {
-            QExpression cond;
+        public Predicate createPredicate(QAttribute column, Object value) {
+            Predicate cond;
             Collection values = ClassUtils.asCollection(value);
             if (values != null) {
                 cond = new FilterOp(column, " in ", values);
@@ -113,26 +113,26 @@ public abstract class QPredicate {
         }
     };
 
-    private static final QPredicate EQ = new Matches();
-    private static final QPredicate IN = new Matches() {
+    private static final PredicateParser EQ = new Matches();
+    private static final PredicateParser IN = new Matches() {
         public boolean needFetchData() { return false; }
     };
 
-    private static final QPredicate ISNULL = new QPredicate() {
+    private static final PredicateParser ISNULL = new PredicateParser() {
         public Class<?> getAccessType(Object value, Class<?> fieldType) {
             return boolean.class;
         }
 
-        public QExpression createPredicate(QAttribute column, Object value) {
+        public Predicate createPredicate(QAttribute column, Object value) {
             return new PostOp(column,
                     value == Boolean.TRUE ? " IS NULL " : " IS NOT NULL ");
         }
     };
 
-    static class Not extends QPredicate {
-        private final QPredicate operator;
+    static class Not extends PredicateParser {
+        private final PredicateParser operator;
 
-        Not(QPredicate operator) {
+        Not(PredicateParser operator) {
             this.operator = operator;
         }
 
@@ -144,28 +144,28 @@ public abstract class QPredicate {
             return this.operator.isAttributeNameRequired();
         }
 
-        public QExpression createPredicate(QAttribute column, Object value) {
+        public Predicate createPredicate(QAttribute column, Object value) {
             return UnaryOp.not(operator.createPredicate(column, value));
         }
 
-        public QExpression parse(JqlParser parser, EntityNode baseNode, Map<String, Object> filter) {
-            EntityNode node = baseNode.createQuerySet(QuerySet.Conjunction.AND);
-            QExpression result = operator.parse(parser, node, filter);
+        public Predicate parse(JqlParser parser, QueryNode baseNode, Map<String, Object> filter) {
+            QueryNode node = baseNode.createQuerySet(Conjunction.AND);
+            Expression result = operator.parse(parser, node, filter);
             return UnaryOp.not(result);
         }
 
-        public QExpression parse(JqlParser parser, EntityNode baseNode, Collection<Map<String, Object>> filters) {
-            EntityNode node = baseNode.createQuerySet(QuerySet.Conjunction.AND);
-            QExpression result = operator.parse(parser, node, filters);
+        public Predicate parse(JqlParser parser, QueryNode baseNode, Collection<Map<String, Object>> filters) {
+            QueryNode node = baseNode.createQuerySet(Conjunction.AND);
+            Expression result = operator.parse(parser, node, filters);
             return UnaryOp.not(result);
         }
     };
 
-    static class PairedPredicate extends QPredicate {
-        private final QPredicate operator1;
-        private final QPredicate operator2;
+    static class PairedPredicate extends PredicateParser {
+        private final PredicateParser operator1;
+        private final PredicateParser operator2;
 
-        PairedPredicate(QPredicate operator1, QPredicate operator2) {
+        PairedPredicate(PredicateParser operator1, PredicateParser operator2) {
             this.operator1 = operator1;
             this.operator2 = operator2;
         }
@@ -174,9 +174,9 @@ public abstract class QPredicate {
             return ClassUtils.getArrayType(fieldType);
         }
 
-        public QExpression createPredicate(QAttribute column, Object value) {
+        public Predicate createPredicate(QAttribute column, Object value) {
             Object[] range = (Object[])value;
-            QuerySet predicates = new QuerySet(QuerySet.Conjunction.AND);
+            PredicateSet predicates = new PredicateSet(Conjunction.AND);
             predicates.add(operator1.createPredicate(column, range[0]));
             predicates.add(operator2.createPredicate(column, range[1]));
             return predicates;

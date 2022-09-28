@@ -8,7 +8,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
-public class JqlQuery extends TableNode {
+public class JqlQuery extends TableQuery {
 
     private HashMap<String, List<JqlColumn>> joinMap = new HashMap<>();
     private HashSet<String> fetchTables = new HashSet<>();
@@ -17,13 +17,13 @@ public class JqlQuery extends TableNode {
         super(schema);
     }
 
-    protected TableNode addTableJoin(List<JqlColumn> foreignKeys) {
+    protected TableQuery addTableJoin(List<JqlColumn> foreignKeys) {
         JqlSchema pkSchema = foreignKeys.get(0).getJoinedPrimaryColumn().getSchema();
         Object old = joinMap.put(pkSchema.getTableName(), foreignKeys);
         if (old != null && old != foreignKeys) {
             throw new RuntimeException("something wrong");
         }
-        return new TableNode(pkSchema);
+        return new TableQuery(pkSchema);
     }
 
     public void writeJoinStatement(SQLWriter sb) {

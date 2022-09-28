@@ -6,15 +6,15 @@ import org.slowcoders.jql.JsonNodeType;
 
 import java.util.List;
 
-class TableNode extends EntityNode {
+class TableQuery extends QueryNode {
     private final JqlSchema schema;
     private boolean fetchData;
 
-    public TableNode(JqlSchema schema) {
+    public TableQuery(JqlSchema schema) {
         this(schema, Conjunction.AND);
     }
 
-    public TableNode(JqlSchema schema, Conjunction delimiter) {
+    public TableQuery(JqlSchema schema, Conjunction delimiter) {
         super(delimiter);
         this.schema = schema;
     }
@@ -23,31 +23,31 @@ class TableNode extends EntityNode {
         return schema;
     }
 
-    public TableNode asTableNode() {
+    public TableQuery asTableNode() {
         return this;
     }
 
     public String getTableName() { return schema.getTableName(); }
 
-    public TableNode getTable() {
+    public TableQuery getTable() {
         return this;
     }
 
     @Override
-    public EntityNode getContainingEntity_impl(JqlQuery query, String key, boolean valueType2) {
+    public QueryNode getContainingEntity_impl(JqlQuery query, String key, boolean valueType2) {
         List<JqlColumn> foreignKeys = schema.getJoinedColumnSet(key);
         if (foreignKeys == null) {
             JqlColumn column = schema.getColumn(key);
             if (column.getValueFormat() != JsonNodeType.Object) return this;
         }
 
-        EntityNode entity = subEntities.get(key);
+        QueryNode entity = subEntities.get(key);
         if (entity == null) {
             if (foreignKeys != null) {
                 entity = query.addTableJoin(foreignKeys);
             }
             else {
-                entity = new JsonNode(this, key);
+                entity = new JsonQuery(this, key);
             }
             subEntities.put(key, entity);
             super.add(entity);
@@ -61,8 +61,8 @@ class TableNode extends EntityNode {
     }
 
     @Override
-    public EntityNode createQuerySet(Conjunction conjunction) {
-        return new TableNode(this.schema, conjunction);
+    public QueryNode createQuerySet(Conjunction conjunction) {
+        return new TableQuery(this.schema, conjunction);
     }
 
     @Override

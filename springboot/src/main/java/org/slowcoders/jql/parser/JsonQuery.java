@@ -3,15 +3,15 @@ package org.slowcoders.jql.parser;
 import org.slowcoders.jql.JqlSchema;
 import org.slowcoders.jql.JsonNodeType;
 
-class JsonNode extends EntityNode {
-    private final EntityNode parent;
+class JsonQuery extends QueryNode {
+    private final QueryNode parent;
     private final String key;
 
-    JsonNode(EntityNode parentNode, String key) {
+    JsonQuery(QueryNode parentNode, String key) {
         this(parentNode, key, Conjunction.AND);
     }
 
-    JsonNode(EntityNode parentNode, String key, Conjunction delimiter) {
+    JsonQuery(QueryNode parentNode, String key, Conjunction delimiter) {
         super(delimiter);
         this.parent = parentNode;
         this.key = key;
@@ -21,25 +21,25 @@ class JsonNode extends EntityNode {
         return getTable().getSchema();
     }
 
-    public TableNode getTable() {
+    public TableQuery getTable() {
         return parent.getTable();
     }
 
     @Override
-    public EntityNode getContainingEntity_impl(JqlQuery query, String key, boolean isLeaf) {
+    public QueryNode getContainingEntity_impl(JqlQuery query, String key, boolean isLeaf) {
         if (isLeaf) {
             return this;
         }
-        EntityNode entity = subEntities.get(key);
+        QueryNode entity = subEntities.get(key);
         if (entity == null) {
-            entity = new JsonNode(this, key);
+            entity = new JsonQuery(this, key);
             subEntities.put(key, entity);
             super.add(entity);
         }
         return entity;
     }
 
-    public JsonNode asJsonNode() {
+    public JsonQuery asJsonNode() {
         return this;
     }
 
@@ -74,8 +74,8 @@ class JsonNode extends EntityNode {
     }
 
     @Override
-    public EntityNode createQuerySet(Conjunction conjunction) {
-        return new JsonNode(this.parent, this.key, conjunction);
+    public QueryNode createQuerySet(Conjunction conjunction) {
+        return new JsonQuery(this.parent, this.key, conjunction);
     }
 
     @Override
@@ -84,7 +84,7 @@ class JsonNode extends EntityNode {
     }
 
     private void dumpColumnName(SQLWriter sb) {
-        JsonNode p = parent.asJsonNode();
+        JsonQuery p = parent.asJsonNode();
         if (p != null) {
             p.dumpColumnName(sb);
             sb.write(" -> '").write(key).write('\'');

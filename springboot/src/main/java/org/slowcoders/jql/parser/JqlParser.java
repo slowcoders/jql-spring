@@ -23,7 +23,7 @@ public class JqlParser {
     }
 
     private final static String SELECT_MORE = "select+";
-    public void parse(EntityNode baseNode, Map<String, Object> filter) {
+    public void parse(QueryNode baseNode, Map<String, Object> filter) {
         // "joinColumn명" : { "id@?EQ" : "joinedColumn2.joinedColumn3.columnName" }; // Fetch 자동 수행.
         //   --> @?EQ 기능은 넣되, 숨겨진 고급기능으로..
         // "select@" : ["attr1", "attr2", "attr3" ] 추가??
@@ -41,7 +41,7 @@ public class JqlParser {
                 key = key.substring(0, op_start);
             }
 
-            QPredicate op = QPredicate.getParser(function);
+            PredicateParser op = PredicateParser.getParser(function);
             if (!isValidKey(key)) {
                 if (op.isAttributeNameRequired()) {
                     throw new IllegalArgumentException("invalid JQL key: " + entry.getKey());
@@ -50,13 +50,13 @@ public class JqlParser {
             }
 
             int valueCategory = this.getValueCategory(value);
-            EntityNode targetNode = key == null ? baseNode
+            QueryNode targetNode = key == null ? baseNode
                 : baseNode.getContainingEntity(query, key, valueCategory == VT_LEAF);
             if (targetNode.getTable() != baseNode.getTable()) {
                 targetNode.getTable().setFetchData(op.needFetchData(), query);
             }
 
-            QExpression cond;
+            Predicate cond;
             if (valueCategory == VT_Entity) {
                 cond = op.parse(this, targetNode, (Map<String, Object>)value);
             }

@@ -2,25 +2,25 @@ package org.slowcoders.jql.parser;
 
 import java.util.HashMap;
 
-abstract class EntityNode extends QuerySet {
+abstract class QueryNode extends PredicateSet {
 
-    protected HashMap<String, EntityNode> subEntities = new HashMap<>();
+    protected HashMap<String, QueryNode> subEntities = new HashMap<>();
 
-    public EntityNode(Conjunction delimiter) {
+    public QueryNode(Conjunction delimiter) {
         super(delimiter);
     }
 
-    public JsonNode asJsonNode() { return null; }
+    public JsonQuery asJsonNode() { return null; }
 
-    public TableNode asTableNode() { return null; }
+    public TableQuery asTableNode() { return null; }
 
-    public abstract TableNode getTable();
+    public abstract TableQuery getTable();
 
-    public EntityNode getContainingEntity(JqlQuery query, String key, boolean isLeaf) {
-        EntityNode entity = this;
+    public QueryNode getContainingEntity(JqlQuery query, String key, boolean isLeaf) {
+        QueryNode entity = this;
         int p;
         while ((p = key.indexOf('.')) > 0) {
-            TableNode table = entity.asTableNode();
+            TableQuery table = entity.asTableNode();
             if (table != null && table.getSchema().hasColumn(key)) {
                 return entity;
             }
@@ -31,11 +31,11 @@ abstract class EntityNode extends QuerySet {
         return entity.getContainingEntity_impl(query, key, isLeaf);
     }
 
-    protected abstract EntityNode getContainingEntity_impl(JqlQuery query, String key, boolean isLeaf);
+    protected abstract QueryNode getContainingEntity_impl(JqlQuery query, String key, boolean isLeaf);
 
     public abstract void writeAttribute(SQLWriter sb, String key, Class<?> valueType);
 
-    public abstract EntityNode createQuerySet(Conjunction conjunction);
+    public abstract QueryNode createQuerySet(Conjunction conjunction);
 
     public abstract String getColumnName(String key);
 

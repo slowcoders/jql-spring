@@ -2,9 +2,9 @@ package org.slowcoders.jql.parser;
 
 import java.util.Collection;
 
-public interface QOperator extends QExpression {
+interface Predicate extends Expression {
 
-    class FilterOp implements QOperator {
+    class FilterOp implements Predicate {
         private final QAttribute key;
         private final Collection values;
         private final String operator;
@@ -25,7 +25,7 @@ public interface QOperator extends QExpression {
     }
 
 
-    class BinaryOp implements QOperator {
+    class BinaryOp implements Predicate {
         private final QAttribute key;
         private final Object value;
         private final String operator;
@@ -43,11 +43,11 @@ public interface QOperator extends QExpression {
     }
 
 
-    class UnaryOp implements QOperator {
-        private QExpression statement;
+    class UnaryOp implements Predicate {
+        private Expression statement;
         private String operator;
 
-        UnaryOp(QExpression statement, String operator) {
+        UnaryOp(Expression statement, String operator) {
             this.statement = statement;
             this.operator = operator;
         }
@@ -59,13 +59,13 @@ public interface QOperator extends QExpression {
             sb.write(")");
         }
 
-        public static UnaryOp not(QExpression condition) {
+        public static UnaryOp not(Expression condition) {
             return new UnaryOp(condition, " NOT ");
         }
     }
 
 
-    class PostOp implements QOperator {
+    class PostOp implements Predicate {
         private QAttribute key;
         private String operator;
 

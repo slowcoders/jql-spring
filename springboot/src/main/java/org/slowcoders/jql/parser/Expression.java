@@ -1,6 +1,6 @@
 package org.slowcoders.jql.parser;
 
-public interface QExpression {
+interface Expression {
 
     void printSQL(SQLWriter builder);
 
