@@ -35,9 +35,9 @@ spring:
 
   datasource:
     # jdbcUrl -> ex) jdbc:postgresql://127.0.0.1/postgres
-    jdbcUrl: ${JQL_URL}
-    username: ${JQL_USER}
-    password: ${JQL_PW}
+    jdbcUrl: ${JDBC_URL}
+    username: ${JDBC_USER}
+    password: ${JDBC_PW}
 
   jpa:
     database-platform: org.hibernate.dialect.PostgreSQLDialect

@@ -1,11 +1,11 @@
-package org.slowcoders.jql.jdbc.parser;
+package org.slowcoders.jql.parser;
 
 public class QAttribute { // implements QNode {
-    private final QNode scope;
+    private final EntityNode scope;
     private final String key;
     private final Class<?> valueType;
 
-    QAttribute(QNode scope, String key, Class<?> valueType) {
+    QAttribute(EntityNode scope, String key, Class<?> valueType) {
         this.scope = scope;
         this.key = key;
         this.valueType = valueType;

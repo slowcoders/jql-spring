@@ -11,28 +11,6 @@ import java.util.HashMap;
 public class ClassUtils {
     private static HashMap<Class<?>, Object[]> emptyArrays = new HashMap<>();
 
-    public static boolean isBooleanType(Class<?> c) {
-        return c == boolean.class || c== Boolean.class;
-    }
-
-    public static boolean isNumberType(Class<?> c) {
-        return c.isPrimitive() ? c != boolean.class : Number.class.isAssignableFrom(c);
-    }
-
-    public static boolean isRealType(Class<?> c) {
-        return c == float.class || c == Float.class || c == double.class || c == Double.class;
-    }
-
-    public static <T> T tryCreateInstance(String className) throws RuntimeException {
-        try {
-            Class<T> c = (Class)Class.forName(className);
-            return newInstance(c);
-        } catch (Exception e) {
-            e.printStackTrace();
-            return null;
-        }
-    }
-
     public static Collection asCollection(Object obj) {
         if (obj instanceof Collection) {
             return (Collection) obj;
@@ -41,15 +19,6 @@ public class ClassUtils {
             return Arrays.asList((Object[]) obj);
         }
         return null;
-    }
-
-    public static <T> T newInstance(String className) throws RuntimeException {
-        try {
-            Class<T> c = (Class)Class.forName(className);
-            return newInstance(c);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
     }
 
     public static <T> T newInstanceOrNull(String className) {
@@ -69,15 +38,6 @@ public class ClassUtils {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-    }
-
-    public static String simplifyClassType(String s) {
-        int p = s.indexOf('<');
-        if (p < 0) {
-            p = s.length();
-        }
-        p = s.lastIndexOf('.', p);
-        return s.substring(p+1);
     }
 
     public static Class<?> toClass(Type type) {

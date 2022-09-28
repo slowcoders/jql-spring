@@ -1,7 +1,6 @@
 package org.slowcoders.jql.json;
 
 import org.slowcoders.jql.JqlColumn;
-import org.slowcoders.jql.JqlColumnJoin;
 import org.slowcoders.jql.JqlSchema;
 import org.slowcoders.jql.jdbc.metadata.JdbcColumn;
 import org.slowcoders.jql.util.ClassUtils;
@@ -28,7 +27,7 @@ public class JsonJql {
         }
 
 //        String max = getPrecision(col, jsonType);
-        sb.append("  ").append(col.getFieldName());
+        sb.append("  ").append(col.getJsonName());
         while (sb.length() < 20) {
             sb.append(' ');
         }
@@ -54,14 +53,14 @@ public class JsonJql {
     public static String createJoinJQL(JqlSchema schema) {
         StringBuilder sb = new StringBuilder();
         for (JqlColumn jqlColumn : schema.getReadableColumns()) {
-            JqlColumnJoin fk = ((JdbcColumn)jqlColumn).getJoinedForeignKey();
-            if (fk == null) continue;
+            JqlColumn joined_pk = jqlColumn.getJoinedPrimaryColumn();
+            if (joined_pk == null) continue;
 
             sb.append(schema.getTableName()).append("Schema.join(\"");
             sb.append(jqlColumn.getColumnName()).append("\", ");
-            sb.append(fk.getPkTableName()).append("Schema, \"");
-            sb.append(fk.getPkColumn()).append("\", \"");
-            sb.append(jqlColumn.getFieldName()).append("\");\n");
+            sb.append(joined_pk.getSchema().getEntityClassName()).append("Schema, \"");
+            sb.append(joined_pk.getJsonName()).append("\", \"");
+            sb.append(jqlColumn.getJsonName()).append("\");\n");
         }
         return sb.toString();
     }

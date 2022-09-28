@@ -8,38 +8,27 @@ import org.slowcoders.jql.util.AttributeNameConverter;
 import org.slowcoders.jql.util.ClassUtils;
 
 import javax.annotation.Nullable;
-import javax.persistence.Column;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.JoinColumn;
-import javax.validation.constraints.Max;
+import javax.persistence.*;
 import java.lang.reflect.Field;
 
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.NONE)
 public class JpaColumn extends JqlColumn {
-    protected boolean isReadOnly;
-    protected boolean isAutoIncrement;
-    protected boolean isNullable;
-    protected boolean isPk;
+
+    private boolean isReadOnly;
+    private boolean isAutoIncrement;
+    private boolean isNullable;
+    private boolean isPk;
 
     private String label;
-    protected JqlColumnJoin fk;
+    private JoinedColumn fk;
 
     @JsonIgnore
-    protected Field field;
+    private Field field;
     public JpaColumn(Field f, JqlSchema schema) {
-        super(schema);
-        this.columnName = resolveColumnName(f);
-        this.fieldName = f.getName();
+        super(schema, f);
         this.fk = resolveForeignKey(f);
 
-        this.valueFormat = ValueFormat.resolveValueFormat(f);
-        if (this.getValueFormat() == ValueFormat.Collection) {
-            this.javaType = ClassUtils.getElementType(f);
-        }
-        else {
-            this.javaType = f.getType();
-        }
+
         this.field = f;
 
         GeneratedValue gv = f.getAnnotation(GeneratedValue.class);
@@ -47,10 +36,13 @@ public class JpaColumn extends JqlColumn {
         this.isPk = JPAUtils.isIdField(f);
         this.isNullable = f.getAnnotation(Nullable.class) != null;
 
-        this.aggregationType = resolveAggregationType(f);
-
         this.isReadOnly = gv != null;
         this.label = null;
+    }
+
+    @Override
+    public String getJsonName() {
+        return this.field.getName();
     }
 
     @Override
@@ -78,7 +70,7 @@ public class JpaColumn extends JqlColumn {
 
     @Override
     public JqlColumn getJoinedPrimaryColumn() {
-        throw new RuntimeException("not implemented");
+        return fk == null ? null : fk.getJoinedColumn();
     }
 
     @Override
@@ -88,52 +80,31 @@ public class JpaColumn extends JqlColumn {
 
 
 
-    private JqlColumnJoin resolveForeignKey(Field f) {
+    private JoinedColumn resolveForeignKey(Field f) {
         JoinColumn jc = f.getAnnotation(JoinColumn.class);
         if (jc == null) return null;
-        String pkTable = getSchema().getSchemaLoader().resolveTableName(f.getType());
-        String pkColumn = jc.referencedColumnName();
-        String fkColumn = resolveColumnName(f);
-
-        return new JqlColumnJoin(pkTable, pkColumn, getSchema().getTableName(), fkColumn, getSchema().getSchemaLoader());
+        return new JoinedColumn(getSchema().getSchemaLoader(), f.getType(), jc.referencedColumnName());
     }
 
-    private String resolveColumnName(Field f) {
-        if (true) {
-            Column c = f.getAnnotation(Column.class);
-            if (c != null) {
-                String colName = c.name();
-                if (colName != null && colName.length() > 0) {
-                    return colName;
-                }
+
+    private static class JoinedColumn {
+        private final SchemaLoader schemaLoader;
+        private final Class entityType;
+        private final String columnName;
+        private JqlColumn pk;
+
+        JoinedColumn(SchemaLoader schemaLoader, Class entityType, String columnName) {
+            this.schemaLoader = schemaLoader;
+            this.entityType = entityType;
+            this.columnName = columnName;
+        }
+
+        public JqlColumn getJoinedColumn() {
+            if (pk == null) {
+                pk = schemaLoader.loadSchema(entityType).getColumn(columnName);
+                assert (pk != null);
             }
+            return pk;
         }
-        if (true) {
-            JoinColumn c = f.getAnnotation(JoinColumn.class);
-            if (c != null) {
-                String colName = c.name();
-                if (colName != null && colName.length() > 0) {
-                    return colName;
-                }
-            }
-        }
-        AttributeNameConverter cvt = getSchema().getSchemaLoader().getNameConverter();
-        String colName = cvt.toPhysicalColumnName(f.getName());
-        return colName;
-    }
-
-    private Aggregate.Type resolveAggregationType(Field f) {
-        Aggregate c = f.getAnnotation(Aggregate.class);
-        if (c != null) {
-            return c.value();
-        }
-        if (this.valueFormat == ValueFormat.Float) {
-            return Aggregate.Type.Mean;
-        }
-        return Aggregate.Type.None;
-    }
-
-    public JqlColumnJoin getJoinedForeignKey() {
-        return fk;
     }
 }

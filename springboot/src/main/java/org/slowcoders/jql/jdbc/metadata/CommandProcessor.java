@@ -42,7 +42,7 @@ public class CommandProcessor implements CommandLineRunner {
             }
 
             for (JqlSchema schema : jqlSchemas) {
-                schema.dumpJPAEntitySchema();
+                ((JdbcSchema)schema).dumpJPAEntitySchema();
             }
             for (JqlSchema schema : jqlSchemas) {
                 String ddl = schema.generateDDL();

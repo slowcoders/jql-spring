@@ -68,13 +68,13 @@ public abstract class JPARepositoryBase<ENTITY, ID> extends JPAQueryBuilder<ENTI
     }
 
     @Override
-    public Iterable<ENTITY> find(Map<String, Object> conditions, int limit) {
-        return find(conditions, (Sort)null, limit);
+    public Iterable<ENTITY> find(Map<String, Object> jqlFilter, int limit) {
+        return find(jqlFilter, (Sort)null, limit);
     }
 
     @Override
-    public Page<ENTITY> find(Map<String, Object> conditions, Pageable pageReq) {
-        return find(conditions, pageReq, super.getEntityType());
+    public Page<ENTITY> find(Map<String, Object> jqlFilter, Pageable pageReq) {
+        return find(jqlFilter, pageReq, super.getEntityType());
     }
 
     //@Override
@@ -89,14 +89,14 @@ public abstract class JPARepositoryBase<ENTITY, ID> extends JPAQueryBuilder<ENTI
     }
 
     @Override
-    public long count(Map<String, Object> filterConditions) {
-        long count = (Long) super.buildCountQuery(filterConditions).getSingleResult();
+    public long count(Map<String, Object> jqlFilter) {
+        long count = (Long) super.buildCountQuery(jqlFilter).getSingleResult();
         return count;
     }
 
     @Override
-    public Iterable<ENTITY> find(Map<String, Object> filterConditions, Sort sort, int limit) {
-        return find(filterConditions, sort, limit, super.getEntityType());
+    public Iterable<ENTITY> find(Map<String, Object> jqlFilter, Sort sort, int limit) {
+        return find(jqlFilter, sort, limit, super.getEntityType());
     }
 
     //@Override
@@ -126,8 +126,8 @@ public abstract class JPARepositoryBase<ENTITY, ID> extends JPAQueryBuilder<ENTI
     }
 
     @Override
-    public ENTITY findTop(Map<String, Object> filterConditions, Sort sort) {
-        Query query = super.buildSearchQuery(filterConditions, sort, this.getEntityType());
+    public ENTITY findTop(Map<String, Object> jqlFilter, Sort sort) {
+        Query query = super.buildSearchQuery(jqlFilter, sort, this.getEntityType());
         List<ENTITY> res = query.setMaxResults(1).getResultList();
         return res.size() > 0 ? res.get(0) : null;
     }

@@ -1,16 +1,14 @@
-package org.slowcoders.jql.jdbc.parser;
+package org.slowcoders.jql.parser;
 
 import org.slowcoders.jql.JqlColumn;
-import org.slowcoders.jql.JqlColumnJoin;
 import org.slowcoders.jql.JqlSchema;
-import org.slowcoders.jql.JqlSchemaJoin;
 
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
-public class JqlQuery extends QTableNode {
+public class JqlQuery extends TableNode {
 
     private HashMap<String, List<JqlColumn>> joinMap = new HashMap<>();
     private HashSet<String> fetchTables = new HashSet<>();
@@ -19,13 +17,13 @@ public class JqlQuery extends QTableNode {
         super(schema);
     }
 
-    protected QTableNode addTableJoin(List<JqlColumn> foreignKeys) {
+    protected TableNode addTableJoin(List<JqlColumn> foreignKeys) {
         JqlSchema pkSchema = foreignKeys.get(0).getJoinedPrimaryColumn().getSchema();
         Object old = joinMap.put(pkSchema.getTableName(), foreignKeys);
         if (old != null && old != foreignKeys) {
             throw new RuntimeException("something wrong");
         }
-        return new QTableNode(pkSchema);
+        return new TableNode(pkSchema);
     }
 
     public void writeJoinStatement(SQLWriter sb) {

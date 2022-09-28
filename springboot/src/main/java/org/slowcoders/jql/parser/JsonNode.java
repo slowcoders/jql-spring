@@ -1,17 +1,17 @@
-package org.slowcoders.jql.jdbc.parser;
+package org.slowcoders.jql.parser;
 
 import org.slowcoders.jql.JqlSchema;
-import org.slowcoders.jql.ValueFormat;
+import org.slowcoders.jql.JsonNodeType;
 
-class QJsonNode extends QNode {
-    private final QNode parent;
+class JsonNode extends EntityNode {
+    private final EntityNode parent;
     private final String key;
 
-    QJsonNode(QNode parentNode, String key) {
-        this(parentNode, key, Type.AND);
+    JsonNode(EntityNode parentNode, String key) {
+        this(parentNode, key, Conjunction.AND);
     }
 
-    QJsonNode(QNode parentNode, String key, Type delimiter) {
+    JsonNode(EntityNode parentNode, String key, Conjunction delimiter) {
         super(delimiter);
         this.parent = parentNode;
         this.key = key;
@@ -21,25 +21,25 @@ class QJsonNode extends QNode {
         return getTable().getSchema();
     }
 
-    public QTableNode getTable() {
+    public TableNode getTable() {
         return parent.getTable();
     }
 
     @Override
-    public QNode getContainingEntity_impl(JqlQuery query, String key, boolean isLeaf) {
+    public EntityNode getContainingEntity_impl(JqlQuery query, String key, boolean isLeaf) {
         if (isLeaf) {
             return this;
         }
-        QNode entity = subEntities.get(key);
+        EntityNode entity = subEntities.get(key);
         if (entity == null) {
-            entity = new QJsonNode(this, key);
+            entity = new JsonNode(this, key);
             subEntities.put(key, entity);
             super.add(entity);
         }
         return entity;
     }
 
-    public QJsonNode asJsonNode() {
+    public JsonNode asJsonNode() {
         return this;
     }
 
@@ -48,9 +48,9 @@ class QJsonNode extends QNode {
         sb.write("(");
         this.dumpColumnName(sb);
         sb.write(" ->> '").write(key).write("')");
-        ValueFormat vf = ValueFormat.resolveValueFormat(valueType);
+        JsonNodeType vf = JsonNodeType.getNodeType(valueType);
         switch (vf) {
-            case Int:
+            case Integer:
             case Float:
                 sb.write("::NUMERIC");
                 break;
@@ -66,16 +66,16 @@ class QJsonNode extends QNode {
             case Text:
                 sb.write("::TEXT");
                 break;
-            case Collection:
-            case Embedded:
+            case Array:
+            case Object:
                 sb.write("::JSONB");
                 break;
         }
     }
 
     @Override
-    public QNode createQuerySet(Type type) {
-        return new QJsonNode(this.parent, this.key, type);
+    public EntityNode createQuerySet(Conjunction conjunction) {
+        return new JsonNode(this.parent, this.key, conjunction);
     }
 
     @Override
@@ -84,7 +84,7 @@ class QJsonNode extends QNode {
     }
 
     private void dumpColumnName(SQLWriter sb) {
-        QJsonNode p = parent.asJsonNode();
+        JsonNode p = parent.asJsonNode();
         if (p != null) {
             p.dumpColumnName(sb);
             sb.write(" -> '").write(key).write('\'');

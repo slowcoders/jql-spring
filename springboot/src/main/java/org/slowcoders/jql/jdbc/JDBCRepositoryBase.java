@@ -4,29 +4,32 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slowcoders.jql.JQLRepository;
 import org.slowcoders.jql.JQLService;
 import org.slowcoders.jql.JqlSchema;
-import org.slowcoders.jql.jdbc.metadata.JdbcSchema;
+import org.slowcoders.jql.jdbc.metadata.JqlRowMapper;
 import org.slowcoders.jql.util.KVEntity;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.RowMapper;
 
 import java.io.IOException;
 import java.util.*;
 
-public class JDBCRepositoryBase<ID> extends JDBCQueryBuilder implements JQLRepository<KVEntity, ID> {
+public class JDBCRepositoryBase<ID> /*extends JDBCQueryBuilder*/ implements JQLRepository<KVEntity, ID> {
 
     private final static HashMap<Class<?>, JDBCRepositoryBase>jqlServices = new HashMap<>();
     private final JdbcTemplate jdbc;
     private final ObjectMapper objectMapper;
+    private final JDBCQueryBuilder queryBuilder;
 
     public JDBCRepositoryBase(JQLJdbcService service, Class<?> entityType) {
         this(service, service.loadSchema(entityType)); //  JqlSchema.loadSchema(entityType));
     }
 
     public JDBCRepositoryBase(JQLService service, JqlSchema jqlSchema) {
-        super(service.getConversionService(), jqlSchema);
+//        super(service.getConversionService(), jqlSchema);
+        this.queryBuilder = new JDBCQueryBuilder(service.getConversionService(), jqlSchema);
         this.jdbc = service.getJdbcTemplate();
         this.objectMapper = service.getJsonConverter().getObjectMapper();
     }
@@ -35,9 +38,8 @@ public class JDBCRepositoryBase<ID> extends JDBCQueryBuilder implements JQLRepos
         return objectMapper;
     }
 
-    @Override
-    public JdbcSchema getSchema() {
-        return (JdbcSchema)super.getSchema();
+    public JqlSchema getSchema() {
+        return queryBuilder.getSchema();
     }
 
     @Override
@@ -52,8 +54,12 @@ public class JDBCRepositoryBase<ID> extends JDBCQueryBuilder implements JQLRepos
     }
     @Override
     public KVEntity find(ID id) {
-        String sql = super.build_findById(id);
-        return jdbc.queryForObject(sql, getSchema().getColumnMapRowMapper());
+        String sql = queryBuilder.build_findById(id);
+        return jdbc.queryForObject(sql, getColumnMapRowMapper());
+    }
+
+    protected RowMapper<KVEntity> getColumnMapRowMapper() {
+        return new JqlRowMapper(this.getSchema());
     }
 
     @Override
@@ -72,48 +78,48 @@ public class JDBCRepositoryBase<ID> extends JDBCQueryBuilder implements JQLRepos
     }
 
     @Override
-    public Iterable<KVEntity> find(Map<String, Object> conditions, int limit) {
-        return find(conditions, (Sort)null, limit);
+    public Iterable<KVEntity> find(Map<String, Object> jqlFilter, int limit) {
+        return find(jqlFilter, (Sort)null, limit);
     }
 
     @Override
-    public Page<KVEntity> find(Map<String, Object> conditions, Pageable pageReq) {
+    public Page<KVEntity> find(Map<String, Object> jqlFilter, Pageable pageReq) {
         int size = pageReq.getPageSize();
         int offset = (pageReq.getPageNumber()) * size;
-        String query = super.buildSearchQuery(conditions, pageReq.getSort(), size, offset);
-        List<KVEntity> res = (List)jdbc.query(query, getSchema().getColumnMapRowMapper());
+        String query = queryBuilder.buildSearchQuery(jqlFilter, pageReq.getSort(), size, offset);
+        List<KVEntity> res = (List)jdbc.query(query, getColumnMapRowMapper());
 
-        long count = count(conditions);
+        long count = count(jqlFilter);
         return new PageImpl(res, pageReq, count);
     }
 
     @Override
-    public long count(Map<String, Object> filterConditions) {
-        String sqlCount = super.buildCountQuery(filterConditions);
+    public long count(Map<String, Object> jqlFilter) {
+        String sqlCount = queryBuilder.buildCountQuery(jqlFilter);
         long count = jdbc.queryForObject(sqlCount, Long.class);
         return count;
     }
 
     @Override
-    public Iterable<KVEntity> find(Map<String, Object> filterConditions, Sort sort, int limit) {
-        String query = super.buildSearchQuery(filterConditions, sort, limit, 0);
-        List<KVEntity> res = (List)jdbc.query(query, getSchema().getColumnMapRowMapper());
+    public Iterable<KVEntity> find(Map<String, Object> jqlFilter, Sort sort, int limit) {
+        String query = queryBuilder.buildSearchQuery(jqlFilter, sort, limit, 0);
+        List<KVEntity> res = (List)jdbc.query(query, getColumnMapRowMapper());
         return res;
     }
 
     @Override
     public List<KVEntity> list(Collection<ID> idList) {
-        String query = super.buildSearchQuery(idList, null, idList.size(), 0);
-        List<KVEntity> res = (List)jdbc.query(query, getSchema().getColumnMapRowMapper());
+        String query = queryBuilder.buildSearchQuery(idList, null, idList.size(), 0);
+        List<KVEntity> res = (List)jdbc.query(query, getColumnMapRowMapper());
         return res;
     }
 
 
 
     @Override
-    public KVEntity findTop(Map<String, Object> filterConditions, Sort sort) {
-        String query = super.buildSearchQuery(filterConditions, sort, 1, 0);
-        List<KVEntity> res = (List)jdbc.query(query, getSchema().getColumnMapRowMapper());
+    public KVEntity findTop(Map<String, Object> jqlFilter, Sort sort) {
+        String query = queryBuilder.buildSearchQuery(jqlFilter, sort, 1, 0);
+        List<KVEntity> res = (List)jdbc.query(query, getColumnMapRowMapper());
         return res.size() > 0 ? res.get(0) : null;
     }
 
@@ -146,7 +152,7 @@ public class JDBCRepositoryBase<ID> extends JDBCQueryBuilder implements JQLRepos
     public List<ID> insertAll(Collection<Map<String, Object>> entities) {
         if (entities.isEmpty()) return null;
 
-        BatchUpsert batch = super.prepareInsert(entities);
+        JDBCQueryBuilder.BatchUpsert batch = queryBuilder.prepareInsert(entities);
         jdbc.batchUpdate(batch.getSql(), batch);
         return batch.getEntityIDs();
     }
@@ -159,19 +165,19 @@ public class JDBCRepositoryBase<ID> extends JDBCQueryBuilder implements JQLRepos
 
     @Override
     public void update(Collection<ID> idList, Map<String, Object> updateSet) throws IOException {
-        String sql = super.buildUpdateQuery(idList, updateSet);
+        String sql = queryBuilder.buildUpdateQuery(idList, updateSet);
         jdbc.update(sql);
     }
 
     @Override
     public void delete(ID id) {
-        String sql = super.buildDeleteQuery(id);
+        String sql = queryBuilder.buildDeleteQuery(id);
         jdbc.update(sql);
     }
 
     @Override
     public int delete(Collection<ID> idList) {
-        String sql = super.buildDeleteQuery(idList);
+        String sql = queryBuilder.buildDeleteQuery(idList);
         return jdbc.update(sql);
     }
 

@@ -7,65 +7,57 @@ import org.slowcoders.jql.util.ClassUtils;
 
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
+import java.util.ArrayList;
 
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.NONE)
 public class JdbcColumn extends JqlColumn {
 
-    protected boolean isReadOnly;
-    protected boolean isAutoIncrement;
-    protected boolean isNullable;
-    protected boolean isPk;
+    private final boolean isReadOnly;
+    private final boolean isAutoIncrement;
+    private final boolean isNullable;
+    private final boolean isPk;
+
+    private String fieldName;
+    private final String colTypeName;
 
     private String label;
-    protected JqlColumnJoin fk;
+    private ColumnBinder fk;
 
-    protected String colTypeName;
+    private int displaySize;
     @JsonIgnore
-    protected int colType;
-    protected int displaySize;
-    @JsonIgnore
-    protected JqlIndex index;
+    private JqlIndex index;
 
     @JsonIgnore
-    protected int precision;
-    protected int scale;
+    private int precision;
+    private int scale;
 
-    public JdbcColumn(JqlSchema schema, ResultSetMetaData md, int col, JqlColumnJoin fk, JqlIndex jqlIndex, String comment) throws SQLException {
-        super(schema);
-        this.columnName = md.getColumnName(col);
-        this.fk = fk;
-        this.fieldName = resolveFieldName();
-        this.label = comment != null ? comment : md.getColumnLabel(col);
-        this.index = jqlIndex;
-
-        this.colTypeName = md.getColumnTypeName(col);
-        this.colType = md.getColumnType(col);
-        try {
-            switch (this.colTypeName) {
-                case "json":
-                case "jsonb":
-                    this.javaType = Object.class;
-                    break;
-                default:
-                    String javaClassName = md.getColumnClassName(col);
-                    this.javaType = ClassUtils.getBoxedType(Class.forName(javaClassName));
-            }
-            this.valueFormat = ValueFormat.resolveValueFormat(this.javaType);
-        } catch (ClassNotFoundException e) {
-            throw new RuntimeException(e);
-        }
+    public JdbcColumn(JqlSchema schema, ResultSetMetaData md, int col, ColumnBinder fk, JqlIndex jqlIndex, String comment, ArrayList<String> primaryKeys) throws SQLException {
+        super(schema, resolveJavaType(md, col), md.getColumnName(col));
 
         this.isAutoIncrement = md.isAutoIncrement(col);
         this.isReadOnly = md.isReadOnly(col);
+        this.isNullable = md.isNullable(col) != ResultSetMetaData.columnNoNulls;
+        this.isPk = primaryKeys.contains(this.getColumnName());
+
+        this.fk = fk;
         boolean isWritable = md.isWritable(col);
         if (!isWritable) {
             throw new RuntimeException("!isWritable");
         }
+        this.colTypeName = md.getColumnTypeName(col);
+        this.label = comment != null ? comment : md.getColumnLabel(col);
+        this.index = jqlIndex;
         this.precision = md.getPrecision(col);
         this.scale = md.getScale(col);
         this.displaySize = md.getColumnDisplaySize(col);
-        this.isNullable = md.isNullable(col) != ResultSetMetaData.columnNoNulls;
-//        this.isPk = false;
+    }
+
+    @Override
+    public String getJsonName() {
+        if (fieldName == null) {
+            fieldName = this.resolveFieldName();
+        }
+        return fieldName;
     }
 
     @Override
@@ -96,17 +88,14 @@ public class JdbcColumn extends JqlColumn {
         return colTypeName;
     }
 
-    public JdbcColumn getJoinedPrimaryColumn() {
-        JqlColumnJoin fk = this.fk;
-        if (fk == null) return null;
-        JqlColumn pkCol = fk.loadPkSchema().getColumn(fk.getPkColumn());
-        return (JdbcColumn)pkCol;
+    public JqlColumn getJoinedPrimaryColumn() {
+        return this.fk == null ? null : fk.getJoinedColumn();
     }
 
     private String resolveFieldName() {
         StringBuilder sb = new StringBuilder();
-        JdbcColumn col = this;
-        for (JdbcColumn joinedPk; (joinedPk = col.getJoinedPrimaryColumn()) != null; ) {
+        JqlColumn col = this;
+        for (JqlColumn joinedPk; (joinedPk = col.getJoinedPrimaryColumn()) != null; ) {
             col = joinedPk;
             sb.append(col.getSchema().getBaseTableName()).append('.');
         }
@@ -116,7 +105,22 @@ public class JdbcColumn extends JqlColumn {
         return name;
     }
 
-    public JqlColumnJoin getJoinedForeignKey() {
-        return fk;
+    private static Class resolveJavaType(ResultSetMetaData md, int col) throws SQLException {
+        String colTypeName = md.getColumnTypeName(col);
+        int colType = md.getColumnType(col);
+        try {
+            switch (colTypeName) {
+                case "json":
+                case "jsonb":
+                    return Object.class;
+                default:
+                    String javaClassName = md.getColumnClassName(col);
+                    return ClassUtils.getBoxedType(Class.forName(javaClassName));
+            }
+
+        } catch (ClassNotFoundException e) {
+            throw new RuntimeException(e);
+        }
     }
+
 }

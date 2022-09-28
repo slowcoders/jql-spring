@@ -1,4 +1,4 @@
-package org.slowcoders.jql.jdbc.parser;
+package org.slowcoders.jql.parser;
 
 //public class QJoinedScope {
 //    private final ForeignKey fk;

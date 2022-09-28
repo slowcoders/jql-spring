@@ -3,14 +3,12 @@ package org.slowcoders.jql.jdbc.metadata;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import org.slowcoders.jql.JqlColumn;
 import org.slowcoders.jql.JqlSchema;
-import org.slowcoders.jql.JqlSchemaJoin;
 import org.slowcoders.jql.SchemaLoader;
 import org.slowcoders.jql.util.AttributeNameConverter;
-import org.slowcoders.jql.util.KVEntity;
-import org.springframework.jdbc.core.RowMapper;
 
+import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
 import java.util.ArrayList;
-import java.util.List;
 
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
 public class JdbcSchema extends JqlSchema {
@@ -19,23 +17,53 @@ public class JdbcSchema extends JqlSchema {
                 AttributeNameConverter.camelCaseConverter.toLogicalAttributeName(tableName.substring(tableName.indexOf('.') + 1)));
     }
 
-    protected boolean resolveJsonPath(ArrayList<String> fieldPath, String fieldName) {
-        if (this.getJoinedForeignKeys(fieldName) != null) {
-            fieldPath.add(fieldName);
-            return true;
-        }
-        for (List<JqlColumn> fks : tableJoinMap.values()) {
-            JdbcSchema pkSchema = (JdbcSchema) fks.get(0).getJoinedPrimaryColumn().getSchema();
-            if (pkSchema.resolveJsonPath(fieldPath, fieldName)) {
-                fieldPath.add(pkSchema.getJpaClassName());
-                return true;
-            }
-        }
-        return false;
+    @Override
+    protected void init(ArrayList<? extends JqlColumn> columns) {
+        super.init(columns);
     }
 
-    public RowMapper<KVEntity> getColumnMapRowMapper() {
-        return new JqlRowMapper(this);
+    public String dumpJPAEntitySchema() {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        PrintStream out = new PrintStream(baos);
+        out.println("import lombok.*;");
+        out.println("import javax.persistence.*;");
+        out.println("import javax.validation.constraints.*;");
+        out.println();
+
+        out.println("public class " + getTableName() + " {");
+        for (JqlColumn col : getReadableColumns()) {
+            dumpORM(col, out);
+            out.println();
+        }
+        out.println("}");
+        return baos.toString();
     }
 
-}
+    private void dumpORM(JqlColumn col, PrintStream out) {
+//        if (col.getLabel() != null) {
+//            out.print("\t/** ");
+//            out.print(col.getLabel());
+//            out.println(" */");
+//        }
+//        if (primaryKeys.contains(col.getColumnName())) {
+//            out.println("\t@Id");
+//            if (col.isAutoIncrement()) {
+//                out.println("\t@GeneratedValue(strategy = GenerationType.IDENTITY)");
+//            }
+//        }
+//        if (!col.isNullable()) {
+//            out.println("\t@NotNull");
+//            out.println("\t@Column(nullable = false)");
+//        }
+//        if (col.getPrecision() > 0) {
+//            out.println("\t@Max(" + col.getPrecision() +")");
+//        }
+
+        out.print("\t@Getter");
+        if (!col.isReadOnly()) {
+            out.print(" @Setter");
+        }
+        out.println();
+
+        out.println("\t" + col.getJavaType().getName() + " " + col.getJsonName() + ";");
+    }}

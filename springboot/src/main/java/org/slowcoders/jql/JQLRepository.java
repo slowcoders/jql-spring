@@ -13,8 +13,6 @@ public interface JQLRepository<ENTITY, ID> {
 
     Class<ENTITY> getEntityType();
 
-//    String getPrimaryKey();
-
     List<ENTITY> list(Collection<ID> idList);
 
     Page<ENTITY> list(Pageable pageRequest);
@@ -31,16 +29,16 @@ public interface JQLRepository<ENTITY, ID> {
 
     ENTITY find(ID id);
 
-    Iterable<ENTITY> find(Map<String, Object> conditions, int limit);
+    Iterable<ENTITY> find(Map<String, Object> jqlFilter, int limit);
 
-    Iterable<ENTITY> find(Map<String, Object> filterConditions, Sort sort, int limit);
+    Iterable<ENTITY> find(Map<String, Object> jqlFilter, Sort sort, int limit);
 
-    Page<ENTITY> find(Map<String, Object> conditions, Pageable pageReq);
+    Page<ENTITY> find(Map<String, Object> jqlFilter, Pageable pageReq);
 
-    ENTITY findTop(Map<String, Object> filterConditions, Sort sort);
+    ENTITY findTop(Map<String, Object> jqlFilter, Sort sort);
 
 
-    long  count(Map<String, Object> filterConditions);
+    long count(Map<String, Object> jqlFilter);
 
 
     void update(ID id, Map<String, Object> updateSet) throws IOException;

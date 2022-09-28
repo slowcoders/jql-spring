@@ -1,28 +1,35 @@
 package org.slowcoders.jql;
 
-import org.slowcoders.jql.jdbc.timescale.Aggregate;
+import org.slowcoders.jql.util.AttributeNameConverter;
+import org.slowcoders.jql.util.ClassUtils;
+
+import javax.persistence.Column;
+import javax.persistence.JoinColumn;
+import java.lang.reflect.Field;
 
 public abstract class JqlColumn {
-    protected String columnName;
-    protected String fieldName;
-    protected Class<?> javaType;
-    protected ValueFormat valueFormat;
-    protected Aggregate.Type aggregationType;
+    private final String columnName;
+    private final Class<?> javaType;
+    private final JsonNodeType valueFormat;
 
     private final JqlSchema schema;
 
-    protected JqlColumn(JqlSchema schema) {
-        this.schema = schema;
-    }
-
-    protected JqlColumn(JqlSchema schema, Class<?> javaType, String fieldName, String columnName,
-                        ValueFormat valueFormat, Aggregate.Type aggregationType) {
+    protected JqlColumn(JqlSchema schema, String columnName, Class<?> javaType, JsonNodeType valueFormat) {
         this.schema = schema;
         this.javaType = javaType;
-        this.fieldName = fieldName;
         this.columnName = columnName;
         this.valueFormat = valueFormat;
-        this.aggregationType = aggregationType;
+    }
+
+    protected JqlColumn(JqlSchema schema, Class javaType, String columnName) {
+        this(schema, columnName, javaType, JsonNodeType.getNodeType(javaType));
+    }
+
+    public JqlColumn(JqlSchema schema, Field f) {
+        this.schema = schema;
+        this.columnName = resolveColumnName(schema, f);
+        this.valueFormat = JsonNodeType.getNodeType(f);
+        this.javaType = valueFormat == JsonNodeType.Array ? ClassUtils.getElementType(f) : f.getType();
     }
 
     public final JqlSchema getSchema() {
@@ -33,20 +40,14 @@ public abstract class JqlColumn {
         return javaType;
     }
 
+    public abstract String getJsonName();
+
     public final String getColumnName() {
         return columnName;
     }
 
-    public final String getFieldName() {
-        return fieldName;
-    }
-
-    public final ValueFormat getValueFormat() {
+    public final JsonNodeType getValueFormat() {
         return valueFormat;
-    }
-
-    public final Aggregate.Type getAggregationType() {
-        return this.aggregationType;
     }
 
     //===========================================================
@@ -79,4 +80,27 @@ public abstract class JqlColumn {
         return null;
     }
 
+    private static String resolveColumnName(JqlSchema schema, Field f) {
+        if (true) {
+            Column c = f.getAnnotation(Column.class);
+            if (c != null) {
+                String colName = c.name();
+                if (colName != null && colName.length() > 0) {
+                    return colName;
+                }
+            }
+        }
+        if (true) {
+            JoinColumn c = f.getAnnotation(JoinColumn.class);
+            if (c != null) {
+                String colName = c.name();
+                if (colName != null && colName.length() > 0) {
+                    return colName;
+                }
+            }
+        }
+        AttributeNameConverter cvt = schema.getSchemaLoader().getNameConverter();
+        String colName = cvt.toPhysicalColumnName(f.getName());
+        return colName;
+    }
 }

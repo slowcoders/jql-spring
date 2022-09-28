@@ -1,18 +1,18 @@
-package org.slowcoders.jql.jdbc.parser;
+package org.slowcoders.jql.parser;
 
 import java.util.ArrayList;
 
 class QuerySet implements QExpression {
-    Type delimiter;
+    Conjunction conjunction;
     ArrayList<QExpression> expressions = new ArrayList<>();
 
-    public enum Type {
+    public enum Conjunction {
         AND(" and "),
         OR(" or ");
 
         private final String delimiter;
 
-        Type(String delimiter) {
+        Conjunction(String delimiter) {
             this.delimiter = delimiter;
         }
 
@@ -22,8 +22,8 @@ class QuerySet implements QExpression {
         }
     }
 
-    public QuerySet(Type delimiter) {
-        this.delimiter = delimiter;
+    public QuerySet(Conjunction conjunction) {
+        this.conjunction = conjunction;
     }
 
     public void add(QExpression expression) {
@@ -46,7 +46,7 @@ class QuerySet implements QExpression {
         first.printSQL(sb);
         for (int i = 0; ++i < expressions.size(); ) {
             QExpression item = expressions.get(i);
-            sb.write(delimiter.toString());
+            sb.write(conjunction.toString());
             item.printSQL(sb);
         }
         sb.write(")");

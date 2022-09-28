@@ -1,4 +1,4 @@
-package org.slowcoders.jql.util;
+package org.slowcoders.jql.jpa;
 
 import org.hibernate.transform.ResultTransformer;
 

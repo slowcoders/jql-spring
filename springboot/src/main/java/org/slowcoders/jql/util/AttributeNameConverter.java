@@ -1,7 +1,5 @@
 package org.slowcoders.jql.util;
 
-//import com.fasterxml.jackson.databind.PropertyNamingStrategies;
-
 import org.apache.commons.text.CaseUtils;
 
 import java.util.ArrayList;

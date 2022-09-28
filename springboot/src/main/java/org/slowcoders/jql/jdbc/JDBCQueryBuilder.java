@@ -2,10 +2,10 @@ package org.slowcoders.jql.jdbc;
 
 import org.slowcoders.jql.JqlColumn;
 import org.slowcoders.jql.JqlSchema;
-import org.slowcoders.jql.ValueFormat;
-import org.slowcoders.jql.jdbc.parser.JqlParser;
-import org.slowcoders.jql.jdbc.parser.JqlQuery;
-import org.slowcoders.jql.jdbc.parser.SQLWriter;
+import org.slowcoders.jql.JsonNodeType;
+import org.slowcoders.jql.parser.JqlParser;
+import org.slowcoders.jql.parser.JqlQuery;
+import org.slowcoders.jql.parser.SQLWriter;
 import org.springframework.core.convert.ConversionService;
 import org.springframework.data.domain.Sort;
 
@@ -13,7 +13,7 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.*;
 
-public abstract class JDBCQueryBuilder {
+public class JDBCQueryBuilder {
 
     private JqlSchema jqlSchema;
     private ConversionService conversionService;
@@ -132,14 +132,14 @@ public abstract class JDBCQueryBuilder {
     protected String build_findById(Object id) {
         SQLWriter sb = new SQLWriter(jqlSchema);
         sb.write("SELECT * FROM ").writeTableName().write("\nWHERE ");
-        List<String> keys = jqlSchema.getPrimaryKeys();
+        List<JqlColumn> keys = jqlSchema.getPKColumns();
         if (keys.size() == 0) {
-            sb.writeEquals(keys.get(0), id);
+            sb.writeEquals(keys.get(0).getColumnName(), id);
         }
         else {
             Object[] values = (Object[]) id;
             for (int i = 0; i < keys.size(); ) {
-                String key = keys.get(i);
+                String key = keys.get(i).getColumnName();
                 sb.writeEquals(key, values[i]);
                 if (++ i < keys.size()) {
                     sb.write(" AND ");
@@ -259,7 +259,7 @@ public abstract class JDBCQueryBuilder {
             Map<String, Object> entity = entities[i];
             int idx = 0;
             for (JqlColumn col : columns) {
-                Object json_v = entity.get(col.getFieldName());
+                Object json_v = entity.get(col.getJsonName());
                 Object value = convertJsonValueToColumnValue(col, json_v);
                 ps.setObject(++idx, value);
             }
@@ -270,7 +270,7 @@ public abstract class JDBCQueryBuilder {
             if (v == null) return null;
 
             if (v.getClass().isEnum()) {
-                if (col.getValueFormat() == ValueFormat.Text) {
+                if (col.getValueFormat() == JsonNodeType.Text) {
                     return v.toString();
                 }
                 else {

@@ -1,21 +1,20 @@
-package org.slowcoders.jql.jdbc.parser;
+package org.slowcoders.jql.parser;
 
 import org.slowcoders.jql.JqlColumn;
 import org.slowcoders.jql.JqlSchema;
-import org.slowcoders.jql.JqlSchemaJoin;
-import org.slowcoders.jql.ValueFormat;
+import org.slowcoders.jql.JsonNodeType;
 
 import java.util.List;
 
-class QTableNode extends QNode {
+class TableNode extends EntityNode {
     private final JqlSchema schema;
     private boolean fetchData;
 
-    public QTableNode(JqlSchema schema) {
-        this(schema, Type.AND);
+    public TableNode(JqlSchema schema) {
+        this(schema, Conjunction.AND);
     }
 
-    public QTableNode(JqlSchema schema, Type delimiter) {
+    public TableNode(JqlSchema schema, Conjunction delimiter) {
         super(delimiter);
         this.schema = schema;
     }
@@ -24,31 +23,31 @@ class QTableNode extends QNode {
         return schema;
     }
 
-    public QTableNode asTableNode() {
+    public TableNode asTableNode() {
         return this;
     }
 
     public String getTableName() { return schema.getTableName(); }
 
-    public QTableNode getTable() {
+    public TableNode getTable() {
         return this;
     }
 
     @Override
-    public QNode getContainingEntity_impl(JqlQuery query, String key, boolean valueType2) {
-        List<JqlColumn> foreignKeys = schema.getJoinedForeignKeys(key);
+    public EntityNode getContainingEntity_impl(JqlQuery query, String key, boolean valueType2) {
+        List<JqlColumn> foreignKeys = schema.getJoinedColumnSet(key);
         if (foreignKeys == null) {
             JqlColumn column = schema.getColumn(key);
-            if (column.getValueFormat() != ValueFormat.Embedded) return this;
+            if (column.getValueFormat() != JsonNodeType.Object) return this;
         }
 
-        QNode entity = subEntities.get(key);
+        EntityNode entity = subEntities.get(key);
         if (entity == null) {
             if (foreignKeys != null) {
                 entity = query.addTableJoin(foreignKeys);
             }
             else {
-                entity = new QJsonNode(this, key);
+                entity = new JsonNode(this, key);
             }
             subEntities.put(key, entity);
             super.add(entity);
@@ -62,8 +61,8 @@ class QTableNode extends QNode {
     }
 
     @Override
-    public QNode createQuerySet(Type type) {
-        return new QTableNode(this.schema, type);
+    public EntityNode createQuerySet(Conjunction conjunction) {
+        return new TableNode(this.schema, conjunction);
     }
 
     @Override

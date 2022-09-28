@@ -41,7 +41,7 @@ public class UpdateListener extends Thread {
         String tableName = tablePath.replace('.', '_');
         String firstPrimaryKey = repository.getPrimaryKeys()[0];
         if (repository.getPrimaryKeys().length > 1) {
-            throw new RuntimeException("can not listen update event on table has multi primary keys. ");
+            throw new RuntimeException("can not listen update event on table with multi primary keys. ");
         }
 
         String sql = "CREATE OR REPLACE FUNCTION auto_update__${TABLE}__modify_time()\n" +

@@ -5,6 +5,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import org.slowcoders.jql.JQLReadOnlyController;
 import org.slowcoders.jql.JQLRepository;
 import org.slowcoders.jql.JqlSchema;
+import org.slowcoders.jql.jdbc.metadata.JdbcSchema;
 import org.slowcoders.jql.json.JsonJql;
 import org.slowcoders.jql.util.KVEntity;
 import org.springframework.data.domain.PageRequest;
@@ -139,7 +140,13 @@ public class DefaultJdbcController<ID> {
     public String jpaSchema(@PathVariable("schema") String dbSchema,
                             @PathVariable("table") String tableName) throws Exception {
         JqlSchema schema = getSchema(dbSchema, tableName);
-        String source = schema.dumpJPAEntitySchema();
+        String source;
+        if (schema instanceof JdbcSchema) {
+            source = ((JdbcSchema)schema).dumpJPAEntitySchema();
+        }
+        else {
+            source = dbSchema + '.' + tableName + " is not a JdbcSchema";
+        }
         return source;
     }
 
@@ -149,9 +156,8 @@ public class DefaultJdbcController<ID> {
     public String jpaSchemas(@PathVariable("schema") String dbSchema) throws Exception {
         StringBuilder sb = new StringBuilder();
         for (String tableName : this.getAllTableNames(dbSchema)) {
-            JqlSchema schema = getSchema(dbSchema, tableName);
             sb.append("\n\n//-------------------------------------------------//\n\n");
-            String source = schema.dumpJPAEntitySchema();
+            String source = this.jpaSchema(dbSchema, tableName);
             sb.append(source);
         }
         return sb.toString();

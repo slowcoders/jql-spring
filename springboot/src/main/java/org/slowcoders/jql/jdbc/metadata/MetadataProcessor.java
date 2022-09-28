@@ -42,11 +42,11 @@ public class MetadataProcessor extends SchemaLoader {
             schema = jdbc.execute(new ConnectionCallback<JqlSchema>() {
                 @Override
                 public JqlSchema doInConnection(Connection conn) throws SQLException, DataAccessException {
-                    JqlSchema schema = new JdbcSchema(MetadataProcessor.this, tablePath);
+                    JdbcSchema schema = new JdbcSchema(MetadataProcessor.this, tablePath);
                     metadataMap.put(tablePath, schema);
-                    ArrayList<JdbcColumn> columns = getColumns(conn, dbSchema, tableName, schema);
                     ArrayList<String> primaryKeys = getPrimaryKeys(conn, dbSchema, tableName);
-                    schema.init(columns, primaryKeys, getTableJoinMap(columns));
+                    ArrayList<JdbcColumn> columns = getColumns(conn, dbSchema, tableName, schema, primaryKeys);
+                    schema.init(columns);
                     return schema;
                 }
             });
@@ -54,35 +54,19 @@ public class MetadataProcessor extends SchemaLoader {
         return schema;
     }
 
-    public HashMap<String, JqlSchemaJoin> getTableJoinMap(ArrayList<JdbcColumn> columns) {
-        HashMap<String, JqlSchemaJoin> tableJoinMap = new HashMap<>();
-        for (JdbcColumn ci: columns) {
-            JqlColumnJoin fk = ci.getJoinedForeignKey();
-            if (fk != null) {
-                String joinFieldName = fk.getJoinedFieldName();
-                JqlSchemaJoin foreignKeys = tableJoinMap.get(joinFieldName);
-                if (foreignKeys == null) {
-                    foreignKeys = new JqlSchemaJoin(this);
-                    tableJoinMap.put(joinFieldName, foreignKeys);
-                }
-                foreignKeys.add(fk);
-            }
-        }
-        return tableJoinMap;
-    }
 
     private ArrayList<String> getPrimaryKeys(Connection conn, String dbSchema, String tableName) throws SQLException {
         DatabaseMetaData md = conn.getMetaData();
         ResultSet rs = md.getPrimaryKeys(catalog, dbSchema, tableName);
         ArrayList<String> keys = new ArrayList<>();
-        int key_seq = 1;
+        int next_key_seq = 1;
         while (rs.next()) {
             String key = rs.getString("column_name");
             int seq = rs.getInt("key_seq");
-            if (seq != key_seq) {
+            if (seq != next_key_seq) {
                 throw new RuntimeException("something wrong");
             }
-            key_seq ++;
+            next_key_seq ++;
             keys.add(key);
         }
         return keys;
@@ -140,8 +124,8 @@ public class MetadataProcessor extends SchemaLoader {
         return indexes;
     }
 
-    private HashMap<String, JqlColumnJoin> getForeignKeyInfos(Connection conn, String dbSchema, String tableName) throws SQLException {
-        HashMap<String, JqlColumnJoin> foreignKeys = new HashMap<>();
+    private HashMap<String, ColumnBinder> getForeignKeyInfos(Connection conn, String dbSchema, String tableName) throws SQLException {
+        HashMap<String, ColumnBinder> foreignKeys = new HashMap<>();
 
         DatabaseMetaData md = conn.getMetaData();
         ResultSet rs = md.getImportedKeys(catalog, dbSchema, tableName);
@@ -165,15 +149,15 @@ public class MetadataProcessor extends SchemaLoader {
             String fktable_cat = rs.getString("fktable_cat");
             assert (pktable_cat == null && fktable_cat == null);
 
-            JqlColumnJoin fk = new JqlColumnJoin(pkTableName, pkColumn, fkTableName, fkColumn, this);
-            foreignKeys.put(fk.getFkColumn(), fk);
+            ColumnBinder fk = new ColumnBinder(this, pkTableName, pkColumn);
+            foreignKeys.put(fkColumn, fk);
         }
         return foreignKeys;
     }
 
-    private ArrayList<JdbcColumn> getColumns(Connection conn, String dbSchema, String tableName, JqlSchema schema) throws SQLException {
+    private ArrayList<JdbcColumn> getColumns(Connection conn, String dbSchema, String tableName, JqlSchema schema, ArrayList<String> primaryKeys) throws SQLException {
         HashMap<String, JqlIndex> indexes = getIndexInfos(conn, dbSchema, tableName);
-        HashMap<String, JqlColumnJoin> foreignKeys = getForeignKeyInfos(conn, dbSchema, tableName);
+        HashMap<String, ColumnBinder> foreignKeys = getForeignKeyInfos(conn, dbSchema, tableName);
         Map<String, String> comments = getColumnComments(conn, dbSchema, tableName);
         ArrayList<JdbcColumn> columns = new ArrayList<>();
         String qname = dbSchema == null ? tableName : dbSchema + "." + tableName;
@@ -182,10 +166,10 @@ public class MetadataProcessor extends SchemaLoader {
         int cntColumn = md.getColumnCount();
         for (int col = 0; ++col <= cntColumn; ) {
             String columnName = md.getColumnName(col);
-            JqlColumnJoin fk = foreignKeys.get(columnName);
+            ColumnBinder fk = foreignKeys.get(columnName);
             JqlIndex jqlIndex = indexes.get(columnName);
             String comment = comments.get(columnName);
-            JdbcColumn ci = new JdbcColumn(schema, md, col, fk, jqlIndex, comment);
+            JdbcColumn ci = new JdbcColumn(schema, md, col, fk, jqlIndex, comment, primaryKeys);
             columns.add(ci);
         }
         return columns;

@@ -1,4 +1,4 @@
-package org.slowcoders.jql.jdbc.parser;
+package org.slowcoders.jql.parser;
 
 import org.slowcoders.jql.util.ClassUtils;
 
@@ -6,7 +6,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.slowcoders.jql.jdbc.parser.QOperator.*;
+import static org.slowcoders.jql.parser.QOperator.*;
 
 public abstract class QPredicate {
 
@@ -23,11 +23,11 @@ public abstract class QPredicate {
         return operators.get(function);
     }
 
-    public QExpression parse(JqlParser parser, QNode baseNode, Map<String, Object> filter) {
+    public QExpression parse(JqlParser parser, EntityNode baseNode, Map<String, Object> filter) {
         return null;
     }
 
-    public QExpression parse(JqlParser parser, QNode baseNode, Collection<Map<String, Object>> filters) {
+    public QExpression parse(JqlParser parser, EntityNode baseNode, Collection<Map<String, Object>> filters) {
         return null;
     }
 
@@ -71,7 +71,7 @@ public abstract class QPredicate {
             QExpression cond;
             Collection values = ClassUtils.asCollection(value);
             if (values != null) {
-                QuerySet or_predicates = new QuerySet(QuerySet.Type.OR);
+                QuerySet or_predicates = new QuerySet(QuerySet.Conjunction.OR);
                 for (Object s : (Collection)value) {
                     cond = new BinaryOp(column, s.toString(), function);
                     or_predicates.add(cond);
@@ -87,13 +87,13 @@ public abstract class QPredicate {
 
     private static class Matches extends CompareAny {
 
-        public QExpression parse(JqlParser parser, QNode baseNode, Map<String, Object> filter) {
+        public QExpression parse(JqlParser parser, EntityNode baseNode, Map<String, Object> filter) {
             parser.parse(baseNode, filter);
             return baseNode;
         }
 
-        public QExpression parse(JqlParser parser, QNode baseNode, Collection<Map<String, Object>> filters) {
-            QNode or_qs = baseNode.createQuerySet(QuerySet.Type.OR);
+        public QExpression parse(JqlParser parser, EntityNode baseNode, Collection<Map<String, Object>> filters) {
+            EntityNode or_qs = baseNode.createQuerySet(QuerySet.Conjunction.OR);
             for (Map<String, Object> filter : filters) {
                 parser.parse(or_qs, (Map)filter);
             }
@@ -148,14 +148,14 @@ public abstract class QPredicate {
             return UnaryOp.not(operator.createPredicate(column, value));
         }
 
-        public QExpression parse(JqlParser parser, QNode baseNode, Map<String, Object> filter) {
-            QNode node = baseNode.createQuerySet(QuerySet.Type.AND);
+        public QExpression parse(JqlParser parser, EntityNode baseNode, Map<String, Object> filter) {
+            EntityNode node = baseNode.createQuerySet(QuerySet.Conjunction.AND);
             QExpression result = operator.parse(parser, node, filter);
             return UnaryOp.not(result);
         }
 
-        public QExpression parse(JqlParser parser, QNode baseNode, Collection<Map<String, Object>> filters) {
-            QNode node = baseNode.createQuerySet(QuerySet.Type.AND);
+        public QExpression parse(JqlParser parser, EntityNode baseNode, Collection<Map<String, Object>> filters) {
+            EntityNode node = baseNode.createQuerySet(QuerySet.Conjunction.AND);
             QExpression result = operator.parse(parser, node, filters);
             return UnaryOp.not(result);
         }
@@ -176,7 +176,7 @@ public abstract class QPredicate {
 
         public QExpression createPredicate(QAttribute column, Object value) {
             Object[] range = (Object[])value;
-            QuerySet predicates = new QuerySet(QuerySet.Type.AND);
+            QuerySet predicates = new QuerySet(QuerySet.Conjunction.AND);
             predicates.add(operator1.createPredicate(column, range[0]));
             predicates.add(operator2.createPredicate(column, range[1]));
             return predicates;

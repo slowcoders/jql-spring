@@ -1,4 +1,4 @@
-package org.slowcoders.jql.jdbc.parser;
+package org.slowcoders.jql.parser;
 
 import org.springframework.core.convert.ConversionService;
 
@@ -23,7 +23,7 @@ public class JqlParser {
     }
 
     private final static String SELECT_MORE = "select+";
-    public void parse(QNode baseNode, Map<String, Object> filter) {
+    public void parse(EntityNode baseNode, Map<String, Object> filter) {
         // "joinColumn명" : { "id@?EQ" : "joinedColumn2.joinedColumn3.columnName" }; // Fetch 자동 수행.
         //   --> @?EQ 기능은 넣되, 숨겨진 고급기능으로..
         // "select@" : ["attr1", "attr2", "attr3" ] 추가??
@@ -50,7 +50,7 @@ public class JqlParser {
             }
 
             int valueCategory = this.getValueCategory(value);
-            QNode targetNode = key == null ? baseNode
+            EntityNode targetNode = key == null ? baseNode
                 : baseNode.getContainingEntity(query, key, valueCategory == VT_LEAF);
             if (targetNode.getTable() != baseNode.getTable()) {
                 targetNode.getTable().setFetchData(op.needFetchData(), query);

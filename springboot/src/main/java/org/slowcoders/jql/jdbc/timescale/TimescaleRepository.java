@@ -2,36 +2,83 @@ package org.slowcoders.jql.jdbc.timescale;
 
 import org.slowcoders.jql.JqlColumn;
 import org.slowcoders.jql.JqlSchema;
+import org.slowcoders.jql.JsonNodeType;
 import org.slowcoders.jql.jdbc.JDBCRepositoryBase;
 import org.slowcoders.jql.jdbc.JQLJdbcService;
-import org.slowcoders.jql.jdbc.parser.SQLWriter;
+import org.slowcoders.jql.parser.SQLWriter;
 import org.springframework.jdbc.core.JdbcTemplate;
 
+import java.lang.reflect.Field;
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 public class TimescaleRepository extends JDBCRepositoryBase {
 
-    private final String timeKeyColumnName;
     private static final String SUFFIX_CONT_AGG = "_ts_agg";
     private static final String SUFFIX_HOURLY_VIEW = "_hourly";
     private static final String SUFFIX_DAILY_VIEW = "_daily";
 
+    private final JqlColumn timeKeyColumn;
+    private final HashMap<String, Aggregate.Type> aggTypeMap;
+
     public TimescaleRepository(JQLJdbcService service, Class<?> entity) {
         super(service, entity);
 
-        this.timeKeyColumnName = super.getSchema().getTimeKeyColumn().getColumnName();
+        this.timeKeyColumn = resolveTimeKeyColumn();
+        this.aggTypeMap = this.initializeAggregationInfos();
         this.initializeTSDB();
-
     }
+
+    private HashMap<String, Aggregate.Type> initializeAggregationInfos() {
+        HashMap<String, Aggregate.Type> aggTypeMap = new HashMap<>();
+        try {
+            for (JqlColumn col : getSchema().getWritableColumns()) {
+                Aggregate.Type aggType = resolveAggregationType(col);
+                String col_name = col.getColumnName();
+                aggTypeMap.put(col_name, aggType);
+            }
+        }
+        catch (NoSuchFieldException e) {
+            throw new RuntimeException(e);
+        }
+        return aggTypeMap;
+    }
+
+    private Aggregate.Type resolveAggregationType(JqlColumn col) throws NoSuchFieldException {
+        Field f = super.getEntityType().getDeclaredField(col.getJsonName());
+        Aggregate c = f.getAnnotation(Aggregate.class);
+        if (c != null) {
+            return c.value();
+        }
+        if (col.getValueFormat() == JsonNodeType.Float) {
+            return Aggregate.Type.Mean;
+        }
+        return Aggregate.Type.None;
+    }
+
+    private JqlColumn resolveTimeKeyColumn() {
+        for (JqlColumn column : this.getSchema().getPKColumns()) {
+            if (column.getValueFormat() == JsonNodeType.Timestamp) {
+                return column;
+            }
+        }
+        return null;
+    }
+
+    public Aggregate.Type getAggregationType(JqlColumn col) {
+        return aggTypeMap.get(col.getColumnName());
+    }
+
 
     public String getTimeKeyColumnName() {
-        return timeKeyColumnName;
+        return timeKeyColumn.getColumnName();
     }
 
-    public void initializeTSDB() {
+    private void initializeTSDB() {
+
         JdbcTemplate jdbc = super.getJdbcTemplate();
         String sql = build_init_timescale(2);
         jdbc.execute(sql);
@@ -76,7 +123,7 @@ public class TimescaleRepository extends JDBCRepositoryBase {
     protected String build_init_timescale(int hours) {
         JqlSchema jqlSchema = super.getSchema();
         SQLWriter sb = new SQLWriter(jqlSchema);
-        String ts_column = timeKeyColumnName;
+        String ts_column = getTimeKeyColumnName();
         sb.writeF("SELECT create_hypertable('{0}', '{1}',", jqlSchema.getTableName(), ts_column)
                 .write("if_not_exists => TRUE, migrate_data => true, ")
                 .writeF("chunk_time_interval => interval '{0} hour')", Integer.toString(hours));
@@ -88,8 +135,8 @@ public class TimescaleRepository extends JDBCRepositoryBase {
         SQLWriter sb = new SQLWriter(jqlSchema);
         String tableName = jqlSchema.getTableName();
         String aggView = tableName + SUFFIX_CONT_AGG;
-        JqlColumn ts_key = jqlSchema.getColumn(timeKeyColumnName);
-        String ts_col_name = jqlSchema.getTimeKeyColumn().getColumnName();
+        JqlColumn ts_key = this.timeKeyColumn;
+        String ts_col_name = this.getTimeKeyColumnName();
 
         sb.write("CREATE MATERIALIZED VIEW IF NOT EXISTS ").writeln(aggView);
         sb.writeln("\tWITH (timescaledb.continuous)\nAS SELECT").incTab();
@@ -104,7 +151,7 @@ public class TimescaleRepository extends JDBCRepositoryBase {
         ArrayList<JqlColumn> accColumns = new ArrayList<>();
         for (JqlColumn col : jqlSchema.getWritableColumns()) {
             String col_name = col.getColumnName();
-            switch (col.getAggregationType()) {
+            switch (getAggregationType(col)) {
                 case Sum: {
                     String ss = "min({0}) as {0}_min,\n" +
                             "max({0}) as {0}_max,\n" +
@@ -164,7 +211,7 @@ public class TimescaleRepository extends JDBCRepositoryBase {
                 }
             }
             for (JqlColumn col : jqlSchema.getWritableColumns()) {
-                switch (col.getAggregationType()) {
+                switch (getAggregationType(col)) {
                     case Sum: {
                         String fmt =
                                 "(case when {0}_last >= least({0}_first, lag({0}_last) over _w) then\n" +
@@ -197,7 +244,7 @@ public class TimescaleRepository extends JDBCRepositoryBase {
             if (col != ts_key) sb.write(col.getColumnName()).writeln(",");
         }
         for (JqlColumn col : jqlSchema.getWritableColumns()) {
-            switch (col.getAggregationType()) {
+            switch (getAggregationType(col)) {
                 case Sum: {
                     sb.writeF("sum({0}) as {0},\n", col.getColumnName());
                     break;
