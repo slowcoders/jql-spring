@@ -24,10 +24,10 @@ public class JpaColumn extends JqlColumn {
 
     @JsonIgnore
     private Field field;
-    public JpaColumn(Field f, JqlSchema schema) {
-        super(schema, f);
-        this.fk = resolveForeignKey(f);
 
+    public JpaColumn(Field f, JqlSchema schema) {
+        super(schema, resolveColumnName(schema, f), ClassUtils.getElementType(f), JsonNodeType.getNodeType(f));
+        this.fk = resolveForeignKey(f);
 
         this.field = f;
 
@@ -106,5 +106,29 @@ public class JpaColumn extends JqlColumn {
             }
             return pk;
         }
+    }
+
+    private static String resolveColumnName(JqlSchema schema, Field f) {
+        if (true) {
+            Column c = f.getAnnotation(Column.class);
+            if (c != null) {
+                String colName = c.name();
+                if (colName != null && colName.length() > 0) {
+                    return colName;
+                }
+            }
+        }
+        if (true) {
+            JoinColumn c = f.getAnnotation(JoinColumn.class);
+            if (c != null) {
+                String colName = c.name();
+                if (colName != null && colName.length() > 0) {
+                    return colName;
+                }
+            }
+        }
+        AttributeNameConverter cvt = schema.getSchemaLoader().getNameConverter();
+        String colName = cvt.toPhysicalColumnName(f.getName());
+        return colName;
     }
 }

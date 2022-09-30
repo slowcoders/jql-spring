@@ -4,6 +4,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 
+import javax.validation.constraints.NotNull;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
@@ -13,13 +14,19 @@ public interface JQLRepository<ENTITY, ID> {
 
     Class<ENTITY> getEntityType();
 
-    List<ENTITY> list(Collection<ID> idList);
 
-    Page<ENTITY> list(Pageable pageRequest);
+    Iterable<ENTITY> find(Map<String, Object> jqlFilter, Sort sort, int limit);
 
-    Iterable<ENTITY> list(Sort sort, int limit);
+    default Iterable<ENTITY> find(Map<String, Object> jqlFilter, int limit) {
+        return find(jqlFilter, null, limit);
+    }
 
-    Iterable<ENTITY> listAll();
+    Page<ENTITY> find(Map<String, Object> jqlFilter, @NotNull Pageable pageReq);
+
+    ENTITY findTop(Map<String, Object> jqlFilter, Sort sort);
+
+    ENTITY find(ID id);
+
 
     default ENTITY get(ID id) throws IllegalArgumentException {
         ENTITY entity = find(id);
@@ -27,15 +34,20 @@ public interface JQLRepository<ENTITY, ID> {
         return entity;
     }
 
-    ENTITY find(ID id);
+    List<ENTITY> list(Collection<ID> idList);
 
-    Iterable<ENTITY> find(Map<String, Object> jqlFilter, int limit);
+    default Page<ENTITY> list(@NotNull Pageable pageRequest) {
+        return find(null, pageRequest);
+    }
 
-    Iterable<ENTITY> find(Map<String, Object> jqlFilter, Sort sort, int limit);
+    default Iterable<ENTITY> list(Sort sort, int limit) {
+        return find(null, sort, limit);
+    }
 
-    Page<ENTITY> find(Map<String, Object> jqlFilter, Pageable pageReq);
+    default Iterable<ENTITY> listAll() {
+        return find(null, null, -1);
+    }
 
-    ENTITY findTop(Map<String, Object> jqlFilter, Sort sort);
 
 
     long count(Map<String, Object> jqlFilter);

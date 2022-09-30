@@ -14,6 +14,7 @@ import javax.annotation.PostConstruct;
 import javax.persistence.Cache;
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
+import javax.validation.constraints.NotNull;
 import java.io.IOException;
 import java.util.*;
 
@@ -53,27 +54,7 @@ public abstract class JPARepositoryBase<ENTITY, ID> extends JPAQueryBuilder<ENTI
     }
 
     @Override
-    public Iterable<ENTITY> listAll() {
-        return find(null, null, -1);
-    }
-
-    @Override
-    public Page<ENTITY> list(Pageable pageRequest) {
-        return find(null, pageRequest);
-    }
-
-    @Override
-    public Iterable<ENTITY> list(Sort sort, int limit) {
-        return find(null, sort, limit);
-    }
-
-    @Override
-    public Iterable<ENTITY> find(Map<String, Object> jqlFilter, int limit) {
-        return find(jqlFilter, (Sort)null, limit);
-    }
-
-    @Override
-    public Page<ENTITY> find(Map<String, Object> jqlFilter, Pageable pageReq) {
+    public Page<ENTITY> find(Map<String, Object> jqlFilter, @NotNull Pageable pageReq) {
         return find(jqlFilter, pageReq, super.getEntityType());
     }
 

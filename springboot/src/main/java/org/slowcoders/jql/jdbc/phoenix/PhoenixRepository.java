@@ -1,6 +1,7 @@
 package org.slowcoders.jql.jdbc.phoenix;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slowcoders.jql.jdbc.BatchUpsert;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -48,7 +49,7 @@ public class PhoenixRepository extends PhoenixJdbcHelper {
             Statement statement = connection.createStatement();
             for (Map<String, Object> entity : entities) {
                 //getSchema().autoArrangeColumns(entity, objectMapper);
-                String sql = super.build_insert(entity, false);
+                String sql = super.insert(entity, false);
                 statement.executeUpdate(sql);
             }
         } catch (Exception throwables) {

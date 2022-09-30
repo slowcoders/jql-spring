@@ -3,12 +3,12 @@ package org.slowcoders.jql.jdbc.phoenix;
 import org.slowcoders.jql.JqlColumn;
 import org.slowcoders.jql.SchemaLoader;
 import org.slowcoders.jql.jdbc.Command;
-import org.slowcoders.jql.jdbc.JDBCQueryBuilder;
+import org.slowcoders.jql.jdbc.SqlGenerator;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 import java.util.ArrayList;
 
-public class PhoenixJdbcHelper extends JDBCQueryBuilder {
+public class PhoenixJdbcHelper extends SqlGenerator {
     protected final JdbcTemplate jdbc;
     private final Class<?> entityType;
     private final String tableName;

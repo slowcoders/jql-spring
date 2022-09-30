@@ -13,6 +13,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 
+import javax.validation.constraints.NotNull;
 import java.io.IOException;
 import java.util.*;
 
@@ -21,17 +22,18 @@ public class JDBCRepositoryBase<ID> /*extends JDBCQueryBuilder*/ implements JQLR
     private final static HashMap<Class<?>, JDBCRepositoryBase>jqlServices = new HashMap<>();
     private final JdbcTemplate jdbc;
     private final ObjectMapper objectMapper;
-    private final JDBCQueryBuilder queryBuilder;
+    private final SqlGenerator sqlGenerator;
+    private final String pkColumnName;
 
     public JDBCRepositoryBase(JQLJdbcService service, Class<?> entityType) {
         this(service, service.loadSchema(entityType)); //  JqlSchema.loadSchema(entityType));
     }
 
     public JDBCRepositoryBase(JQLService service, JqlSchema jqlSchema) {
-//        super(service.getConversionService(), jqlSchema);
-        this.queryBuilder = new JDBCQueryBuilder(service.getConversionService(), jqlSchema);
+        this.sqlGenerator = new SqlGenerator(service.getConversionService(), jqlSchema);
         this.jdbc = service.getJdbcTemplate();
         this.objectMapper = service.getJsonConverter().getObjectMapper();
+        this.pkColumnName = jqlSchema.getPKColumns().get(0).getColumnName();
     }
 
     public ObjectMapper getObjectMapper() {
@@ -39,7 +41,7 @@ public class JDBCRepositoryBase<ID> /*extends JDBCQueryBuilder*/ implements JQLR
     }
 
     public JqlSchema getSchema() {
-        return queryBuilder.getSchema();
+        return sqlGenerator.getSchema();
     }
 
     @Override
@@ -54,7 +56,7 @@ public class JDBCRepositoryBase<ID> /*extends JDBCQueryBuilder*/ implements JQLR
     }
     @Override
     public KVEntity find(ID id) {
-        String sql = queryBuilder.build_findById(id);
+        String sql = sqlGenerator.findById(id);
         return jdbc.queryForObject(sql, getColumnMapRowMapper());
     }
 
@@ -63,30 +65,10 @@ public class JDBCRepositoryBase<ID> /*extends JDBCQueryBuilder*/ implements JQLR
     }
 
     @Override
-    public Iterable<KVEntity> listAll() {
-        return find(null, null, -1);
-    }
-
-    @Override
-    public Page<KVEntity> list(Pageable pageRequest) {
-        return find(null, pageRequest);
-    }
-
-    @Override
-    public Iterable<KVEntity> list(Sort sort, int limit) {
-        return find(null, sort, limit);
-    }
-
-    @Override
-    public Iterable<KVEntity> find(Map<String, Object> jqlFilter, int limit) {
-        return find(jqlFilter, (Sort)null, limit);
-    }
-
-    @Override
-    public Page<KVEntity> find(Map<String, Object> jqlFilter, Pageable pageReq) {
+    public Page<KVEntity> find(Map<String, Object> jqlFilter, @NotNull Pageable pageReq) {
         int size = pageReq.getPageSize();
         int offset = (pageReq.getPageNumber()) * size;
-        String query = queryBuilder.buildSearchQuery(jqlFilter, pageReq.getSort(), size, offset);
+        String query = sqlGenerator.select(jqlFilter, pageReq.getSort(), size, offset);
         List<KVEntity> res = (List)jdbc.query(query, getColumnMapRowMapper());
 
         long count = count(jqlFilter);
@@ -95,21 +77,22 @@ public class JDBCRepositoryBase<ID> /*extends JDBCQueryBuilder*/ implements JQLR
 
     @Override
     public long count(Map<String, Object> jqlFilter) {
-        String sqlCount = queryBuilder.buildCountQuery(jqlFilter);
+        String sqlCount = sqlGenerator.count(jqlFilter);
         long count = jdbc.queryForObject(sqlCount, Long.class);
         return count;
     }
 
     @Override
     public Iterable<KVEntity> find(Map<String, Object> jqlFilter, Sort sort, int limit) {
-        String query = queryBuilder.buildSearchQuery(jqlFilter, sort, limit, 0);
+        String query = sqlGenerator.select(jqlFilter, sort, limit, 0);
         List<KVEntity> res = (List)jdbc.query(query, getColumnMapRowMapper());
         return res;
     }
 
     @Override
     public List<KVEntity> list(Collection<ID> idList) {
-        String query = queryBuilder.buildSearchQuery(idList, null, idList.size(), 0);
+        KVEntity filter = KVEntity.of(pkColumnName, idList);
+        String query = sqlGenerator.select(filter, null, idList.size(), 0);
         List<KVEntity> res = (List)jdbc.query(query, getColumnMapRowMapper());
         return res;
     }
@@ -118,7 +101,7 @@ public class JDBCRepositoryBase<ID> /*extends JDBCQueryBuilder*/ implements JQLR
 
     @Override
     public KVEntity findTop(Map<String, Object> jqlFilter, Sort sort) {
-        String query = queryBuilder.buildSearchQuery(jqlFilter, sort, 1, 0);
+        String query = sqlGenerator.select(jqlFilter, sort, 1, 0);
         List<KVEntity> res = (List)jdbc.query(query, getColumnMapRowMapper());
         return res.size() > 0 ? res.get(0) : null;
     }
@@ -152,7 +135,7 @@ public class JDBCRepositoryBase<ID> /*extends JDBCQueryBuilder*/ implements JQLR
     public List<ID> insertAll(Collection<Map<String, Object>> entities) {
         if (entities.isEmpty()) return null;
 
-        JDBCQueryBuilder.BatchUpsert batch = queryBuilder.prepareInsert(entities);
+        BatchUpsert batch = sqlGenerator.prepareInsert(entities);
         jdbc.batchUpdate(batch.getSql(), batch);
         return batch.getEntityIDs();
     }
@@ -165,19 +148,22 @@ public class JDBCRepositoryBase<ID> /*extends JDBCQueryBuilder*/ implements JQLR
 
     @Override
     public void update(Collection<ID> idList, Map<String, Object> updateSet) throws IOException {
-        String sql = queryBuilder.buildUpdateQuery(idList, updateSet);
+        KVEntity filter = KVEntity.of(pkColumnName, idList);
+        String sql = sqlGenerator.update(filter, updateSet);
         jdbc.update(sql);
     }
 
     @Override
     public void delete(ID id) {
-        String sql = queryBuilder.buildDeleteQuery(id);
+        KVEntity filter = KVEntity.of(pkColumnName, id);
+        String sql = sqlGenerator.delete(filter);
         jdbc.update(sql);
     }
 
     @Override
     public int delete(Collection<ID> idList) {
-        String sql = queryBuilder.buildDeleteQuery(idList);
+        KVEntity filter = KVEntity.of(pkColumnName, idList);
+        String sql = sqlGenerator.delete(filter);
         return jdbc.update(sql);
     }
 

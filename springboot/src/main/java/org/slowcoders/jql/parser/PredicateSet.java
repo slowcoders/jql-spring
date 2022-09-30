@@ -15,7 +15,7 @@ class PredicateSet implements Predicate {
     }
 
     @Override
-    public void printSQL(SQLWriter sb) {
+    public void buildQuery(QueryBuilder sb) {
         if (expressions.size() == 0) {
             sb.write("true");
             return;
@@ -23,15 +23,15 @@ class PredicateSet implements Predicate {
 
         Predicate first = expressions.get(0);
         if (expressions.size() == 1) {
-            first.printSQL(sb);
+            first.buildQuery(sb);
             return;
         }
         sb.write("(");
-        first.printSQL(sb);
+        first.buildQuery(sb);
         for (int i = 0; ++i < expressions.size(); ) {
             Predicate item = expressions.get(i);
             sb.write(conjunction.toString());
-            item.printSQL(sb);
+            item.buildQuery(sb);
         }
         sb.write(")");
     }

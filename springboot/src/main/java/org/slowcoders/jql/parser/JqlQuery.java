@@ -8,7 +8,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
-public class JqlQuery extends TableQuery {
+public class JqlQuery extends EntityFilter {
 
     private HashMap<String, List<JqlColumn>> joinMap = new HashMap<>();
     private HashSet<String> fetchTables = new HashSet<>();
@@ -17,16 +17,20 @@ public class JqlQuery extends TableQuery {
         super(schema);
     }
 
-    protected TableQuery addTableJoin(List<JqlColumn> foreignKeys) {
+    protected void markFetchData(JqlSchema tableName) {
+        this.fetchTables.add(tableName.getTableName());
+    }
+
+    protected EntityFilter addTableJoin(List<JqlColumn> foreignKeys) {
         JqlSchema pkSchema = foreignKeys.get(0).getJoinedPrimaryColumn().getSchema();
         Object old = joinMap.put(pkSchema.getTableName(), foreignKeys);
         if (old != null && old != foreignKeys) {
             throw new RuntimeException("something wrong");
         }
-        return new TableQuery(pkSchema);
+        return new EntityFilter(pkSchema);
     }
 
-    public void writeJoinStatement(SQLWriter sb) {
+    protected void writeJoinStatement(QueryBuilder sb) {
         sb.write(this.getSchema().getTableName());
         for (Map.Entry<String, List<JqlColumn>> e : joinMap.entrySet()) {
             String primaryTable = e.getKey();
@@ -41,14 +45,8 @@ public class JqlQuery extends TableQuery {
         }
     }
 
-    public void writeSelect(SQLWriter sb) {
-        sb.write("SELECT ").write(getSchema().getTableName()).write(".* ");
-        for (String table : fetchTables) {
-            sb.write(", ").write(table).write(".* ");
-        }
-    }
 
-    public void markFetchData(JqlSchema tableName) {
-        this.fetchTables.add(tableName.getTableName());
+    public Iterable<String> getFetchTables() {
+        return fetchTables;
     }
 }

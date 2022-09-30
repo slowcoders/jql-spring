@@ -1,5 +1,6 @@
 package org.slowcoders.jql.parser;
 
+import org.slowcoders.jql.JqlSchema;
 import org.springframework.core.convert.ConversionService;
 
 import javax.persistence.FetchType;
@@ -11,21 +12,27 @@ import java.util.*;
 public class JqlParser {
 
     private final ConversionService conversionService;
-    private final JqlQuery query;
+    private final JqlQuery where;
     private static final int VT_LEAF = 0;
     private static final int VT_Entity = 1;
     private static final int VT_Entities = 2;
 
 
-    public JqlParser(JqlQuery query, ConversionService conversionService) {
+    public JqlParser(JqlSchema schema, ConversionService conversionService) {
+        this.where = new JqlQuery(schema);
         this.conversionService = conversionService;
-        this.query = query;
+    }
+
+    public JqlQuery parse(Map<String, Object> filter) {
+        this.parse(where, filter);
+        return where;
     }
 
     private final static String SELECT_MORE = "select+";
-    public void parse(QueryNode baseNode, Map<String, Object> filter) {
+    public void parse(Filter baseNode, Map<String, Object> filter) {
         // "joinColumn명" : { "id@?EQ" : "joinedColumn2.joinedColumn3.columnName" }; // Fetch 자동 수행.
         //   --> @?EQ 기능은 넣되, 숨겨진 고급기능으로..
+        // "@except" : {},  "@except" : [ {}, {} ] 추가
         // "select@" : ["attr1", "attr2", "attr3" ] 추가??
         // "select+@" : ["attr1", "attr2", "attr3" ] 추가??
         // "groupBy@" : ["attr1", "attr2/attr3" ]
@@ -50,10 +57,10 @@ public class JqlParser {
             }
 
             int valueCategory = this.getValueCategory(value);
-            QueryNode targetNode = key == null ? baseNode
-                : baseNode.getContainingEntity(query, key, valueCategory == VT_LEAF);
+            Filter targetNode = key == null ? baseNode
+                : baseNode.getContainingFilter(where, key, valueCategory == VT_LEAF);
             if (targetNode.getTable() != baseNode.getTable()) {
-                targetNode.getTable().setFetchData(op.needFetchData(), query);
+                targetNode.getTable().setFetchData(op.needFetchData(), where);
             }
 
             Predicate cond;
@@ -69,7 +76,7 @@ public class JqlParser {
                 }
 
                 String columnName = targetNode.getColumnName(key);
-                if (targetNode.asJsonNode() == null) {
+                if (targetNode.asJsonFilter() == null) {
                     Class<?> fieldType = targetNode.getTable().getSchema().getColumn(columnName).getJavaType();
                     Class<?> accessType = op.getAccessType(value, fieldType);
                     value = conversionService.convert(value, accessType);

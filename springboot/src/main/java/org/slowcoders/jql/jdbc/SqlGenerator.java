@@ -2,72 +2,75 @@ package org.slowcoders.jql.jdbc;
 
 import org.slowcoders.jql.JqlColumn;
 import org.slowcoders.jql.JqlSchema;
-import org.slowcoders.jql.JsonNodeType;
 import org.slowcoders.jql.parser.JqlParser;
 import org.slowcoders.jql.parser.JqlQuery;
-import org.slowcoders.jql.parser.SQLWriter;
+import org.slowcoders.jql.parser.QueryBuilder;
 import org.springframework.core.convert.ConversionService;
 import org.springframework.data.domain.Sort;
 
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
 import java.util.*;
 
-public class JDBCQueryBuilder {
+public class SqlGenerator { //extends QueryBuilder {
 
     private JqlSchema jqlSchema;
     private ConversionService conversionService;
 
-    public JDBCQueryBuilder(ConversionService conversionService, JqlSchema jqlSchema) {
+    public SqlGenerator(ConversionService conversionService, JqlSchema jqlSchema) {
         this.jqlSchema = jqlSchema;
         this.conversionService = conversionService;
     }
 
-    protected String buildSearchQuery(Object filter, Sort sort, int limit, int offset) {
+    
+    public String select(Map<String, Object> filter, Sort sort, int limit, int offset) {
 
         JqlQuery where = build_where(filter, true);
-        StringBuilder order_by = new StringBuilder("\n");
-        if (sort != null) {
-            order_by.append("ORDER BY ");
-            sort.forEach(order -> {
-                order_by.append(order.getProperty());
-                order_by.append(order.isAscending() ? " asc" : " desc").append(", ");
-            });
+        QueryBuilder sb = new QueryBuilder(jqlSchema);
+        sb.write("SELECT ").write(getSchema().getTableName()).write(".* ");
+        for (String table : where.getFetchTables()) {
+            sb.write(", ").write(table).write(".* ");
         }
-        if (order_by.length() > 2) {
-            order_by.setLength(order_by.length() - 2);
-        }
-
-        SQLWriter sb = new SQLWriter(jqlSchema);
-        where.writeSelect(sb);
         sb.write("FROM ").writeWhere(where, true);
-        sb.write(order_by.toString());
-        if (offset > 0) {
-            sb.write("\nOFFSET " + limit);
-        }
-        if (limit > 0) {
-            sb.write("\nLIMIT " + limit);
-        }
+        sb.writeln();
+
+        write_orderBy(sb, sort);
+
+        if (offset > 0) sb.write("\nOFFSET " + limit);
+
+        if (limit > 0) sb.write("\nLIMIT " + limit);
+
         String sql = sb.toString();
         System.out.println(sql);
         return sql;
     }
 
-    protected String buildCountQuery(Map<String, Object> filter) {
+    private void write_orderBy(QueryBuilder sb, Sort sort) {
+        if (sort == null) return;
+
+        sb.write("ORDER BY ");
+        sort.forEach(order -> {
+            sb.write(order.getProperty());
+            sb.write(order.isAscending() ? " asc" : " desc").write(", ");
+        });
+        sb.replaceTrailingComma("\n");
+    }
+
+
+    public String count(Map<String, Object> filter) {
         JqlQuery where = build_where(filter, false);
-        SQLWriter sb = new SQLWriter(jqlSchema);
+        QueryBuilder sb = new QueryBuilder(jqlSchema);
         sb.write("SELECT count(*) FROM ").writeWhere(where, true);
         return sb.toString();
     }
 
 
-    protected String buildUpdateQuery(Object filter, Map<String, Object> updateSet) {
+    
+    public String update(Map<String, Object> filter, Map<String, Object> updateSet) {
         JqlQuery where = build_where(filter, false);
         if (where.isEmpty()) {
             throw new RuntimeException("Update All is not permitted");
         }
 
-        SQLWriter sb = new SQLWriter(jqlSchema);
+        QueryBuilder sb = new QueryBuilder(jqlSchema);
         sb.write("UPDATE ").writeTableName().write(" SET\n");
         for (Map.Entry<String, Object> entry : updateSet.entrySet()) {
             String key = entry.getKey();
@@ -80,13 +83,14 @@ public class JDBCQueryBuilder {
         return sql;
     }
 
-    protected String buildDeleteQuery(Object filter) {
+    
+    public String delete(Map<String, Object> filter) {
         JqlQuery where = build_where(filter, false);
         if (where.isEmpty()) {
             throw new RuntimeException("Delete All is not permitted");
         }
 
-        SQLWriter sb = new SQLWriter(jqlSchema);
+        QueryBuilder sb = new QueryBuilder(jqlSchema);
         sb.write("DELETE FROM ").writeTableName().writeWhere(where, false);
         return sb.toString();
     }
@@ -97,7 +101,7 @@ public class JDBCQueryBuilder {
     }
 
     private static final Map _emptyMap = new HashMap();
-    private JqlQuery build_where(Object filter, boolean fetchData) {
+    private JqlQuery build_where(Map<String, Object> filter, boolean fetchData) {
         Map filterMap;
         if (filter instanceof Map) {
             filterMap = (Map) filter;
@@ -111,6 +115,9 @@ public class JDBCQueryBuilder {
                 return JQLOperator.EQ.createPredicate(cb, column, filter);
             */
         }
+        else if (!fetchData) {
+            return new JqlQuery(this.jqlSchema);
+        }
         else {
             /**
              * 참고) 왜 불필요하게 JQLParser 를 수행하는가?
@@ -122,15 +129,15 @@ public class JDBCQueryBuilder {
             filterMap = _emptyMap;
         }
 
-        JqlQuery query = new JqlQuery(this.jqlSchema);
-        JqlParser parser = new JqlParser(query, conversionService);
-        parser.parse(query, filterMap);
-        return query;
+        JqlParser parser = new JqlParser(this.jqlSchema, conversionService);
+        JqlQuery where = parser.parse(filterMap);
+        return where;
     }
 
 
-    protected String build_findById(Object id) {
-        SQLWriter sb = new SQLWriter(jqlSchema);
+    
+    public String findById(Object id) {
+        QueryBuilder sb = new QueryBuilder(jqlSchema);
         sb.write("SELECT * FROM ").writeTableName().write("\nWHERE ");
         List<JqlColumn> keys = jqlSchema.getPKColumns();
         if (keys.size() == 0) {
@@ -153,9 +160,10 @@ public class JDBCQueryBuilder {
         return command.toString();
     }
 
-    public String build_insert(Map entity, boolean ignoreConflict) {
+    
+    public String insert(Map entity, boolean ignoreConflict) {
         Set<String> keys = ((Map<String, ?>)entity).keySet();
-        SQLWriter sb = new SQLWriter(jqlSchema);
+        QueryBuilder sb = new QueryBuilder(jqlSchema);
         sb.write(getCommand(Command.Insert)).write(" INTO ").writeTableName().write("(");
         sb.writeColumnNames(jqlSchema.getPhysicalColumnNames(keys), false);
         sb.write(") VALUES ");
@@ -171,15 +179,17 @@ public class JDBCQueryBuilder {
         return sb.toString();
     }
 
-    public String build_insert(Iterable<Map<String, Object>> entities, boolean ignoreConflict) {
-        return build_insert_ex(entities, jqlSchema.getTableName(), ignoreConflict);
+    
+    public String insert(Iterable<Map<String, Object>> entities, boolean ignoreConflict) {
+        return insert_ex(entities, jqlSchema.getTableName(), ignoreConflict);
     }
 
-    public String build_insert_ex(Iterable<Map<String, Object>> entities, String tableName, boolean ignoreConflict) {
+    
+    public String insert_ex(Iterable<Map<String, Object>> entities, String tableName, boolean ignoreConflict) {
         Iterator<Map<String, Object>> it = entities.iterator();
         Map<String, Object> first = it.next();
         Set<String> keys = ((Map<String, ?>)first).keySet();
-        SQLWriter sb = new SQLWriter(jqlSchema);
+        QueryBuilder sb = new QueryBuilder(jqlSchema);
         sb.write(getCommand(Command.Insert)).write(" INTO ").write(tableName).write("(");
         sb.writeColumnNames(jqlSchema.getPhysicalColumnNames(keys), false);
         sb.write(") VALUES ");
@@ -204,22 +214,14 @@ public class JDBCQueryBuilder {
         return jqlSchema;
     }
 
-    public String prepareBatchInsert() {
-        SQLWriter sb = new SQLWriter(jqlSchema);
-        sb.write(getCommand(Command.Insert)).write(" INTO ").writeTableName().write("(");
-        for (JqlColumn col : jqlSchema.getWritableColumns()) {
-            sb.write(col.getColumnName()).write(", ");
-        }
-        sb.replaceTrailingComma(")");
-        return sb.toString();
-    }
-
-    protected BatchUpsert prepareInsert(Collection<Map<String, Object>> entities) {
+    
+    public BatchUpsert prepareInsert(Collection<Map<String, Object>> entities) {
         return prepareInsert(entities, getSchema().getTableName(), true);
     }
 
-    protected BatchUpsert prepareInsert(Collection<Map<String, Object>> entities, String extendedTableName, boolean ignoreConflict) {
-        SQLWriter sb = new SQLWriter(jqlSchema);
+    
+    public BatchUpsert prepareInsert(Collection<Map<String, Object>> entities, String extendedTableName, boolean ignoreConflict) {
+        QueryBuilder sb = new QueryBuilder(jqlSchema);
         sb.write(getCommand(Command.Insert)).write(" INTO ").write(extendedTableName).write("(");
         for (JqlColumn col : getSchema().getWritableColumns()) {
             sb.write(col.getColumnName()).write(", ");
@@ -235,71 +237,5 @@ public class JDBCQueryBuilder {
         return new BatchUpsert(entities, this.getSchema(), sb.toString());
     }
 
-
-    public static class BatchUpsert<ID> implements BatchPreparedStatementSetterWithKeyHolder {
-        private final Map<String, Object>[] entities;
-        private final List<JqlColumn> columns;
-        private final String sql;
-        private final JqlSchema schema;
-        private List<Map<String, Object>> generatedKeys;
-
-        BatchUpsert(Collection<Map<String, Object>> entities, JqlSchema schema, String sql) {
-            this.schema = schema;
-            this.columns = schema.getWritableColumns();
-            this.entities = entities.toArray(new Map[entities.size()]);
-            this.sql = sql;
-        }
-
-        public String getSql() {
-            return sql;
-        }
-
-        @Override
-        public void setValues(PreparedStatement ps, int i) throws SQLException {
-            Map<String, Object> entity = entities[i];
-            int idx = 0;
-            for (JqlColumn col : columns) {
-                Object json_v = entity.get(col.getJsonName());
-                Object value = convertJsonValueToColumnValue(col, json_v);
-                ps.setObject(++idx, value);
-            }
-            ps.getGeneratedKeys();
-        }
-
-        private Object convertJsonValueToColumnValue(JqlColumn col, Object v) {
-            if (v == null) return null;
-
-            if (v.getClass().isEnum()) {
-                if (col.getValueFormat() == JsonNodeType.Text) {
-                    return v.toString();
-                }
-                else {
-                    return ((Enum)v).ordinal();
-                }
-            }
-            return v;
-        }
-
-
-        @Override
-        public int getBatchSize() {
-            return entities.length;
-        }
-
-        @Override
-        public void setGeneratedKeys(List<Map<String, Object>> keys) {
-            this.generatedKeys = keys;
-        }
-
-        public List<ID> getEntityIDs() {
-            int cntKeys = generatedKeys == null ? 0 : generatedKeys.size();
-            ArrayList<ID> ids = new ArrayList<>();
-            for (int i = 0; i < entities.length; i ++) {
-                ID id = (ID)schema.extractEntityId(entities[i], i < cntKeys ? this.generatedKeys.get(i) : null);
-                ids.add(id);
-            }
-            return ids;
-        }
-    }
 
 }

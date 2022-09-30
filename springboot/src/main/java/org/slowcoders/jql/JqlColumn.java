@@ -25,13 +25,6 @@ public abstract class JqlColumn {
         this(schema, columnName, javaType, JsonNodeType.getNodeType(javaType));
     }
 
-    public JqlColumn(JqlSchema schema, Field f) {
-        this.schema = schema;
-        this.columnName = resolveColumnName(schema, f);
-        this.valueFormat = JsonNodeType.getNodeType(f);
-        this.javaType = valueFormat == JsonNodeType.Array ? ClassUtils.getElementType(f) : f.getType();
-    }
-
     public final JqlSchema getSchema() {
         return schema;
     }
@@ -80,27 +73,4 @@ public abstract class JqlColumn {
         return null;
     }
 
-    private static String resolveColumnName(JqlSchema schema, Field f) {
-        if (true) {
-            Column c = f.getAnnotation(Column.class);
-            if (c != null) {
-                String colName = c.name();
-                if (colName != null && colName.length() > 0) {
-                    return colName;
-                }
-            }
-        }
-        if (true) {
-            JoinColumn c = f.getAnnotation(JoinColumn.class);
-            if (c != null) {
-                String colName = c.name();
-                if (colName != null && colName.length() > 0) {
-                    return colName;
-                }
-            }
-        }
-        AttributeNameConverter cvt = schema.getSchemaLoader().getNameConverter();
-        String colName = cvt.toPhysicalColumnName(f.getName());
-        return colName;
-    }
 }

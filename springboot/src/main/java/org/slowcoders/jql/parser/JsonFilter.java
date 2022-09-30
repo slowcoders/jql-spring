@@ -3,16 +3,16 @@ package org.slowcoders.jql.parser;
 import org.slowcoders.jql.JqlSchema;
 import org.slowcoders.jql.JsonNodeType;
 
-class JsonQuery extends QueryNode {
-    private final QueryNode parent;
+class JsonFilter extends Filter {
+    private final Filter parent;
     private final String key;
 
-    JsonQuery(QueryNode parentNode, String key) {
+    JsonFilter(Filter parentNode, String key) {
         this(parentNode, key, Conjunction.AND);
     }
 
-    JsonQuery(QueryNode parentNode, String key, Conjunction delimiter) {
-        super(delimiter);
+    JsonFilter(Filter parentNode, String key, Conjunction conjunction) {
+        super(conjunction);
         this.parent = parentNode;
         this.key = key;
     }
@@ -21,30 +21,30 @@ class JsonQuery extends QueryNode {
         return getTable().getSchema();
     }
 
-    public TableQuery getTable() {
+    public EntityFilter getTable() {
         return parent.getTable();
     }
 
     @Override
-    public QueryNode getContainingEntity_impl(JqlQuery query, String key, boolean isLeaf) {
+    public Filter getContainingFilter_impl(JqlQuery query, String key, boolean isLeaf) {
         if (isLeaf) {
             return this;
         }
-        QueryNode entity = subEntities.get(key);
+        Filter entity = subEntities.get(key);
         if (entity == null) {
-            entity = new JsonQuery(this, key);
+            entity = new JsonFilter(this, key);
             subEntities.put(key, entity);
             super.add(entity);
         }
         return entity;
     }
 
-    public JsonQuery asJsonNode() {
+    public JsonFilter asJsonFilter() {
         return this;
     }
 
     @Override
-    public void writeAttribute(SQLWriter sb, String key, Class<?> valueType) {
+    public void writeAttribute(QueryBuilder sb, String key, Class<?> valueType) {
         sb.write("(");
         this.dumpColumnName(sb);
         sb.write(" ->> '").write(key).write("')");
@@ -74,8 +74,8 @@ class JsonQuery extends QueryNode {
     }
 
     @Override
-    public QueryNode createQuerySet(Conjunction conjunction) {
-        return new JsonQuery(this.parent, this.key, conjunction);
+    public Filter createFilter(Conjunction conjunction) {
+        return new JsonFilter(this.parent, this.key, conjunction);
     }
 
     @Override
@@ -83,8 +83,8 @@ class JsonQuery extends QueryNode {
         return key.substring(key.lastIndexOf('.') + 1);
     }
 
-    private void dumpColumnName(SQLWriter sb) {
-        JsonQuery p = parent.asJsonNode();
+    private void dumpColumnName(QueryBuilder sb) {
+        JsonFilter p = parent.asJsonFilter();
         if (p != null) {
             p.dumpColumnName(sb);
             sb.write(" -> '").write(key).write('\'');

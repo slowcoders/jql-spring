@@ -107,7 +107,7 @@ public class JqlSchema {
         this.writableColumns = Collections.unmodifiableList(writableColumns);
     }
 
-    public Map<String, Object> separateUnknownColumns(Map<String, Object> metric)  {
+    public Map<String, Object> splitUnknownProperties(Map<String, Object> metric)  {
         HashMap<String, Object> unknownProperties = new HashMap<>();
         for (Map.Entry<String, Object> entry : metric.entrySet()) {
             String key = entry.getKey();
@@ -122,30 +122,6 @@ public class JqlSchema {
         return unknownProperties;
     }
 
-
-    public Object extractEntityId(Map<String, Object> entity, Map<String, Object> generatedKeys) {
-        if (pkColumns == null || pkColumns.size() == 0) return null;
-        if (pkColumns.size() > 1) {
-            Object[] id = new Object[pkColumns.size()];
-            int i = 0;
-            for (JqlColumn pk : pkColumns) {
-                Object v = getValue(pk.getJsonName(), entity, generatedKeys);
-                id[i++] = v;
-            }
-            return id;
-        }
-        else {
-            Object id = getValue(pkColumns.get(0).getJsonName(), entity, generatedKeys);
-            return id;
-        }
-    }
-
-    private static Object getValue(String key, Map<String, Object> entity, Map<String, Object> generatedKeys) {
-        if (generatedKeys != null && generatedKeys.containsKey(key)) {
-            return generatedKeys.get(key);
-        }
-        return entity.get(key);
-    }
 
     public String generateDDL() {
         return schemaLoader.createDDL(this);

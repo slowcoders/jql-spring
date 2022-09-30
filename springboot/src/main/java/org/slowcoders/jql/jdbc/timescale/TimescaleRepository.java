@@ -5,7 +5,7 @@ import org.slowcoders.jql.JqlSchema;
 import org.slowcoders.jql.JsonNodeType;
 import org.slowcoders.jql.jdbc.JDBCRepositoryBase;
 import org.slowcoders.jql.jdbc.JQLJdbcService;
-import org.slowcoders.jql.parser.SQLWriter;
+import org.slowcoders.jql.parser.QueryBuilder;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 import java.lang.reflect.Field;
@@ -122,7 +122,7 @@ public class TimescaleRepository extends JDBCRepositoryBase {
 
     protected String build_init_timescale(int hours) {
         JqlSchema jqlSchema = super.getSchema();
-        SQLWriter sb = new SQLWriter(jqlSchema);
+        QueryBuilder sb = new QueryBuilder(jqlSchema);
         String ts_column = getTimeKeyColumnName();
         sb.writeF("SELECT create_hypertable('{0}', '{1}',", jqlSchema.getTableName(), ts_column)
                 .write("if_not_exists => TRUE, migrate_data => true, ")
@@ -132,7 +132,7 @@ public class TimescaleRepository extends JDBCRepositoryBase {
 
     protected String build_auto_down_sampling_view(int retention_days) {
         JqlSchema jqlSchema = super.getSchema();
-        SQLWriter sb = new SQLWriter(jqlSchema);
+        QueryBuilder sb = new QueryBuilder(jqlSchema);
         String tableName = jqlSchema.getTableName();
         String aggView = tableName + SUFFIX_CONT_AGG;
         JqlColumn ts_key = this.timeKeyColumn;

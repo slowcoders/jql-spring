@@ -16,7 +16,7 @@ interface Predicate extends Expression {
         }
 
         @Override
-        public void printSQL(SQLWriter sb) {
+        public void buildQuery(QueryBuilder sb) {
             key.printSQL(sb);
             sb.write(operator).write("(");
             sb.writeValues(values);
@@ -37,7 +37,7 @@ interface Predicate extends Expression {
         }
 
         @Override
-        public void printSQL(SQLWriter sb) {
+        public void buildQuery(QueryBuilder sb) {
             sb.writePredicate(key, operator, value);
         }
     }
@@ -53,9 +53,9 @@ interface Predicate extends Expression {
         }
 
         @Override
-        public void printSQL(SQLWriter sb) {
+        public void buildQuery(QueryBuilder sb) {
             sb.write(operator).write("(");
-            statement.printSQL(sb);
+            statement.buildQuery(sb);
             sb.write(")");
         }
 
@@ -75,7 +75,7 @@ interface Predicate extends Expression {
         }
 
         @Override
-        public void printSQL(SQLWriter sb) {
+        public void buildQuery(QueryBuilder sb) {
             key.printSQL(sb);
             sb.write(operator);
         }

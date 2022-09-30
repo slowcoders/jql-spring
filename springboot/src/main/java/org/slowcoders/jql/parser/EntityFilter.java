@@ -6,15 +6,15 @@ import org.slowcoders.jql.JsonNodeType;
 
 import java.util.List;
 
-class TableQuery extends QueryNode {
+class EntityFilter extends Filter {
     private final JqlSchema schema;
     private boolean fetchData;
 
-    public TableQuery(JqlSchema schema) {
+    public EntityFilter(JqlSchema schema) {
         this(schema, Conjunction.AND);
     }
 
-    public TableQuery(JqlSchema schema, Conjunction delimiter) {
+    public EntityFilter(JqlSchema schema, Conjunction delimiter) {
         super(delimiter);
         this.schema = schema;
     }
@@ -23,31 +23,31 @@ class TableQuery extends QueryNode {
         return schema;
     }
 
-    public TableQuery asTableNode() {
+    public EntityFilter asEntityFilter() {
         return this;
     }
 
     public String getTableName() { return schema.getTableName(); }
 
-    public TableQuery getTable() {
+    public EntityFilter getTable() {
         return this;
     }
 
     @Override
-    public QueryNode getContainingEntity_impl(JqlQuery query, String key, boolean valueType2) {
+    public Filter getContainingFilter_impl(JqlQuery query, String key, boolean valueType2) {
         List<JqlColumn> foreignKeys = schema.getJoinedColumnSet(key);
         if (foreignKeys == null) {
             JqlColumn column = schema.getColumn(key);
             if (column.getValueFormat() != JsonNodeType.Object) return this;
         }
 
-        QueryNode entity = subEntities.get(key);
+        Filter entity = subEntities.get(key);
         if (entity == null) {
             if (foreignKeys != null) {
                 entity = query.addTableJoin(foreignKeys);
             }
             else {
-                entity = new JsonQuery(this, key);
+                entity = new JsonFilter(this, key);
             }
             subEntities.put(key, entity);
             super.add(entity);
@@ -56,20 +56,20 @@ class TableQuery extends QueryNode {
     }
 
     @Override
-    public void writeAttribute(SQLWriter sb, String key, Class<?> valueType) {
+    public void writeAttribute(QueryBuilder sb, String key, Class<?> valueType) {
         sb.write(getSchema().getTableName()).write(".").write(key);
     }
 
     @Override
-    public QueryNode createQuerySet(Conjunction conjunction) {
-        return new TableQuery(this.schema, conjunction);
+    public Filter createFilter(Conjunction conjunction) {
+        return new EntityFilter(this.schema, conjunction);
     }
 
     @Override
-    public void printSQL(SQLWriter sb) {
-        JqlSchema old = sb.pushJoinedTable(this.schema);
-        super.printSQL(sb);
-        sb.replaceTableInfo(old);
+    public void buildQuery(QueryBuilder sb) {
+        JqlSchema old = sb.setWorkingSchema(this.schema);
+        super.buildQuery(sb);
+        sb.setWorkingSchema(old);
     }
 
     @Override
