@@ -1,9 +1,9 @@
 logging:
   level:
-    sql: error
-    jdbc: off
+    sql: debug
+    jdbc: debug
     jdbc.sqlonly: debug
-    org.hibernate.SQL: off
+    org.hibernate.SQL: debug
     org.hibernate.type.descriptor.sql: debug
     org:
       springframework:
@@ -28,19 +28,26 @@ server:
     min-response-size: 2048
     mime-types: application/json,application/xml,text/html,text/xml,text/plain,application/javascript
 
+
+database: postgres
+
 spring:
+  sql.init:
+      mode: always
+      schema-locations: classpath*:db/${database}/schema.sql
+      data-locations: classpath*:db/${database}/data.sql
   session:
     store-type: none  # Session 저장 유형 StoreType 참조.
     timeout: 3600     # Session timeout.
 
+
   datasource:
-    # jdbcUrl -> ex) jdbc:postgresql://127.0.0.1/postgres
-    jdbcUrl: ${JDBC_URL}
-    username: ${JDBC_USER}
-    password: ${JDBC_PW}
+    url: ${POSTGRES_URL:jdbc:postgresql://localhost/petclinic}
+    username: ${POSTGRES_USER:petclinic}
+    password: ${POSTGRES_PASS:petclinic}
 
   jpa:
-    database-platform: org.hibernate.dialect.PostgreSQLDialect
+#    database-platform: org.hibernate.dialect.PostgreSQLDialect
     show-sql: true
       # open-in-view: true(=default) 인 경우, 모든 Controller API 가 자동적으로 Transaction 을 생성한다.
       #               단, API 실행에 긴 시간이 걸리는 경우, 그 시간만큼 DB Connection 을 유지하는 단점이 있다.
@@ -55,8 +62,8 @@ spring:
     properties:
       hibernate:
         format_sql: true
-        # default schema for entity.
-        default_schema: eip_edge
+        # default_schema: public
+
         # Hibernate cache 설정.
         cache:
           ## true: 2nd level cache 활성화.

@@ -99,7 +99,6 @@ public abstract class JQLReadOnlyController<ENTITY, ID> {
         ArrayList<Sort.Order> orders = new ArrayList<>();
         for (String col : columns) {
             col = col.trim();
-            col = col.replace("_", "__");
 
             Sort.Order order;
             switch (col.charAt(0)) {

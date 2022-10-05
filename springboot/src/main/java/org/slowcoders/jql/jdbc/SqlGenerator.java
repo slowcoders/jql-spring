@@ -25,12 +25,11 @@ public class SqlGenerator { //extends QueryBuilder {
 
         JqlQuery where = build_where(filter, true);
         QueryBuilder sb = new QueryBuilder(jqlSchema);
-        sb.write("SELECT ").write(getSchema().getTableName()).write(".* ");
+        sb.write("\nSELECT ").write(getSchema().getTableName()).write(".* ");
         for (String table : where.getFetchTables()) {
             sb.write(", ").write(table).write(".* ");
         }
-        sb.write("FROM ").writeWhere(where, true);
-        sb.writeln();
+        sb.write("\nFROM ").writeWhere(where, true);
 
         write_orderBy(sb, sort);
 
@@ -39,16 +38,16 @@ public class SqlGenerator { //extends QueryBuilder {
         if (limit > 0) sb.write("\nLIMIT " + limit);
 
         String sql = sb.toString();
-        System.out.println(sql);
         return sql;
     }
 
     private void write_orderBy(QueryBuilder sb, Sort sort) {
         if (sort == null) return;
 
-        sb.write("ORDER BY ");
+        sb.write("\nORDER BY ");
         sort.forEach(order -> {
-            sb.write(order.getProperty());
+            String p = order.getProperty();
+            sb.write(jqlSchema.getColumn(p).getColumnName());
             sb.write(order.isAscending() ? " asc" : " desc").write(", ");
         });
         sb.replaceTrailingComma("\n");
@@ -58,7 +57,7 @@ public class SqlGenerator { //extends QueryBuilder {
     public String count(Map<String, Object> filter) {
         JqlQuery where = build_where(filter, false);
         QueryBuilder sb = new QueryBuilder(jqlSchema);
-        sb.write("SELECT count(*) FROM ").writeWhere(where, true);
+        sb.write("\nSELECT count(*) FROM ").writeWhere(where, true);
         return sb.toString();
     }
 
@@ -71,7 +70,7 @@ public class SqlGenerator { //extends QueryBuilder {
         }
 
         QueryBuilder sb = new QueryBuilder(jqlSchema);
-        sb.write("UPDATE ").writeTableName().write(" SET\n");
+        sb.write("\nUPDATE ").writeTableName().write(" SET\n");
         for (Map.Entry<String, Object> entry : updateSet.entrySet()) {
             String key = entry.getKey();
             Object value = entry.getValue();
@@ -91,7 +90,7 @@ public class SqlGenerator { //extends QueryBuilder {
         }
 
         QueryBuilder sb = new QueryBuilder(jqlSchema);
-        sb.write("DELETE FROM ").writeTableName().writeWhere(where, false);
+        sb.write("\nDELETE FROM ").writeTableName().writeWhere(where, false);
         return sb.toString();
     }
 
@@ -138,7 +137,7 @@ public class SqlGenerator { //extends QueryBuilder {
     
     public String findById(Object id) {
         QueryBuilder sb = new QueryBuilder(jqlSchema);
-        sb.write("SELECT * FROM ").writeTableName().write("\nWHERE ");
+        sb.write("\nSELECT * FROM ").writeTableName().write("\nWHERE ");
         List<JqlColumn> keys = jqlSchema.getPKColumns();
         if (keys.size() == 0) {
             sb.writeEquals(keys.get(0).getColumnName(), id);
@@ -164,17 +163,19 @@ public class SqlGenerator { //extends QueryBuilder {
     public String insert(Map entity, boolean ignoreConflict) {
         Set<String> keys = ((Map<String, ?>)entity).keySet();
         QueryBuilder sb = new QueryBuilder(jqlSchema);
-        sb.write(getCommand(Command.Insert)).write(" INTO ").writeTableName().write("(");
+        sb.writeln();
+        sb.write(getCommand(Command.Insert)).write(" INTO ").writeTableName().writeln("(");
+        sb.incTab();
         sb.writeColumnNames(jqlSchema.getPhysicalColumnNames(keys), false);
-        sb.write(") VALUES ");
-        sb.write("(");
+        sb.decTab();
+        sb.writeln("\n) VALUES (");
         for (String k : keys) {
             Object v = entity.get(k);
             sb.writeValue(v).write(", ");
         }
         sb.replaceTrailingComma(")");
         if (ignoreConflict) {
-            sb.write(" ON CONFLICT DO NOTHING");
+            sb.write("\nON CONFLICT DO NOTHING");
         }
         return sb.toString();
     }
@@ -190,15 +191,20 @@ public class SqlGenerator { //extends QueryBuilder {
         Map<String, Object> first = it.next();
         Set<String> keys = ((Map<String, ?>)first).keySet();
         QueryBuilder sb = new QueryBuilder(jqlSchema);
-        sb.write(getCommand(Command.Insert)).write(" INTO ").write(tableName).write("(");
+        sb.writeln();
+        sb.write(getCommand(Command.Insert)).write(" INTO ").write(tableName).writeln("(");
+        sb.incTab();
         sb.writeColumnNames(jqlSchema.getPhysicalColumnNames(keys), false);
-        sb.write(") VALUES ");
+        sb.decTab();
+        sb.write("\n) VALUES ");
         for (Map<String, Object> entity = first; entity != null; entity = it.hasNext() ? it.next() : null) {
-            sb.write("(");
+            sb.write("(\n");
+            sb.incTab();
             for (String k : keys) {
                 Object v = entity.get(k);
                 sb.writeValue(v).write(", ");
             }
+            sb.decTab();
             sb.replaceTrailingComma("),\n");
         }
         if (ignoreConflict) {
@@ -222,11 +228,12 @@ public class SqlGenerator { //extends QueryBuilder {
     
     public BatchUpsert prepareInsert(Collection<Map<String, Object>> entities, String extendedTableName, boolean ignoreConflict) {
         QueryBuilder sb = new QueryBuilder(jqlSchema);
-        sb.write(getCommand(Command.Insert)).write(" INTO ").write(extendedTableName).write("(");
+        sb.writeln();
+        sb.write(getCommand(Command.Insert)).write(" INTO ").write(extendedTableName).writeln("(");
         for (JqlColumn col : getSchema().getWritableColumns()) {
             sb.write(col.getColumnName()).write(", ");
         }
-        sb.replaceTrailingComma(") VALUES (");
+        sb.replaceTrailingComma("\n) VALUES (");
         for (JqlColumn col : getSchema().getWritableColumns()) {
             sb.write("?,");
         }

@@ -14,6 +14,7 @@ public interface JQLRepository<ENTITY, ID> {
 
     Class<ENTITY> getEntityType();
 
+    ID convertId(Object v);
 
     Iterable<ENTITY> find(Map<String, Object> jqlFilter, Sort sort, int limit);
 

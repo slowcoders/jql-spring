@@ -91,7 +91,7 @@ public class UpdateListener extends Thread {
                         @SneakyThrows
                         protected void doInTransactionWithoutResult(TransactionStatus transactionStatus) {
                             for (int i = 0; i < notifications.length; i++) {
-                                Object id = repository.convertID(notifications[i].getParameter());
+                                Object id = repository.convertId(notifications[i].getParameter());
                                 repository.clearEntityCache(id);
                                 System.out.println("Got notification: " + notifications[i].getName() + ": " + id);
                             }

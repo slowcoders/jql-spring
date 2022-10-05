@@ -133,14 +133,14 @@ public abstract class JPAQueryBuilder<ENTITY, ID> {
                 Class<?> joinType = ClassUtils.toClass(t);
                 JPARepositoryBase jqlRepository = JPARepositoryBase.Util.findRepository(joinType);
                 if (value instanceof Map) {
-                    Object id = jqlRepository.convertID(((Map)value).get("id"));
+                    Object id = jqlRepository.convertId(((Map)value).get("id"));
                     value = jqlRepository.find(id);
                 }
                 else {
                     List list = (List)value;
                     for (int i = list.size(); --i >= 0; ) {
                         Object v = list.get(i);
-                        Object id = jqlRepository.convertID(((Map)v).get("id"));
+                        Object id = jqlRepository.convertId(((Map)v).get("id"));
                         v = jqlRepository.find(id);
                         list.set(i, v);
                     }
@@ -195,7 +195,7 @@ public abstract class JPAQueryBuilder<ENTITY, ID> {
         return conversionService.convert(arg, type);
     }
 
-    public ID convertID(Object _id) {
+    public ID convertId(Object _id) {
         return conversionService.convert(_id, this.idType);
     }
 

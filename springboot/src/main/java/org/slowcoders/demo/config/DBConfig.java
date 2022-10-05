@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 import org.springframework.core.env.Environment;
 
 import javax.sql.DataSource;
@@ -21,6 +22,7 @@ public class DBConfig {
         return new Properties();
     }
 
+    @Profile("postgres")
     @Bean()
     public DataSource dataSource(@Qualifier("db-config") Properties properties, Environment env) {
         if (properties.get("connectionInitSql") == null && properties.get("connection-init-sql") == null) {

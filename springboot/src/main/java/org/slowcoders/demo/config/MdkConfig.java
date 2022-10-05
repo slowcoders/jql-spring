@@ -12,12 +12,12 @@ public class MdkConfig {
     public static class JQL extends JQLConfig {
     }
 
-    @RestController
-    @ControllerAdvice
-    public static class RestApiError extends RestApiErrorHandler {
-    }
+//    @RestController
+//    @ControllerAdvice
+//    public static class RestApiError extends RestApiErrorHandler {
+//    }
 
-    @Configuration
-    public static class WebLogging extends WebLoggingConfig {
-    }
+//    @Configuration
+//    public static class WebLogging extends WebLoggingConfig {
+//    }
 }

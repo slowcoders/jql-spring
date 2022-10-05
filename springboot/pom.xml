@@ -77,7 +77,14 @@
 			<artifactId>tomcat-jdbc</artifactId>
 		</dependency>
 
-		<!-- PostgreSQL used in Staging and Production environment, e.g. on Heroku -->
+		<!-- H2 database -->
+		<dependency>
+			<groupId>com.h2database</groupId>
+			<artifactId>h2</artifactId>
+			<scope>runtime</scope>
+		</dependency>
+
+		<!-- PostgreSQL -->
         <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>

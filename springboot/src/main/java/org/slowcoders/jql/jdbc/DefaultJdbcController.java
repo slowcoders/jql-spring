@@ -20,7 +20,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class DefaultJdbcController<ID> {
+public class DefaultJdbcController {
 
     private final JQLJdbcService service;
 
@@ -31,8 +31,8 @@ public class DefaultJdbcController<ID> {
     @GetMapping(path = "/{schema}/{table}/{id}")
     @ResponseBody
     @Operation(summary = "지정 엔터티 읽기")
-    public KVEntity get(@PathVariable("schema") String schema, @PathVariable("table") String table, @PathVariable("id") ID id) {
-        JQLRepository<KVEntity, ID> repository = getRepository(schema, table);
+    public KVEntity get(@PathVariable("schema") String schema, @PathVariable("table") String table, @PathVariable("id") Object id) {
+        JQLRepository<KVEntity, Object> repository = getRepository(schema, table);
         KVEntity entity = repository.find(id);
         if (entity == null) {
             throw new HttpServerErrorException("Entity(" + id + ") is not found", HttpStatus.NOT_FOUND, null, null, null, null);
@@ -60,7 +60,7 @@ public class DefaultJdbcController<ID> {
                        @RequestParam(value = "limit", required = false) Integer limit,
                        @RequestParam(value = "sort", required = false) String[] _sort,
                        @RequestBody() HashMap<String, Object> filter) {
-        JQLRepository<KVEntity, ID> repository = getRepository(schema, table);
+        JQLRepository<KVEntity, Object> repository = getRepository(schema, table);
         Sort sort = JQLReadOnlyController.buildSort(_sort);
         if (page == null) {
             return repository.find(filter, sort, limit == null ? -1 : limit);
@@ -78,7 +78,7 @@ public class DefaultJdbcController<ID> {
     public KVEntity top(@PathVariable("schema") String schema, @PathVariable("table") String table,
                         @RequestParam(value = "sort", required = false) String[] _sort,
                         @RequestBody HashMap<String, Object> filter) {
-        JQLRepository<KVEntity, ID> repository = getRepository(schema, table);
+        JQLRepository<KVEntity, Object> repository = getRepository(schema, table);
         Sort sort = JQLReadOnlyController.buildSort(_sort);
         return repository.findTop(filter, sort);
     }
@@ -88,8 +88,8 @@ public class DefaultJdbcController<ID> {
     @Operation(summary = "엔터티 추가")
     public KVEntity add(@PathVariable("schema") String schema, @PathVariable("table") String table,
                         @RequestBody Map<String, Object> entity) throws Exception {
-        JQLRepository<KVEntity, ID> repository = getRepository(schema, table);
-        ID id = repository.insert(entity);
+        JQLRepository<KVEntity, Object> repository = getRepository(schema, table);
+        Object id = repository.insert(entity);
         KVEntity newEntity = repository.find(id);
         return newEntity;
     }
@@ -98,9 +98,9 @@ public class DefaultJdbcController<ID> {
     @ResponseBody
     @Operation(summary = "엔터티 일부 내용 변경")
     public List update(@PathVariable("schema") String schema, @PathVariable("table") String table,
-                       @PathVariable("idList") Collection<ID> idList,
+                       @PathVariable("idList") Collection<Object> idList,
                        @RequestBody HashMap<String, Object> updateSet) throws Exception {
-        JQLRepository<KVEntity, ID> repository = getRepository(schema, table);
+        JQLRepository<KVEntity, Object> repository = getRepository(schema, table);
         repository.update(idList, updateSet);
         List<KVEntity> entities = repository.list(idList);
         return entities;
@@ -109,14 +109,14 @@ public class DefaultJdbcController<ID> {
     @DeleteMapping("/{schema}/{table}/{idList}")
     @ResponseBody
     @Operation(summary = "엔터티 삭제")
-    public Collection<ID> delete(@PathVariable("schema") String schema, @PathVariable("table") String table,
-                                 @PathVariable("idList") Collection<ID> idList) {
-        JQLRepository<KVEntity, ID> repository = getRepository(schema, table);
+    public Collection<Object> delete(@PathVariable("schema") String schema, @PathVariable("table") String table,
+                                 @PathVariable("idList") Collection<Object> idList) {
+        JQLRepository<KVEntity, Object> repository = getRepository(schema, table);
         repository.delete(idList);
         return idList;
     }
 
-    JQLRepository<KVEntity, ID> getRepository(String dbSchema, String tableName) {
+    JQLRepository<KVEntity, Object> getRepository(String dbSchema, String tableName) {
         String tablePath = service.makeTablePath(dbSchema, tableName);
         return service.makeRepository(tablePath);
     }
