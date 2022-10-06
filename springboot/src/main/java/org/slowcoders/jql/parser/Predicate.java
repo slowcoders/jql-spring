@@ -4,80 +4,53 @@ import java.util.Collection;
 
 interface Predicate extends Expression {
 
-    class FilterOp implements Predicate {
+    class MatchAny implements Predicate {
         private final QAttribute key;
         private final Collection values;
-        private final String operator;
+        private final CompareOperator operator;
 
-        FilterOp(QAttribute key, String operator, Collection values) {
+        MatchAny(QAttribute key, CompareOperator operator, Collection values) {
             this.key = key;
             this.operator = operator;
             this.values = values;
         }
 
         @Override
-        public void buildQuery(QueryBuilder sb) {
-            key.printSQL(sb);
-            sb.write(operator).write("(");
-            sb.writeValues(values);
-            sb.write(")");
+        public void accept(JqlVisitor sb) {
+            sb.visitMatchAny(key, operator, values);
         }
     }
 
 
-    class BinaryOp implements Predicate {
+    class Compare implements Predicate {
         private final QAttribute key;
         private final Object value;
-        private final String operator;
+        private final CompareOperator operator;
 
-        public BinaryOp(QAttribute key, Object value, String operator) {
+        public Compare(QAttribute key, Object value, CompareOperator operator) {
             this.key = key;
             this.value = value;
             this.operator = operator;
         }
 
         @Override
-        public void buildQuery(QueryBuilder sb) {
-            sb.writePredicate(key, operator, value);
+        public void accept(JqlVisitor sb) {
+            sb.visitCompare(key, operator, value);
         }
     }
 
 
-    class UnaryOp implements Predicate {
+    class Not implements Predicate {
         private Expression statement;
-        private String operator;
 
-        UnaryOp(Expression statement, String operator) {
+        Not(Expression statement) {
             this.statement = statement;
-            this.operator = operator;
         }
 
         @Override
-        public void buildQuery(QueryBuilder sb) {
-            sb.write(operator).write("(");
-            statement.buildQuery(sb);
-            sb.write(")");
-        }
-
-        public static UnaryOp not(Expression condition) {
-            return new UnaryOp(condition, " NOT ");
+        public void accept(JqlVisitor sb) {
+            sb.visitNot(statement);
         }
     }
 
-
-    class PostOp implements Predicate {
-        private QAttribute key;
-        private String operator;
-
-        PostOp(QAttribute key, String operator) {
-            this.key = key;
-            this.operator = operator;
-        }
-
-        @Override
-        public void buildQuery(QueryBuilder sb) {
-            key.printSQL(sb);
-            sb.write(operator);
-        }
-    }
 }

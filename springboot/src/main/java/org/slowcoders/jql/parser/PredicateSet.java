@@ -4,35 +4,28 @@ import java.util.ArrayList;
 
 class PredicateSet implements Predicate {
     Conjunction conjunction;
-    ArrayList<Predicate> expressions = new ArrayList<>();
+    ArrayList<Predicate> predicates = new ArrayList<>();
 
     public PredicateSet(Conjunction conjunction) {
         this.conjunction = conjunction;
     }
 
     public void add(Predicate predicate) {
-        this.expressions.add(predicate);
+        this.predicates.add(predicate);
     }
 
     @Override
-    public void buildQuery(QueryBuilder sb) {
-        if (expressions.size() == 0) {
-            sb.write("true");
+    public void accept(JqlVisitor sb) {
+        if (predicates.size() == 0) {
+            sb.visitAlwaysTrue();
             return;
         }
 
-        Predicate first = expressions.get(0);
-        if (expressions.size() == 1) {
-            first.buildQuery(sb);
+        Predicate first = predicates.get(0);
+        if (predicates.size() == 1) {
+            first.accept(sb);
             return;
         }
-        sb.write("(");
-        first.buildQuery(sb);
-        for (int i = 0; ++i < expressions.size(); ) {
-            Predicate item = expressions.get(i);
-            sb.write(conjunction.toString());
-            item.buildQuery(sb);
-        }
-        sb.write(")");
+        sb.visitPredicateSet(predicates, conjunction);
     }
 }

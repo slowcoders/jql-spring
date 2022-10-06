@@ -99,7 +99,7 @@ public class JdbcColumn extends JqlColumn {
             col = joinedPk;
             sb.append(col.getSchema().getBaseTableName()).append('.');
         }
-        CharSequence rawFieldName = (col != this) ? sb.append(this.getColumnName()) : col.getColumnName();
+        CharSequence rawFieldName = (col != this) ? sb.append(col.getColumnName()) : this.getColumnName();
 
         String name = getSchema().getSchemaLoader().getNameConverter().toLogicalAttributeName(rawFieldName.toString());
         return name;

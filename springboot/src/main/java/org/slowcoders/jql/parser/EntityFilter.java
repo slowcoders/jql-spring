@@ -66,9 +66,9 @@ class EntityFilter extends Filter {
     }
 
     @Override
-    public void buildQuery(QueryBuilder sb) {
+    public void accept(JqlVisitor sb) {
         JqlSchema old = sb.setWorkingSchema(this.schema);
-        super.buildQuery(sb);
+        super.accept(sb);
         sb.setWorkingSchema(old);
     }
 

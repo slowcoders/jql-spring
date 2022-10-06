@@ -4,14 +4,14 @@ enum Conjunction {
     AND(" and "),
     OR(" or ");
 
-    private final String delimiter;
+    private final String text;
 
     Conjunction(String delimiter) {
-        this.delimiter = delimiter;
+        this.text = delimiter;
     }
 
     @Override
     public String toString() {
-        return delimiter;
+        return text;
     }
 }

@@ -6,9 +6,9 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.slowcoders.jql.parser.Predicate.*;
-
 abstract class PredicateParser {
+
+    static PredicateParser defaultParser = new MatchAny(CompareOperator.EQ, true);
 
     public Class<?> getAccessType(Object value, Class<?> fieldType) {
         return fieldType;
@@ -19,7 +19,7 @@ abstract class PredicateParser {
     public abstract Predicate createPredicate(QAttribute column, Object value);
 
     public static PredicateParser getParser(String function) {
-        if (function == null) return EQ;
+        if (function == null) return defaultParser;
         return operators.get(function);
     }
 
@@ -39,53 +39,38 @@ abstract class PredicateParser {
     // Operators
     // ------------------------------------------------------//
 
-    static class Compare extends PredicateParser {
-        final String operator;
+    private static class Compare extends PredicateParser {
+        final CompareOperator operator;
 
-        Compare(String operator) {
+        Compare(CompareOperator operator) {
             this.operator = operator;
         }
 
         public Predicate createPredicate(QAttribute column, Object value) {
-            return new BinaryOp(column, value.toString(), operator);
+            return new Predicate.Compare(column, value.toString(), operator);
         }
     }
 
-    static abstract class CompareAny extends PredicateParser {
+    private static class MatchAny extends PredicateParser {
+        final CompareOperator operator;
+        final boolean fetchData;
+
+        MatchAny(CompareOperator operator, boolean fetchData) {
+            this.operator = operator;
+            this.fetchData = fetchData;
+        }
+
         public Class<?> getAccessType(Object value, Class<?> fieldType) {
-            if ((value.getClass().isArray() || value instanceof Collection)) {
+            /**
+             * IN operator(!fetchData) 는 항상 Array 를 받는다.
+             */
+            if (!fetchData || (value.getClass().isArray() || value instanceof Collection)) {
                 fieldType = ClassUtils.getArrayType(fieldType);
             }
             return fieldType;
         }
-    }
 
-    static class Examines extends CompareAny {
-        final String function;
-
-        Examines(String function) {
-            this.function = function;
-        }
-
-        public Predicate createPredicate(QAttribute column, Object value) {
-            Predicate cond;
-            Collection values = ClassUtils.asCollection(value);
-            if (values != null) {
-                PredicateSet or_predicates = new PredicateSet(Conjunction.OR);
-                for (Object s : (Collection)value) {
-                    cond = new BinaryOp(column, s.toString(), function);
-                    or_predicates.add(cond);
-                }
-                cond = or_predicates;
-            }
-            else {
-                cond = new BinaryOp(column, value.toString(), function);
-            }
-            return cond;
-        }
-    }
-
-    private static class Matches extends CompareAny {
+        public boolean needFetchData() { return fetchData; }
 
         public Predicate parse(JqlParser parser, Filter baseNode, Map<String, Object> filter) {
             parser.parse(baseNode, filter);
@@ -99,23 +84,18 @@ abstract class PredicateParser {
             }
             return or_qs;
         }
-        
+
         public Predicate createPredicate(QAttribute column, Object value) {
             Predicate cond;
             Collection values = ClassUtils.asCollection(value);
             if (values != null) {
-                cond = new FilterOp(column, " in ", values);
+                cond = new Predicate.MatchAny(column, operator, values);
             }
             else {
-                cond = new BinaryOp(column, value, " = ");
+                cond = new Predicate.Compare(column, value, operator);
             }
             return cond;
         }
-    };
-
-    private static final PredicateParser EQ = new Matches();
-    private static final PredicateParser IN = new Matches() {
-        public boolean needFetchData() { return false; }
     };
 
     private static final PredicateParser ISNULL = new PredicateParser() {
@@ -124,40 +104,40 @@ abstract class PredicateParser {
         }
 
         public Predicate createPredicate(QAttribute column, Object value) {
-            return new PostOp(column,
-                    value == Boolean.TRUE ? " IS NULL " : " IS NOT NULL ");
+            CompareOperator op = value == Boolean.TRUE ? CompareOperator.EQ : CompareOperator.NE;
+            return new Predicate.Compare(column, op, null);
         }
     };
 
     static class Not extends PredicateParser {
-        private final PredicateParser operator;
+        private final PredicateParser parser;
 
-        Not(PredicateParser operator) {
-            this.operator = operator;
+        Not(PredicateParser parser) {
+            this.parser = parser;
         }
 
         public Class<?> getAccessType(Object value, Class<?> fieldType) {
-            return operator.getAccessType(value, fieldType);
+            return parser.getAccessType(value, fieldType);
         }
 
         public boolean isAttributeNameRequired() {
-            return this.operator.isAttributeNameRequired();
+            return this.parser.isAttributeNameRequired();
         }
 
         public Predicate createPredicate(QAttribute column, Object value) {
-            return UnaryOp.not(operator.createPredicate(column, value));
+            return new Predicate.Not(parser.createPredicate(column, value));
         }
 
         public Predicate parse(JqlParser parser, Filter baseNode, Map<String, Object> filter) {
             Filter node = baseNode.createFilter(Conjunction.AND);
-            Expression result = operator.parse(parser, node, filter);
-            return UnaryOp.not(result);
+            Expression result = this.parser.parse(parser, node, filter);
+            return new Predicate.Not(result);
         }
 
         public Predicate parse(JqlParser parser, Filter baseNode, Collection<Map<String, Object>> filters) {
             Filter node = baseNode.createFilter(Conjunction.AND);
-            Expression result = operator.parse(parser, node, filters);
-            return UnaryOp.not(result);
+            Expression result = this.parser.parse(parser, node, filters);
+            return new Predicate.Not(result);
         }
     };
 
@@ -184,24 +164,21 @@ abstract class PredicateParser {
     }
 
     static {
-        operators.put("in", IN);
-        operators.put("!in", new Not(IN));
+        operators.put("in", new MatchAny(CompareOperator.EQ, false));
+        operators.put("not in", new MatchAny(CompareOperator.NE, false));
 
-        Examines LINE = new Examines(" like ");
-        operators.put("like", LINE);
-        operators.put("!like", new Not(LINE));
+        operators.put("like", new MatchAny(CompareOperator.LIKE, true));
+        operators.put("not like", new MatchAny(CompareOperator.NOT_LIKE, true));
 
         operators.put("isnull", ISNULL);
 
-        operators.put("eq", EQ);
-        Not NOT = new Not(EQ);
-        operators.put("ne", NOT);
-        operators.put("not", NOT);
+        operators.put("eq", new MatchAny(CompareOperator.EQ, true));
+        operators.put("ne", new MatchAny(CompareOperator.NE, true));
 
-        Compare GT = new Compare(" > ");
-        Compare LT = new Compare(" < ");
-        Compare GE = new Compare(" >= ");
-        Compare LE = new Compare(" <= ");
+        Compare GT = new Compare(CompareOperator.GT);
+        Compare LT = new Compare(CompareOperator.LT);
+        Compare GE = new Compare(CompareOperator.GE);
+        Compare LE = new Compare(CompareOperator.LE);
 
         operators.put("gt", GT);
         operators.put("lt", LT);

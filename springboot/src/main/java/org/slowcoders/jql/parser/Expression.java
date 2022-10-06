@@ -2,7 +2,7 @@ package org.slowcoders.jql.parser;
 
 interface Expression {
 
-    void buildQuery(QueryBuilder writer);
+    void accept(JqlVisitor visitor);
 
     default boolean isEmpty() { return false; }
 
