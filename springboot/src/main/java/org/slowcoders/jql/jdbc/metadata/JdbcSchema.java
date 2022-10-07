@@ -9,17 +9,41 @@ import org.slowcoders.jql.util.AttributeNameConverter;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.util.ArrayList;
+import java.util.List;
 
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
 public class JdbcSchema extends JqlSchema {
+    private List<String[]> uniqueConstraints;
+    private ArrayList<MappedColumn> mappedColumns;
+
     protected JdbcSchema(SchemaLoader schemaLoader, String tableName) {
         super(schemaLoader, tableName,
                 AttributeNameConverter.camelCaseConverter.toLogicalAttributeName(tableName.substring(tableName.indexOf('.') + 1)));
     }
 
-    @Override
-    protected void init(ArrayList<? extends JqlColumn> columns) {
+    protected void init(ArrayList<? extends JqlColumn> columns, List<String[]> uniqueConstraints) {
+        this.uniqueConstraints = uniqueConstraints;
         super.init(columns);
+    }
+
+    @Override
+    public boolean isUnique(List<JqlColumn> fkColumns) {
+        int cntColumn = fkColumns.size();
+        for (String[] uc : this.uniqueConstraints) {
+            if (uc.length != cntColumn) continue;
+            int cntMatch = 0;
+            for (JqlColumn column : fkColumns) {
+                String colName = column.getColumnName();
+                for (String s : uc) {
+                    if (s.equals(colName)) {
+                        cntMatch ++;
+                        break;
+                    }
+                }
+            }
+            if (cntMatch == cntColumn) return true;
+        }
+        return false;
     }
 
     public String dumpJPAEntitySchema() {
@@ -66,4 +90,9 @@ public class JdbcSchema extends JqlSchema {
         out.println();
 
         out.println("\t" + col.getJavaType().getName() + " " + col.getJsonName() + ";");
-    }}
+    }
+
+    public void initMappedColumns(ArrayList<MappedColumn> mappedColumns) {
+        this.mappedColumns = mappedColumns;
+    }
+}

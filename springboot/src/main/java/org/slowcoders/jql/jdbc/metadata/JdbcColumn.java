@@ -24,15 +24,15 @@ public class JdbcColumn extends JqlColumn {
     private ColumnBinder fk;
 
     private int displaySize;
-    @JsonIgnore
-    private JqlIndex index;
+//    @JsonIgnore
+//    private JqlIndex index;
 
     @JsonIgnore
     private int precision;
     private int scale;
 
-    public JdbcColumn(JqlSchema schema, ResultSetMetaData md, int col, ColumnBinder fk, JqlIndex jqlIndex, String comment, ArrayList<String> primaryKeys) throws SQLException {
-        super(schema, resolveJavaType(md, col), md.getColumnName(col));
+    public JdbcColumn(JqlSchema schema, ResultSetMetaData md, int col, ColumnBinder fk, String comment, ArrayList<String> primaryKeys) throws SQLException {
+        super(schema, md.getColumnName(col), resolveJavaType(md, col));
 
         this.isAutoIncrement = md.isAutoIncrement(col);
         this.isReadOnly = md.isReadOnly(col);
@@ -46,7 +46,6 @@ public class JdbcColumn extends JqlColumn {
         }
         this.colTypeName = md.getColumnTypeName(col);
         this.label = comment != null ? comment : md.getColumnLabel(col);
-        this.index = jqlIndex;
         this.precision = md.getPrecision(col);
         this.scale = md.getScale(col);
         this.displaySize = md.getColumnDisplaySize(col);

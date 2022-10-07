@@ -1,12 +1,5 @@
 package org.slowcoders.jql;
 
-import org.slowcoders.jql.util.AttributeNameConverter;
-import org.slowcoders.jql.util.ClassUtils;
-
-import javax.persistence.Column;
-import javax.persistence.JoinColumn;
-import java.lang.reflect.Field;
-
 public abstract class JqlColumn {
     private final String columnName;
     private final Class<?> javaType;
@@ -21,7 +14,7 @@ public abstract class JqlColumn {
         this.valueFormat = valueFormat;
     }
 
-    protected JqlColumn(JqlSchema schema, Class javaType, String columnName) {
+    protected JqlColumn(JqlSchema schema, String columnName, Class javaType) {
         this(schema, columnName, javaType, JsonNodeType.getNodeType(javaType));
     }
 

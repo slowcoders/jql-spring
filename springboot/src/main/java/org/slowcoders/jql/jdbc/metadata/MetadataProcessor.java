@@ -34,23 +34,31 @@ public class MetadataProcessor extends SchemaLoader {
 
 
     public JqlSchema loadSchema(String tablePath) {
-        int dot_p = tablePath.indexOf('.');
-        String dbSchema = dot_p <= 0 ? defaultSchema : tablePath.substring(0, dot_p);
-        String tableName = tablePath.substring(dot_p + 1);
         JqlSchema schema = metadataMap.get(tablePath);
         if (schema == null) {
             schema = jdbc.execute(new ConnectionCallback<JqlSchema>() {
                 @Override
                 public JqlSchema doInConnection(Connection conn) throws SQLException, DataAccessException {
-                    JdbcSchema schema = new JdbcSchema(MetadataProcessor.this, tablePath);
-                    metadataMap.put(tablePath, schema);
-                    ArrayList<String> primaryKeys = getPrimaryKeys(conn, dbSchema, tableName);
-                    ArrayList<JdbcColumn> columns = getColumns(conn, dbSchema, tableName, schema, primaryKeys);
-                    schema.init(columns);
-                    return schema;
+                    return loadSchema(conn, tablePath);
                 }
             });
         }
+        return schema;
+    }
+
+    private JqlSchema loadSchema(Connection conn, String tablePath) throws SQLException {
+        JdbcSchema schema = new JdbcSchema(MetadataProcessor.this, tablePath);
+        metadataMap.put(tablePath, schema);
+
+        int dot_p = tablePath.indexOf('.');
+        String dbSchema = dot_p <= 0 ? defaultSchema : tablePath.substring(0, dot_p);
+        String tableName = tablePath.substring(dot_p + 1);
+        ArrayList<String> primaryKeys = getPrimaryKeys(conn, dbSchema, tableName);
+        ArrayList<JdbcColumn> columns = getColumns(conn, dbSchema, tableName, schema, primaryKeys);
+        ArrayList<String[]> uniqueConstraints = getUniqueConstraints(conn, dbSchema, tableName);
+        schema.init(columns, uniqueConstraints);
+        ArrayList<MappedColumn> mappedColumns = getExportedKeyInfos(conn, schema, dbSchema, tableName);
+        schema.initMappedColumns(mappedColumns);
         return schema;
     }
 
@@ -112,16 +120,41 @@ public class MetadataProcessor extends SchemaLoader {
         return names;
     }
 
-    private HashMap<String, JqlIndex> getIndexInfos(Connection conn, String dbSchema, String tableName) throws SQLException {
-        HashMap<String, JqlIndex> indexes = new HashMap<>();
+    private ArrayList<String[]> getUniqueConstraints(Connection conn, String dbSchema, String tableName) throws SQLException {
+        HashMap<String, ArrayList<String>> indexMap = new HashMap<>();
 
         DatabaseMetaData md = conn.getMetaData();
-        ResultSet rs = md.getIndexInfo(catalog, dbSchema, tableName, false, false);
+        ResultSet rs = md.getIndexInfo(catalog, dbSchema, tableName, true, false);
         while (rs.next()) {
-            JqlIndex index = new JqlIndex(rs);
-            indexes.put(index.column_name, index);
+            String table_schem = rs.getString("table_schem");
+            String table_name = rs.getString("table_name");
+            String index_qualifier = rs.getString("index_qualifier");
+            String index_name = rs.getString("index_name");
+            String column_name = rs.getString("column_name");
+            String filter_condition = rs.getString("filter_condition");
+            boolean is_unique = !rs.getBoolean("non_unique");
+            String sort = rs.getString("asc_or_desc");
+            int type = rs.getInt("type");
+            int ordinal_position = rs.getInt("ordinal_position");
+            int cardinality = rs.getInt("cardinality");
+            int pages = rs.getInt("pages");
+
+            String table_cat = rs.getString("table_cat");
+            assert(table_cat == null);
+            assert(is_unique);
+
+            ArrayList<String> indexes = indexMap.get(index_name);
+            if (indexes == null) {
+                indexes = new ArrayList<>();
+                indexMap.put(index_name, indexes);
+            }
+            indexes.add(column_name);
         }
-        return indexes;
+        ArrayList<String[]> uniqueIndexes = new ArrayList<>();
+        for (ArrayList<String> uc : indexMap.values()) {
+            uniqueIndexes.add(uc.toArray(new String[uc.size()]));
+        }
+        return uniqueIndexes;
     }
 
     private HashMap<String, ColumnBinder> getForeignKeyInfos(Connection conn, String dbSchema, String tableName) throws SQLException {
@@ -155,8 +188,50 @@ public class MetadataProcessor extends SchemaLoader {
         return foreignKeys;
     }
 
+    private ArrayList<MappedColumn> getExportedKeyInfos(Connection conn, JqlSchema pkSchema, String dbSchema, String tableName) throws SQLException {
+        HashMap<String, ColumnMappingHelper> fkMap = new HashMap<>();
+        DatabaseMetaData md = conn.getMetaData();
+        ResultSet rs = md.getExportedKeys(catalog, dbSchema, tableName);
+        while (rs.next()) {
+            String pktable_schem = rs.getString("pktable_schem");
+            String pktable_name  = rs.getString("pktable_name");
+
+            String fktable_schem = rs.getString("fktable_schem");
+            String fktable_name  = rs.getString("fktable_name");
+
+            String pkcolumn_name = rs.getString("pkcolumn_name");
+            String fkcolumn_name = rs.getString("fkcolumn_name");
+
+            String fkTablePath = makeTablePath(fktable_schem, fktable_name);
+            String pkTablePath = makeTablePath(pktable_schem, pktable_name);
+
+            int key_seq = rs.getInt("key_seq");
+            int update_rule = rs.getInt("update_rule");
+            int delete_rule = rs.getInt("delete_rule");
+            int deferrability = rs.getInt("deferrability");
+            String pktable_cat = rs.getString("pktable_cat");
+            String fktable_cat = rs.getString("fktable_cat");
+            assert (pktable_cat == null && fktable_cat == null);
+
+            ColumnMappingHelper mappedColumn = fkMap.get(fkTablePath);
+            JqlSchema fkSchema = loadSchema(conn, fkTablePath);
+            JqlColumn col = fkSchema.getColumn(fkcolumn_name);
+            if (mappedColumn == null) {
+                mappedColumn = new ColumnMappingHelper(pkSchema, fkSchema);
+                fkMap.put(fkTablePath, mappedColumn);
+            }
+            mappedColumn.addMappedForeignKey(col);
+        }
+
+        ArrayList<MappedColumn> mappedColumns = new ArrayList<>();
+        for (ColumnMappingHelper mc : fkMap.values()) {
+            mappedColumns.add(mc.createMappedColumn());
+        }
+        return mappedColumns;
+    }
+
     private ArrayList<JdbcColumn> getColumns(Connection conn, String dbSchema, String tableName, JqlSchema schema, ArrayList<String> primaryKeys) throws SQLException {
-        HashMap<String, JqlIndex> indexes = getIndexInfos(conn, dbSchema, tableName);
+        //HashMap<String, JqlIndex> indexes = getUniqueConstraints(conn, dbSchema, tableName);
         HashMap<String, ColumnBinder> foreignKeys = getForeignKeyInfos(conn, dbSchema, tableName);
         Map<String, String> comments = getColumnComments(conn, dbSchema, tableName);
         ArrayList<JdbcColumn> columns = new ArrayList<>();
@@ -167,9 +242,9 @@ public class MetadataProcessor extends SchemaLoader {
         for (int col = 0; ++col <= cntColumn; ) {
             String columnName = md.getColumnName(col);
             ColumnBinder fk = foreignKeys.get(columnName);
-            JqlIndex jqlIndex = indexes.get(columnName);
+//            JqlIndex jqlIndex = indexes.get(columnName);
             String comment = comments.get(columnName);
-            JdbcColumn ci = new JdbcColumn(schema, md, col, fk, jqlIndex, comment, primaryKeys);
+            JdbcColumn ci = new JdbcColumn(schema, md, col, fk, comment, primaryKeys);
             columns.add(ci);
         }
         return columns;

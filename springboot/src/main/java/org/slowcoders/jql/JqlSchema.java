@@ -26,6 +26,8 @@ public class JqlSchema {
         return schemaLoader;
     }
 
+    public Class<?> getMappedClass() { return Map.class; }
+
     public String getTableName() {
         return this.tableName;
     }
@@ -157,4 +159,7 @@ public class JqlSchema {
         return out;
     }
 
+    public boolean isUnique(List<JqlColumn> fkColumns) {
+        return false;
+    }
 }
