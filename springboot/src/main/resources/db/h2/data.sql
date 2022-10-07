@@ -47,7 +47,7 @@ INSERT INTO pets VALUES (default, 'Freddy', '2010-03-09', 5, 9);
 INSERT INTO pets VALUES (default, 'Lucky', '2010-06-24', 2, 10);
 INSERT INTO pets VALUES (default, 'Sly', '2012-06-08', 1, 10);
 
-INSERT INTO visits VALUES (default, 7, '2013-01-01', 'rabies shot');
-INSERT INTO visits VALUES (default, 8, '2013-01-02', 'rabies shot');
-INSERT INTO visits VALUES (default, 8, '2013-01-03', 'neutered');
-INSERT INTO visits VALUES (default, 7, '2013-01-04', 'spayed');
+INSERT INTO visits VALUES (default, 7, '2013-01-01', 'rabies shot(광견변 예방 주사)');
+INSERT INTO visits VALUES (default, 8, '2013-01-02', 'rabies shot(광견변 예방 주사)');
+INSERT INTO visits VALUES (default, 8, '2013-01-03', 'h(중성화 수술)');
+INSERT INTO visits VALUES (default, 7, '2013-01-04', 'spayed(난소 제거 수술)');
