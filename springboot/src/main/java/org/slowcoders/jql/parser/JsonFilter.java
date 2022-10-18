@@ -26,7 +26,7 @@ class JsonFilter extends Filter {
     }
 
     @Override
-    public Filter getContainingFilter_impl(JqlQuery query, String key, boolean isLeaf) {
+    public Filter getContainingFilter_impl(JqlQuery query, String key, boolean isLeaf, boolean fetchData_unused) {
         if (isLeaf) {
             return this;
         }

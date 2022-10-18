@@ -21,36 +21,34 @@ public class SqlGenerator { //extends QueryBuilder {
     }
 
     
-    public String select(Map<String, Object> filter, Sort sort, int limit, int offset) {
+    public SearchQuery select(Map<String, Object> filter) {
 
         JqlQuery where = build_where(filter, true);
-        QueryBuilder sb = new QueryBuilder(jqlSchema);
-        sb.write("\nSELECT ").write(getSchema().getTableName()).write(".* ");
-        for (String table : where.getFetchTables()) {
-            sb.write(", ").write(table).write(".* ");
-        }
-        sb.write("\nFROM ").writeWhere(where, true);
-
-        write_orderBy(sb, sort);
-
-        if (offset > 0) sb.write("\nOFFSET " + limit);
-
-        if (limit > 0) sb.write("\nLIMIT " + limit);
-
-        String sql = sb.toString();
-        return sql;
-    }
-
-    private void write_orderBy(QueryBuilder sb, Sort sort) {
-        if (sort == null) return;
-
-        sb.write("\nORDER BY ");
-        sort.forEach(order -> {
-            String p = order.getProperty();
-            sb.write(jqlSchema.getColumn(p).getColumnName());
-            sb.write(order.isAscending() ? " asc" : " desc").write(", ");
-        });
-        sb.replaceTrailingComma("\n");
+        return new SearchQuery(where);
+//        QueryBuilder sb = new QueryBuilder(jqlSchema);
+//        sb.write("\nSELECT ");
+//        if (false) {
+//            for (JqlSchema table : where.getFetchTables()) {
+//                sb.write(table.getTableName()).write(".*, ");
+//            }
+//        } else {
+//            for (JqlSchema table : where.getFetchTables()) {
+//                for (JqlColumn col : table.getReadableColumns()) {
+//                    sb.write(table.getTableName()).write('.').write(col.getColumnName()).
+//                            write(" as ").write('\"').write(col.getJsonName()).write("\",\n");
+//                }
+//            }
+//        }
+//        sb.replaceTrailingComma("\nFROM ").writeWhere(where, true);
+//
+//        write_orderBy(sb, sort);
+//
+//        if (offset > 0) sb.write("\nOFFSET " + limit);
+//
+//        if (limit > 0) sb.write("\nLIMIT " + limit);
+//
+//        String sql = sb.toString();
+//        return sql;
     }
 
 

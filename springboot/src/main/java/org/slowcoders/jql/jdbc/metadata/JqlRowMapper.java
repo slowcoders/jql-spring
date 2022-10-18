@@ -1,7 +1,9 @@
 package org.slowcoders.jql.jdbc.metadata;
 
 import org.slowcoders.jql.JqlColumn;
+import org.slowcoders.jql.JqlEntityJoin;
 import org.slowcoders.jql.JqlSchema;
+import org.slowcoders.jql.parser.JqlQuery;
 import org.slowcoders.jql.util.KVEntity;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.support.JdbcUtils;
@@ -14,36 +16,45 @@ import java.util.HashMap;
 import java.util.List;
 
 public class JqlRowMapper implements RowMapper<KVEntity> {
-    private final JqlSchema schema;
+    private final List<JqlQuery.FetchInfo> fetchList;
     private final HashMap<String, ArrayList<String>> joinMap = new HashMap<>();
 
-    public JqlRowMapper(JqlSchema schema) {
-        this.schema = schema;
+    public JqlRowMapper(List<JqlQuery.FetchInfo> schema) {
+        this.fetchList = schema;
     }
 
     @Override
     public KVEntity mapRow(ResultSet rs, int rowNum) throws SQLException {
-        JqlSchema jqlSchema = schema;
+//        JqlSchema jqlSchema = fetchList;
         KVEntity baseEntity = new KVEntity();
         KVEntity subEntity = baseEntity;
         String currTableName = null;
         String currDbSchema = null;
+        int idxFetch = 0;
 
         ResultSetMetaData rsmd = rs.getMetaData();
         int columnCount = rsmd.getColumnCount();
+        JqlSchema jqlSchema = null;
         for (int idxColumn = 1; idxColumn <= columnCount; idxColumn++) {
             String column = JdbcUtils.lookupColumnName(rsmd, idxColumn);
             String tableName = rsmd.getTableName(idxColumn);
             String dbSchema = rsmd.getSchemaName(idxColumn);
             if (!tableName.equals(currTableName) || !dbSchema.equals(currDbSchema)) {
-                if (currTableName != null) {
-                    jqlSchema = (JqlSchema) schema.getSchemaLoader().loadSchema(dbSchema, tableName);
-                    ArrayList<String> fieldPath = getJoinedFieldPath(jqlSchema);
-                    subEntity = baseEntity;
-                    for (int i = fieldPath.size(); --i >= 0; ) {
-                        subEntity = makeSubEntity(subEntity, fieldPath.get(i));
-                    }
+                JqlQuery.FetchInfo fetchInfo = fetchList.get(idxFetch ++);
+                jqlSchema = fetchInfo.schema;
+                String[] fieldPath = fetchInfo.jsonPath;
+                subEntity = baseEntity;
+                for (int i = 0; i < fieldPath.length; i++) {
+                    subEntity = makeSubEntity(subEntity, fieldPath[i]);
                 }
+//                if (currTableName != null) {
+//                    jqlSchema = (JqlSchema) fetchList.getSchemaLoader().loadSchema(dbSchema, tableName);
+//                    ArrayList<String> fieldPath = getJoinedFieldPath(jqlSchema);
+//                    subEntity = baseEntity;
+//                    for (int i = fieldPath.size(); --i >= 0; ) {
+//                        subEntity = makeSubEntity(subEntity, fieldPath.get(i));
+//                    }
+//                }
                 currTableName = tableName;
                 currDbSchema = dbSchema;
             }
@@ -61,17 +72,17 @@ public class JqlRowMapper implements RowMapper<KVEntity> {
         return baseEntity;
     }
 
-    private ArrayList<String> getJoinedFieldPath(JqlSchema jqlSchema) {
-        ArrayList<String> fieldPath = this.joinMap.get(jqlSchema.getTableName());
-        if (fieldPath == null) {
-            fieldPath = new ArrayList<>();
-            String fieldName = jqlSchema.getEntityClassName();
-            if (!resolveJsonPath(schema, fieldPath, fieldName)) {
-                throw new RuntimeException("unknown joined table " + jqlSchema.getTableName());
-            };
-        }
-        return fieldPath;
-    }
+//    private ArrayList<String> getJoinedFieldPath(JqlSchema jqlSchema) {
+//        ArrayList<String> fieldPath = this.joinMap.get(jqlSchema.getTableName());
+//        if (fieldPath == null) {
+//            fieldPath = new ArrayList<>();
+//            String fieldName = jqlSchema.getEntityClassName();
+//            if (!resolveJsonPath(fetchList, fieldPath, fieldName)) {
+//                throw new RuntimeException("unknown joined table " + jqlSchema.getTableName());
+//            };
+//        }
+//        return fieldPath;
+//    }
 
     private KVEntity makeSubEntity(KVEntity entity, String key) {
         KVEntity subEntity = (KVEntity) entity.get(key);
@@ -85,22 +96,22 @@ public class JqlRowMapper implements RowMapper<KVEntity> {
     protected Object getColumnValue(ResultSet rs, int index) throws SQLException {
         return JdbcUtils.getResultSetValue(rs, index);
     }
-
-    private static boolean resolveJsonPath(JqlSchema schema, ArrayList<String> fieldPath, String fieldName) {
-        if (schema.getJoinedColumnSet(fieldName) != null) {
-            fieldPath.add(fieldName);
-            return true;
-        }
-        for (String fk : schema.getJoinedFieldNames()) {
-            List<JqlColumn> fks = schema.getJoinedColumnSet(fk);
-            JqlSchema pkSchema = fks.get(0).getJoinedPrimaryColumn().getSchema();
-            if (resolveJsonPath(pkSchema, fieldPath, fieldName)) {
-                fieldPath.add(pkSchema.getEntityClassName());
-                return true;
-            }
-        }
-        return false;
-    }
+//
+//    private static boolean resolveJsonPath(JqlSchema schema, ArrayList<String> fieldPath, String fieldName) {
+//        if (schema.getJoinedColumnSet(fieldName) != null) {
+//            fieldPath.add(fieldName);
+//            return true;
+//        }
+//        for (String fk : schema.getJoinedFieldNames()) {
+//            JqlEntityJoin fks = schema.getJoinedColumnSet(fk);
+//            JqlSchema pkSchema = fks.getJoinedSchema();
+//            if (resolveJsonPath(pkSchema, fieldPath, fieldName)) {
+//                fieldPath.add(pkSchema.getEntityClassName());
+//                return true;
+//            }
+//        }
+//        return false;
+//    }
 
 
 }

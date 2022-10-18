@@ -54,11 +54,12 @@ public class MetadataProcessor extends SchemaLoader {
         String dbSchema = dot_p <= 0 ? defaultSchema : tablePath.substring(0, dot_p);
         String tableName = tablePath.substring(dot_p + 1);
         ArrayList<String> primaryKeys = getPrimaryKeys(conn, dbSchema, tableName);
-        ArrayList<JdbcColumn> columns = getColumns(conn, dbSchema, tableName, schema, primaryKeys);
+        ArrayList<JqlColumn> columns = getColumns(conn, dbSchema, tableName, schema, primaryKeys);
         ArrayList<String[]> uniqueConstraints = getUniqueConstraints(conn, dbSchema, tableName);
         schema.init(columns, uniqueConstraints);
-        ArrayList<MappedColumn> mappedColumns = getExportedKeyInfos(conn, schema, dbSchema, tableName);
-        schema.initMappedColumns(mappedColumns);
+        ArrayList<JqlEntityJoin> joinedColumns = getJoinedPrimaryKeyInfos(conn, schema, dbSchema, tableName);
+        ArrayList<JqlEntityJoin> mappedColumns = getExportedKeyInfos(conn, schema, dbSchema, tableName);
+        schema.initMappedColumns(joinedColumns, mappedColumns);
         return schema;
     }
 
@@ -157,20 +158,24 @@ public class MetadataProcessor extends SchemaLoader {
         return uniqueIndexes;
     }
 
-    private HashMap<String, ColumnBinder> getForeignKeyInfos(Connection conn, String dbSchema, String tableName) throws SQLException {
+    private ArrayList<JqlEntityJoin> getJoinedPrimaryKeyInfos(Connection conn, JqlSchema fkSchema, String dbSchema, String tableName) throws SQLException {
         HashMap<String, ColumnBinder> foreignKeys = new HashMap<>();
+
+        HashMap<String, EntityJoinHelper> fkMap = new HashMap<>();
 
         DatabaseMetaData md = conn.getMetaData();
         ResultSet rs = md.getImportedKeys(catalog, dbSchema, tableName);
         while (rs.next()) {
+            String pk_name = rs.getString("pk_name");
             String pktable_schem = rs.getString("pktable_schem");
             String pktable_name  = rs.getString("pktable_name");
 
+            String fk_name = rs.getString("fk_name");
             String fktable_schem = rs.getString("fktable_schem");
             String fktable_name  = rs.getString("fktable_name");
 
-            String pkColumn = rs.getString("pkcolumn_name");
-            String fkColumn = rs.getString("fkcolumn_name");
+            String pkColumnName = rs.getString("pkcolumn_name");
+            String fkColumnName = rs.getString("fkcolumn_name");
             String fkTableName = makeTablePath(fktable_schem, fktable_name);
             String pkTableName = makeTablePath(pktable_schem, pktable_name);
 
@@ -182,28 +187,42 @@ public class MetadataProcessor extends SchemaLoader {
             String fktable_cat = rs.getString("fktable_cat");
             assert (pktable_cat == null && fktable_cat == null);
 
-            ColumnBinder fk = new ColumnBinder(this, pkTableName, pkColumn);
-            foreignKeys.put(fkColumn, fk);
+            JqlColumn col = fkSchema.getColumn(fkColumnName);
+            ((JdbcColumn)col).bindPrimaryKey(new ColumnBinder(this, pkTableName, pkColumnName));
+
+            fk_name = fkTableName + '.' + fk_name;
+            EntityJoinHelper mappedColumn = fkMap.get(fk_name);
+            if (mappedColumn == null) {
+                mappedColumn = new EntityJoinHelper(fkSchema);
+                fkMap.put(fk_name, mappedColumn);
+            }
+            mappedColumn.addForeignKey(col);
         }
-        return foreignKeys;
+
+        ArrayList<JqlEntityJoin> joinedColumns = new ArrayList<>();
+        for (EntityJoinHelper mc : fkMap.values()) {
+            joinedColumns.add(mc.createMappedColumn(false));
+        }
+        return joinedColumns;
     }
 
-    private ArrayList<MappedColumn> getExportedKeyInfos(Connection conn, JqlSchema pkSchema, String dbSchema, String tableName) throws SQLException {
-        HashMap<String, ColumnMappingHelper> fkMap = new HashMap<>();
+    private ArrayList<JqlEntityJoin> getExportedKeyInfos(Connection conn, JqlSchema pkSchema, String dbSchema, String tableName) throws SQLException {
+        HashMap<String, EntityJoinHelper> fkMap = new HashMap<>();
         DatabaseMetaData md = conn.getMetaData();
         ResultSet rs = md.getExportedKeys(catalog, dbSchema, tableName);
         while (rs.next()) {
+            String pk_name = rs.getString("pk_name");
             String pktable_schem = rs.getString("pktable_schem");
             String pktable_name  = rs.getString("pktable_name");
 
+            String fk_name = rs.getString("fk_name");
             String fktable_schem = rs.getString("fktable_schem");
             String fktable_name  = rs.getString("fktable_name");
 
-            String pkcolumn_name = rs.getString("pkcolumn_name");
-            String fkcolumn_name = rs.getString("fkcolumn_name");
-
-            String fkTablePath = makeTablePath(fktable_schem, fktable_name);
-            String pkTablePath = makeTablePath(pktable_schem, pktable_name);
+            String pkColumnName = rs.getString("pkcolumn_name");
+            String fkColumnName = rs.getString("fkcolumn_name");
+            String fkTableName = makeTablePath(fktable_schem, fktable_name);
+            String pkTableName = makeTablePath(pktable_schem, pktable_name);
 
             int key_seq = rs.getInt("key_seq");
             int update_rule = rs.getInt("update_rule");
@@ -213,38 +232,38 @@ public class MetadataProcessor extends SchemaLoader {
             String fktable_cat = rs.getString("fktable_cat");
             assert (pktable_cat == null && fktable_cat == null);
 
-            ColumnMappingHelper mappedColumn = fkMap.get(fkTablePath);
-            JqlSchema fkSchema = loadSchema(conn, fkTablePath);
-            JqlColumn col = fkSchema.getColumn(fkcolumn_name);
-            if (mappedColumn == null) {
-                mappedColumn = new ColumnMappingHelper(pkSchema, fkSchema);
-                fkMap.put(fkTablePath, mappedColumn);
+            JqlSchema fkSchema = loadSchema(fkTableName);
+            JqlColumn col = fkSchema.getColumn(fkColumnName);
+
+            fk_name = fkTableName + '.' + fk_name;
+            EntityJoinHelper joinHelper = fkMap.get(fk_name);
+            if (joinHelper == null) {
+                joinHelper = new EntityJoinHelper(fkSchema);
+                fkMap.put(fk_name, joinHelper);
             }
-            mappedColumn.addMappedForeignKey(col);
+            joinHelper.addMappedForeignKey(col);
         }
 
-        ArrayList<MappedColumn> mappedColumns = new ArrayList<>();
-        for (ColumnMappingHelper mc : fkMap.values()) {
-            mappedColumns.add(mc.createMappedColumn());
+        ArrayList<JqlEntityJoin> mappedColumns = new ArrayList<>();
+        for (EntityJoinHelper mc : fkMap.values()) {
+            mappedColumns.add(mc.createMappedColumn(true));
         }
         return mappedColumns;
     }
 
-    private ArrayList<JdbcColumn> getColumns(Connection conn, String dbSchema, String tableName, JqlSchema schema, ArrayList<String> primaryKeys) throws SQLException {
+    private ArrayList<JqlColumn> getColumns(Connection conn, String dbSchema, String tableName, JqlSchema schema, ArrayList<String> primaryKeys) throws SQLException {
         //HashMap<String, JqlIndex> indexes = getUniqueConstraints(conn, dbSchema, tableName);
-        HashMap<String, ColumnBinder> foreignKeys = getForeignKeyInfos(conn, dbSchema, tableName);
         Map<String, String> comments = getColumnComments(conn, dbSchema, tableName);
-        ArrayList<JdbcColumn> columns = new ArrayList<>();
+        ArrayList<JqlColumn> columns = new ArrayList<>();
         String qname = dbSchema == null ? tableName : dbSchema + "." + tableName;
         ResultSet rs = conn.createStatement().executeQuery("select * from " + qname + " limit 1");
         ResultSetMetaData md = rs.getMetaData();
         int cntColumn = md.getColumnCount();
         for (int col = 0; ++col <= cntColumn; ) {
             String columnName = md.getColumnName(col);
-            ColumnBinder fk = foreignKeys.get(columnName);
-//            JqlIndex jqlIndex = indexes.get(columnName);
+            //ColumnBinder joinedPK = joinedPKs.get(columnName);
             String comment = comments.get(columnName);
-            JdbcColumn ci = new JdbcColumn(schema, md, col, fk, comment, primaryKeys);
+            JdbcColumn ci = new JdbcColumn(schema, md, col, null, comment, primaryKeys);
             columns.add(ci);
         }
         return columns;

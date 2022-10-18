@@ -21,7 +21,7 @@ public class JdbcColumn extends JqlColumn {
     private final String colTypeName;
 
     private String label;
-    private ColumnBinder fk;
+    private ColumnBinder pkBinder;
 
     private int displaySize;
 //    @JsonIgnore
@@ -31,7 +31,7 @@ public class JdbcColumn extends JqlColumn {
     private int precision;
     private int scale;
 
-    public JdbcColumn(JqlSchema schema, ResultSetMetaData md, int col, ColumnBinder fk, String comment, ArrayList<String> primaryKeys) throws SQLException {
+    public JdbcColumn(JqlSchema schema, ResultSetMetaData md, int col, ColumnBinder pkBinder, String comment, ArrayList<String> primaryKeys) throws SQLException {
         super(schema, md.getColumnName(col), resolveJavaType(md, col));
 
         this.isAutoIncrement = md.isAutoIncrement(col);
@@ -39,7 +39,7 @@ public class JdbcColumn extends JqlColumn {
         this.isNullable = md.isNullable(col) != ResultSetMetaData.columnNoNulls;
         this.isPk = primaryKeys.contains(this.getColumnName());
 
-        this.fk = fk;
+        this.pkBinder = pkBinder;
         boolean isWritable = md.isWritable(col);
         if (!isWritable) {
             throw new RuntimeException("!isWritable");
@@ -88,20 +88,25 @@ public class JdbcColumn extends JqlColumn {
     }
 
     public JqlColumn getJoinedPrimaryColumn() {
-        return this.fk == null ? null : fk.getJoinedColumn();
+        return this.pkBinder == null ? null : pkBinder.getJoinedColumn();
     }
 
     private String resolveFieldName() {
         StringBuilder sb = new StringBuilder();
         JqlColumn col = this;
-        for (JqlColumn joinedPk; (joinedPk = col.getJoinedPrimaryColumn()) != null; ) {
-            col = joinedPk;
-            sb.append(col.getSchema().getBaseTableName()).append('.');
+        for (JqlColumn joinedPk; (joinedPk = col.getJoinedPrimaryColumn()) != null; col = joinedPk) {
+            String token = JqlEntityJoin.resolveJsonName(col, joinedPk);
+            sb.append(token).append('.');
         }
         CharSequence rawFieldName = (col != this) ? sb.append(col.getColumnName()) : this.getColumnName();
 
+
         String name = getSchema().getSchemaLoader().getNameConverter().toLogicalAttributeName(rawFieldName.toString());
         return name;
+    }
+
+    protected void bindPrimaryKey(ColumnBinder pkBinder) {
+        this.pkBinder = pkBinder;
     }
 
     private static Class resolveJavaType(ResultSetMetaData md, int col) throws SQLException {

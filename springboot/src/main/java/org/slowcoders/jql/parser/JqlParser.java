@@ -58,10 +58,10 @@ public class JqlParser {
 
             int valueCategory = this.getValueCategory(value);
             Filter targetNode = key == null ? baseNode
-                : baseNode.getContainingFilter(where, key, valueCategory == VT_LEAF);
-            if (targetNode.getTable() != baseNode.getTable()) {
-                targetNode.getTable().setFetchData(op.needFetchData(), where);
-            }
+                : baseNode.getContainingFilter(where, key, valueCategory == VT_LEAF, op.needFetchData());
+//            if (targetNode.getTable() != baseNode.getTable()) {
+//                targetNode.getTable().setFetchData(op.needFetchData(), where);
+//            }
 
             Predicate cond;
             if (valueCategory == VT_Entity) {

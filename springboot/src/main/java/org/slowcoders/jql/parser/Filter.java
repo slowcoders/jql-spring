@@ -16,7 +16,7 @@ abstract class Filter extends PredicateSet {
 
     public abstract EntityFilter getTable();
 
-    public Filter getContainingFilter(JqlQuery query, String key, boolean isLeaf) {
+    public Filter getContainingFilter(JqlQuery query, String key, boolean isLeaf, boolean fetchData) {
         Filter entity = this;
         int p;
         while ((p = key.indexOf('.')) > 0) {
@@ -25,13 +25,13 @@ abstract class Filter extends PredicateSet {
                 return entity;
             }
             String token = key.substring(0, p);
-            entity = entity.getContainingFilter_impl(query, token, false);
+            entity = entity.getContainingFilter_impl(query, token, false, fetchData);
             key = key.substring(p + 1);
         }
-        return entity.getContainingFilter_impl(query, key, isLeaf);
+        return entity.getContainingFilter_impl(query, key, isLeaf, fetchData);
     }
 
-    protected abstract Filter getContainingFilter_impl(JqlQuery query, String key, boolean isLeaf);
+    protected abstract Filter getContainingFilter_impl(JqlQuery query, String key, boolean isLeaf, boolean fetchData);
 
     public abstract void writeAttribute(QueryBuilder sb, String key, Class<?> valueType);
 

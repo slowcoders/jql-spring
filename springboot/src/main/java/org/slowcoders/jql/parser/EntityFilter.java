@@ -1,10 +1,9 @@
 package org.slowcoders.jql.parser;
 
 import org.slowcoders.jql.JqlColumn;
+import org.slowcoders.jql.JqlEntityJoin;
 import org.slowcoders.jql.JqlSchema;
 import org.slowcoders.jql.JsonNodeType;
-
-import java.util.List;
 
 class EntityFilter extends Filter {
     private final JqlSchema schema;
@@ -34,17 +33,17 @@ class EntityFilter extends Filter {
     }
 
     @Override
-    public Filter getContainingFilter_impl(JqlQuery query, String key, boolean valueType2) {
-        List<JqlColumn> foreignKeys = schema.getJoinedColumnSet(key);
-        if (foreignKeys == null) {
+    public Filter getContainingFilter_impl(JqlQuery query, String key, boolean isLeaf_unused, boolean fetchData) {
+        JqlEntityJoin joinKeys = schema.getJoinedColumnSet(key);
+        if (joinKeys == null) {
             JqlColumn column = schema.getColumn(key);
             if (column.getValueFormat() != JsonNodeType.Object) return this;
         }
 
         Filter entity = subEntities.get(key);
         if (entity == null) {
-            if (foreignKeys != null) {
-                entity = query.addTableJoin(foreignKeys);
+            if (joinKeys != null) {
+                entity = query.addTableJoin(joinKeys, fetchData);
             }
             else {
                 entity = new JsonFilter(this, key);
@@ -84,14 +83,14 @@ class EntityFilter extends Filter {
         return this.schema.getColumn(key).getColumnName();
     }
 
-    public void setFetchData(boolean needDataFetch, JqlQuery query) {
-        if (needDataFetch && !this.fetchData) {
-            query.markFetchData(this.getSchema());
-        }
-        this.fetchData |= needDataFetch;
-    }
-
-    public boolean getFetchData() {
-        return fetchData;
-    }
+//    public void setFetchData(boolean needDataFetch, JqlQuery query) {
+//        if (needDataFetch && !this.fetchData) {
+//            query.markFetchData(this.getSchema());
+//        }
+//        this.fetchData |= needDataFetch;
+//    }
+//
+//    public boolean getFetchData() {
+//        return fetchData;
+//    }
 }

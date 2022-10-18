@@ -1,5 +1,7 @@
 package org.slowcoders.jql.parser;
 
+import org.slowcoders.jql.JqlColumn;
+import org.slowcoders.jql.JqlEntityJoin;
 import org.slowcoders.jql.JqlSchema;
 
 import java.util.ArrayList;
@@ -11,6 +13,10 @@ public class QueryBuilder extends SourceWriter<QueryBuilder> implements JqlVisit
     public QueryBuilder(JqlSchema schema) {
         super('\'');
         this.schema = schema;
+    }
+
+    public JqlSchema getWorkingSchema() {
+        return schema;
     }
 
     public JqlSchema setWorkingSchema(JqlSchema jqlSchema) {
@@ -144,13 +150,36 @@ public class QueryBuilder extends SourceWriter<QueryBuilder> implements JqlVisit
     @Override
     public void writeWhere(JqlQuery where, boolean includeTableName) {
         if (includeTableName) {
-            where.writeJoinStatement(this);
+            writeJoinStatement(where);
         }
         if (!where.isEmpty()) {
             writeRaw("\nWHERE ");
             where.accept(this);
         }
     }
+
+
+    public void writeJoinStatement(JqlQuery where) {
+        write(where.getSchema().getTableName());
+        for (JqlEntityJoin joinKeys : where.getJoinList()) {
+            boolean isInverseMapped = joinKeys.isInverseMapped();
+            String joinedTable = joinKeys.getJoinedSchema().getTableName();
+            write("\nleft outer join ").write(joinedTable).write(" on\n");
+            for (JqlColumn fk : joinKeys) {
+                JqlColumn anchor, linked;
+                if (isInverseMapped) {
+                    linked = fk; anchor = fk.getJoinedPrimaryColumn();
+                } else {
+                    anchor = fk; linked = fk.getJoinedPrimaryColumn();
+                }
+                write("  ").write(joinKeys.getAnchorSchema().getTableName()).write(".").write(anchor.getColumnName());
+                write(" = ").write(linked.getSchema().getTableName()).write(".")
+                        .write(linked.getColumnName()).write(" and\n");
+            }
+            shrinkLength(5);
+        }
+    }
+
 
     @Override
     public QueryBuilder writeColumnName(String name, boolean withTableName) {
@@ -176,4 +205,5 @@ public class QueryBuilder extends SourceWriter<QueryBuilder> implements JqlVisit
         this.write(column).write(" = ").writeValue(value);
         return this;
     }
+
 }

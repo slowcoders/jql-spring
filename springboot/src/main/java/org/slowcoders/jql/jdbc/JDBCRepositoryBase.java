@@ -25,7 +25,6 @@ public class JDBCRepositoryBase<ID> /*extends JDBCQueryBuilder*/ implements JQLR
     private final JdbcTemplate jdbc;
     private final ObjectMapper objectMapper;
     private final SqlGenerator sqlGenerator;
-//    private final String pkColumnName;
     private final JQLJdbcService service;
     private final List<JqlColumn> pkColumns;
 
@@ -114,21 +113,24 @@ public class JDBCRepositoryBase<ID> /*extends JDBCQueryBuilder*/ implements JQLR
     }
     @Override
     public KVEntity find(ID id) {
-        String sql = sqlGenerator.findById(id);
-        return jdbc.queryForObject(sql, getColumnMapRowMapper());
+        Map<String, Object> filter = createJqlFilterWithId(id);
+        SearchQuery query = sqlGenerator.select(filter);
+        List<KVEntity> res = query.execute(jdbc, null, 1, 0);
+        return res.size() == 0 ? null : res.get(0);
+//        String sql = sqlGenerator.findById(id);
+//        return jdbc.queryForObject(sql, getColumnMapRowMapper());
     }
 
-    protected RowMapper<KVEntity> getColumnMapRowMapper() {
-        return new JqlRowMapper(this.getSchema());
-    }
+//    protected RowMapper<KVEntity> getColumnMapRowMapper() {
+//        return new JqlRowMapper(this.getSchema());
+//    }
 
     @Override
     public Page<KVEntity> find(Map<String, Object> jqlFilter, @NotNull Pageable pageReq) {
         int size = pageReq.getPageSize();
         int offset = (pageReq.getPageNumber()) * size;
-        String query = sqlGenerator.select(jqlFilter, pageReq.getSort(), size, offset);
-        List<KVEntity> res = (List)jdbc.query(query, getColumnMapRowMapper());
-
+        SearchQuery query = sqlGenerator.select(jqlFilter);
+        List<KVEntity> res = query.execute(jdbc, pageReq.getSort(), size, offset);
         long count = count(jqlFilter);
         return new PageImpl(res, pageReq, count);
     }
@@ -142,23 +144,28 @@ public class JDBCRepositoryBase<ID> /*extends JDBCQueryBuilder*/ implements JQLR
 
     @Override
     public Iterable<KVEntity> find(Map<String, Object> jqlFilter, Sort sort, int limit) {
-        String query = sqlGenerator.select(jqlFilter, sort, limit, 0);
-        List<KVEntity> res = (List)jdbc.query(query, getColumnMapRowMapper());
+        SearchQuery query = sqlGenerator.select(jqlFilter);
+        List<KVEntity> res = query.execute(jdbc, sort, limit, 0);
+//        String query = sqlGenerator.select(jqlFilter, sort, limit, 0);
+//        List<KVEntity> res = (List)jdbc.query(query, getColumnMapRowMapper());
         return res;
     }
 
     @Override
     public List<KVEntity> list(Collection<ID> idList) {
         Map<String, Object> filter = createJqlFilterWithIdList( idList);
-        String query = sqlGenerator.select(filter, null, idList.size(), 0);
-        List<KVEntity> res = (List)jdbc.query(query, getColumnMapRowMapper());
+        SearchQuery query = sqlGenerator.select(filter);
+        List<KVEntity> res = query.execute(jdbc, null, -1, 0);
+//        String query = sqlGenerator.select(filter, null, idList.size(), 0);
+//        List<KVEntity> res = (List)jdbc.query(query, getColumnMapRowMapper());
         return res;
     }
 
     @Override
     public KVEntity findTop(Map<String, Object> jqlFilter, Sort sort) {
-        String query = sqlGenerator.select(jqlFilter, sort, 1, 0);
-        List<KVEntity> res = (List)jdbc.query(query, getColumnMapRowMapper());
+        SearchQuery query = sqlGenerator.select(jqlFilter);
+        List<KVEntity> res = query.execute(jdbc, sort, 1, 0);
+//        List<KVEntity> res = (List)jdbc.query(query, getColumnMapRowMapper());
         return res.size() > 0 ? res.get(0) : null;
     }
 

@@ -2,6 +2,7 @@ package org.slowcoders.jql.jdbc.metadata;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import org.slowcoders.jql.JqlColumn;
+import org.slowcoders.jql.JqlEntityJoin;
 import org.slowcoders.jql.JqlSchema;
 import org.slowcoders.jql.SchemaLoader;
 import org.slowcoders.jql.util.AttributeNameConverter;
@@ -92,7 +93,13 @@ public class JdbcSchema extends JqlSchema {
         out.println("\t" + col.getJavaType().getName() + " " + col.getJsonName() + ";");
     }
 
-    public void initMappedColumns(ArrayList<MappedColumn> mappedColumns) {
-        this.mappedColumns = mappedColumns;
+    protected void initMappedColumns(ArrayList<JqlEntityJoin> joinedColumns, ArrayList<JqlEntityJoin> mappedColumns) {//String key, ArrayList<JqlColumn> mappedColumns) {
+        super.initJsonNames();
+        for (JqlEntityJoin mc : joinedColumns) {
+            super.initMappedColumns(mc.getJsonName(), mc);
+        }
+        for (JqlEntityJoin mc : mappedColumns) {
+            super.initMappedColumns(mc.getJsonName(), mc);
+        }
     }
 }

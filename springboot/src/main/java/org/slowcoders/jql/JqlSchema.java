@@ -1,6 +1,7 @@
 package org.slowcoders.jql;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import org.slowcoders.jql.jdbc.metadata.MappedColumn;
 
 import java.util.*;
 
@@ -14,7 +15,7 @@ public class JqlSchema {
     private List<JqlColumn> allColumns;
     private List<JqlColumn> writableColumns;
     private Map<String, JqlColumn> columnMap = new HashMap<>();
-    protected final HashMap<String, List<JqlColumn>> tableJoinMap = new HashMap<>();
+    protected final HashMap<String, JqlEntityJoin> tableJoinMap = new HashMap<>();
 
     public JqlSchema(SchemaLoader schemaLoader, String tableName, String jpaClassName) {
         this.tableName = tableName;
@@ -44,7 +45,7 @@ public class JqlSchema {
         return this.pkColumns;
     }
 
-    public List<JqlColumn> getJoinedColumnSet(String fieldName) {
+    public JqlEntityJoin getJoinedColumnSet(String fieldName) {
         return tableJoinMap.get(fieldName);
     }
 
@@ -74,39 +75,30 @@ public class JqlSchema {
 
     protected void init(ArrayList<? extends JqlColumn> columns) {
         ArrayList<JqlColumn> writableColumns = new ArrayList<>();
-        HashMap<String, JqlColumn> columnMap = new HashMap<>();
         ArrayList<JqlColumn> pkColumns = new ArrayList<>();
         for (JqlColumn ci: columns) {
-            JqlColumn joined_pk = ci.getJoinedPrimaryColumn();
-            if (joined_pk != null) {
-                String joinFieldName = joined_pk.getSchema().getEntityClassName();
-                List<JqlColumn> foreignKeys = tableJoinMap.get(joinFieldName);
-                if (foreignKeys == null) {
-                    foreignKeys = new ArrayList<>();
-                    tableJoinMap.put(joinFieldName, foreignKeys);
-                }
-                foreignKeys.add(ci);
-            }
-
             if (ci.isPrimaryKey()) {
                 pkColumns.add(ci);
             }
 
-            String fieldName = ci.getJsonName();
-            columnMap.put(fieldName, ci);
             String colName = ci.getColumnName().toLowerCase();
-            if (!fieldName.equals(colName)) {
-                columnMap.put(colName, ci);
-            }
+            this.columnMap.put(colName, ci);
 
             if (!ci.isReadOnly() && ci.getValueFormat().isPrimitive()) {
                 writableColumns.add(ci);
             }
         }
+
         this.pkColumns = Collections.unmodifiableList(pkColumns);
-        this.columnMap = Collections.unmodifiableMap(columnMap);
         this.allColumns = Collections.unmodifiableList(columns);
         this.writableColumns = Collections.unmodifiableList(writableColumns);
+    }
+
+    protected void initJsonNames() {
+        for (JqlColumn ci: allColumns) {
+            String fieldName = ci.getJsonName();
+            columnMap.put(fieldName, ci);
+        }
     }
 
     public Map<String, Object> splitUnknownProperties(Map<String, Object> metric)  {
@@ -159,7 +151,15 @@ public class JqlSchema {
         return out;
     }
 
+    protected void initMappedColumns(String key, JqlEntityJoin mappedColumns) {
+        this.tableJoinMap.put(key, mappedColumns);
+    }
+
     public boolean isUnique(List<JqlColumn> fkColumns) {
         return false;
+    }
+
+    public String toString() {
+        return this.tableName;
     }
 }
