@@ -6,15 +6,11 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import org.slowcoders.jql.JQLReadOnlyController;
 import org.slowcoders.jql.JQLRepository;
-import org.slowcoders.jql.jdbc.DefaultJdbcController;
 import org.slowcoders.jql.jdbc.JQLJdbcService;
 import org.slowcoders.jql.util.KVEntity;
-import org.springframework.boot.actuate.autoconfigure.metrics.MetricsProperties;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
-import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.client.HttpServerErrorException;
 
 import java.util.HashMap;
 

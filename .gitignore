@@ -1,2 +1,5 @@
 springboot/.idea
 springboot/target/classes
+jql/build
+springboot/.gradle
+springboot/build

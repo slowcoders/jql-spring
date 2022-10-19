@@ -158,26 +158,6 @@
 					</layers>
 				</configuration>
 			</plugin>
-			<plugin>
-				<groupId>com.google.cloud.tools</groupId>
-				<artifactId>jib-maven-plugin</artifactId>
-				<!-- 참조) https://github.com/GoogleContainerTools/jib/tree/master/jib-maven-plugin#quickstart -->
-				<version>3.1.4</version>
-				<configuration>
-					<!-- 기본적인 shell 기능이 탑재된 기반 이미지 -->
-					<from>
-						<image>openjdk:11-jre-slim</image>
-					</from>
-					<to>
-						<image>686532090731.dkr.ecr.ap-northeast-2.amazonaws.com/fuel-cell-cart</image>
-					</to>
-					<container>
-						<jvmFlags>
-							<jvmFlag>-Dspring.profiles.active=production</jvmFlag>
-						</jvmFlags>
-					</container>
-				</configuration>
-			</plugin>
 		</plugins>
 	</build>
 
