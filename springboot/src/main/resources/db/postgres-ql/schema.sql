@@ -23,6 +23,9 @@ create table if not exists character_friend_link
             references character
 );
 alter table character_friend_link owner to petclinic;
+create unique index if not exists character_friend_link_character_id_friend_id_uindex
+    on character_friend_link (character_id, friend_id);
+
 
 --------------------------------------------------------
 create table if not exists episode
@@ -45,6 +48,9 @@ create table if not exists character_episode_link
             references episode
 );
 alter table character_episode_link owner to petclinic;
+create unique index if not exists character_episode_link_character_id_episode_id_uindex
+    on character_episode_link (character_id, episode_id);
+
 
 --------------------------------------------------------
 create table if not exists starship
@@ -68,4 +74,7 @@ create table if not exists human_starship_link
             references character
 );
 alter table human_starship_link owner to petclinic;
+create unique index if not exists human_starship_link_starship_id_human_id_uindex
+    on human_starship_link (starship_id, human_id);
+
 

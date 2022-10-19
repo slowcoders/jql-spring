@@ -104,7 +104,7 @@ public class JqlParser {
         }
         for (int i = key.length(); --i > 0; ) {
             ch = key.charAt(i);
-            if (!Character.isJavaIdentifierPart(ch)) {
+            if (ch != '.' && !Character.isJavaIdentifierPart(ch)) {
                 return false;
             }
         }
