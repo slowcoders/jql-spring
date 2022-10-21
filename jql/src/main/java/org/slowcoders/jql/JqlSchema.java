@@ -1,7 +1,6 @@
 package org.slowcoders.jql;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
-import org.slowcoders.jql.jdbc.metadata.MappedColumn;
 
 import java.util.*;
 
@@ -26,8 +25,6 @@ public class JqlSchema {
     public final SchemaLoader getSchemaLoader() {
         return schemaLoader;
     }
-
-    public Class<?> getMappedClass() { return Map.class; }
 
     public String getTableName() {
         return this.tableName;

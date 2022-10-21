@@ -15,7 +15,6 @@ import java.util.List;
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
 public class JdbcSchema extends JqlSchema {
     private List<String[]> uniqueConstraints;
-    private ArrayList<MappedColumn> mappedColumns;
 
     protected JdbcSchema(SchemaLoader schemaLoader, String tableName) {
         super(schemaLoader, tableName,

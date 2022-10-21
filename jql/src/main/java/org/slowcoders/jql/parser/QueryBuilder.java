@@ -33,6 +33,7 @@ public class QueryBuilder extends SourceWriter<QueryBuilder> implements JqlVisit
         shrinkLength(2);
     }
 
+
     @Override
     public void visitCompare(QAttribute column, CompareOperator operator, Object value) {
         column.printSQL(this);
@@ -115,7 +116,10 @@ public class QueryBuilder extends SourceWriter<QueryBuilder> implements JqlVisit
                     write(" LIKE ");
                     writeQuoted(v);
                 }
+                break;
 
+            default:
+                throw new RuntimeException("Invalid match any operator: " + operator);
         }
     }
 

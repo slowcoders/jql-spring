@@ -65,11 +65,6 @@ public abstract class SchemaLoader {
         return name;
     }
 
-    public JqlSchema loadSchema(String dbSchema, String tableName) {
-        String tablePath = makeTablePath(dbSchema, tableName);
-        return loadSchema(tablePath);
-    }
-
     public abstract JqlSchema loadSchema(String tablePath);
 
     public abstract String createDDL(JqlSchema schema);
