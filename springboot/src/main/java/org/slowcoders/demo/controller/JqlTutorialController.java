@@ -64,17 +64,31 @@ public class JqlTutorialController {
 
     @PostMapping(path = "/{schema}/{table}/join-search")
     @ResponseBody
-    @Operation(summary = "joined query 처리",
+    @Operation(summary = "or query",
             requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "ClientRequest body.",
                     content = @Content(schema = @Schema(implementation = Object.class)), required = true),
-            description = "joined query 생성")
+            description = "or query<br>" +
+                    "JQL 은 {} 내부의 항목은 And 연산으로, [] 내부의 항목은 or 연산으로 묶는다.<br>" +
+                    "<br>" +
+                    "아래는 owner 의 ID 3 보다 작거나, 5보다 큰 사용자에 속한 애완동물 리스트를 확인하는 Jql 구문이다.<OL>" +
+                    "<LI> { \"owners@eq\": [ { \"id@lt\": 3 }, { \"id@gt\": 5 } ]" +
+                    "</OL>" +
+                    "위 예시는 except 연산자를 이용하여 and 연산으로 변경할 수 있다.<OL>" +
+                    "<LI> { \"owners@except\": { \"id@between\": [3, 6] } " +
+                    "</OL>" +
+                    "아래는 cat 과 dog 의 항목을 리스트를 출력한다<OL>" +
+                    "<LI> { \"types\": { \"name\": [\"cat\", \"dog\"] }" +
+                    "<LI> { \"types\": [ { \"name\": \"cat\" },  { \"name\": \"dog\"} ] }" +
+                    "<LI> { \"types@except\": [ { \"name@ne\": \"cat\" },  { \"name@ne\": \"dog\"} ] }" +
+                    "<LI> { \"types\": { \"@except\" : [ { \"name@ne\": \"cat\" },  { \"name@ne\": \"dog\"} ] } }" +
+                    "</OL>")
     public Object joinSearch(@Parameter(example = "public") @PathVariable("schema") String schema,
                        @Parameter(example = "pets") @PathVariable("table") String table,
                        @RequestParam(value = "page", required = false) Integer page,
                        @Parameter(name = "limit", example = "5")
                        @RequestParam(value = "limit", required = false) Integer limit,
                        @RequestParam(value = "sort", required = false) String[] _sort,
-                             @Parameter(description = "{ \"owners\": { \"id\" = 3 } } 을 입력하여 특정 사용자에 속한 애완동물 리스트를 확인한다.")
+                             @Parameter(description = "{ \"owners\": { \"id\": 3 } } 을 입력하여 특정 사용자에 속한 애완동물 리스트를 확인한다.")
                        @RequestBody() HashMap<String, Object> filter) {
         return find(schema, table, page, limit, _sort, filter);
     }
@@ -83,20 +97,28 @@ public class JqlTutorialController {
     @ResponseBody
     @Operation(summary = "한 칼럼에 대한 in 검색",
             requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
-                    description = "아래는 ID 3,4 를 가진 두 사용자에 속한 애완동물 리스트를 확인하는 Jql 구문이다.<OL>" +
-                                "<LI> { \"owners@eq\": { \"id@eq\" = [3,4] } }" +
-                                "<LI> { \"owners@eq\": [ { \"id@eq\" = 3 }, { \"id@eq\" = 4 } ]</OL>" +
-                                "@eq 를 생략하고 아래와 같이 좀 더 간략하게 사용할 수 있다.<OL>" +
-                                "<LI> { \"owners\": { \"id\" = [3,4] } }<br>" +
-                                "<LI> { \"owners\": [ { \"id\" = 3 }, { \"id\" = 4 } ]</OL>" +
-                                "단일 컬럼에 대한 @eq 와 @in 연산자는 결과가 동일하다.<OL>" +
-                                "<LI> { \"owners\": { \"id@in\" = [3,4] } }</OL>" +
-                                "join 된 column 에 @in 연산자를 사용하면, @eq 과 동일한 조건으로 검색하되, join 된 entity 를 검색 결과에 포함시키지 않는다.<OL>" +
-                                "<LI> { \"owners@in\": { \"id\" = [3,4] } }</OL>",
                     content = @Content(schema = @Schema(implementation = Object.class)), required = true),
             description = "@eq 연산자와 @in 연산자<br>" +
                     "@eq 과 @in 의 검색 기능은 동일하다. 단, @in 검색 시엔 join 된 entity 가 검색 결과에 포함되지 않는다.<br>" +
-                    "@eq 연산자는 생략할 수 있다. 즉 @eq 연산자는 default operator 이다.")
+                    "@eq 연산자는 생략할 수 있다. 즉 @eq 연산자는 default operator 이다.<br>" +
+                    "JQL 샘플<br>" +
+                    "아래는 ID 3,4 를 가진 두 사용자에 속한 애완동물 리스트를 확인하는 Jql 구문이다.<OL>" +
+                    "<LI> { \"owners@eq\": { \"id@eq\": [3,4] } }" +
+                    "<LI> { \"owners@eq\": [ { \"id@eq\": 3 }, { \"id@eq\": 4 } ]" +
+                    "</OL>" +
+                    "@eq 를 생략하고 아래와 같이 좀 더 간략하게 사용할 수 있다.<OL>" +
+                    "<LI> { \"owners\": { \"id\": [3,4] } }<br>" +
+                    "<LI> { \"owners\": [ { \"id\": 3 }, { \"id\": 4 } ]" +
+                    "</OL>" +
+                    "컬럼에 적용한 @eq 와 @in 연산의 검색 결과가 동일하며, 아래 3개는 동일한 결과를 출력한다.<OL>" +
+                    "<LI> { \"owners\": { \"id\": [3,4] } }" +
+                    "<LI> { \"owners\": { \"id@eq\": [3,4] } }" +
+                    "<LI> { \"owners\": { \"id@in\": [3,4] } }" +
+                    "</OL>" +
+                    "단, join 된 column 에 @in 연산자를 사용하면, @eq 과 동일한 조건으로 검색하되, join 된 entity 를 검색 결과에 포함시키지 않는다.<OL>" +
+                    "<LI> { \"owners@in\": { \"id\": [3,4] } }" +
+                    "<LI> { \"owners@in\": [ { \"id\": 3 }, { \"id\": 4 } ]" +
+                    "</OL>")
     public Object selectIn(@Parameter(example = "public") @PathVariable("schema") String schema,
                              @Parameter(example = "pets") @PathVariable("table") String table,
                              @RequestParam(value = "page", required = false) Integer page,

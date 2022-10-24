@@ -22,6 +22,7 @@ abstract class QNode extends PredicateSet {
         while ((p = key.indexOf('.')) > 0) {
             TableNode table = entity.asEntityFilter();
             if (table != null && table.getSchema().hasColumn(key)) {
+                // TODO 오류 수정. '.' 으로 이어진 복합키가 Entity 가 아닌 경우만 유효.
                 return entity;
             }
             String token = key.substring(0, p);
