@@ -17,6 +17,10 @@ public class JqlEntityJoin extends ArrayList<JqlColumn> {
         return this.isInverseMapped;
     }
 
+    public boolean isUnique() {
+        return this.isUnique;
+    }
+
     public String getJsonName() {
         if (jsonName == null) {
             jsonName = resolveJsonName(this);
@@ -32,7 +36,7 @@ public class JqlEntityJoin extends ArrayList<JqlColumn> {
             name = first.getSchema().getEntityClassName();
         }
         else if (joinedColumns.size() == 1) {
-            name = resolveJsonName(first, first.getJoinedPrimaryColumn());
+            name = resolveJsonName(first);
         }
         else {
             name = first.getJoinedPrimaryColumn().getSchema().getEntityClassName();
@@ -40,9 +44,9 @@ public class JqlEntityJoin extends ArrayList<JqlColumn> {
         return name;
     }
 
-    public static String resolveJsonName(JqlColumn fk, JqlColumn joinedPk) {
+    public static String resolveJsonName(JqlColumn fk) {
         String fk_name = fk.getColumnName();
-        joinedPk = fk.getJoinedPrimaryColumn();
+        JqlColumn joinedPk = fk.getJoinedPrimaryColumn();
         String pk_name = joinedPk.getColumnName();
         if (fk_name.endsWith("_" + pk_name)) {
             return fk_name.substring(0, fk_name.length() - pk_name.length() - 1);

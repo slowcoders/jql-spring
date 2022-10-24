@@ -57,10 +57,35 @@ public class MetadataProcessor extends SchemaLoader {
         ArrayList<JqlColumn> columns = getColumns(conn, dbSchema, tableName, schema, primaryKeys);
         ArrayList<String[]> uniqueConstraints = getUniqueConstraints(conn, dbSchema, tableName);
         schema.init(columns, uniqueConstraints);
-        ArrayList<JqlEntityJoin> joinedColumns = getJoinedPrimaryKeyInfos(conn, schema, dbSchema, tableName);
-        ArrayList<JqlEntityJoin> mappedColumns = getExportedKeyInfos(conn, schema, dbSchema, tableName);
+        ArrayList<JqlEntityJoin> joinedColumns = getJoinedKeyInfos(conn, schema, dbSchema, tableName);
+        ArrayList<JqlEntityJoin> mappedColumns = getJoinedKeyInfos(conn, null, dbSchema, tableName);
+        HashMap<JqlSchema, JqlEntityJoin> schemaJoinMap = new HashMap<>();
+        for (int idx = mappedColumns.size(); --idx >= 0; ) {
+            JqlEntityJoin join = mappedColumns.get(idx);
+            JqlSchema joinedSchema = join.getJoinedSchema();
+            JqlEntityJoin join2 = schemaJoinMap.get(joinedSchema);
+            if (join2 == null) {
+                schemaJoinMap.put(joinedSchema, join);
+            } else {
+                if (join.size() == 1 && join2.size() == 1) {
+                    if (hasNameToken(join2.get(0).getJsonName(), tableName)) {
+                        mappedColumns.remove(idx);
+                    } else if (hasNameToken(join.get(0).getJsonName(), tableName)) {
+                        mappedColumns.remove(join2);
+                        schemaJoinMap.put(joinedSchema, join);
+                    }
+                }
+                else {
+                    throw new RuntimeException("Conflict Mapped Schema");
+                }
+            }
+        }
         schema.initMappedColumns(joinedColumns, mappedColumns);
         return schema;
+    }
+
+    private boolean hasNameToken(String jsKey, String tableName) {
+        return jsKey.startsWith(tableName) && jsKey.charAt(tableName.length()) == '.';
     }
 
 
@@ -158,13 +183,18 @@ public class MetadataProcessor extends SchemaLoader {
         return uniqueIndexes;
     }
 
-    private ArrayList<JqlEntityJoin> getJoinedPrimaryKeyInfos(Connection conn, JqlSchema fkSchema, String dbSchema, String tableName) throws SQLException {
-        HashMap<String, ColumnBinder> foreignKeys = new HashMap<>();
+    private ArrayList<JqlEntityJoin> getJoinedKeyInfos(Connection conn, JqlSchema fkSchema, String dbSchema, String tableName) throws SQLException {
+        boolean isForeignKeyJoin = fkSchema != null;
 
         HashMap<String, EntityJoinHelper> fkMap = new HashMap<>();
 
         DatabaseMetaData md = conn.getMetaData();
-        ResultSet rs = md.getImportedKeys(catalog, dbSchema, tableName);
+        ResultSet rs;
+        if (isForeignKeyJoin) {
+            rs = md.getImportedKeys(catalog, dbSchema, tableName);
+        } else {
+            rs = md.getExportedKeys(catalog, dbSchema, tableName);
+        }
         while (rs.next()) {
             String pk_name = rs.getString("pk_name");
             String pktable_schem = rs.getString("pktable_schem");
@@ -187,53 +217,14 @@ public class MetadataProcessor extends SchemaLoader {
             String fktable_cat = rs.getString("fktable_cat");
             assert (pktable_cat == null && fktable_cat == null);
 
-            JqlColumn col = fkSchema.getColumn(fkColumnName);
-            ((JdbcColumn)col).bindPrimaryKey(new ColumnBinder(this, pkTableName, pkColumnName));
-
-            fk_name = fkTableName + '.' + fk_name;
-            EntityJoinHelper mappedColumn = fkMap.get(fk_name);
-            if (mappedColumn == null) {
-                mappedColumn = new EntityJoinHelper(fkSchema);
-                fkMap.put(fk_name, mappedColumn);
+            JqlColumn fk;
+            if (isForeignKeyJoin) {
+                fk = fkSchema.getColumn(fkColumnName);
+                ((JdbcColumn) fk).bindPrimaryKey(new ColumnBinder(this, pkTableName, pkColumnName));
+            } else {
+                fkSchema = loadSchema(fkTableName);
+                fk = fkSchema.getColumn(fkColumnName);
             }
-            mappedColumn.addForeignKey(col);
-        }
-
-        ArrayList<JqlEntityJoin> joinedColumns = new ArrayList<>();
-        for (EntityJoinHelper mc : fkMap.values()) {
-            joinedColumns.add(mc.createMappedColumn(false));
-        }
-        return joinedColumns;
-    }
-
-    private ArrayList<JqlEntityJoin> getExportedKeyInfos(Connection conn, JqlSchema pkSchema, String dbSchema, String tableName) throws SQLException {
-        HashMap<String, EntityJoinHelper> fkMap = new HashMap<>();
-        DatabaseMetaData md = conn.getMetaData();
-        ResultSet rs = md.getExportedKeys(catalog, dbSchema, tableName);
-        while (rs.next()) {
-            String pk_name = rs.getString("pk_name");
-            String pktable_schem = rs.getString("pktable_schem");
-            String pktable_name  = rs.getString("pktable_name");
-
-            String fk_name = rs.getString("fk_name");
-            String fktable_schem = rs.getString("fktable_schem");
-            String fktable_name  = rs.getString("fktable_name");
-
-            String pkColumnName = rs.getString("pkcolumn_name");
-            String fkColumnName = rs.getString("fkcolumn_name");
-            String fkTableName = makeTablePath(fktable_schem, fktable_name);
-            String pkTableName = makeTablePath(pktable_schem, pktable_name);
-
-            int key_seq = rs.getInt("key_seq");
-            int update_rule = rs.getInt("update_rule");
-            int delete_rule = rs.getInt("delete_rule");
-            int deferrability = rs.getInt("deferrability");
-            String pktable_cat = rs.getString("pktable_cat");
-            String fktable_cat = rs.getString("fktable_cat");
-            assert (pktable_cat == null && fktable_cat == null);
-
-            JqlSchema fkSchema = loadSchema(fkTableName);
-            JqlColumn col = fkSchema.getColumn(fkColumnName);
 
             fk_name = fkTableName + '.' + fk_name;
             EntityJoinHelper joinHelper = fkMap.get(fk_name);
@@ -241,14 +232,14 @@ public class MetadataProcessor extends SchemaLoader {
                 joinHelper = new EntityJoinHelper(fkSchema);
                 fkMap.put(fk_name, joinHelper);
             }
-            joinHelper.addMappedForeignKey(col);
+            joinHelper.addForeignKey(fk);
         }
 
-        ArrayList<JqlEntityJoin> mappedColumns = new ArrayList<>();
+        ArrayList<JqlEntityJoin> joinedColumns = new ArrayList<>();
         for (EntityJoinHelper mc : fkMap.values()) {
-            mappedColumns.add(mc.createMappedColumn(true));
+            joinedColumns.add(mc.createMappedColumn(!isForeignKeyJoin));
         }
-        return mappedColumns;
+        return joinedColumns;
     }
 
     private ArrayList<JqlColumn> getColumns(Connection conn, String dbSchema, String tableName, JqlSchema schema, ArrayList<String> primaryKeys) throws SQLException {
