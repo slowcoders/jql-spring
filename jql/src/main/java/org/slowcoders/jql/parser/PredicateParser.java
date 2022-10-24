@@ -23,11 +23,11 @@ abstract class PredicateParser {
         return operators.get(function);
     }
 
-    public Predicate parse(JqlParser parser, Filter baseNode, Map<String, Object> filter) {
+    public Predicate parse(JqlParser parser, QNode baseNode, Map<String, Object> filter) {
         return null;
     }
 
-    public Predicate parse(JqlParser parser, Filter baseNode, Collection<Map<String, Object>> filters) {
+    public Predicate parse(JqlParser parser, QNode baseNode, Collection<Map<String, Object>> filters) {
         return null;
     }
 
@@ -72,13 +72,13 @@ abstract class PredicateParser {
 
         public boolean needFetchData() { return fetchData; }
 
-        public Predicate parse(JqlParser parser, Filter baseNode, Map<String, Object> filter) {
+        public Predicate parse(JqlParser parser, QNode baseNode, Map<String, Object> filter) {
             parser.parse(baseNode, filter);
             return baseNode;
         }
 
-        public Predicate parse(JqlParser parser, Filter baseNode, Collection<Map<String, Object>> filters) {
-            Filter or_qs = baseNode.createFilter(Conjunction.OR);
+        public Predicate parse(JqlParser parser, QNode baseNode, Collection<Map<String, Object>> filters) {
+            QNode or_qs = baseNode.createFilter(Conjunction.OR);
             for (Map<String, Object> filter : filters) {
                 parser.parse(or_qs, (Map)filter);
             }
@@ -128,14 +128,14 @@ abstract class PredicateParser {
             return new Predicate.Not(parser.createPredicate(column, value));
         }
 
-        public Predicate parse(JqlParser parser, Filter baseNode, Map<String, Object> filter) {
-            Filter node = baseNode.createFilter(Conjunction.AND);
+        public Predicate parse(JqlParser parser, QNode baseNode, Map<String, Object> filter) {
+            QNode node = baseNode.createFilter(Conjunction.AND);
             Expression result = this.parser.parse(parser, node, filter);
             return new Predicate.Not(result);
         }
 
-        public Predicate parse(JqlParser parser, Filter baseNode, Collection<Map<String, Object>> filters) {
-            Filter node = baseNode.createFilter(Conjunction.AND);
+        public Predicate parse(JqlParser parser, QNode baseNode, Collection<Map<String, Object>> filters) {
+            QNode node = baseNode.createFilter(Conjunction.AND);
             Expression result = this.parser.parse(parser, node, filters);
             return new Predicate.Not(result);
         }

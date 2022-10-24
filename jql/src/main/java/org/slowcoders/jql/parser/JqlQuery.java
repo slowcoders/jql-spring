@@ -1,15 +1,12 @@
 package org.slowcoders.jql.parser;
 
-import org.slowcoders.jql.JqlColumn;
 import org.slowcoders.jql.JqlEntityJoin;
 import org.slowcoders.jql.JqlSchema;
 
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 
-public class JqlQuery extends EntityFilter {
+public class JqlQuery extends TableNode {
 
     private ArrayList<JqlEntityJoin> joinMap = new ArrayList<>();
     private ArrayList<JqlSchema> fetchTables = new ArrayList<>();
@@ -23,7 +20,7 @@ public class JqlQuery extends EntityFilter {
         this.fetchInfos.add(new FetchInfo(emptyJsonPath, schema));
     }
 
-    protected EntityFilter addTableJoin(JqlEntityJoin joinKeys, boolean fetchData) {
+    protected TableNode addTableJoin(JqlEntityJoin joinKeys, boolean fetchData) {
         JqlSchema schema = joinKeys.getJoinedSchema();
         if (joinMap.indexOf(joinKeys) < 0) {
             joinMap.add(joinKeys);
@@ -35,7 +32,7 @@ public class JqlQuery extends EntityFilter {
             this.fetchInfos.add(new FetchInfo(jsonPath, schema));
             this.fetchTables.add(schema);
         }
-        return new EntityFilter(schema);
+        return new TableNode(schema);
     }
 
     private String[] getJsonPath(JqlSchema anchorSchema) {

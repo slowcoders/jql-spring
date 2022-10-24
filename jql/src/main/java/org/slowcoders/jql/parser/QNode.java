@@ -2,25 +2,25 @@ package org.slowcoders.jql.parser;
 
 import java.util.HashMap;
 
-abstract class Filter extends PredicateSet {
+abstract class QNode extends PredicateSet {
 
-    protected HashMap<String, Filter> subEntities = new HashMap<>();
+    protected HashMap<String, QNode> subEntities = new HashMap<>();
 
-    public Filter(Conjunction delimiter) {
+    public QNode(Conjunction delimiter) {
         super(delimiter);
     }
 
-    public JsonFilter asJsonFilter() { return null; }
+    public JsonNode asJsonFilter() { return null; }
 
-    public EntityFilter asEntityFilter() { return null; }
+    public TableNode asEntityFilter() { return null; }
 
-    public abstract EntityFilter getTable();
+    public abstract TableNode getTable();
 
-    public Filter getContainingFilter(JqlQuery query, String key, boolean isLeaf, boolean fetchData) {
-        Filter entity = this;
+    public QNode getContainingFilter(JqlQuery query, String key, boolean isLeaf, boolean fetchData) {
+        QNode entity = this;
         int p;
         while ((p = key.indexOf('.')) > 0) {
-            EntityFilter table = entity.asEntityFilter();
+            TableNode table = entity.asEntityFilter();
             if (table != null && table.getSchema().hasColumn(key)) {
                 return entity;
             }
@@ -31,11 +31,11 @@ abstract class Filter extends PredicateSet {
         return entity.getContainingFilter_impl(query, key, isLeaf, fetchData);
     }
 
-    protected abstract Filter getContainingFilter_impl(JqlQuery query, String key, boolean isLeaf, boolean fetchData);
+    protected abstract QNode getContainingFilter_impl(JqlQuery query, String key, boolean isLeaf, boolean fetchData);
 
     public abstract void writeAttribute(QueryBuilder sb, String key, Class<?> valueType);
 
-    public abstract Filter createFilter(Conjunction conjunction);
+    public abstract QNode createFilter(Conjunction conjunction);
 
     public abstract String getColumnName(String key);
 

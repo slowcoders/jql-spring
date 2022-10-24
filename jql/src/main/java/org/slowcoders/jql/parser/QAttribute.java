@@ -1,11 +1,11 @@
 package org.slowcoders.jql.parser;
 
 class QAttribute {
-    private final Filter scope;
+    private final QNode scope;
     private final String key;
     private final Class<?> valueType;
 
-    QAttribute(Filter scope, String key, Class<?> valueType) {
+    QAttribute(QNode scope, String key, Class<?> valueType) {
         this.scope = scope;
         this.key = key;
         this.valueType = valueType;

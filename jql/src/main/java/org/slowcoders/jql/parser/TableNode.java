@@ -5,15 +5,14 @@ import org.slowcoders.jql.JqlEntityJoin;
 import org.slowcoders.jql.JqlSchema;
 import org.slowcoders.jql.JsonNodeType;
 
-class EntityFilter extends Filter {
+class TableNode extends QNode {
     private final JqlSchema schema;
-    private boolean fetchData;
 
-    public EntityFilter(JqlSchema schema) {
+    public TableNode(JqlSchema schema) {
         this(schema, Conjunction.AND);
     }
 
-    public EntityFilter(JqlSchema schema, Conjunction delimiter) {
+    public TableNode(JqlSchema schema, Conjunction delimiter) {
         super(delimiter);
         this.schema = schema;
     }
@@ -22,31 +21,31 @@ class EntityFilter extends Filter {
         return schema;
     }
 
-    public EntityFilter asEntityFilter() {
+    public TableNode asEntityFilter() {
         return this;
     }
 
     public String getTableName() { return schema.getTableName(); }
 
-    public EntityFilter getTable() {
+    public TableNode getTable() {
         return this;
     }
 
     @Override
-    public Filter getContainingFilter_impl(JqlQuery query, String key, boolean isLeaf_unused, boolean fetchData) {
+    public QNode getContainingFilter_impl(JqlQuery query, String key, boolean isLeaf_unused, boolean fetchData) {
         JqlEntityJoin joinKeys = schema.getJoinedColumnSet(key);
         if (joinKeys == null) {
             JqlColumn column = schema.getColumn(key);
             if (column.getValueFormat() != JsonNodeType.Object) return this;
         }
 
-        Filter entity = subEntities.get(key);
+        QNode entity = subEntities.get(key);
         if (entity == null) {
             if (joinKeys != null) {
                 entity = query.addTableJoin(joinKeys, fetchData);
             }
             else {
-                entity = new JsonFilter(this, key);
+                entity = new JsonNode(this, key);
             }
             subEntities.put(key, entity);
             super.add(entity);
@@ -60,8 +59,8 @@ class EntityFilter extends Filter {
     }
 
     @Override
-    public Filter createFilter(Conjunction conjunction) {
-        return new EntityFilter(this.schema, conjunction);
+    public QNode createFilter(Conjunction conjunction) {
+        return new TableNode(this.schema, conjunction);
     }
 
     @Override
@@ -82,15 +81,4 @@ class EntityFilter extends Filter {
         }
         return this.schema.getColumn(key).getColumnName();
     }
-
-//    public void setFetchData(boolean needDataFetch, JqlQuery query) {
-//        if (needDataFetch && !this.fetchData) {
-//            query.markFetchData(this.getSchema());
-//        }
-//        this.fetchData |= needDataFetch;
-//    }
-//
-//    public boolean getFetchData() {
-//        return fetchData;
-//    }
 }

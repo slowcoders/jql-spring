@@ -29,7 +29,7 @@ public class JqlParser {
     }
 
     private final static String SELECT_MORE = "select+";
-    public void parse(Filter baseNode, Map<String, Object> filter) {
+    public void parse(QNode baseNode, Map<String, Object> filter) {
         // "joinColumn명" : { "id@?EQ" : "joinedColumn2.joinedColumn3.columnName" }; // Fetch 자동 수행.
         //   --> @?EQ 기능은 넣되, 숨겨진 고급기능으로..
         // "@except" : {},  "@except" : [ {}, {} ] 추가
@@ -57,7 +57,7 @@ public class JqlParser {
             }
 
             int valueCategory = this.getValueCategory(value);
-            Filter targetNode = key == null ? baseNode
+            QNode targetNode = key == null ? baseNode
                 : baseNode.getContainingFilter(where, key, valueCategory == VT_LEAF, op.needFetchData());
 //            if (targetNode.getTable() != baseNode.getTable()) {
 //                targetNode.getTable().setFetchData(op.needFetchData(), where);
