@@ -29,7 +29,7 @@ public class JqlParser {
     }
 
     private final static String SELECT_MORE = "select+";
-    public void parse(QNode baseNode, Map<String, Object> filter) {
+    public void parse(QScope baseScope, Map<String, Object> filter) {
         // "joinColumn명" : { "id@?EQ" : "joinedColumn2.joinedColumn3.columnName" }; // Fetch 자동 수행.
         //   --> @?EQ 기능은 넣되, 숨겨진 고급기능으로..
         // "@except" : {},  "@except" : [ {}, {} ] 추가
@@ -57,39 +57,39 @@ public class JqlParser {
             }
 
             int valueCategory = this.getValueCategory(value);
-            QNode targetNode = key == null ? baseNode
-                : baseNode.getContainingFilter(where, key, valueCategory == VT_LEAF, op.needFetchData());
+            QScope targetScope = key == null ? baseScope
+                : baseScope.getQueryScope(where, key, valueCategory == VT_LEAF, op.needFetchData());
 //            if (targetNode.getTable() != baseNode.getTable()) {
 //                targetNode.getTable().setFetchData(op.needFetchData(), where);
 //            }
 
             Predicate cond;
             if (valueCategory == VT_Entity) {
-                cond = op.parse(this, targetNode, (Map<String, Object>)value);
+                cond = op.parse(this, targetScope, (Map<String, Object>)value);
             }
             else if (valueCategory == VT_Entities) {
-                cond = op.parse(this, targetNode, (Collection<Map<String, Object>>)value);
+                cond = op.parse(this, targetScope, (Collection<Map<String, Object>>)value);
             }
             else {
                 if (selectedAttrs != null && !selectedAttrs.contains(key)) {
                     selectedAttrs.add(key);
                 }
 
-                String columnName = targetNode.getColumnName(key);
-                if (targetNode.asJsonFilter() == null) {
-                    Class<?> fieldType = targetNode.getTable().getSchema().getColumn(columnName).getJavaType();
+                String columnName = targetScope.getColumnName(key);
+                if (targetScope.asJsonScope() == null) {
+                    Class<?> fieldType = targetScope.getTable().getSchema().getColumn(columnName).getJavaType();
                     Class<?> accessType = op.getAccessType(value, fieldType);
                     value = conversionService.convert(value, accessType);
                 }
-                QAttribute column = new QAttribute(targetNode, columnName, value.getClass());
+                QAttribute column = new QAttribute(targetScope, columnName, value.getClass());
                 cond = op.createPredicate(column, value);
             }
 
             if (cond == null) {
                 throw new IllegalArgumentException("invalid value type for " + entry.getKey() + " value: " + value);
             }
-            if (cond != targetNode) {
-                targetNode.add(cond);
+            if (cond != targetScope) {
+                targetScope.add(cond);
             }
         }
     }

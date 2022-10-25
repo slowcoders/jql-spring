@@ -6,7 +6,7 @@ import org.slowcoders.jql.JqlSchema;
 import java.util.ArrayList;
 import java.util.List;
 
-public class JqlQuery extends TableNode {
+public class JqlQuery extends TableScope {
 
     private ArrayList<JqlEntityJoin> joinMap = new ArrayList<>();
     private ArrayList<JqlSchema> fetchTables = new ArrayList<>();
@@ -20,7 +20,7 @@ public class JqlQuery extends TableNode {
         this.fetchInfos.add(new FetchInfo(emptyJsonPath, schema));
     }
 
-    protected TableNode addTableJoin(JqlEntityJoin joinKeys, boolean fetchData) {
+    protected TableScope addTableJoin(JqlEntityJoin joinKeys, boolean fetchData) {
         JqlSchema schema = joinKeys.getJoinedSchema();
         if (joinMap.indexOf(joinKeys) < 0) {
             joinMap.add(joinKeys);
@@ -32,7 +32,7 @@ public class JqlQuery extends TableNode {
             this.fetchInfos.add(new FetchInfo(jsonPath, schema));
             this.fetchTables.add(schema);
         }
-        return new TableNode(schema);
+        return new TableScope(schema);
     }
 
     private String[] getJsonPath(JqlSchema anchorSchema) {

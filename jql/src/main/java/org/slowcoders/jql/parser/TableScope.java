@@ -5,14 +5,14 @@ import org.slowcoders.jql.JqlEntityJoin;
 import org.slowcoders.jql.JqlSchema;
 import org.slowcoders.jql.JsonNodeType;
 
-class TableNode extends QNode {
+class TableScope extends QScope {
     private final JqlSchema schema;
 
-    public TableNode(JqlSchema schema) {
+    public TableScope(JqlSchema schema) {
         this(schema, Conjunction.AND);
     }
 
-    public TableNode(JqlSchema schema, Conjunction delimiter) {
+    public TableScope(JqlSchema schema, Conjunction delimiter) {
         super(delimiter);
         this.schema = schema;
     }
@@ -21,31 +21,31 @@ class TableNode extends QNode {
         return schema;
     }
 
-    public TableNode asEntityFilter() {
+    public TableScope asTableScope() {
         return this;
     }
 
     public String getTableName() { return schema.getTableName(); }
 
-    public TableNode getTable() {
+    public TableScope getTable() {
         return this;
     }
 
     @Override
-    public QNode getContainingFilter_impl(JqlQuery query, String key, boolean isLeaf_unused, boolean fetchData) {
+    public QScope getQueryScope_impl(JqlQuery query, String key, boolean isLeaf_unused, boolean fetchData) {
         JqlEntityJoin joinKeys = schema.getJoinedColumnSet(key);
         if (joinKeys == null) {
             JqlColumn column = schema.getColumn(key);
             if (column.getValueFormat() != JsonNodeType.Object) return this;
         }
 
-        QNode entity = subEntities.get(key);
+        QScope entity = subEntities.get(key);
         if (entity == null) {
             if (joinKeys != null) {
                 entity = query.addTableJoin(joinKeys, fetchData);
             }
             else {
-                entity = new JsonNode(this, key);
+                entity = new JsonScope(this, key);
             }
             subEntities.put(key, entity);
             super.add(entity);
@@ -59,8 +59,8 @@ class TableNode extends QNode {
     }
 
     @Override
-    public QNode createFilter(Conjunction conjunction) {
-        return new TableNode(this.schema, conjunction);
+    public QScope createQueryScope(Conjunction conjunction) {
+        return new TableScope(this.schema, conjunction);
     }
 
     @Override

@@ -1,9 +1,9 @@
-INSERT INTO episode (title) values
+INSERT INTO starwars.episode (title) values
 ('NEWHOPE'), ('EMPIRE'), ('JEDI')
 on conflict DO NOTHING;
 
 
-INSERT INTO character (dtype, id, name, home_planet, height, mass) values
+INSERT INTO starwars.character (dtype, id, name, home_planet, height, mass) values
 ('Human', 1000, 'Luke Skywalker', 'Tatooine', 1.72, 77),
 ('Human', 1001, 'Darth Vader', 'Tatooine', 2.02, 136),
 ('Human', 1002, 'Han Solo', null, 1.8, 80),
@@ -12,13 +12,13 @@ INSERT INTO character (dtype, id, name, home_planet, height, mass) values
 on conflict DO NOTHING;
 
 
-INSERT INTO character (dtype, id, name, primary_function) values
+INSERT INTO starwars.character (dtype, id, name, primary_function) values
 ('Droid', 2000, 'C-3PO', 'protocol'),
 ('Droid', 2001, 'R2-D2', 'Astromech')
 on conflict DO NOTHING;
 
 
-INSERT INTO starship (id, name, length) values
+INSERT INTO starwars.starship (id, name, length) values
 (3000, 'Millenium Falcon', 34.37),
 (3001, 'X-Wing', 12.5),
 (3002, 'TIE Advanced x1', 9.2),
@@ -26,7 +26,7 @@ INSERT INTO starship (id, name, length) values
 on conflict DO NOTHING;
 
 
-INSERT INTO human_starship_link (human_id, starship_id) values
+INSERT INTO starwars.human_starship_link (human_id, starship_id) values
 (1000, 3001),
 (1000, 3003),
 
@@ -37,7 +37,7 @@ INSERT INTO human_starship_link (human_id, starship_id) values
 on conflict DO NOTHING;
 
 
-INSERT INTO character_episode_link (character_id, episode_id) values
+INSERT INTO starwars.character_episode_link (character_id, episode_id) values
 (1000, 'NEWHOPE'),
 (1000, 'EMPIRE'),
 (1000, 'JEDI'),
@@ -60,7 +60,7 @@ INSERT INTO character_episode_link (character_id, episode_id) values
 on conflict DO NOTHING;
 
 
-INSERT INTO character_friend_link (character_id, friend_id)
+INSERT INTO starwars.character_friend_link (character_id, friend_id)
 values
 (1000, 1002),
 (1000, 1003),

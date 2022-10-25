@@ -3,15 +3,15 @@ package org.slowcoders.jql.parser;
 import org.slowcoders.jql.JqlSchema;
 import org.slowcoders.jql.JsonNodeType;
 
-class JsonNode extends QNode {
-    private final QNode parent;
+class JsonScope extends QScope {
+    private final QScope parent;
     private final String key;
 
-    JsonNode(QNode parentNode, String key) {
+    JsonScope(QScope parentNode, String key) {
         this(parentNode, key, Conjunction.AND);
     }
 
-    JsonNode(QNode parentNode, String key, Conjunction conjunction) {
+    JsonScope(QScope parentNode, String key, Conjunction conjunction) {
         super(conjunction);
         this.parent = parentNode;
         this.key = key;
@@ -21,25 +21,25 @@ class JsonNode extends QNode {
         return getTable().getSchema();
     }
 
-    public TableNode getTable() {
+    public TableScope getTable() {
         return parent.getTable();
     }
 
     @Override
-    public QNode getContainingFilter_impl(JqlQuery query, String key, boolean isLeaf, boolean fetchData_unused) {
+    public QScope getQueryScope_impl(JqlQuery query, String key, boolean isLeaf, boolean fetchData_unused) {
         if (isLeaf) {
             return this;
         }
-        QNode entity = subEntities.get(key);
+        QScope entity = subEntities.get(key);
         if (entity == null) {
-            entity = new JsonNode(this, key);
+            entity = new JsonScope(this, key);
             subEntities.put(key, entity);
             super.add(entity);
         }
         return entity;
     }
 
-    public JsonNode asJsonFilter() {
+    public JsonScope asJsonScope() {
         return this;
     }
 
@@ -74,8 +74,8 @@ class JsonNode extends QNode {
     }
 
     @Override
-    public QNode createFilter(Conjunction conjunction) {
-        return new JsonNode(this.parent, this.key, conjunction);
+    public QScope createQueryScope(Conjunction conjunction) {
+        return new JsonScope(this.parent, this.key, conjunction);
     }
 
     @Override
@@ -84,7 +84,7 @@ class JsonNode extends QNode {
     }
 
     private void dumpColumnName(QueryBuilder sb) {
-        JsonNode p = parent.asJsonFilter();
+        JsonScope p = parent.asJsonScope();
         if (p != null) {
             p.dumpColumnName(sb);
             sb.write(" -> '").write(key).write('\'');

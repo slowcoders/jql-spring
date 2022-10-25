@@ -23,11 +23,11 @@ abstract class PredicateParser {
         return operators.get(function);
     }
 
-    public Predicate parse(JqlParser parser, QNode baseNode, Map<String, Object> filter) {
+    public Predicate parse(JqlParser parser, QScope baseScope, Map<String, Object> filter) {
         return null;
     }
 
-    public Predicate parse(JqlParser parser, QNode baseNode, Collection<Map<String, Object>> filters) {
+    public Predicate parse(JqlParser parser, QScope baseScope, Collection<Map<String, Object>> filters) {
         return null;
     }
 
@@ -72,13 +72,13 @@ abstract class PredicateParser {
 
         public boolean needFetchData() { return fetchData; }
 
-        public Predicate parse(JqlParser parser, QNode baseNode, Map<String, Object> filter) {
-            parser.parse(baseNode, filter);
-            return baseNode;
+        public Predicate parse(JqlParser parser, QScope baseScope, Map<String, Object> filter) {
+            parser.parse(baseScope, filter);
+            return baseScope;
         }
 
-        public Predicate parse(JqlParser parser, QNode baseNode, Collection<Map<String, Object>> filters) {
-            QNode or_qs = baseNode.createFilter(Conjunction.OR);
+        public Predicate parse(JqlParser parser, QScope baseScope, Collection<Map<String, Object>> filters) {
+            QScope or_qs = baseScope.createQueryScope(Conjunction.OR);
             for (Map<String, Object> filter : filters) {
                 parser.parse(or_qs, (Map)filter);
             }
@@ -109,34 +109,18 @@ abstract class PredicateParser {
         }
     };
 
-    static class Not extends PredicateParser {
-        private final PredicateParser parser;
-
-        Not(PredicateParser parser) {
-            this.parser = parser;
+    static class Excepts extends MatchAny {
+        Excepts() {
+            super(CompareOperator.EQ, true);
         }
 
-        public Class<?> getAccessType(Object value, Class<?> fieldType) {
-            return parser.getAccessType(value, fieldType);
-        }
-
-        public boolean isAttributeNameRequired() {
-            return this.parser.isAttributeNameRequired();
-        }
-
-        public Predicate createPredicate(QAttribute column, Object value) {
-            return new Predicate.Not(parser.createPredicate(column, value));
-        }
-
-        public Predicate parse(JqlParser parser, QNode baseNode, Map<String, Object> filter) {
-            QNode node = baseNode.createFilter(Conjunction.AND);
-            Expression result = this.parser.parse(parser, node, filter);
+        public Predicate parse(JqlParser parser, QScope baseScope, Map<String, Object> filter) {
+            Expression result = super.parse(parser, baseScope, filter);
             return new Predicate.Not(result);
         }
 
-        public Predicate parse(JqlParser parser, QNode baseNode, Collection<Map<String, Object>> filters) {
-            QNode node = baseNode.createFilter(Conjunction.AND);
-            Expression result = this.parser.parse(parser, node, filters);
+        public Predicate parse(JqlParser parser, QScope baseScope, Collection<Map<String, Object>> filters) {
+            Expression result = super.parse(parser, baseScope, filters);
             return new Predicate.Not(result);
         }
     };
@@ -144,10 +128,12 @@ abstract class PredicateParser {
     static class PairedPredicate extends PredicateParser {
         private final PredicateParser operator1;
         private final PredicateParser operator2;
+        private final Conjunction conjunction;
 
-        PairedPredicate(PredicateParser operator1, PredicateParser operator2) {
+        PairedPredicate(PredicateParser operator1, PredicateParser operator2, Conjunction conjunction) {
             this.operator1 = operator1;
             this.operator2 = operator2;
+            this.conjunction = conjunction;
         }
 
         public Class<?> getAccessType(Object value, Class<?> fieldType) {
@@ -156,7 +142,7 @@ abstract class PredicateParser {
 
         public Predicate createPredicate(QAttribute column, Object value) {
             Object[] range = (Object[])value;
-            PredicateSet predicates = new PredicateSet(Conjunction.AND);
+            PredicateSet predicates = new PredicateSet(conjunction);
             predicates.add(operator1.createPredicate(column, range[0]));
             predicates.add(operator2.createPredicate(column, range[1]));
             return predicates;
@@ -184,6 +170,9 @@ abstract class PredicateParser {
         operators.put("lt", LT);
         operators.put("ge", GE);
         operators.put("le", LE);
-        operators.put("between", new PairedPredicate(GE, LT));
+        operators.put("between", new PairedPredicate(GE, LT, Conjunction.AND));
+        operators.put("not between", new PairedPredicate(LT, GE, Conjunction.OR));
+
+        operators.put("excepts", new Excepts());
     }
 }

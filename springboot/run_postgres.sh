@@ -1,1 +1,1 @@
-docker run -e POSTGRES_USER=petclinic -e POSTGRES_PASSWORD=petclinic -e POSTGRES_DB=petclinic -p 5432:5432 postgres:14.1
+docker run --rm -e POSTGRES_USER=jql_demo -e POSTGRES_PASSWORD=jql_demo -e POSTGRES_DB=jql_demo -p 5432:5432 postgres:14.1

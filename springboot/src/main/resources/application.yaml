@@ -29,7 +29,7 @@ server:
     mime-types: application/json,application/xml,text/html,text/xml,text/plain,application/javascript
 
 
-database: postgres-ql
+database: postgres
 
 spring:
   sql.init:
@@ -42,9 +42,9 @@ spring:
 
 
   datasource:
-    url: ${POSTGRES_URL:jdbc:postgresql://localhost/petclinic}
-    username: ${POSTGRES_USER:petclinic}
-    password: ${POSTGRES_PASS:petclinic}
+    url: ${POSTGRES_URL:jdbc:postgresql://localhost/jql_demo}
+    username: ${POSTGRES_USER:jql_demo}
+    password: ${POSTGRES_PASS:jql_demo}
 
   jpa:
 #    database-platform: org.hibernate.dialect.PostgreSQLDialect
