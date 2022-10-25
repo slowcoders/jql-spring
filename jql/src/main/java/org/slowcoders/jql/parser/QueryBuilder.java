@@ -138,7 +138,8 @@ public class QueryBuilder extends SourceWriter<QueryBuilder> implements JqlVisit
     public void visitPredicateSet(ArrayList<Predicate> predicates, Conjunction conjunction) {
         write("(");
         boolean first = true;
-        for (int i = 0; ++i < predicates.size(); ) {
+        int cnt_predicate = predicates.size();
+        for (int i = 0; i < cnt_predicate; i++) {
             if (first) {
                 first = false;
             } else {

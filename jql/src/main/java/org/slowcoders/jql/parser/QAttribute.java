@@ -1,11 +1,11 @@
 package org.slowcoders.jql.parser;
 
 class QAttribute {
-    private final QScope scope;
+    private final EntityQuery scope;
     private final String key;
     private final Class<?> valueType;
 
-    QAttribute(QScope scope, String key, Class<?> valueType) {
+    QAttribute(EntityQuery scope, String key, Class<?> valueType) {
         this.scope = scope;
         this.key = key;
         this.valueType = valueType;

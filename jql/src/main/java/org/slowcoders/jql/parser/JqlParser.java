@@ -13,9 +13,6 @@ public class JqlParser {
 
     private final ConversionService conversionService;
     private final JqlQuery where;
-    private static final int VT_LEAF = 0;
-    private static final int VT_Entity = 1;
-    private static final int VT_Entities = 2;
 
 
     public JqlParser(JqlSchema schema, ConversionService conversionService) {
@@ -29,7 +26,7 @@ public class JqlParser {
     }
 
     private final static String SELECT_MORE = "select+";
-    public void parse(QScope baseScope, Map<String, Object> filter) {
+    public void parse(PredicateSet predicates, Map<String, Object> filter) {
         // "joinColumn명" : { "id@?EQ" : "joinedColumn2.joinedColumn3.columnName" }; // Fetch 자동 수행.
         //   --> @?EQ 기능은 넣되, 숨겨진 고급기능으로..
         // "@except" : {},  "@except" : [ {}, {} ] 추가
@@ -37,6 +34,7 @@ public class JqlParser {
         // "select+@" : ["attr1", "attr2", "attr3" ] 추가??
         // "groupBy@" : ["attr1", "attr2/attr3" ]
 
+        EntityQuery baseScope = predicates.getEntityPredicates();
         List<String> selectedAttrs = (List<String>)filter.get(SELECT_MORE);
         for (Map.Entry<String, Object> entry : filter.entrySet()) {
             String key = entry.getKey();
@@ -56,28 +54,30 @@ public class JqlParser {
                 key = null;
             }
 
-            int valueCategory = this.getValueCategory(value);
-            QScope targetScope = key == null ? baseScope
-                : baseScope.getQueryScope(where, key, valueCategory == VT_LEAF, op.needFetchData());
-//            if (targetNode.getTable() != baseNode.getTable()) {
-//                targetNode.getTable().setFetchData(op.needFetchData(), where);
-//            }
+            EntityQuery.Type valueCategory = this.getValueCategory(value);
+            PredicateSet targetPS = key == null ? predicates
+                : baseScope.getQueryScope(key, valueCategory, op.needFetchData());
 
             Predicate cond;
-            if (valueCategory == VT_Entity) {
-                cond = op.parse(this, targetScope, (Map<String, Object>)value);
+            if (valueCategory == EntityQuery.Type.Entity) {
+                this.parse(targetPS, (Map<String, Object>)value);
+                cond = targetPS;
             }
-            else if (valueCategory == VT_Entities) {
-                cond = op.parse(this, targetScope, (Collection<Map<String, Object>>)value);
+            else if (valueCategory == EntityQuery.Type.Entities) {
+                for (Map<String, Object> c : (Collection<Map<String, Object>>)value) {
+                    this.parse(targetPS, (Map)c);
+                }
+                cond = targetPS;
             }
             else {
                 if (selectedAttrs != null && !selectedAttrs.contains(key)) {
                     selectedAttrs.add(key);
                 }
 
+                EntityQuery targetScope = targetPS.getEntityPredicates();
                 String columnName = targetScope.getColumnName(key);
-                if (targetScope.asJsonScope() == null) {
-                    Class<?> fieldType = targetScope.getTable().getSchema().getColumn(columnName).getJavaType();
+                if (targetScope.asJsonQuery() == null) {
+                    Class<?> fieldType = targetScope.getTableQuery().getSchema().getColumn(columnName).getJavaType();
                     Class<?> accessType = op.getAccessType(value, fieldType);
                     value = conversionService.convert(value, accessType);
                 }
@@ -88,8 +88,8 @@ public class JqlParser {
             if (cond == null) {
                 throw new IllegalArgumentException("invalid value type for " + entry.getKey() + " value: " + value);
             }
-            if (cond != targetScope) {
-                targetScope.add(cond);
+            if (cond != predicates) {
+                predicates.add(cond);
             }
         }
     }
@@ -141,16 +141,16 @@ public class JqlParser {
         registerAutoFetchFields(fields, entityType.getSuperclass());
     }
 
-    private int getValueCategory(Object value) {
+    private EntityQuery.Type getValueCategory(Object value) {
         if (value instanceof Collection) {
             if (((Collection)value).iterator().next() instanceof Map) {
-                return VT_Entities;
+                return EntityQuery.Type.Entities;
             }
         }
         if (value instanceof Map) {
-            return VT_Entity;
+            return EntityQuery.Type.Entity;
         }
-        return VT_LEAF;
+        return EntityQuery.Type.Leaf;
     }
 
 }

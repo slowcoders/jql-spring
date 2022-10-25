@@ -6,7 +6,7 @@ import org.slowcoders.jql.JqlSchema;
 import java.util.ArrayList;
 import java.util.List;
 
-public class JqlQuery extends TableScope {
+public class JqlQuery extends TableQuery {
 
     private ArrayList<JqlEntityJoin> joinMap = new ArrayList<>();
     private ArrayList<JqlSchema> fetchTables = new ArrayList<>();
@@ -15,12 +15,16 @@ public class JqlQuery extends TableScope {
     private String[] emptyJsonPath = new String[0];
 
     public JqlQuery(JqlSchema schema) {
-        super(schema);
+        super(null, schema);
         this.fetchTables.add(schema);
         this.fetchInfos.add(new FetchInfo(emptyJsonPath, schema));
     }
 
-    protected TableScope addTableJoin(JqlEntityJoin joinKeys, boolean fetchData) {
+    public JqlQuery getTopQuery() {
+        return this;
+    }
+
+    protected JqlSchema addTableJoin(JqlEntityJoin joinKeys, boolean fetchData) {
         JqlSchema schema = joinKeys.getJoinedSchema();
         if (joinMap.indexOf(joinKeys) < 0) {
             joinMap.add(joinKeys);
@@ -32,7 +36,7 @@ public class JqlQuery extends TableScope {
             this.fetchInfos.add(new FetchInfo(jsonPath, schema));
             this.fetchTables.add(schema);
         }
-        return new TableScope(schema);
+        return schema;
     }
 
     private String[] getJsonPath(JqlSchema anchorSchema) {

@@ -5,15 +5,11 @@ import org.slowcoders.jql.JqlEntityJoin;
 import org.slowcoders.jql.JqlSchema;
 import org.slowcoders.jql.JsonNodeType;
 
-class TableScope extends QScope {
+class TableQuery extends EntityQuery {
     private final JqlSchema schema;
 
-    public TableScope(JqlSchema schema) {
-        this(schema, Conjunction.AND);
-    }
-
-    public TableScope(JqlSchema schema, Conjunction delimiter) {
-        super(delimiter);
+    public TableQuery(EntityQuery parentQuery, JqlSchema schema) {
+        super(parentQuery);
         this.schema = schema;
     }
 
@@ -21,46 +17,41 @@ class TableScope extends QScope {
         return schema;
     }
 
-    public TableScope asTableScope() {
+    public TableQuery asTableQuery() {
         return this;
     }
 
     public String getTableName() { return schema.getTableName(); }
 
-    public TableScope getTable() {
+    public TableQuery getTableQuery() {
         return this;
     }
 
     @Override
-    public QScope getQueryScope_impl(JqlQuery query, String key, boolean isLeaf_unused, boolean fetchData) {
+    public EntityQuery getQueryScope_impl(String key, Type isLeaf_unused, boolean fetchData) {
         JqlEntityJoin joinKeys = schema.getJoinedColumnSet(key);
         if (joinKeys == null) {
             JqlColumn column = schema.getColumn(key);
             if (column.getValueFormat() != JsonNodeType.Object) return this;
         }
 
-        QScope entity = subEntities.get(key);
-        if (entity == null) {
+        EntityQuery subQuery = subQueries.get(key);
+        if (subQuery == null) {
             if (joinKeys != null) {
-                entity = query.addTableJoin(joinKeys, fetchData);
+                JqlSchema subSchema = getTopQuery().addTableJoin(joinKeys, fetchData);
+                subQuery = new TableQuery(this, subSchema);
             }
             else {
-                entity = new JsonScope(this, key);
+                subQuery = new JsonQuery(this, key);
             }
-            subEntities.put(key, entity);
-            super.add(entity);
+            subQueries.put(key, subQuery);
         }
-        return entity;
+        return subQuery;
     }
 
     @Override
     public void writeAttribute(QueryBuilder sb, String key, Class<?> valueType) {
         sb.write(getSchema().getTableName()).write(".").write(key);
-    }
-
-    @Override
-    public QScope createQueryScope(Conjunction conjunction) {
-        return new TableScope(this.schema, conjunction);
     }
 
     @Override

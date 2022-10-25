@@ -1,31 +1,34 @@
 package org.slowcoders.jql.parser;
 
+import org.slowcoders.jql.JqlSchema;
+
 import java.util.ArrayList;
 
-class PredicateSet implements Predicate {
-    Conjunction conjunction;
-    ArrayList<Predicate> predicates = new ArrayList<>();
+class PredicateSet extends ArrayList<Predicate> implements Predicate {
+    private final Conjunction conjunction;
 
     public PredicateSet(Conjunction conjunction) {
         this.conjunction = conjunction;
     }
 
-    public void add(Predicate predicate) {
-        this.predicates.add(predicate);
+    EntityQuery getEntityPredicates() { return null; }
+
+    public boolean add(Predicate predicate) {
+        return super.add(predicate);
     }
 
     @Override
     public void accept(JqlVisitor sb) {
-        if (predicates.size() == 0) {
+        if (super.size() == 0) {
             sb.visitAlwaysTrue();
             return;
         }
 
-        Predicate first = predicates.get(0);
-        if (predicates.size() == 1) {
+        Predicate first = super.get(0);
+        if (super.size() == 1) {
             first.accept(sb);
-            return;
+        } else {
+            sb.visitPredicateSet(this, conjunction);
         }
-        sb.visitPredicateSet(predicates, conjunction);
     }
 }

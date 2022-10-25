@@ -21,7 +21,7 @@ public class SearchQuery {
 
         QueryBuilder sb = new QueryBuilder(where.getSchema());
         sb.write("\nSELECT ");
-        if (false) {
+        if (true) {
             for (JqlSchema table : where.getFetchTables()) {
                 sb.write(table.getTableName()).write(".*, ");
             }

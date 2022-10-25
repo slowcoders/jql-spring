@@ -3,43 +3,33 @@ package org.slowcoders.jql.parser;
 import org.slowcoders.jql.JqlSchema;
 import org.slowcoders.jql.JsonNodeType;
 
-class JsonScope extends QScope {
-    private final QScope parent;
+class JsonQuery extends EntityQuery {
     private final String key;
 
-    JsonScope(QScope parentNode, String key) {
-        this(parentNode, key, Conjunction.AND);
-    }
-
-    JsonScope(QScope parentNode, String key, Conjunction conjunction) {
-        super(conjunction);
-        this.parent = parentNode;
+    JsonQuery(EntityQuery parentQuery, String key) {
+        super(parentQuery);
         this.key = key;
     }
 
     public JqlSchema getSchema() {
-        return getTable().getSchema();
-    }
-
-    public TableScope getTable() {
-        return parent.getTable();
+        return getTableQuery().getSchema();
     }
 
     @Override
-    public QScope getQueryScope_impl(JqlQuery query, String key, boolean isLeaf, boolean fetchData_unused) {
-        if (isLeaf) {
+    public EntityQuery getQueryScope_impl(String key, Type type, boolean fetchData_unused) {
+        if (type == Type.Leaf) {
             return this;
         }
-        QScope entity = subEntities.get(key);
+        EntityQuery entity = subQueries.get(key);
         if (entity == null) {
-            entity = new JsonScope(this, key);
-            subEntities.put(key, entity);
-            super.add(entity);
+            entity = new JsonQuery(this, key);
+            subQueries.put(key, entity);
+//            super.add(entity);
         }
         return entity;
     }
 
-    public JsonScope asJsonScope() {
+    public JsonQuery asJsonQuery() {
         return this;
     }
 
@@ -73,10 +63,10 @@ class JsonScope extends QScope {
         }
     }
 
-    @Override
-    public QScope createQueryScope(Conjunction conjunction) {
-        return new JsonScope(this.parent, this.key, conjunction);
-    }
+//    @Override
+//    public QScope createQueryScope(Conjunction conjunction) {
+//        return new JsonQuery(this.parent, this.key, conjunction);
+//    }
 
     @Override
     public String getColumnName(String key) {
@@ -84,7 +74,7 @@ class JsonScope extends QScope {
     }
 
     private void dumpColumnName(QueryBuilder sb) {
-        JsonScope p = parent.asJsonScope();
+        JsonQuery p = getParent().asJsonQuery();
         if (p != null) {
             p.dumpColumnName(sb);
             sb.write(" -> '").write(key).write('\'');
@@ -92,4 +82,5 @@ class JsonScope extends QScope {
             sb.write(key);
         }
     }
+
 }
