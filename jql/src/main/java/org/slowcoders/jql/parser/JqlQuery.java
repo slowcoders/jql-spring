@@ -9,14 +9,11 @@ import java.util.List;
 public class JqlQuery extends TableQuery {
 
     private ArrayList<JqlEntityJoin> joinMap = new ArrayList<>();
-    private ArrayList<JqlSchema> fetchTables = new ArrayList<>();
-
     private ArrayList<FetchInfo> fetchInfos = new ArrayList<>();
     private String[] emptyJsonPath = new String[0];
 
     public JqlQuery(JqlSchema schema) {
         super(null, schema);
-        this.fetchTables.add(schema);
         this.fetchInfos.add(new FetchInfo(emptyJsonPath, schema));
     }
 
@@ -29,12 +26,10 @@ public class JqlQuery extends TableQuery {
         if (joinMap.indexOf(joinKeys) < 0) {
             joinMap.add(joinKeys);
         }
-        if (fetchData && fetchTables.indexOf(schema) < 0) {
+        if (fetchData && !FetchInfo.contains(fetchInfos, schema)) {
             String[] basePath = getJsonPath(joinKeys.getAnchorSchema());
-
             String[] jsonPath = toJsonPath(basePath, joinKeys.getJsonName());
             this.fetchInfos.add(new FetchInfo(jsonPath, schema));
-            this.fetchTables.add(schema);
         }
         return schema;
     }
@@ -60,10 +55,6 @@ public class JqlQuery extends TableQuery {
     }
 
 
-    public Iterable<JqlSchema> getFetchTables() {
-        return fetchTables;
-    }
-
     public List<JqlEntityJoin> getJoinList() {
         return joinMap;
     }
@@ -81,6 +72,13 @@ public class JqlQuery extends TableQuery {
             this.jsonPath = jsonPath;
             this.schema = schema;
             this.alias = null;
+        }
+
+        static boolean contains(List<FetchInfo> list, JqlSchema schema) {
+            for (FetchInfo fi : list) {
+                if (fi.schema == schema) return true;
+            }
+            return false;
         }
     }
 }

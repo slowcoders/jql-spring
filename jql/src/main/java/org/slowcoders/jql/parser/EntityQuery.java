@@ -4,7 +4,6 @@ import java.util.HashMap;
 
 abstract class EntityQuery extends PredicateSet {
 
-
     enum Type {
         Leaf,
         Entity,

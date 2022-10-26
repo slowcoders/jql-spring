@@ -22,11 +22,13 @@ public class SearchQuery {
         QueryBuilder sb = new QueryBuilder(where.getSchema());
         sb.write("\nSELECT ");
         if (true) {
-            for (JqlSchema table : where.getFetchTables()) {
+            for (JqlQuery.FetchInfo fetch : where.getFetchList()) {
+                JqlSchema table = fetch.schema;
                 sb.write(table.getTableName()).write(".*, ");
             }
         } else {
-            for (JqlSchema table : where.getFetchTables()) {
+            for (JqlQuery.FetchInfo fetch : where.getFetchList()) {
+                JqlSchema table = fetch.schema;
                 for (JqlColumn col : table.getReadableColumns()) {
                     sb.write(table.getTableName()).write('.').write(col.getColumnName()).
                             write(" as ").write('\"').write(col.getJsonName()).write("\",\n");
