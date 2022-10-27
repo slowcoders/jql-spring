@@ -30,7 +30,7 @@ public class SearchQuery {
 
         if (limit > 0) sb.write("\nLIMIT " + limit);
 
-        JqlRowMapper rowMapper = new JqlRowMapper(where.getOutputNodes());
+        JqlRowMapper rowMapper = new JqlRowMapper(where.getResultMappings());
         return (List)jdbc.query(query, rowMapper);
     }
 

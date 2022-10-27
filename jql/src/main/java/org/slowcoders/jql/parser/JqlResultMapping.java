@@ -5,16 +5,16 @@ import org.slowcoders.jql.JqlSchema;
 
 import java.util.List;
 
-public class JqlOutputNode {
+public class JqlResultMapping {
     private final String[] jsonPath;
     private final JqlSchema schema;
     private List<JqlColumn> columns;
 
-    public JqlOutputNode(String[] jsonPath, JqlSchema schema) {
+    public JqlResultMapping(String[] jsonPath, JqlSchema schema) {
         this(jsonPath, schema, null);
     }
 
-    public JqlOutputNode(String[] jsonPath, JqlSchema schema, List<JqlColumn> columns) {
+    public JqlResultMapping(String[] jsonPath, JqlSchema schema, List<JqlColumn> columns) {
         this.jsonPath = jsonPath;
         this.schema = schema;
         this.columns = columns;

@@ -205,12 +205,12 @@ public class SqlBuilder extends SourceWriter<SqlBuilder> implements JqlVisitor, 
     public String createSelectQuery(JqlQuery where) {
         write("\nSELECT ");
         if (true) {
-            for (JqlOutputNode fetch : where.getOutputNodes()) {
+            for (JqlResultMapping fetch : where.getResultMappings()) {
                 JqlSchema table = fetch.getSchema();
                 write(table.getTableName()).write(".*, ");
             }
         } else {
-            for (JqlOutputNode fetch : where.getOutputNodes()) {
+            for (JqlResultMapping fetch : where.getResultMappings()) {
                 JqlSchema table = fetch.getSchema();
                 for (JqlColumn col : table.getReadableColumns()) {
                     write(table.getTableName()).write('.').write(col.getColumnName()).

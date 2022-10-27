@@ -9,12 +9,12 @@ import java.util.List;
 public class JqlQuery extends TableQuery {
 
     private ArrayList<JqlEntityJoin> joinMap = new ArrayList<>();
-    private ArrayList<JqlOutputNode> outputNodes = new ArrayList<>();
+    private ArrayList<JqlResultMapping> resultMappings = new ArrayList<>();
     private String[] emptyJsonPath = new String[0];
 
     public JqlQuery(JqlSchema schema) {
         super(null, schema);
-        this.outputNodes.add(new JqlOutputNode(emptyJsonPath, schema));
+        this.resultMappings.add(new JqlResultMapping(emptyJsonPath, schema));
     }
 
     public JqlQuery getTopQuery() {
@@ -29,20 +29,20 @@ public class JqlQuery extends TableQuery {
         if (fetchData && !isAlreadyFetched(schema)) {
             String[] basePath = getJsonPath(joinKeys.getAnchorSchema());
             String[] jsonPath = toJsonPath(basePath, joinKeys.getJsonName());
-            this.outputNodes.add(new JqlOutputNode(jsonPath, schema));
+            this.resultMappings.add(new JqlResultMapping(jsonPath, schema));
         }
         return schema;
     }
 
     private boolean isAlreadyFetched(JqlSchema schema) {
-        for (JqlOutputNode fi : outputNodes) {
+        for (JqlResultMapping fi : resultMappings) {
             if (fi.getSchema() == schema) return true;
         }
         return false;
     }
 
     private String[] getJsonPath(JqlSchema anchorSchema) {
-        for (JqlOutputNode fetch : outputNodes) {
+        for (JqlResultMapping fetch : resultMappings) {
             if (fetch.getSchema() == anchorSchema) {
                 return fetch.getJsonPath();
             }
@@ -66,8 +66,8 @@ public class JqlQuery extends TableQuery {
         return joinMap;
     }
 
-    public List<JqlOutputNode> getOutputNodes() {
-        return this.outputNodes;
+    public List<JqlResultMapping> getResultMappings() {
+        return this.resultMappings;
     }
 
 }

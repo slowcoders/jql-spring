@@ -2,7 +2,7 @@ package org.slowcoders.jql.jdbc.metadata;
 
 import org.slowcoders.jql.JqlColumn;
 import org.slowcoders.jql.JqlSchema;
-import org.slowcoders.jql.parser.JqlOutputNode;
+import org.slowcoders.jql.parser.JqlResultMapping;
 import org.slowcoders.jql.util.KVEntity;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.support.JdbcUtils;
@@ -15,11 +15,11 @@ import java.util.HashMap;
 import java.util.List;
 
 public class JqlRowMapper implements RowMapper<KVEntity> {
-    private final List<JqlOutputNode> outputNodes;
+    private final List<JqlResultMapping> resultMappings;
     private final HashMap<String, ArrayList<String>> joinMap = new HashMap<>();
 
-    public JqlRowMapper(List<JqlOutputNode> schema) {
-        this.outputNodes = schema;
+    public JqlRowMapper(List<JqlResultMapping> schema) {
+        this.resultMappings = schema;
     }
 
     @Override
@@ -39,7 +39,7 @@ public class JqlRowMapper implements RowMapper<KVEntity> {
             String tableName = rsmd.getTableName(idxColumn);
             String dbSchema = rsmd.getSchemaName(idxColumn);
             if (!tableName.equals(currTableName) || !dbSchema.equals(currDbSchema)) {
-                JqlOutputNode outNode = outputNodes.get(idxFetch ++);
+                JqlResultMapping outNode = resultMappings.get(idxFetch ++);
                 jqlSchema = outNode.getSchema();
                 String[] fieldPath = outNode.getJsonPath();
                 subEntity = baseEntity;
