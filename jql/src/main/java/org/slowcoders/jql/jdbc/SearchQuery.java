@@ -1,11 +1,9 @@
 package org.slowcoders.jql.jdbc;
 
-import org.slowcoders.jql.JqlColumn;
-import org.slowcoders.jql.JqlEntityJoin;
-import org.slowcoders.jql.JqlSchema;
 import org.slowcoders.jql.jdbc.metadata.JqlRowMapper;
 import org.slowcoders.jql.parser.JqlQuery;
 import org.slowcoders.jql.parser.QueryBuilder;
+import org.slowcoders.jql.parser.SqlBuilder;
 import org.slowcoders.jql.util.KVEntity;
 import org.springframework.data.domain.Sort;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -16,33 +14,14 @@ public class SearchQuery {
     String query;
     JqlQuery where;
     JdbcTemplate jdbc;
-    public SearchQuery(JqlQuery where) {
+    public SearchQuery(JqlQuery where, QueryBuilder builder) {
         this.where = where;
-
-        QueryBuilder sb = new QueryBuilder(where.getSchema());
-        sb.write("\nSELECT ");
-        if (true) {
-            for (JqlQuery.FetchInfo fetch : where.getFetchList()) {
-                JqlSchema table = fetch.schema;
-                sb.write(table.getTableName()).write(".*, ");
-            }
-        } else {
-            for (JqlQuery.FetchInfo fetch : where.getFetchList()) {
-                JqlSchema table = fetch.schema;
-                for (JqlColumn col : table.getReadableColumns()) {
-                    sb.write(table.getTableName()).write('.').write(col.getColumnName()).
-                            write(" as ").write('\"').write(col.getJsonName()).write("\",\n");
-                }
-            }
-        }
-        sb.replaceTrailingComma("\nFROM ");
-        sb.writeWhere(where, true);
-        query = sb.toString();
+        this.query = builder.createSelectQuery(where);
     }
 
 
     public List<KVEntity> execute(JdbcTemplate jdbc, Sort sort, int limit, int offset) {
-        QueryBuilder sb = new QueryBuilder(where.getSchema());
+        SqlBuilder sb = new SqlBuilder(where.getSchema());
         sb.write(query);
 
         write_orderBy(sb, sort);
@@ -51,11 +30,11 @@ public class SearchQuery {
 
         if (limit > 0) sb.write("\nLIMIT " + limit);
 
-        JqlRowMapper rowMapper = new JqlRowMapper(where.getFetchList());
+        JqlRowMapper rowMapper = new JqlRowMapper(where.getOutputNodes());
         return (List)jdbc.query(query, rowMapper);
     }
 
-    private void write_orderBy(QueryBuilder sb, Sort sort) {
+    private void write_orderBy(SqlBuilder sb, Sort sort) {
         if (sort == null) return;
 
         sb.write("\nORDER BY ");

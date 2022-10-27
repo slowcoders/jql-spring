@@ -50,7 +50,7 @@ class TableQuery extends EntityQuery {
     }
 
     @Override
-    public void writeAttribute(QueryBuilder sb, String key, Class<?> valueType) {
+    public void writeAttribute(SqlBuilder sb, String key, Class<?> valueType) {
         sb.write(getSchema().getTableName()).write(".").write(key);
     }
 

@@ -15,11 +15,13 @@ public class JqlSchema {
     private List<JqlColumn> writableColumns;
     private Map<String, JqlColumn> columnMap = new HashMap<>();
     protected final HashMap<String, JqlEntityJoin> tableJoinMap = new HashMap<>();
+    private final String alias;
 
     public JqlSchema(SchemaLoader schemaLoader, String tableName, String jpaClassName) {
         this.tableName = tableName;
         this.schemaLoader = schemaLoader;
         this.jpaClassName = jpaClassName;
+        this.alias = schemaLoader.generateUniqueAlias(this);
     }
 
     public final SchemaLoader getSchemaLoader() {
@@ -28,6 +30,10 @@ public class JqlSchema {
 
     public String getTableName() {
         return this.tableName;
+    }
+
+    public String getAlias() {
+        return this.alias;
     }
 
     public Iterable<JqlColumn> getReadableColumns() {

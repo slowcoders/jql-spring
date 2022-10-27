@@ -9,12 +9,12 @@ import java.util.List;
 public class JqlQuery extends TableQuery {
 
     private ArrayList<JqlEntityJoin> joinMap = new ArrayList<>();
-    private ArrayList<FetchInfo> fetchInfos = new ArrayList<>();
+    private ArrayList<JqlOutputNode> outputNodes = new ArrayList<>();
     private String[] emptyJsonPath = new String[0];
 
     public JqlQuery(JqlSchema schema) {
         super(null, schema);
-        this.fetchInfos.add(new FetchInfo(emptyJsonPath, schema));
+        this.outputNodes.add(new JqlOutputNode(emptyJsonPath, schema));
     }
 
     public JqlQuery getTopQuery() {
@@ -26,18 +26,25 @@ public class JqlQuery extends TableQuery {
         if (joinMap.indexOf(joinKeys) < 0) {
             joinMap.add(joinKeys);
         }
-        if (fetchData && !FetchInfo.contains(fetchInfos, schema)) {
+        if (fetchData && !isAlreadyFetched(schema)) {
             String[] basePath = getJsonPath(joinKeys.getAnchorSchema());
             String[] jsonPath = toJsonPath(basePath, joinKeys.getJsonName());
-            this.fetchInfos.add(new FetchInfo(jsonPath, schema));
+            this.outputNodes.add(new JqlOutputNode(jsonPath, schema));
         }
         return schema;
     }
 
+    private boolean isAlreadyFetched(JqlSchema schema) {
+        for (JqlOutputNode fi : outputNodes) {
+            if (fi.getSchema() == schema) return true;
+        }
+        return false;
+    }
+
     private String[] getJsonPath(JqlSchema anchorSchema) {
-        for (FetchInfo fetch : fetchInfos) {
-            if (fetch.schema == anchorSchema) {
-                return fetch.jsonPath;
+        for (JqlOutputNode fetch : outputNodes) {
+            if (fetch.getSchema() == anchorSchema) {
+                return fetch.getJsonPath();
             }
         }
         return null;
@@ -59,26 +66,8 @@ public class JqlQuery extends TableQuery {
         return joinMap;
     }
 
-    public List<FetchInfo> getFetchList() {
-        return this.fetchInfos;
+    public List<JqlOutputNode> getOutputNodes() {
+        return this.outputNodes;
     }
 
-    public static class FetchInfo {
-        public final String[] jsonPath;
-        public final JqlSchema schema;
-        public final String alias;
-
-        public FetchInfo(String[] jsonPath, JqlSchema schema) {
-            this.jsonPath = jsonPath;
-            this.schema = schema;
-            this.alias = null;
-        }
-
-        static boolean contains(List<FetchInfo> list, JqlSchema schema) {
-            for (FetchInfo fi : list) {
-                if (fi.schema == schema) return true;
-            }
-            return false;
-        }
-    }
 }

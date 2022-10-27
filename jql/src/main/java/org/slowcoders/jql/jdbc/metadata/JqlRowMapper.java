@@ -1,9 +1,8 @@
 package org.slowcoders.jql.jdbc.metadata;
 
 import org.slowcoders.jql.JqlColumn;
-import org.slowcoders.jql.JqlEntityJoin;
 import org.slowcoders.jql.JqlSchema;
-import org.slowcoders.jql.parser.JqlQuery;
+import org.slowcoders.jql.parser.JqlOutputNode;
 import org.slowcoders.jql.util.KVEntity;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.support.JdbcUtils;
@@ -16,11 +15,11 @@ import java.util.HashMap;
 import java.util.List;
 
 public class JqlRowMapper implements RowMapper<KVEntity> {
-    private final List<JqlQuery.FetchInfo> fetchList;
+    private final List<JqlOutputNode> outputNodes;
     private final HashMap<String, ArrayList<String>> joinMap = new HashMap<>();
 
-    public JqlRowMapper(List<JqlQuery.FetchInfo> schema) {
-        this.fetchList = schema;
+    public JqlRowMapper(List<JqlOutputNode> schema) {
+        this.outputNodes = schema;
     }
 
     @Override
@@ -40,21 +39,13 @@ public class JqlRowMapper implements RowMapper<KVEntity> {
             String tableName = rsmd.getTableName(idxColumn);
             String dbSchema = rsmd.getSchemaName(idxColumn);
             if (!tableName.equals(currTableName) || !dbSchema.equals(currDbSchema)) {
-                JqlQuery.FetchInfo fetchInfo = fetchList.get(idxFetch ++);
-                jqlSchema = fetchInfo.schema;
-                String[] fieldPath = fetchInfo.jsonPath;
+                JqlOutputNode outNode = outputNodes.get(idxFetch ++);
+                jqlSchema = outNode.getSchema();
+                String[] fieldPath = outNode.getJsonPath();
                 subEntity = baseEntity;
                 for (int i = 0; i < fieldPath.length; i++) {
                     subEntity = makeSubEntity(subEntity, fieldPath[i]);
                 }
-//                if (currTableName != null) {
-//                    jqlSchema = (JqlSchema) fetchList.getSchemaLoader().loadSchema(dbSchema, tableName);
-//                    ArrayList<String> fieldPath = getJoinedFieldPath(jqlSchema);
-//                    subEntity = baseEntity;
-//                    for (int i = fieldPath.size(); --i >= 0; ) {
-//                        subEntity = makeSubEntity(subEntity, fieldPath.get(i));
-//                    }
-//                }
                 currTableName = tableName;
                 currDbSchema = dbSchema;
             }

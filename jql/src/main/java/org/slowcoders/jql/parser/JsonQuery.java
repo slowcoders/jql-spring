@@ -34,7 +34,7 @@ class JsonQuery extends EntityQuery {
     }
 
     @Override
-    public void writeAttribute(QueryBuilder sb, String key, Class<?> valueType) {
+    public void writeAttribute(SqlBuilder sb, String key, Class<?> valueType) {
         sb.write("(");
         this.dumpColumnName(sb);
         sb.write(" ->> '").write(key).write("')");
@@ -73,7 +73,7 @@ class JsonQuery extends EntityQuery {
         return key.substring(key.lastIndexOf('.') + 1);
     }
 
-    private void dumpColumnName(QueryBuilder sb) {
+    private void dumpColumnName(SqlBuilder sb) {
         JsonQuery p = getParent().asJsonQuery();
         if (p != null) {
             p.dumpColumnName(sb);

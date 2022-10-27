@@ -7,11 +7,13 @@ import org.slowcoders.jql.util.AttributeNameConverter;
 import javax.persistence.Table;
 import java.lang.reflect.Field;
 import java.util.HashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public abstract class SchemaLoader {
 
     private final HashMap<Class<?>, JqlSchema> classToSchemaMap = new HashMap<>();
     private final AttributeNameConverter nameConverter;
+    private AtomicInteger cntSchema;
 
     protected SchemaLoader(AttributeNameConverter nameConverter) {
         this.nameConverter = nameConverter;
@@ -73,4 +75,9 @@ public abstract class SchemaLoader {
         return JsonJql.getColumnType(javaType);
     }
 
+    protected String generateUniqueAlias(JqlSchema schema) {
+        int id = cntSchema.getAndIncrement();
+        String alias = (id < 10 ? "t_" : "t") + id;
+        return alias;
+    }
 }

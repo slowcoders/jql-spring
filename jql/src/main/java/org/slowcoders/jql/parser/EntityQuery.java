@@ -71,7 +71,7 @@ abstract class EntityQuery extends PredicateSet {
 
     protected abstract EntityQuery getQueryScope_impl(String key, Type type, boolean fetchData);
 
-    public abstract void writeAttribute(QueryBuilder sb, String key, Class<?> valueType);
+    public abstract void writeAttribute(SqlBuilder sb, String key, Class<?> valueType);
 
     public abstract String getColumnName(String key);
 

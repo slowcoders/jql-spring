@@ -6,15 +6,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 public interface JqlVisitor {
-    void writeColumnNames(Iterable<String> names, boolean withTableName);
-
-    void writeWhere(JqlQuery where, boolean includeTableName);
-
-    QueryBuilder writeColumnName(String name, boolean withTableName);
-
-    QueryBuilder writeColumnName(String name);
-
-    QueryBuilder writeTableName();
 
     void visitCompare(QAttribute column, CompareOperator operator, Object value);
 
