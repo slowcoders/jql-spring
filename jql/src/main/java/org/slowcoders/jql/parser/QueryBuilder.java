@@ -8,8 +8,5 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 public interface QueryBuilder {
-
-    JqlSchema setWorkingSchema(JqlSchema jqlSchema);
-
     String createSelectQuery(JqlQuery where);
 }
