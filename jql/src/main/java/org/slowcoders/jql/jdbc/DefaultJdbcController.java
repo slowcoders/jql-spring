@@ -109,8 +109,8 @@ public class DefaultJdbcController {
     @DeleteMapping("/{schema}/{table}/{idList}")
     @ResponseBody
     @Operation(summary = "엔터티 삭제")
-    public Collection<Object> delete(@PathVariable("schema") String schema, @PathVariable("table") String table,
-                                 @PathVariable("idList") Collection<Object> idList) {
+    public Collection<String> delete(@PathVariable("schema") String schema, @PathVariable("table") String table,
+                                 @PathVariable("idList") Collection<String> idList) {
         JQLRepository<KVEntity, Object> repository = getRepository(schema, table);
         repository.delete(idList);
         return idList;

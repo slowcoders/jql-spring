@@ -67,10 +67,10 @@ public class MetadataProcessor extends SchemaLoader {
             if (join2 == null) {
                 schemaJoinMap.put(joinedSchema, join);
             } else {
-                if (join.size() == 1 && join2.size() == 1) {
-                    if (hasNameToken(join2.get(0).getJsonName(), tableName)) {
+                if (join.isJoinedBySingleKey() && join2.isJoinedBySingleKey()) {
+                    if (hasNameToken(join2.getJoinedColumns().get(0).getJsonName(), tableName)) {
                         mappedColumns.remove(idx);
-                    } else if (hasNameToken(join.get(0).getJsonName(), tableName)) {
+                    } else if (hasNameToken(join.getJoinedColumns().get(0).getJsonName(), tableName)) {
                         mappedColumns.remove(join2);
                         schemaJoinMap.put(joinedSchema, join);
                     }

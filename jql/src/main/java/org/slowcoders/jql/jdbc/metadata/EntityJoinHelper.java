@@ -31,8 +31,7 @@ class EntityJoinHelper {
 
     JqlEntityJoin createMappedColumn(boolean inverseMapped) {
         boolean isUnique = fkSchema.isUnique(fkColumns);
-        JqlEntityJoin join = new JqlEntityJoin(inverseMapped, isUnique);
-        join.addAll(fkColumns);
+        JqlEntityJoin join = new JqlEntityJoin(fkColumns, inverseMapped, isUnique);
         return join;
     }
 }

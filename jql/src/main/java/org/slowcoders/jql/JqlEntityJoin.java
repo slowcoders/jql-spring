@@ -3,14 +3,20 @@ package org.slowcoders.jql;
 import java.util.ArrayList;
 import java.util.List;
 
-public class JqlEntityJoin extends ArrayList<JqlColumn> {
+public class JqlEntityJoin {
     private String jsonName;
     private final boolean isUnique;
     private final boolean isInverseMapped;
+    private final List<JqlColumn> joinedColumns;
 
-    public JqlEntityJoin(boolean inverseMapped, boolean isUnique) {
+    public JqlEntityJoin(List<JqlColumn> joinedColumns , boolean inverseMapped, boolean isUnique) {
+        this.joinedColumns = joinedColumns;
         this.isInverseMapped = inverseMapped;
         this.isUnique = isUnique;
+    }
+
+    public List<JqlColumn> getJoinedColumns() {
+        return joinedColumns;
     }
 
     public boolean isInverseMapped() {
@@ -23,7 +29,7 @@ public class JqlEntityJoin extends ArrayList<JqlColumn> {
 
     public String getJsonName() {
         if (jsonName == null) {
-            jsonName = resolveJsonName(this);
+            jsonName = resolveJsonName(joinedColumns);
         }
         return jsonName;
     }
@@ -56,7 +62,7 @@ public class JqlEntityJoin extends ArrayList<JqlColumn> {
     }
 
     public JqlSchema getJoinedSchema() {
-        JqlColumn col = super.get(0);
+        JqlColumn col = joinedColumns.get(0);
         if (!isInverseMapped) {
             col = col.getJoinedPrimaryColumn();
         }
@@ -64,10 +70,14 @@ public class JqlEntityJoin extends ArrayList<JqlColumn> {
     }
 
     public JqlSchema getAnchorSchema() {
-        JqlColumn col = super.get(0);
+        JqlColumn col = joinedColumns.get(0);
         if (isInverseMapped) {
             col = col.getJoinedPrimaryColumn();
         }
         return col.getSchema();
+    }
+
+    public boolean isJoinedBySingleKey() {
+        return joinedColumns.size() == 1;
     }
 }
