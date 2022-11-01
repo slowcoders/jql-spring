@@ -37,20 +37,13 @@ public class SqlBuilder extends SourceWriter<SqlBuilder> implements JqlVisitor, 
     public void visitCompare(QAttribute column, CompareOperator operator, Object value) {
         column.printSQL(this);
         String op = "";
+        assert (value != null);
         switch (operator) {
             case EQ:
-                if (value == null) {
-                    value = " IS NULL";
-                } else {
-                    op = " = ";
-                }
+                op = " = ";
                 break;
             case NE:
-                if (value == null) {
-                    value = " IS NOT NULL";
-                } else {
-                    op = " != ";
-                }
+                op = " != ";
                 break;
 
             case GT:
@@ -123,9 +116,20 @@ public class SqlBuilder extends SourceWriter<SqlBuilder> implements JqlVisitor, 
     }
 
     @Override
-    public void visitIsNull(QAttribute key, boolean isNull) {
+    public void visitIsNull(QAttribute key, CompareOperator operator) {
+        String value;
+        switch (operator) {
+            case EQ:
+                value = " IS NULL";
+                break;
+            case NE:
+                value = " IS NOT NULL";
+                break;
+            default:
+                throw new RuntimeException("Invalid match operator with null value: " + operator);
+        }
         key.printSQL(this);
-        write(" IS NULL");
+        write(value);
     }
 
     @Override
@@ -220,6 +224,8 @@ public class SqlBuilder extends SourceWriter<SqlBuilder> implements JqlVisitor, 
         }
         replaceTrailingComma("\nFROM ");
         writeWhere(where, true);
-        return toString();
+        String sql = toString();
+        super.clear();
+        return sql;
     }
 }

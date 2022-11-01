@@ -76,12 +76,18 @@ public class JqlParser {
 
                 EntityQuery targetScope = targetPS.getEntityPredicates();
                 String columnName = targetScope.getColumnName(key);
-                if (targetScope.asJsonQuery() == null) {
-                    Class<?> fieldType = targetScope.getTableQuery().getSchema().getColumn(columnName).getJavaType();
-                    Class<?> accessType = op.getAccessType(value, fieldType);
-                    value = conversionService.convert(value, accessType);
+                QAttribute column;
+                if (value == null) {
+                    column = new QAttribute(targetScope, columnName, null);
                 }
-                QAttribute column = new QAttribute(targetScope, columnName, value.getClass());
+                else {
+                    if (targetScope.asJsonQuery() == null) {
+                        Class<?> fieldType = targetScope.getTableQuery().getSchema().getColumn(columnName).getJavaType();
+                        Class<?> accessType = op.getAccessType(value, fieldType);
+                        value = conversionService.convert(value, accessType);
+                    }
+                    column = new QAttribute(targetScope, columnName, value.getClass());
+                }
                 cond = op.createPredicate(column, value);
             }
 

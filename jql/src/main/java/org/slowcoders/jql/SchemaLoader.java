@@ -13,7 +13,7 @@ public abstract class SchemaLoader {
 
     private final HashMap<Class<?>, JqlSchema> classToSchemaMap = new HashMap<>();
     private final AttributeNameConverter nameConverter;
-    private AtomicInteger cntSchema;
+    private AtomicInteger cntSchema = new AtomicInteger();
 
     protected SchemaLoader(AttributeNameConverter nameConverter) {
         this.nameConverter = nameConverter;

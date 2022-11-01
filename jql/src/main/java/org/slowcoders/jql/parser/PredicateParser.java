@@ -87,7 +87,7 @@ abstract class PredicateParser {
 
         public Predicate createPredicate(QAttribute column, Object value) {
             Predicate cond;
-            Collection values = ClassUtils.asCollection(value);
+            Collection values = value == null ? null : ClassUtils.asCollection(value);
             if (values != null) {
                 cond = new Predicate.MatchAny(column, operator, values);
             }
@@ -95,17 +95,6 @@ abstract class PredicateParser {
                 cond = new Predicate.Compare(column, value, operator);
             }
             return cond;
-        }
-    };
-
-    private static final PredicateParser ISNULL = new PredicateParser() {
-        public Class<?> getAccessType(Object value, Class<?> fieldType) {
-            return boolean.class;
-        }
-
-        public Predicate createPredicate(QAttribute column, Object value) {
-            CompareOperator op = value == Boolean.TRUE ? CompareOperator.EQ : CompareOperator.NE;
-            return new Predicate.Compare(column, op, null);
         }
     };
 
@@ -155,8 +144,6 @@ abstract class PredicateParser {
 
         operators.put("like", new MatchAny(CompareOperator.LIKE, true));
         operators.put("not like", new MatchAny(CompareOperator.NOT_LIKE, true));
-
-        operators.put("isnull", ISNULL);
 
         operators.put("eq", new MatchAny(CompareOperator.EQ, true));
         operators.put("ne", new MatchAny(CompareOperator.NE, true));

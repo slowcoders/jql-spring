@@ -117,6 +117,10 @@ public class SourceWriter<Self extends SourceWriter> {
         return (Self)this;
     }
 
+    public void clear() {
+        sb.setLength(0);
+    }
+
     public Self replaceTrailingComma(String text) {
         int len = sb.length();
         while (len > 0) {

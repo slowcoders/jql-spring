@@ -13,7 +13,7 @@ public interface JqlVisitor {
 
     void visitMatchAny(QAttribute key, CompareOperator operator, Collection values);
 
-    void visitIsNull(QAttribute key, boolean isNull);
+    void visitIsNull(QAttribute key, CompareOperator operator);
 
     void visitAlwaysTrue();
 

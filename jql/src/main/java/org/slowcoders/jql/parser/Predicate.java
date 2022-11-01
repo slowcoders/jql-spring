@@ -35,7 +35,11 @@ interface Predicate extends Expression {
 
         @Override
         public void accept(JqlVisitor sb) {
-            sb.visitCompare(key, operator, value);
+            if (value == null) {
+                sb.visitIsNull(key, operator);
+            } else {
+                sb.visitCompare(key, operator, value);
+            }
         }
     }
 
