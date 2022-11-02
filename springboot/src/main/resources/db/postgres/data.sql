@@ -16,11 +16,11 @@ INSERT INTO petclinic.vet_specialties VALUES (4, 2) ON CONFLICT (vet_id, special
 INSERT INTO petclinic.vet_specialties VALUES (5, 1) ON CONFLICT (vet_id, specialty_id) DO NOTHING;
 
 INSERT INTO petclinic.types (name) values ('cat') on conflict do nothing;
-INSERT INTO petclinic.types (name) SELECT ('dog') on conflict do nothing;
-INSERT INTO petclinic.types (name) SELECT ('lizard') on conflict do nothing;
-INSERT INTO petclinic.types (name) SELECT ('snake') on conflict do nothing;
-INSERT INTO petclinic.types (name) SELECT ('bird') on conflict do nothing;
-INSERT INTO petclinic.types (name) SELECT ('hamster') on conflict do nothing;
+INSERT INTO petclinic.types (name) values ('dog') on conflict do nothing;
+INSERT INTO petclinic.types (name) values ('lizard') on conflict do nothing;
+INSERT INTO petclinic.types (name) values ('snake') on conflict do nothing;
+INSERT INTO petclinic.types (name) values ('bird') on conflict do nothing;
+INSERT INTO petclinic.types (name) values ('hamster') on conflict do nothing;
 
 INSERT INTO petclinic.owners (first_name, last_name, address, city, telephone) SELECT 'George', 'Franklin', '110 W. Liberty St.', 'Madison', '6085551023' WHERE NOT EXISTS (SELECT * FROM petclinic.owners WHERE id=1);
 INSERT INTO petclinic.owners (first_name, last_name, address, city, telephone) SELECT 'Betty', 'Davis', '638 Cardinal Ave.', 'Sun Prairie', '6085551749' WHERE NOT EXISTS (SELECT * FROM petclinic.owners WHERE id=2);

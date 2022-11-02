@@ -15,16 +15,7 @@ public interface BatchPreparedStatementSetterWithKeyHolder extends BatchPrepared
 
     void setGeneratedKeys(List<Map<String, Object>> keys);
 
-    /**
-     * 批量更新
-     * @param jdbcTemplate
-     * @param sql
-     * @param pss
-     * @param keyHolder 存储主键，如果要存储主键，就必须传入此对象
-     * @return sql执行结果
-     * @see JdbcTemplate#batchUpdate(String, BatchPreparedStatementSetter)
-     */
-    public static int[] batchUpdateWithKeyHolder(JdbcTemplate jdbcTemplate, final String sql, final BatchPreparedStatementSetterWithKeyHolder pss) {
+    static int[] batchUpdateWithKeyHolder(JdbcTemplate jdbcTemplate, final String sql, final BatchPreparedStatementSetterWithKeyHolder pss) {
         return jdbcTemplate.execute(new PreparedStatementCreator() {
             @Override
             public PreparedStatement createPreparedStatement(Connection con) throws SQLException {

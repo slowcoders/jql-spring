@@ -1,13 +1,14 @@
 <template>
   <form>
     <div class="mb-3">
-      <label for="exampleFormControlInput1" class="form-label">Email address</label>
+      <label class="form-label">Email address</label>
       <Codemirror id="code-editor"
           v-model:value="code"
           :options="cmOptions"
           border
           placeholder="test placeholder"
           :height="200"
+          :aria-readonly="true"
           @change="change"
       />
     </div>
@@ -32,9 +33,14 @@ import "codemirror/theme/dracula.css";
 
 import { ref } from "vue";
 export default {
+  props : {
+    js_code : String
+  },
+
   components: { Codemirror },
-  setup() {
-    const code = ref(`
+  setup(props) {
+    // const code = ref(this.js_code)
+ref(`
 var i = 0;
 for (; i < 9; i++) {
   console.log(i);
@@ -42,7 +48,7 @@ for (; i < 9; i++) {
 }`);
 
     return {
-      code,
+      code: props.js_code ,
       cmOptions: {
         mode: "text/javascript", // Language mode
         theme: "dracula", // Theme
@@ -51,9 +57,15 @@ for (; i < 9; i++) {
         indentUnit: 4, // The smart indent unit is 2 spaces in length
         foldGutter: true, // Code folding
         styleActiveLine: true, // Display the style of the selected row
+        readOnly: true
       },
     };
   },
+  // data() {
+  //   return {
+  //     code: this.js_code
+  // ``}
+  // },
   methods : {
     execute() {
       console.log(this.code)
