@@ -3,6 +3,7 @@
     <div class="mb-3">
       <label class="form-label">Email address</label>
       <Codemirror id="code-editor"
+                  ref="cm"
           v-model:value="code"
           :options="cmOptions"
           border
@@ -17,7 +18,15 @@
     </b-button>
     <div class="mb-3">
       <label for="exampleFormControlTextarea1" class="form-label">Example textarea</label>
-      <textarea class="form-control" id="exampleFormControlTextarea1" rows="3"></textarea>
+      <Codemirror id="result-view"
+                  v-model:value="test_result"
+                  :options="cmOptions"
+                  border
+                  placeholder="test placeholder"
+                  :height="200"
+                  :aria-readonly="true"
+                  @change="change"
+      />
     </div>
   </form>
 </template>
@@ -32,6 +41,9 @@ import "codemirror/mode/javascript/javascript.js";
 import "codemirror/theme/dracula.css";
 
 import { ref } from "vue";
+
+import axios from "axios";
+
 export default {
   props : {
     js_code : String
@@ -49,6 +61,8 @@ for (; i < 9; i++) {
 
     return {
       code: props.js_code ,
+      test_result: '',
+      axios: axios,
       cmOptions: {
         mode: "text/javascript", // Language mode
         theme: "dracula", // Theme
@@ -61,14 +75,21 @@ for (; i < 9; i++) {
       },
     };
   },
-  // data() {
-  //   return {
-  //     code: this.js_code
-  // ``}
-  // },
+  data() {
+    return {
+      http_res: ''
+    }
+  },
   methods : {
     execute() {
-      console.log(this.code)
+      const vm = this;
+      this.exampleFormControlTextarea1 = vm.code;
+      eval(vm.code);
+      vm.http_res.then((res) => {
+        vm.$refs.cm.setValue = (res.data);
+        vm.test_result = res.data;
+        console.log(res.data)
+      })
     }
   }
 };
