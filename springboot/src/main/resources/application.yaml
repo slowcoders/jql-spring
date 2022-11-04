@@ -29,7 +29,7 @@ server:
     mime-types: application/json,application/xml,text/html,text/xml,text/plain,application/javascript
 
 
-database: postgres-agila
+database: starwars
 
 spring:
   sql.init:
