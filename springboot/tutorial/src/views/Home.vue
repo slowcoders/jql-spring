@@ -8,11 +8,11 @@
 <script>
 import About from "./About";
 
-const sample_code = `
+const sample_code = `// JQL sample
 const dbSchema = 'petclinic'
 const dbTable = 'pets'
 const jql = {}
-this.http_res = this.axios.post(\`http://localhost:6090/api/jql/\${dbSchema}/\${dbTable}/find\`, jql)
+this.http_post(\`http://localhost:6090/api/jql/\${dbSchema}/\${dbTable}/find\`, jql);
 `
 export default {
   components: {

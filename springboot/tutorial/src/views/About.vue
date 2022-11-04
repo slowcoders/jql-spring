@@ -2,14 +2,12 @@
   <form>
     <div class="mb-3">
       <label class="form-label">Email address</label>
-      <Codemirror id="code-editor"
-                  ref="cm"
+      <CodeMirror
           v-model:value="code"
-          :options="cmOptions"
+          :options="editOptions"
           border
           placeholder="test placeholder"
           :height="200"
-          :aria-readonly="true"
           @change="change"
       />
     </div>
@@ -17,27 +15,24 @@
       run
     </b-button>
     <div class="mb-3">
-      <label for="exampleFormControlTextarea1" class="form-label">Example textarea</label>
-      <Codemirror id="result-view"
-                  v-model:value="test_result"
-                  :options="cmOptions"
-                  border
-                  placeholder="test placeholder"
-                  :height="200"
-                  :aria-readonly="true"
-                  @change="change"
+      <label class="form-label">Example textarea</label>
+      <CodeMirror
+          class="test-result-view" ref="resultView"
+          v-model:value="test_result"
+          :options="viewOptions"
+          border
+          placeholder="test placeholder"
+          :height="600"
+          :aria-readonly="true"
+          @change="change"
       />
     </div>
   </form>
 </template>
 
 <script>
-import Codemirror from "codemirror-editor-vue3";
-
-// language
+import CodeMirror from "codemirror-editor-vue3";
 import "codemirror/mode/javascript/javascript.js";
-
-// theme
 import "codemirror/theme/dracula.css";
 
 import { ref } from "vue";
@@ -49,29 +44,29 @@ export default {
     js_code : String
   },
 
-  components: { Codemirror },
+  components: { CodeMirror },
   setup(props) {
-    // const code = ref(this.js_code)
-ref(`
-var i = 0;
-for (; i < 9; i++) {
-  console.log(i);
-  // more statements
-}`);
-
     return {
-      code: props.js_code ,
+      code: props.js_code,
       test_result: '',
       axios: axios,
-      cmOptions: {
+      editOptions: {
         mode: "text/javascript", // Language mode
-        theme: "dracula", // Theme
+        theme: "default", // Theme
         lineNumbers: true, // Show line number
         smartIndent: true, // Smart indent
         indentUnit: 4, // The smart indent unit is 2 spaces in length
         foldGutter: true, // Code folding
         styleActiveLine: true, // Display the style of the selected row
-        readOnly: true
+      },
+      viewOptions: {
+        mode: "text/javascript", // Language mode
+        theme: "dracula", // Theme
+        lineNumbers: false, // Show line number
+        smartIndent: true, // Smart indent
+        indentUnit: 4, // The smart indent unit is 2 spaces in length
+        foldGutter: true, // Code folding
+        styleActiveLine: true, // Display the style of the selected row
       },
     };
   },
@@ -80,15 +75,18 @@ for (; i < 9; i++) {
       http_res: ''
     }
   },
+  mounted() {
+    this.resultView = this.$refs.resultView.cminstance;
+  },
   methods : {
     execute() {
+      eval(this.code);
+    },
+
+    http_post(url, jql) {
       const vm = this;
-      this.exampleFormControlTextarea1 = vm.code;
-      eval(vm.code);
-      vm.http_res.then((res) => {
-        vm.$refs.cm.setValue = (res.data);
-        vm.test_result = res.data;
-        console.log(res.data)
+      axios.post(url, jql).then((res) => {
+        vm.resultView.setValue(JSON.stringify(res.data, null, 4));
       })
     }
   }
@@ -104,6 +102,9 @@ for (; i < 9; i++) {
   .CodeMirror * {
     font-family: Curier, monospace;
     font-size: small;
+  }
+  .test-result-view .CodeMirror-cursor {
+    display: none !important
   }
 
 </style>
