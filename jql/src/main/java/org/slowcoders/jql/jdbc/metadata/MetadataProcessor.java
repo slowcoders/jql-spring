@@ -55,32 +55,11 @@ public class MetadataProcessor extends SchemaLoader {
         String tableName = tablePath.substring(dot_p + 1);
         ArrayList<String> primaryKeys = getPrimaryKeys(conn, dbSchema, tableName);
         ArrayList<JqlColumn> columns = getColumns(conn, dbSchema, tableName, schema, primaryKeys);
-        ArrayList<String[]> uniqueConstraints = getUniqueConstraints(conn, dbSchema, tableName);
+        HashMap<String, List<String>> uniqueConstraints = getUniqueConstraints(conn, dbSchema, tableName);
         schema.init(columns, uniqueConstraints);
-        ArrayList<JqlEntityJoin> joinedColumns = getJoinedKeyInfos(conn, schema, dbSchema, tableName);
-        ArrayList<JqlEntityJoin> mappedColumns = getJoinedKeyInfos(conn, null, dbSchema, tableName);
-        HashMap<JqlSchema, JqlEntityJoin> schemaJoinMap = new HashMap<>();
-        for (int idx = mappedColumns.size(); --idx >= 0; ) {
-            JqlEntityJoin join = mappedColumns.get(idx);
-            JqlSchema joinedSchema = join.getJoinedSchema();
-            JqlEntityJoin join2 = schemaJoinMap.get(joinedSchema);
-            if (join2 == null) {
-                schemaJoinMap.put(joinedSchema, join);
-            } else {
-                if (join.isJoinedBySingleKey() && join2.isJoinedBySingleKey()) {
-                    if (hasNameToken(join2.getJoinedColumns().get(0).getJsonName(), tableName)) {
-                        mappedColumns.remove(idx);
-                    } else if (hasNameToken(join.getJoinedColumns().get(0).getJsonName(), tableName)) {
-                        mappedColumns.remove(join2);
-                        schemaJoinMap.put(joinedSchema, join);
-                    }
-                }
-                else {
-                    throw new RuntimeException("Conflict Mapped Schema");
-                }
-            }
-        }
-        schema.initMappedColumns(joinedColumns, mappedColumns);
+        getJoinedKeyInfos(conn, true, schema,  dbSchema, tableName);
+        EntityJoinHelper exportedJoins = getJoinedKeyInfos(conn, false, schema, dbSchema, tableName);
+        schema.initMappedColumns(exportedJoins.values(), false);
         return schema;
     }
 
@@ -146,8 +125,8 @@ public class MetadataProcessor extends SchemaLoader {
         return names;
     }
 
-    private ArrayList<String[]> getUniqueConstraints(Connection conn, String dbSchema, String tableName) throws SQLException {
-        HashMap<String, ArrayList<String>> indexMap = new HashMap<>();
+    private HashMap<String, List<String>> getUniqueConstraints(Connection conn, String dbSchema, String tableName) throws SQLException {
+        HashMap<String, List<String>> indexMap = new HashMap<>();
 
         DatabaseMetaData md = conn.getMetaData();
         ResultSet rs = md.getIndexInfo(catalog, dbSchema, tableName, true, false);
@@ -169,24 +148,21 @@ public class MetadataProcessor extends SchemaLoader {
             assert(table_cat == null);
             assert(is_unique);
 
-            ArrayList<String> indexes = indexMap.get(index_name);
+            List<String> indexes = indexMap.get(index_name);
             if (indexes == null) {
                 indexes = new ArrayList<>();
                 indexMap.put(index_name, indexes);
             }
             indexes.add(column_name);
         }
-        ArrayList<String[]> uniqueIndexes = new ArrayList<>();
-        for (ArrayList<String> uc : indexMap.values()) {
-            uniqueIndexes.add(uc.toArray(new String[uc.size()]));
-        }
-        return uniqueIndexes;
+        return indexMap;
     }
 
-    private ArrayList<JqlEntityJoin> getJoinedKeyInfos(Connection conn, JqlSchema fkSchema, String dbSchema, String tableName) throws SQLException {
-        boolean isForeignKeyJoin = fkSchema != null;
+    private EntityJoinHelper getJoinedKeyInfos(Connection conn, boolean isForeignKeyJoin, JdbcSchema baseSchema, String dbSchema, String tableName) throws SQLException {
+        JdbcSchema fkSchema = isForeignKeyJoin ? baseSchema : null;
+        JdbcSchema pkSchema = !isForeignKeyJoin ? baseSchema : null;
 
-        HashMap<String, EntityJoinHelper> fkMap = new HashMap<>();
+        EntityJoinHelper joins = isForeignKeyJoin ? null : new EntityJoinHelper(pkSchema);
 
         DatabaseMetaData md = conn.getMetaData();
         ResultSet rs;
@@ -200,6 +176,7 @@ public class MetadataProcessor extends SchemaLoader {
             String pktable_schem = rs.getString("pktable_schem");
             String pktable_name  = rs.getString("pktable_name");
 
+            // 참고) fk_name 은 column-name 이 아니라, fk constraint 의 name 이다.
             String fk_name = rs.getString("fk_name");
             String fktable_schem = rs.getString("fktable_schem");
             String fktable_name  = rs.getString("fktable_name");
@@ -222,24 +199,18 @@ public class MetadataProcessor extends SchemaLoader {
                 fk = fkSchema.getColumn(fkColumnName);
                 ((JdbcColumn) fk).bindPrimaryKey(new ColumnBinder(this, pkTableName, pkColumnName));
             } else {
-                fkSchema = loadSchema(fkTableName);
+                fkSchema = (JdbcSchema) loadSchema(fkTableName);
                 fk = fkSchema.getColumn(fkColumnName);
             }
 
-            fk_name = fkTableName + '.' + fk_name;
-            EntityJoinHelper joinHelper = fkMap.get(fk_name);
-            if (joinHelper == null) {
-                joinHelper = new EntityJoinHelper(fkSchema);
-                fkMap.put(fk_name, joinHelper);
+            JqlEntityJoin join = fkSchema.makeForeignKeyConstraint(fk_name);
+            if (isForeignKeyJoin) {
+                join.addForeignKey(fk);
+            } else {
+                joins.put(fkSchema, join);
             }
-            joinHelper.addForeignKey(fk);
         }
-
-        ArrayList<JqlEntityJoin> joinedColumns = new ArrayList<>();
-        for (EntityJoinHelper mc : fkMap.values()) {
-            joinedColumns.add(mc.createMappedColumn(!isForeignKeyJoin));
-        }
-        return joinedColumns;
+        return joins;
     }
 
     private ArrayList<JqlColumn> getColumns(Connection conn, String dbSchema, String tableName, JqlSchema schema, ArrayList<String> primaryKeys) throws SQLException {

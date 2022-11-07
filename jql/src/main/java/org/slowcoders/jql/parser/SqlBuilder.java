@@ -218,7 +218,7 @@ public class SqlBuilder extends SourceWriter<SqlBuilder> implements JqlVisitor, 
                 JqlSchema table = fetch.getSchema();
                 for (JqlColumn col : table.getReadableColumns()) {
                     write(table.getTableName()).write('.').write(col.getColumnName()).
-                            write(" as ").write('\"').write(col.getJsonName()).write("\",\n");
+                            write(" as ").write('\"').write(col.getJsonKey()).write("\",\n");
                 }
             }
         }

@@ -34,7 +34,7 @@ public class BatchUpsert<ID> implements BatchPreparedStatementSetterWithKeyHolde
         Map<String, Object> entity = entities[i];
         int idx = 0;
         for (JqlColumn col : columns) {
-            Object json_v = entity.get(col.getJsonName());
+            Object json_v = entity.get(col.getJsonKey());
             Object value = convertJsonValueToColumnValue(col, json_v);
             ps.setObject(++idx, value);
         }
@@ -81,13 +81,13 @@ public class BatchUpsert<ID> implements BatchPreparedStatementSetterWithKeyHolde
             Object[] id = new Object[pkColumns.size()];
             int i = 0;
             for (JqlColumn pk : pkColumns) {
-                Object v = getValue(pk.getJsonName(), entity, generatedKeys);
+                Object v = getValue(pk.getJsonKey(), entity, generatedKeys);
                 id[i++] = v;
             }
             return id;
         }
         else {
-            Object id = getValue(pkColumns.get(0).getJsonName(), entity, generatedKeys);
+            Object id = getValue(pkColumns.get(0).getJsonKey(), entity, generatedKeys);
             return id;
         }
     }

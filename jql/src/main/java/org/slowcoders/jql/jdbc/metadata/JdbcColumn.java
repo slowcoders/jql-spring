@@ -52,7 +52,7 @@ public class JdbcColumn extends JqlColumn {
     }
 
     @Override
-    public String getJsonName() {
+    public String getJsonKey() {
         if (fieldName == null) {
             fieldName = this.resolveFieldName();
         }
@@ -95,7 +95,7 @@ public class JdbcColumn extends JqlColumn {
         StringBuilder sb = new StringBuilder();
         JqlColumn col = this;
         for (JqlColumn joinedPk; (joinedPk = col.getJoinedPrimaryColumn()) != null; col = joinedPk) {
-            String token = JqlEntityJoin.resolveJsonName(col);
+            String token = JqlEntityJoin.initJsonKey(col);
             sb.append(token).append('.');
         }
         CharSequence rawFieldName = (col != this) ? sb.append(col.getColumnName()) : this.getColumnName();

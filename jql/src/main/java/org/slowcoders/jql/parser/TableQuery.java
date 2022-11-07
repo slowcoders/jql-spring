@@ -29,7 +29,7 @@ class TableQuery extends EntityQuery {
 
     @Override
     public EntityQuery getQueryScope_impl(String key, Type isLeaf_unused, boolean fetchData) {
-        JqlEntityJoin joinKeys = schema.getJoinedColumnSet(key);
+        JqlEntityJoin joinKeys = schema.getEntityJoinBy(key);
         if (joinKeys == null) {
             JqlColumn column = schema.getColumn(key);
             if (column.getValueFormat() != JsonNodeType.Object) return this;

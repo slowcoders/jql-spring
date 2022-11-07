@@ -5,17 +5,17 @@ import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import java.util.*;
 
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
-public class JqlSchema {
+public abstract class JqlSchema {
     private final SchemaLoader schemaLoader;
     private final String tableName;
+    private final String alias;
     private String jpaClassName;
 
     private List<JqlColumn> pkColumns;
     private List<JqlColumn> allColumns;
     private List<JqlColumn> writableColumns;
     private Map<String, JqlColumn> columnMap = new HashMap<>();
-    protected final HashMap<String, JqlEntityJoin> tableJoinMap = new HashMap<>();
-    private final String alias;
+    private final HashMap<String, JqlEntityJoin> entityJoinMap = new HashMap<>();
 
     public JqlSchema(SchemaLoader schemaLoader, String tableName, String jpaClassName) {
         this.tableName = tableName;
@@ -48,12 +48,8 @@ public class JqlSchema {
         return this.pkColumns;
     }
 
-    public JqlEntityJoin getJoinedColumnSet(String fieldName) {
-        return tableJoinMap.get(fieldName);
-    }
-
-    public Iterable<String> getJoinedFieldNames() {
-        return tableJoinMap.keySet();
+    public JqlEntityJoin getEntityJoinBy(String jsonKey) {
+        return entityJoinMap.get(jsonKey);
     }
 
     public JqlColumn getColumn(String key) throws IllegalArgumentException {
@@ -97,11 +93,12 @@ public class JqlSchema {
         this.writableColumns = Collections.unmodifiableList(writableColumns);
     }
 
-    protected void initJsonNames() {
+    protected void initJsonKeys() {
         for (JqlColumn ci: allColumns) {
-            String fieldName = ci.getJsonName();
+            String fieldName = ci.getJsonKey();
             columnMap.put(fieldName, ci);
         }
+
     }
 
     public Map<String, Object> splitUnknownProperties(Map<String, Object> metric)  {
@@ -133,7 +130,7 @@ public class JqlSchema {
     }
 
     public String getLogicalAttributeName(String columnName) {
-        return this.columnMap.get(columnName).getJsonName();
+        return this.columnMap.get(columnName).getJsonKey();
     }
 
     public String[] getPhysicalColumnNames(String[] fieldNames) {
@@ -154,15 +151,16 @@ public class JqlSchema {
         return out;
     }
 
-    protected void initMappedColumns(String key, JqlEntityJoin mappedColumns) {
-        this.tableJoinMap.put(key, mappedColumns);
+    protected void registerMappedColumns(String key, JqlEntityJoin mappedColumns) {
+        this.entityJoinMap.put(key, mappedColumns);
     }
 
-    public boolean isUnique(List<JqlColumn> fkColumns) {
+    public boolean isUniqueConstrainedColumnSet(List<JqlColumn> fkColumns) {
         return false;
     }
 
     public String toString() {
         return this.tableName;
     }
+
 }

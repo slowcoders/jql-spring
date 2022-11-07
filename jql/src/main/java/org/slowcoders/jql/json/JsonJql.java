@@ -27,7 +27,7 @@ public class JsonJql {
         }
 
 //        String max = getPrecision(col, jsonType);
-        sb.append("  ").append(col.getJsonName());
+        sb.append("  ").append(col.getJsonKey());
         while (sb.length() < 20) {
             sb.append(' ');
         }
@@ -59,8 +59,8 @@ public class JsonJql {
             sb.append(schema.getTableName()).append("Schema.join(\"");
             sb.append(jqlColumn.getColumnName()).append("\", ");
             sb.append(joined_pk.getSchema().getEntityClassName()).append("Schema, \"");
-            sb.append(joined_pk.getJsonName()).append("\", \"");
-            sb.append(jqlColumn.getJsonName()).append("\");\n");
+            sb.append(joined_pk.getJsonKey()).append("\", \"");
+            sb.append(jqlColumn.getJsonKey()).append("\");\n");
         }
         return sb.toString();
     }

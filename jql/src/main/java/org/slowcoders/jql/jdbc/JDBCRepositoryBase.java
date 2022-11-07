@@ -84,7 +84,7 @@ public class JDBCRepositoryBase<ID> /*extends JDBCQueryBuilder*/ implements JQLR
             JqlColumn pk = pkColumns.get(i);
             Object raw_v = raw_values == single_pk_value ? id : raw_values[i];
             Object k_v = cvtService.convert(raw_v, pk.getJavaType());
-            map.put(pk.getJsonName(), k_v);
+            map.put(pk.getJsonKey(), k_v);
         }
         return map;
     }

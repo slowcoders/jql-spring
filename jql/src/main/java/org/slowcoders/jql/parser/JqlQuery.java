@@ -28,7 +28,7 @@ public class JqlQuery extends TableQuery {
         }
         if (fetchData && !isAlreadyFetched(schema)) {
             String[] basePath = getJsonPath(joinKeys.getAnchorSchema());
-            String[] jsonPath = toJsonPath(basePath, joinKeys.getJsonName());
+            String[] jsonPath = toJsonPath(basePath, joinKeys.getJsonKey());
             this.resultMappings.add(new JqlResultMapping(jsonPath, schema));
         }
         return schema;
@@ -50,8 +50,8 @@ public class JqlQuery extends TableQuery {
         return null;
     }
 
-    private String[] toJsonPath(String[] basePath, String jsonName) {
-        String[] path = jsonName.split("\\.");
+    private String[] toJsonPath(String[] basePath, String jsonKey) {
+        String[] path = jsonKey.split("\\.");
         if (basePath != null && basePath.length > 0) {
             String[] jsonPath = new String[basePath.length + path.length];
             System.arraycopy(basePath, 0, jsonPath, 0, basePath.length);

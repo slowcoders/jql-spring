@@ -41,7 +41,7 @@ public class JpaColumn extends JqlColumn {
     }
 
     @Override
-    public String getJsonName() {
+    public String getJsonKey() {
         return this.field.getName();
     }
 

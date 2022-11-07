@@ -50,7 +50,7 @@ public class JqlRowMapper implements RowMapper<KVEntity> {
                 currDbSchema = dbSchema;
             }
             JqlColumn jqlColumn = jqlSchema.getColumn(column);
-            String fieldName = jqlColumn.getJsonName();
+            String fieldName = jqlColumn.getJsonKey();
             Object value = getColumnValue(rs, idxColumn);
 
             KVEntity entity = subEntity;

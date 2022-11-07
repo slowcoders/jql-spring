@@ -10,40 +10,23 @@ import org.slowcoders.jql.util.AttributeNameConverter;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
 public class JdbcSchema extends JqlSchema {
-    private List<String[]> uniqueConstraints;
+    private HashMap<String, List<String>> uniqueConstraints = new HashMap<>();
+    private final HashMap<String, JqlEntityJoin> fkConstraints = new HashMap<>();
 
     protected JdbcSchema(SchemaLoader schemaLoader, String tableName) {
         super(schemaLoader, tableName,
                 AttributeNameConverter.camelCaseConverter.toLogicalAttributeName(tableName.substring(tableName.indexOf('.') + 1)));
     }
 
-    protected void init(ArrayList<? extends JqlColumn> columns, List<String[]> uniqueConstraints) {
+    protected void init(ArrayList<? extends JqlColumn> columns, HashMap<String, List<String>> uniqueConstraints) {
         this.uniqueConstraints = uniqueConstraints;
         super.init(columns);
-    }
-
-    @Override
-    public boolean isUnique(List<JqlColumn> fkColumns) {
-        int cntColumn = fkColumns.size();
-        for (String[] uc : this.uniqueConstraints) {
-            if (uc.length != cntColumn) continue;
-            int cntMatch = 0;
-            for (JqlColumn column : fkColumns) {
-                String colName = column.getColumnName();
-                for (String s : uc) {
-                    if (s.equals(colName)) {
-                        cntMatch ++;
-                        break;
-                    }
-                }
-            }
-            if (cntMatch == cntColumn) return true;
-        }
-        return false;
     }
 
     public String dumpJPAEntitySchema() {
@@ -89,16 +72,42 @@ public class JdbcSchema extends JqlSchema {
         }
         out.println();
 
-        out.println("\t" + col.getJavaType().getName() + " " + col.getJsonName() + ";");
+        out.println("\t" + col.getJavaType().getName() + " " + col.getJsonKey() + ";");
     }
 
-    protected void initMappedColumns(ArrayList<JqlEntityJoin> joinedColumns, ArrayList<JqlEntityJoin> mappedColumns) {//String key, ArrayList<JqlColumn> mappedColumns) {
-        super.initJsonNames();
-        for (JqlEntityJoin mc : joinedColumns) {
-            super.initMappedColumns(mc.getJsonName(), mc);
+    protected void initMappedColumns(Collection<JqlEntityJoin> mappedJoins, boolean importedByForeignKey) {
+        super.initJsonKeys();
+        for (JqlEntityJoin mc : fkConstraints.values()) {
+            super.registerMappedColumns(mc.initJsonKey(false), mc);
         }
-        for (JqlEntityJoin mc : mappedColumns) {
-            super.initMappedColumns(mc.getJsonName(), mc);
+        for (JqlEntityJoin mc : mappedJoins) {
+            super.registerMappedColumns(mc.initJsonKey(true), mc);
         }
     }
+
+    public boolean isUniqueConstrainedColumnSet(List<JqlColumn> fkColumns) {
+        int cntColumn = fkColumns.size();
+        compare_constraint:
+        for (List<String> uc : this.uniqueConstraints.values()) {
+            if (uc.size() != cntColumn) continue;
+            for (JqlColumn col : fkColumns) {
+                String col_name = col.getColumnName();
+                if (!uc.contains(col_name)) {
+                    continue compare_constraint;
+                }
+            }
+            return true;
+        }
+        return false;
+    }
+
+    protected JqlEntityJoin makeForeignKeyConstraint(String fk_name) {
+        JqlEntityJoin fkJoin = fkConstraints.get(fk_name);
+        if (fkJoin == null) {
+            fkJoin = new JqlEntityJoin(fk_name);
+            fkConstraints.put(fk_name, fkJoin);
+        }
+        return fkJoin;
+    }
+
 }

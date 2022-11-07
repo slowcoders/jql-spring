@@ -35,7 +35,7 @@ public class SqlGenerator extends SqlBuilder {
 //            for (JqlSchema table : where.getFetchTables()) {
 //                for (JqlColumn col : table.getReadableColumns()) {
 //                    sb.write(table.getTableName()).write('.').write(col.getColumnName()).
-//                            write(" as ").write('\"').write(col.getJsonName()).write("\",\n");
+//                            write(" as ").write('\"').write(col.getJsonKey()).write("\",\n");
 //                }
 //            }
 //        }

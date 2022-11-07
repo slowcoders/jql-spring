@@ -48,7 +48,7 @@ public class TimescaleRepository extends JDBCRepositoryBase {
     }
 
     private Aggregate.Type resolveAggregationType(JqlColumn col) throws NoSuchFieldException {
-        Field f = super.getEntityType().getDeclaredField(col.getJsonName());
+        Field f = super.getEntityType().getDeclaredField(col.getJsonKey());
         Aggregate c = f.getAnnotation(Aggregate.class);
         if (c != null) {
             return c.value();

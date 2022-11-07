@@ -26,7 +26,7 @@ public abstract class JqlColumn {
         return javaType;
     }
 
-    public abstract String getJsonName();
+    public abstract String getJsonKey();
 
     public final String getColumnName() {
         return columnName;

@@ -4,15 +4,15 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class JqlEntityJoin {
-    private String jsonName;
-    private final boolean isUnique;
-    private final boolean isInverseMapped;
+    private String jsonKey;
+    private boolean isUnique;
+    private boolean isInverseMapped;
     private final List<JqlColumn> joinedColumns;
+    private String constraintName;
 
-    public JqlEntityJoin(List<JqlColumn> joinedColumns , boolean inverseMapped, boolean isUnique) {
-        this.joinedColumns = joinedColumns;
-        this.isInverseMapped = inverseMapped;
-        this.isUnique = isUnique;
+    public JqlEntityJoin(String constraintName) {//boolean inverseMapped, boolean isUnique) {
+        this.joinedColumns = new ArrayList<>();
+        this.constraintName = constraintName;
     }
 
     public List<JqlColumn> getJoinedColumns() {
@@ -27,30 +27,33 @@ public class JqlEntityJoin {
         return this.isUnique;
     }
 
-    public String getJsonName() {
-        if (jsonName == null) {
-            jsonName = resolveJsonName(joinedColumns);
-        }
-        return jsonName;
+    public String getJsonKey() {
+        assert (jsonKey != null);
+        return jsonKey;
     }
 
-    private String resolveJsonName(List<JqlColumn> joinedColumns) {
+    public void addForeignKey(JqlColumn fk) {
+        joinedColumns.add(fk);
+    }
+
+    public String initJsonKey(boolean isInverseMapped) {
         JqlColumn first = joinedColumns.get(0);
+        this.isInverseMapped = isInverseMapped;
         String name;
-        if (this.isInverseMapped) {
+        if (isInverseMapped) {
             // column 이 없으므로 타입을 이용하여 이름을 정한다.
             name = first.getSchema().getEntityClassName();
         }
         else if (joinedColumns.size() == 1) {
-            name = resolveJsonName(first);
+            name = initJsonKey(first);
         }
         else {
             name = first.getJoinedPrimaryColumn().getSchema().getEntityClassName();
         }
-        return name;
+        return (this.jsonKey = name);
     }
 
-    public static String resolveJsonName(JqlColumn fk) {
+    public static String initJsonKey(JqlColumn fk) {
         String fk_name = fk.getColumnName();
         JqlColumn joinedPk = fk.getJoinedPrimaryColumn();
         String pk_name = joinedPk.getColumnName();
@@ -79,5 +82,9 @@ public class JqlEntityJoin {
 
     public boolean isJoinedBySingleKey() {
         return joinedColumns.size() == 1;
+    }
+
+    public String getConstraintName() {
+        return this.constraintName;
     }
 }
