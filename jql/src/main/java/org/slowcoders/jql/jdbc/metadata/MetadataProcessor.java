@@ -59,7 +59,7 @@ public class MetadataProcessor extends SchemaLoader {
         schema.init(columns, uniqueConstraints);
         getJoinedKeyInfos(conn, true, schema,  dbSchema, tableName);
         EntityJoinHelper exportedJoins = getJoinedKeyInfos(conn, false, schema, dbSchema, tableName);
-        schema.initMappedColumns(exportedJoins.values(), false);
+        schema.initMappedColumns(exportedJoins.values());
         return schema;
     }
 
@@ -203,11 +203,11 @@ public class MetadataProcessor extends SchemaLoader {
                 fk = fkSchema.getColumn(fkColumnName);
             }
 
-            JqlEntityJoin join = fkSchema.makeForeignKeyConstraint(fk_name);
+            List<JqlColumn> fkColumns = fkSchema.makeForeignKeyConstraint(fk_name);
             if (isForeignKeyJoin) {
-                join.addForeignKey(fk);
+                fkColumns.add(fk);
             } else {
-                joins.put(fkSchema, join);
+                joins.put(fkSchema, fkColumns);
             }
         }
         return joins;

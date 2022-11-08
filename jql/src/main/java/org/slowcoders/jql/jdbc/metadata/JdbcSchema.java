@@ -9,15 +9,12 @@ import org.slowcoders.jql.util.AttributeNameConverter;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
 public class JdbcSchema extends JqlSchema {
     private HashMap<String, List<String>> uniqueConstraints = new HashMap<>();
-    private final HashMap<String, JqlEntityJoin> fkConstraints = new HashMap<>();
+    private final HashMap<String, List<JqlColumn>> fkConstraints = new HashMap<>();
 
     protected JdbcSchema(SchemaLoader schemaLoader, String tableName) {
         super(schemaLoader, tableName,
@@ -75,13 +72,21 @@ public class JdbcSchema extends JqlSchema {
         out.println("\t" + col.getJavaType().getName() + " " + col.getJsonKey() + ";");
     }
 
-    protected void initMappedColumns(Collection<JqlEntityJoin> mappedJoins, boolean importedByForeignKey) {
+    protected void initMappedColumns(Collection<List<JqlColumn>> mappedJoins) {
         super.initJsonKeys();
-        for (JqlEntityJoin mc : fkConstraints.values()) {
-            super.registerMappedColumns(mc.initJsonKey(false), mc);
+        for (List<JqlColumn> mc : fkConstraints.values()) {
+            super.registerEntityJoin(new JqlEntityJoin(this, mc));
         }
-        for (JqlEntityJoin mc : mappedJoins) {
-            super.registerMappedColumns(mc.initJsonKey(true), mc);
+        for (List<JqlColumn> mc : mappedJoins) {
+            super.registerEntityJoin(new JqlEntityJoin(this, mc));
+
+            Collection<JqlEntityJoin> joins = mc.get(0).getSchema().getEntityJoins();
+            for (JqlEntityJoin j2 : joins) {
+                if (mc != j2.getForeignKeyColumns() && !j2.isInverseMapped()) {
+                    JqlEntityJoin j3 = new JqlEntityJoin(this, mc, j2);
+                    super.registerEntityJoin(j3);
+                }
+            }
         }
     }
 
@@ -101,13 +106,13 @@ public class JdbcSchema extends JqlSchema {
         return false;
     }
 
-    protected JqlEntityJoin makeForeignKeyConstraint(String fk_name) {
-        JqlEntityJoin fkJoin = fkConstraints.get(fk_name);
-        if (fkJoin == null) {
-            fkJoin = new JqlEntityJoin(fk_name);
-            fkConstraints.put(fk_name, fkJoin);
+    protected List<JqlColumn> makeForeignKeyConstraint(String fk_name) {
+        List<JqlColumn> fkColumns = fkConstraints.get(fk_name);
+        if (fkColumns == null) {
+            fkColumns = new ArrayList<>();
+            fkConstraints.put(fk_name, fkColumns);
         }
-        return fkJoin;
+        return fkColumns;
     }
 
 }

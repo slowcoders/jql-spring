@@ -172,14 +172,14 @@ public class SqlBuilder extends SourceWriter<SqlBuilder> implements JqlVisitor, 
             boolean isInverseMapped = joinKeys.isInverseMapped();
             String joinedTable = joinKeys.getJoinedSchema().getTableName();
             write("\nleft outer join ").write(joinedTable).write(" on\n");
-            for (JqlColumn fk : joinKeys.getJoinedColumns()) {
+            for (JqlColumn fk : joinKeys.getForeignKeyColumns()) {
                 JqlColumn anchor, linked;
                 if (isInverseMapped) {
                     linked = fk; anchor = fk.getJoinedPrimaryColumn();
                 } else {
                     anchor = fk; linked = fk.getJoinedPrimaryColumn();
                 }
-                write("  ").write(joinKeys.getAnchorSchema().getTableName()).write(".").write(anchor.getColumnName());
+                write("  ").write(joinKeys.getBaseSchema().getTableName()).write(".").write(anchor.getColumnName());
                 write(" = ").write(linked.getSchema().getTableName()).write(".")
                         .write(linked.getColumnName()).write(" and\n");
             }

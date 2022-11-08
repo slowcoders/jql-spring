@@ -29,16 +29,16 @@ class TableQuery extends EntityQuery {
 
     @Override
     public EntityQuery getQueryScope_impl(String key, Type isLeaf_unused, boolean fetchData) {
-        JqlEntityJoin joinKeys = schema.getEntityJoinBy(key);
-        if (joinKeys == null) {
+        JqlEntityJoin join = schema.getEntityJoinBy(key);
+        if (join == null) {
             JqlColumn column = schema.getColumn(key);
             if (column.getValueFormat() != JsonNodeType.Object) return this;
         }
 
         EntityQuery subQuery = subQueries.get(key);
         if (subQuery == null) {
-            if (joinKeys != null) {
-                JqlSchema subSchema = getTopQuery().addTableJoin(joinKeys, fetchData);
+            if (join != null) {
+                JqlSchema subSchema = getTopQuery().addTableJoin(key, join, fetchData);
                 subQuery = new TableQuery(this, subSchema);
             }
             else {

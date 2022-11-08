@@ -105,7 +105,7 @@ public class JqlParser {
         if (key_length == 0) return false;
         char ch = key.charAt(0);
 
-        if (!Character.isJavaIdentifierStart(ch)) {//.isAlphabetic(ch)) {
+        if (!Character.isJavaIdentifierStart(ch) && ch != '+') {
             return false;
         }
         for (int i = key.length(); --i > 0; ) {

@@ -151,8 +151,8 @@ public abstract class JqlSchema {
         return out;
     }
 
-    protected void registerMappedColumns(String key, JqlEntityJoin mappedColumns) {
-        this.entityJoinMap.put(key, mappedColumns);
+    protected void registerEntityJoin(JqlEntityJoin join) {
+        this.entityJoinMap.put(join.getJsonKey(), join);
     }
 
     public boolean isUniqueConstrainedColumnSet(List<JqlColumn> fkColumns) {
@@ -163,4 +163,7 @@ public abstract class JqlSchema {
         return this.tableName;
     }
 
+    public Collection<JqlEntityJoin> getEntityJoins() {
+        return this.entityJoinMap.values();
+    }
 }

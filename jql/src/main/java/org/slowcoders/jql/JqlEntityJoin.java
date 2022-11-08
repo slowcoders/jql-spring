@@ -1,56 +1,82 @@
 package org.slowcoders.jql;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class JqlEntityJoin {
-    private String jsonKey;
-    private boolean isUnique;
-    private boolean isInverseMapped;
-    private final List<JqlColumn> joinedColumns;
-    private String constraintName;
+    private final JqlEntityJoin associateJoin;
+    private final String jsonKey;
+    private final boolean isUnique;
+    private final boolean inverseMapped;
+    private final List<JqlColumn> fkColumns;
+    private final JqlSchema baseSchema;
+    private final JqlSchema joinedSchema;
 
-    public JqlEntityJoin(String constraintName) {//boolean inverseMapped, boolean isUnique) {
-        this.joinedColumns = new ArrayList<>();
-        this.constraintName = constraintName;
+    public JqlEntityJoin(JqlSchema baseSchema, List<JqlColumn> fkColumns) {
+        this(baseSchema, fkColumns, null);
     }
 
-    public List<JqlColumn> getJoinedColumns() {
-        return joinedColumns;
+    public JqlEntityJoin(JqlSchema baseSchema, List<JqlColumn> fkColumns, JqlEntityJoin associatedJoin) {
+        this.fkColumns = fkColumns;
+        this.baseSchema = baseSchema;
+        this.inverseMapped = baseSchema != fkColumns.get(0).getSchema();
+        if (inverseMapped) {
+            if (associatedJoin != null && associatedJoin.inverseMapped) {
+                throw new RuntimeException("invalid associatedJoin");
+            }
+            this.joinedSchema = fkColumns.get(0).getSchema();
+            this.isUnique = joinedSchema.isUniqueConstrainedColumnSet(fkColumns);
+        } else {
+            if (associatedJoin != null) {
+                throw new RuntimeException("invalid associatedJoin");
+            }
+            List<JqlColumn> pkColumns = fkColumns.stream()
+                    .map(col -> col.getJoinedPrimaryColumn())
+                    .collect(Collectors.toList());
+            this.joinedSchema = pkColumns.get(0).getSchema();
+            this.isUnique = joinedSchema.isUniqueConstrainedColumnSet(pkColumns);
+        }
+        this.associateJoin = associatedJoin;
+        this.jsonKey = associatedJoin != null ? '+' + associatedJoin.getJsonKey() : initJsonKey();
+    }
+
+    public List<JqlColumn> getForeignKeyColumns() {
+        return fkColumns;
+    }
+
+    public JqlEntityJoin getAssociateJoin() {
+        return associateJoin;
     }
 
     public boolean isInverseMapped() {
-        return this.isInverseMapped;
+        return this.inverseMapped;
     }
 
-    public boolean isUnique() {
+    public boolean isUniqueJoin() {
         return this.isUnique;
     }
 
     public String getJsonKey() {
-        assert (jsonKey != null);
         return jsonKey;
     }
 
-    public void addForeignKey(JqlColumn fk) {
-        joinedColumns.add(fk);
-    }
-
-    public String initJsonKey(boolean isInverseMapped) {
-        JqlColumn first = joinedColumns.get(0);
-        this.isInverseMapped = isInverseMapped;
+    private String initJsonKey() {
+        if (this.jsonKey != null) {
+            throw new RuntimeException("already initialized");
+        }
+        JqlColumn first = fkColumns.get(0);
         String name;
-        if (isInverseMapped) {
+        if (inverseMapped) {
             // column 이 없으므로 타입을 이용하여 이름을 정한다.
             name = first.getSchema().getEntityClassName();
         }
-        else if (joinedColumns.size() == 1) {
+        else if (fkColumns.size() == 1) {
             name = initJsonKey(first);
         }
         else {
             name = first.getJoinedPrimaryColumn().getSchema().getEntityClassName();
         }
-        return (this.jsonKey = name);
+        return name;
     }
 
     public static String initJsonKey(JqlColumn fk) {
@@ -65,26 +91,24 @@ public class JqlEntityJoin {
     }
 
     public JqlSchema getJoinedSchema() {
-        JqlColumn col = joinedColumns.get(0);
-        if (!isInverseMapped) {
+        JqlColumn col = fkColumns.get(0);
+        if (!inverseMapped) {
             col = col.getJoinedPrimaryColumn();
         }
         return col.getSchema();
     }
 
-    public JqlSchema getAnchorSchema() {
-        JqlColumn col = joinedColumns.get(0);
-        if (isInverseMapped) {
-            col = col.getJoinedPrimaryColumn();
-        }
-        return col.getSchema();
+    public JqlSchema getBaseSchema() {
+        return this.baseSchema;
+//        JqlColumn col = fkColumns.get(0);
+//        if (inverseMapped) {
+//            col = col.getJoinedPrimaryColumn();
+//        }
+//        return col.getSchema();
     }
 
     public boolean isJoinedBySingleKey() {
-        return joinedColumns.size() == 1;
+        return fkColumns.size() == 1;
     }
 
-    public String getConstraintName() {
-        return this.constraintName;
-    }
 }

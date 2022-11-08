@@ -8,9 +8,9 @@ import java.util.List;
 
 public class JqlQuery extends TableQuery {
 
-    private ArrayList<JqlEntityJoin> joinMap = new ArrayList<>();
-    private ArrayList<JqlResultMapping> resultMappings = new ArrayList<>();
-    private String[] emptyJsonPath = new String[0];
+    private final ArrayList<JqlEntityJoin> joinMap = new ArrayList<>();
+    private final ArrayList<JqlResultMapping> resultMappings = new ArrayList<>();
+    private static final String[] emptyJsonPath = new String[0];
 
     public JqlQuery(JqlSchema schema) {
         super(null, schema);
@@ -21,14 +21,20 @@ public class JqlQuery extends TableQuery {
         return this;
     }
 
-    protected JqlSchema addTableJoin(JqlEntityJoin joinKeys, boolean fetchData) {
-        JqlSchema schema = joinKeys.getJoinedSchema();
-        if (joinMap.indexOf(joinKeys) < 0) {
-            joinMap.add(joinKeys);
+    protected JqlSchema addTableJoin(String key, JqlEntityJoin join, boolean fetchData) {
+        if (joinMap.indexOf(join) < 0) {
+            joinMap.add(join);
         }
+        if (join.getAssociateJoin() != null) {
+            join = join.getAssociateJoin();
+            if (joinMap.indexOf(join) < 0) {
+                joinMap.add(join);
+            }
+        }
+        JqlSchema schema = join.getJoinedSchema();
         if (fetchData && !isAlreadyFetched(schema)) {
-            String[] basePath = getJsonPath(joinKeys.getAnchorSchema());
-            String[] jsonPath = toJsonPath(basePath, joinKeys.getJsonKey());
+            String[] basePath = getJsonPath(join.getBaseSchema());
+            String[] jsonPath = toJsonPath(basePath, join.getJsonKey());
             this.resultMappings.add(new JqlResultMapping(jsonPath, schema));
         }
         return schema;
