@@ -16,7 +16,6 @@ import java.util.List;
 
 public class JqlRowMapper implements RowMapper<KVEntity> {
     private final List<JqlResultMapping> resultMappings;
-    private final HashMap<String, ArrayList<String>> joinMap = new HashMap<>();
 
     public JqlRowMapper(List<JqlResultMapping> schema) {
         this.resultMappings = schema;

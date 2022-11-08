@@ -8,7 +8,8 @@ import java.util.List;
 
 public class JqlQuery extends TableQuery {
 
-    private final ArrayList<JqlEntityJoin> joinMap = new ArrayList<>();
+    private final ArrayList<JqlEntityJoin> fkJoins = new ArrayList<>();
+    private final ArrayList<JqlEntityJoin> pkJoins = new ArrayList<>();
     private final ArrayList<JqlResultMapping> resultMappings = new ArrayList<>();
     private static final String[] emptyJsonPath = new String[0];
 
@@ -21,20 +22,27 @@ public class JqlQuery extends TableQuery {
         return this;
     }
 
-    protected JqlSchema addTableJoin(String key, JqlEntityJoin join, boolean fetchData) {
-        if (joinMap.indexOf(join) < 0) {
-            joinMap.add(join);
-        }
-        if (join.getAssociateJoin() != null) {
-            join = join.getAssociateJoin();
-            if (joinMap.indexOf(join) < 0) {
-                joinMap.add(join);
+    protected JqlSchema addTableJoin(JqlEntityJoin join, boolean fetchData) {
+        String jsonKey = join.getJsonKey();
+        if (!join.isInverseMapped()) {
+            if (fkJoins.indexOf(join) < 0) {
+                fkJoins.add(join);
+            }
+        } else {
+            if (pkJoins.indexOf(join) < 0) {
+                pkJoins.add(join);
+            }
+            if (join.getAssociateJoin() != null) {
+                join = join.getAssociateJoin();
+//                if (pkJoins.indexOf(join) < 0) {
+//                    pkJoins.add(join);
+//                }
             }
         }
         JqlSchema schema = join.getJoinedSchema();
         if (fetchData && !isAlreadyFetched(schema)) {
             String[] basePath = getJsonPath(join.getBaseSchema());
-            String[] jsonPath = toJsonPath(basePath, join.getJsonKey());
+            String[] jsonPath = toJsonPath(basePath, jsonKey);
             this.resultMappings.add(new JqlResultMapping(jsonPath, schema));
         }
         return schema;
@@ -68,8 +76,12 @@ public class JqlQuery extends TableQuery {
     }
 
 
-    public List<JqlEntityJoin> getJoinList() {
-        return joinMap;
+    public List<JqlEntityJoin> getForeignKeyBasedJoins() {
+        return fkJoins;
+    }
+
+    public List<JqlEntityJoin> getPrimaryKeyBasedJoins() {
+        return pkJoins;
     }
 
     public List<JqlResultMapping> getResultMappings() {

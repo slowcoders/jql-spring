@@ -25,7 +25,8 @@ public class JqlEntityJoin {
                 throw new RuntimeException("invalid associatedJoin");
             }
             this.joinedSchema = fkColumns.get(0).getSchema();
-            this.isUnique = joinedSchema.isUniqueConstrainedColumnSet(fkColumns);
+            this.isUnique = (associatedJoin == null || associatedJoin.isUnique)
+                            && joinedSchema.isUniqueConstrainedColumnSet(fkColumns);
         } else {
             if (associatedJoin != null) {
                 throw new RuntimeException("invalid associatedJoin");

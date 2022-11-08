@@ -6,10 +6,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/jql")
-public class JqlGlobalController extends DefaultJdbcController {
+@RequestMapping("/api/jql/starwars")
+public class StarWarsController extends DefaultJdbcController {
 
-    public JqlGlobalController(JQLJdbcService service) {
-        super(service);
+    public StarWarsController(JQLJdbcService service) {
+        super(service, "starwars");
     }
 }

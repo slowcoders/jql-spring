@@ -38,7 +38,7 @@ class TableQuery extends EntityQuery {
         EntityQuery subQuery = subQueries.get(key);
         if (subQuery == null) {
             if (join != null) {
-                JqlSchema subSchema = getTopQuery().addTableJoin(key, join, fetchData);
+                JqlSchema subSchema = getTopQuery().addTableJoin(join, fetchData);
                 subQuery = new TableQuery(this, subSchema);
             }
             else {

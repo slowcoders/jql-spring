@@ -165,25 +165,35 @@ public class SqlBuilder extends SourceWriter<SqlBuilder> implements JqlVisitor, 
         }
     }
 
+    private void writeJoinStatement(JqlEntityJoin joinKeys) {
+        boolean isInverseMapped = joinKeys.isInverseMapped();
+        String joinedTable = joinKeys.getJoinedSchema().getTableName();
+        write("\nleft outer join ").write(joinedTable).write(" on\n");
+        for (JqlColumn fk : joinKeys.getForeignKeyColumns()) {
+            JqlColumn anchor, linked;
+            if (isInverseMapped) {
+                linked = fk; anchor = fk.getJoinedPrimaryColumn();
+            } else {
+                anchor = fk; linked = fk.getJoinedPrimaryColumn();
+            }
+            write("  ").write(joinKeys.getBaseSchema().getTableName()).write(".").write(anchor.getColumnName());
+            write(" = ").write(linked.getSchema().getTableName()).write(".")
+                    .write(linked.getColumnName()).write(" and\n");
+        }
+        shrinkLength(5);
+    }
 
     public void writeJoinStatement(JqlQuery where) {
         write(where.getSchema().getTableName());
-        for (JqlEntityJoin joinKeys : where.getJoinList()) {
-            boolean isInverseMapped = joinKeys.isInverseMapped();
-            String joinedTable = joinKeys.getJoinedSchema().getTableName();
-            write("\nleft outer join ").write(joinedTable).write(" on\n");
-            for (JqlColumn fk : joinKeys.getForeignKeyColumns()) {
-                JqlColumn anchor, linked;
-                if (isInverseMapped) {
-                    linked = fk; anchor = fk.getJoinedPrimaryColumn();
-                } else {
-                    anchor = fk; linked = fk.getJoinedPrimaryColumn();
-                }
-                write("  ").write(joinKeys.getBaseSchema().getTableName()).write(".").write(anchor.getColumnName());
-                write(" = ").write(linked.getSchema().getTableName()).write(".")
-                        .write(linked.getColumnName()).write(" and\n");
+        for (JqlEntityJoin join : where.getForeignKeyBasedJoins()) {
+            writeJoinStatement(join);
+        }
+        for (JqlEntityJoin join : where.getPrimaryKeyBasedJoins()) {
+            writeJoinStatement(join);
+            join = join.getAssociateJoin();
+            if (join != null) {
+                writeJoinStatement(join);
             }
-            shrinkLength(5);
         }
     }
 
