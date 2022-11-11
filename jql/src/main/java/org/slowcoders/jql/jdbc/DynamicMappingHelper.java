@@ -57,7 +57,7 @@ public class DynamicMappingHelper extends RequestMappingHandlerMapping {
 
     }
 
-    public abstract static class DynamicController extends JdbcController<Object> {
+    public abstract static class DynamicController extends JdbcTableController<Object> {
 
         private JQLJdbcService service;
 

@@ -20,12 +20,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public abstract class JdbcCatalogController {
+public abstract class JdbcSchemaController {
 
     private final JQLJdbcService service;
     private final String db_schema;
 
-    public JdbcCatalogController(JQLJdbcService service, String db_schema) {
+    public JdbcSchemaController(JQLJdbcService service, String db_schema) {
         this.service = service;
         this.db_schema = db_schema;
     }
@@ -35,7 +35,7 @@ public abstract class JdbcCatalogController {
     @Operation(summary = "전체 Table 목록")
     public String listTables() throws Exception {
         StringBuilder sb = new StringBuilder();
-        for (String tableName : this.getAllTableNames()) {
+        for (String tableName : service.getTableNames(db_schema)) {
             sb.append(tableName).append('\n');
         }
         return sb.toString();
