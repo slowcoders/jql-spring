@@ -13,12 +13,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public abstract class JdbcController<ID> extends JQLReadOnlyController<KVEntity, ID> {
+public abstract class JdbcEntityController<ID> extends JQLReadOnlyController<KVEntity, ID> {
 
     @Autowired
     ConversionService conversionService;
 
-    protected JdbcController(JDBCRepositoryBase<ID> repo) {
+    protected JdbcEntityController(JDBCRepositoryBase<ID> repo) {
         super(repo);
     }
 
