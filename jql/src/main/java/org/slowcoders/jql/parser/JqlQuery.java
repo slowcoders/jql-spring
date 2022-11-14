@@ -8,10 +8,11 @@ import java.util.List;
 
 public class JqlQuery extends TableQuery {
 
-    private final ArrayList<JqlEntityJoin> fkJoins = new ArrayList<>();
-    private final ArrayList<JqlEntityJoin> pkJoins = new ArrayList<>();
+//    private final ArrayList<JqlEntityJoin> entityJoins = new ArrayList<>();
+//    private final ArrayList<JqlEntityJoin> pkJoins = new ArrayList<>();
     private final ArrayList<JqlResultMapping> resultMappings = new ArrayList<>();
     private static final String[] emptyJsonPath = new String[0];
+
 
     public JqlQuery(JqlSchema schema) {
         super(null, schema);
@@ -24,22 +25,7 @@ public class JqlQuery extends TableQuery {
 
     protected JqlSchema addTableJoin(JqlEntityJoin join, boolean fetchData) {
         String jsonKey = join.getJsonKey();
-        if (!join.isInverseMapped()) {
-            if (fkJoins.indexOf(join) < 0) {
-                fkJoins.add(join);
-            }
-        } else {
-            if (pkJoins.indexOf(join) < 0) {
-                pkJoins.add(join);
-            }
-            if (join.getAssociateJoin() != null) {
-                join = join.getAssociateJoin();
-//                if (pkJoins.indexOf(join) < 0) {
-//                    pkJoins.add(join);
-//                }
-            }
-        }
-        JqlSchema schema = join.getJoinedSchema();
+        JqlSchema schema = join.getAssociatedSchema();
         if (fetchData && !isAlreadyFetched(schema)) {
             String[] basePath = getJsonPath(join.getBaseSchema());
             String[] jsonPath = toJsonPath(basePath, jsonKey);
@@ -76,13 +62,9 @@ public class JqlQuery extends TableQuery {
     }
 
 
-    public List<JqlEntityJoin> getForeignKeyBasedJoins() {
-        return fkJoins;
-    }
-
-    public List<JqlEntityJoin> getPrimaryKeyBasedJoins() {
-        return pkJoins;
-    }
+//    public List<JqlEntityJoin> getEntityJoins() {
+//        return entityJoins;
+//    }
 
     public List<JqlResultMapping> getResultMappings() {
         return this.resultMappings;

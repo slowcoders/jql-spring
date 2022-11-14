@@ -16,7 +16,7 @@ interface Predicate extends Expression {
         }
 
         @Override
-        public void accept(JqlVisitor sb) {
+        public void accept(JqlPredicateVisitor sb) {
             sb.visitMatchAny(key, operator, values);
         }
     }
@@ -34,7 +34,7 @@ interface Predicate extends Expression {
         }
 
         @Override
-        public void accept(JqlVisitor sb) {
+        public void accept(JqlPredicateVisitor sb) {
             if (value == null) {
                 sb.visitIsNull(key, operator);
             } else {
@@ -52,7 +52,7 @@ interface Predicate extends Expression {
         }
 
         @Override
-        public void accept(JqlVisitor sb) {
+        public void accept(JqlPredicateVisitor sb) {
             sb.visitNot(statement);
         }
     }

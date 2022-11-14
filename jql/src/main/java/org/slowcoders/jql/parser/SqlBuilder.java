@@ -4,14 +4,19 @@ import org.slowcoders.jql.JqlColumn;
 import org.slowcoders.jql.JqlEntityJoin;
 import org.slowcoders.jql.JqlSchema;
 
-import java.util.ArrayList;
-import java.util.Collection;
+import java.util.*;
 
-public class SqlBuilder extends SourceWriter<SqlBuilder> implements JqlVisitor, QueryBuilder {
+public class SqlBuilder implements JqlPredicateVisitor, JqlEntityJoinVisitor, QueryBuilder {
     private JqlSchema schema;
+    private final SourceWriter<SourceWriter> sb = new SourceWriter<SourceWriter>('\'');
+
+    public enum Command {
+        Insert,
+        Delete,
+        Update,
+    }
 
     public SqlBuilder(JqlSchema schema) {
-        super('\'');
         this.schema = schema;
     }
 
@@ -27,15 +32,16 @@ public class SqlBuilder extends SourceWriter<SqlBuilder> implements JqlVisitor, 
 
     public void writeColumnNames(Iterable<String> names, boolean withTableName) {
         for (String name : names) {
-            writeColumnName(name, withTableName).write(", ");
+            writeColumnName(name, withTableName);
+            sb.write(", ");
         }
-        shrinkLength(2);
+        sb.shrinkLength(2);
     }
 
 
     @Override
     public void visitCompare(QAttribute column, CompareOperator operator, Object value) {
-        column.printSQL(this);
+        column.printSQL(sb);
         String op = "";
         assert (value != null);
         switch (operator) {
@@ -66,47 +72,47 @@ public class SqlBuilder extends SourceWriter<SqlBuilder> implements JqlVisitor, 
                 op = " NOT LIKE ";
                 break;
         }
-        this.write(op).writeValue(value);
+        sb.write(op).writeValue(value);
     }
 
     @Override
     public void visitNot(Expression statement) {
-        this.write(" NOT (");
+        sb.write(" NOT (");
         statement.accept(this);
-        this.write(")");
+        sb.write(")");
 
     }
 
     @Override
     public void visitMatchAny(QAttribute key, CompareOperator operator, Collection values) {
         if (operator == CompareOperator.EQ || operator == CompareOperator.NE) {
-            key.printSQL(this);
+            key.printSQL(sb);
         }
         switch (operator) {
             case NE:
-                write("NOT ");
+                sb.write("NOT ");
                 // no-break;
             case EQ:
-                write(" IN(");
-                writeValues(values);
-                write(")");
+                sb.write(" IN(");
+                sb.writeValues(values);
+                sb.write(")");
                 break;
 
             case NOT_LIKE:
-                write("NOT ");
+                sb.write("NOT ");
                 // no-break;
             case LIKE:
-                write("(");
+                sb.write("(");
                 boolean first = true;
                 for (Object v : values) {
                     if (first) {
                         first = false;
                     } else {
-                        writeQuoted(" OR ");
+                        sb.writeQuoted(" OR ");
                     }
-                    key.printSQL(this);
-                    write(" LIKE ");
-                    writeQuoted(v);
+                    key.printSQL(sb);
+                    sb.write(" LIKE ");
+                    sb.writeQuoted(v);
                 }
                 break;
 
@@ -128,47 +134,59 @@ public class SqlBuilder extends SourceWriter<SqlBuilder> implements JqlVisitor, 
             default:
                 throw new RuntimeException("Invalid match operator with null value: " + operator);
         }
-        key.printSQL(this);
-        write(value);
+        key.printSQL(sb);
+        sb.write(value);
     }
 
     @Override
     public void visitAlwaysTrue() {
-        write("true");
+        sb.write("true");
     }
 
     @Override
     public void visitPredicateSet(ArrayList<Predicate> predicates, Conjunction conjunction) {
-        write("(");
+        sb.write("(");
         boolean first = true;
         int cnt_predicate = predicates.size();
         for (int i = 0; i < cnt_predicate; i++) {
             if (first) {
                 first = false;
             } else {
-                write(conjunction.toString());
+                sb.write(conjunction.toString());
             }
             Predicate item = predicates.get(i);
             item.accept(this);
         }
-        write(")");
-
+        sb.write(")");
     }
 
-    public void writeWhere(JqlQuery where, boolean includeTableName) {
-        if (includeTableName) {
-            writeJoinStatement(where);
+    public void visitJoinedSchema(TableQuery tableQuery) {
+        JqlEntityJoin join = tableQuery.getEntityJoin();
+        writeJoinStatement(join);
+        join = join.getAssociativeJoin();
+        if (join != null) {
+            writeJoinStatement(join);
         }
+//        tableQuery.accept((JqlPredicateVisitor)this);
+        tableQuery.accept((JqlEntityJoinVisitor)this);
+    }
+
+//    public void visitJoinedSchema(JsonQuery jsonQuery) {
+//        jsonQuery.accept((JqlPredicateVisitor)this);
+//    }
+
+
+    private void writeWhere(JqlQuery where) {
         if (!where.isEmpty()) {
-            writeRaw("\nWHERE ");
-            where.accept(this);
+            sb.writeRaw("\nWHERE ");
+            where.accept((JqlPredicateVisitor) this);
         }
     }
 
     private void writeJoinStatement(JqlEntityJoin joinKeys) {
         boolean isInverseMapped = joinKeys.isInverseMapped();
         String joinedTable = joinKeys.getJoinedSchema().getTableName();
-        write("\nleft outer join ").write(joinedTable).write(" on\n");
+        sb.write("\nleft outer join ").write(joinedTable).write(" on\n\t");
         for (JqlColumn fk : joinKeys.getForeignKeyColumns()) {
             JqlColumn anchor, linked;
             if (isInverseMapped) {
@@ -176,66 +194,154 @@ public class SqlBuilder extends SourceWriter<SqlBuilder> implements JqlVisitor, 
             } else {
                 anchor = fk; linked = fk.getJoinedPrimaryColumn();
             }
-            write("  ").write(joinKeys.getBaseSchema().getTableName()).write(".").write(anchor.getColumnName());
-            write(" = ").write(linked.getSchema().getTableName()).write(".")
-                    .write(linked.getColumnName()).write(" and\n");
+            sb.write(joinKeys.getBaseSchema().getTableName()).write(".").write(anchor.getColumnName());
+            sb.write(" = ").write(linked.getSchema().getTableName()).write(".")
+                    .write(linked.getColumnName()).write(" and\n\t");
         }
-        shrinkLength(5);
+        sb.shrinkLength(6);
     }
 
-    public void writeJoinStatement(JqlQuery where) {
-        write(where.getSchema().getTableName());
-        for (JqlEntityJoin join : where.getForeignKeyBasedJoins()) {
-            writeJoinStatement(join);
-        }
-        for (JqlEntityJoin join : where.getPrimaryKeyBasedJoins()) {
-            writeJoinStatement(join);
-            join = join.getAssociateJoin();
-            if (join != null) {
-                writeJoinStatement(join);
-            }
-        }
+    private void writeFrom(JqlQuery where) {
+        sb.write("FROM ").write(where.getSchema().getTableName());
+        where.accept((JqlEntityJoinVisitor)this);
+//        for (JqlEntityJoin join : where.getEntityJoins()) {
+//            writeJoinStatement(join);
+//            join = join.getAssociativeJoin();
+//            if (join != null) {
+//                writeJoinStatement(join);
+//            }
+//        }
     }
 
 
-    public SqlBuilder writeColumnName(String name, boolean withTableName) {
+    private SqlBuilder writeColumnName(String name, boolean withTableName) {
         if (withTableName) {
-            writeRaw(schema.getTableName()).write('.');
+            sb.writeRaw(schema.getTableName()).write('.');
         }
-        writeRaw(name);
+        sb.writeRaw(name);
         return this;
     }
 
-    public SqlBuilder writeTableName() {
-        writeRaw(this.schema.getTableName());
+    private SqlBuilder writeTableName() {
+        sb.writeRaw(this.schema.getTableName());
         return this;
     }
 
-    public SqlBuilder writeEquals(String column, Object value) {
-        this.write(column).write(" = ").writeValue(value);
+    private SqlBuilder writeEquals(String column, Object value) {
+        sb.write(column).write(" = ").writeValue(value);
         return this;
+    }
+
+    public String createCountQuery(JqlQuery where) {
+        sb.write("\nSELECT count(*) ");
+        writeFrom(where);
+        this.writeWhere(where);
+        String sql = sb.reset();
+        return sql;
     }
 
     public String createSelectQuery(JqlQuery where) {
-        write("\nSELECT ");
+        sb.write("\nSELECT ");
         if (true) {
             for (JqlResultMapping fetch : where.getResultMappings()) {
                 JqlSchema table = fetch.getSchema();
-                write(table.getTableName()).write(".*, ");
+                sb.write(table.getTableName()).write(".*, ");
             }
         } else {
             for (JqlResultMapping fetch : where.getResultMappings()) {
                 JqlSchema table = fetch.getSchema();
                 for (JqlColumn col : table.getReadableColumns()) {
-                    write(table.getTableName()).write('.').write(col.getColumnName()).
+                    sb.write(table.getTableName()).write('.').write(col.getColumnName()).
                             write(" as ").write('\"').write(col.getJsonKey()).write("\",\n");
                 }
             }
         }
-        replaceTrailingComma("\nFROM ");
-        writeWhere(where, true);
-        String sql = toString();
-        super.clear();
+        sb.replaceTrailingComma("\n");
+        writeFrom(where);
+        writeWhere(where);
+        String sql = sb.reset();
+        return sql;
+    }
+
+    public String createUpdateQuery(JqlQuery where, Map<String, Object> updateSet) {
+        sb.write("\nUPDATE ").write(schema.getTableName()).write(" SET\n");
+
+        for (Map.Entry<String, Object> entry : updateSet.entrySet()) {
+            String key = entry.getKey();
+            Object value = entry.getValue();
+            sb.write("  ");
+            this.writeEquals(key, value);
+            sb.write(",\n");
+        }
+        sb.replaceTrailingComma("\n");
+        this.writeWhere(where);
+        String sql = sb.reset();
+        return sql;
+
+    }
+
+    public String createDeleteQuery(JqlQuery where) {
+        sb.write("\nDELETE ");
+        this.writeFrom(where);
+        this.writeWhere(where);
+        String sql = sb.reset();
+        return sql;
+    }
+
+    public String prepareFindByIdStatement() {
+        sb.write("\nSELECT * FROM ").write(schema.getTableName()).write("\nWHERE ");
+        List<JqlColumn> keys = schema.getPKColumns();
+        for (int i = 0; i < keys.size(); ) {
+            String key = keys.get(i).getColumnName();
+            sb.write(key).write(" = ? ");
+            if (++ i < keys.size()) {
+                sb.write(" AND ");
+            }
+        }
+        String sql = sb.reset();
+        return sql;
+    }
+
+    protected String getCommand(Command command) {
+        return command.toString();
+    }
+
+    public String createInsertStatement(Map entity, boolean ignoreConflict) {
+
+        Set<String> keys = ((Map<String, ?>)entity).keySet();
+        sb.writeln();
+        sb.write(getCommand(Command.Insert)).write(" INTO ").write(schema.getTableName()).writeln("(");
+        sb.incTab();
+        writeColumnNames(schema.getPhysicalColumnNames(keys), false);
+        sb.decTab();
+        sb.writeln("\n) VALUES (");
+        for (String k : keys) {
+            Object v = entity.get(k);
+            sb.writeValue(v).write(", ");
+        }
+        sb.replaceTrailingComma(")");
+        if (ignoreConflict) {
+            sb.write("\nON CONFLICT DO NOTHING");
+        }
+        String sql = sb.reset();
+        return sql;
+    }
+
+    public String prepareBatchInsertStatement(boolean ignoreConflict) {
+        sb.writeln();
+        sb.write(getCommand(Command.Insert)).write(" INTO ").write(schema.getTableName()).writeln("(");
+        for (JqlColumn col : schema.getWritableColumns()) {
+            sb.write(col.getColumnName()).write(", ");
+        }
+        sb.replaceTrailingComma("\n) VALUES (");
+        for (JqlColumn col : schema.getWritableColumns()) {
+            sb.write("?,");
+        }
+        sb.replaceTrailingComma(")");
+        if (ignoreConflict) {
+            sb.write("\nON CONFLICT DO NOTHING");
+        }
+        String sql = sb.reset();
         return sql;
     }
 }

@@ -5,12 +5,25 @@ import org.slowcoders.jql.JqlEntityJoin;
 import org.slowcoders.jql.JqlSchema;
 import org.slowcoders.jql.JsonNodeType;
 
+import java.util.ArrayList;
+
 class TableQuery extends EntityQuery {
     private final JqlSchema schema;
 
-    public TableQuery(EntityQuery parentQuery, JqlSchema schema) {
+    private final ArrayList<TableQuery> joinedTables = new ArrayList<>();
+    private final JqlEntityJoin join;
+
+    protected TableQuery(TableQuery parentQuery, JqlSchema schema) {
+        this(null, schema, null, true);
+    }
+
+    public TableQuery(TableQuery parentQuery, JqlSchema schema, JqlEntityJoin join, boolean fetchData) {
         super(parentQuery);
+        if (parentQuery != null) {// && parentQuery.joinedTables.indexOf(join) < 0) {
+            parentQuery.joinedTables.add(this);
+        }
         this.schema = schema;
+        this.join = join;
     }
 
     public JqlSchema getSchema() {
@@ -39,7 +52,7 @@ class TableQuery extends EntityQuery {
         if (subQuery == null) {
             if (join != null) {
                 JqlSchema subSchema = getTopQuery().addTableJoin(join, fetchData);
-                subQuery = new TableQuery(this, subSchema);
+                subQuery = new TableQuery(this, subSchema, join, fetchData);
             }
             else {
                 subQuery = new JsonQuery(this, key);
@@ -50,15 +63,15 @@ class TableQuery extends EntityQuery {
     }
 
     @Override
-    public void writeAttribute(SqlBuilder sb, String key, Class<?> valueType) {
+    public void writeAttribute(SourceWriter sb, String key, Class<?> valueType) {
         sb.write(getSchema().getTableName()).write(".").write(key);
     }
 
     @Override
-    public void accept(JqlVisitor sb) {
-        JqlSchema old = sb.setWorkingSchema(this.schema);
-        super.accept(sb);
-        sb.setWorkingSchema(old);
+    public void accept(JqlPredicateVisitor visitor) {
+        JqlSchema old = visitor.setWorkingSchema(this.schema);
+        super.accept(visitor);
+        visitor.setWorkingSchema(old);
     }
 
     @Override
@@ -71,5 +84,15 @@ class TableQuery extends EntityQuery {
             key = key.substring(p + 1);
         }
         return this.schema.getColumn(key).getColumnName();
+    }
+
+    public JqlEntityJoin getEntityJoin() {
+        return this.join;
+    }
+
+    public void accept(JqlEntityJoinVisitor jqlEntityJoinVisitor) {
+        for (TableQuery table : joinedTables) {
+            jqlEntityJoinVisitor.visitJoinedSchema(table);
+        }
     }
 }

@@ -5,7 +5,7 @@ import org.slowcoders.jql.JqlSchema;
 import java.util.ArrayList;
 import java.util.Collection;
 
-public interface JqlVisitor {
+public interface JqlPredicateVisitor {
 
     void visitCompare(QAttribute column, CompareOperator operator, Object value);
 

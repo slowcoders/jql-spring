@@ -3,6 +3,7 @@ package org.slowcoders.jql.jdbc;
 import org.slowcoders.jql.jdbc.metadata.JqlRowMapper;
 import org.slowcoders.jql.parser.JqlQuery;
 import org.slowcoders.jql.parser.QueryBuilder;
+import org.slowcoders.jql.parser.SourceWriter;
 import org.slowcoders.jql.parser.SqlBuilder;
 import org.slowcoders.jql.util.KVEntity;
 import org.springframework.data.domain.Sort;
@@ -21,7 +22,7 @@ public class SearchQuery {
 
 
     public List<KVEntity> execute(JdbcTemplate jdbc, Sort sort, int limit, int offset) {
-        SqlBuilder sb = new SqlBuilder(where.getSchema());
+        SourceWriter sb = new SourceWriter('\'');
         sb.write(query);
 
         write_orderBy(sb, sort);
@@ -34,7 +35,7 @@ public class SearchQuery {
         return (List)jdbc.query(query, rowMapper);
     }
 
-    private void write_orderBy(SqlBuilder sb, Sort sort) {
+    private void write_orderBy(SourceWriter sb, Sort sort) {
         if (sort == null) return;
 
         sb.write("\nORDER BY ");

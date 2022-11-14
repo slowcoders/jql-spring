@@ -1,7 +1,5 @@
 package org.slowcoders.jql.parser;
 
-import org.slowcoders.jql.JqlSchema;
-
 import java.util.ArrayList;
 
 class PredicateSet extends ArrayList<Predicate> implements Predicate {
@@ -18,7 +16,7 @@ class PredicateSet extends ArrayList<Predicate> implements Predicate {
     }
 
     @Override
-    public void accept(JqlVisitor sb) {
+    public void accept(JqlPredicateVisitor sb) {
         if (super.size() == 0) {
             sb.visitAlwaysTrue();
             return;

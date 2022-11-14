@@ -11,7 +11,7 @@ class QAttribute {
         this.valueType = valueType;
     }
 
-    public void printSQL(SqlBuilder sb) {
+    public void printSQL(SourceWriter sb) {
         scope.writeAttribute(sb, key, valueType);
     }
 }

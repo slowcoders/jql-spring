@@ -21,7 +21,7 @@ public class JqlEntityJoin {
         this.baseSchema = baseSchema;
         this.inverseMapped = baseSchema != fkColumns.get(0).getSchema();
         if (inverseMapped) {
-            if (associatedJoin != null && associatedJoin.inverseMapped) {
+            if (!(associatedJoin == null || !associatedJoin.inverseMapped)) {
                 throw new RuntimeException("invalid associatedJoin");
             }
             this.joinedSchema = fkColumns.get(0).getSchema();
@@ -45,7 +45,7 @@ public class JqlEntityJoin {
         return fkColumns;
     }
 
-    public JqlEntityJoin getAssociateJoin() {
+    public JqlEntityJoin getAssociativeJoin() {
         return associateJoin;
     }
 
@@ -101,15 +101,17 @@ public class JqlEntityJoin {
 
     public JqlSchema getBaseSchema() {
         return this.baseSchema;
-//        JqlColumn col = fkColumns.get(0);
-//        if (inverseMapped) {
-//            col = col.getJoinedPrimaryColumn();
-//        }
-//        return col.getSchema();
     }
 
     public boolean isJoinedBySingleKey() {
         return fkColumns.size() == 1;
     }
 
+    public JqlSchema getAssociatedSchema() {
+        if (associateJoin != null) {
+            return associateJoin.getJoinedSchema();
+        } else {
+            return this.getJoinedSchema();
+        }
+    }
 }

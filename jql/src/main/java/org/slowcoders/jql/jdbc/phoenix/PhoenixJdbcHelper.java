@@ -2,7 +2,6 @@ package org.slowcoders.jql.jdbc.phoenix;
 
 import org.slowcoders.jql.JqlColumn;
 import org.slowcoders.jql.SchemaLoader;
-import org.slowcoders.jql.jdbc.Command;
 import org.slowcoders.jql.jdbc.SqlGenerator;
 import org.springframework.jdbc.core.JdbcTemplate;
 
@@ -25,6 +24,7 @@ public class PhoenixJdbcHelper extends SqlGenerator {
 
     }
 
+    @Override
     protected String getCommand(Command command) {
         switch (command) {
             case Insert: case Update:
