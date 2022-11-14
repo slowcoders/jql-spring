@@ -15,22 +15,21 @@ class JsonFilter extends Filter {
         return getTableFilter().getSchema();
     }
 
+    public JsonFilter asJsonFilter() {
+        return this;
+    }
+
     @Override
-    public Filter getQueryScope_impl(String key, ValueNodeType nodeType, boolean fetchData_unused) {
+    public Filter getFilter_impl(String key, ValueNodeType nodeType, boolean fetchData_unused) {
         if (nodeType == ValueNodeType.Leaf) {
             return this;
         }
-        Filter entity = subQueries.get(key);
+        Filter entity = subFilters.get(key);
         if (entity == null) {
             entity = new JsonFilter(this, key);
-            subQueries.put(key, entity);
-//            super.add(entity);
+            subFilters.put(key, entity);
         }
         return entity;
-    }
-
-    public JsonFilter asJsonFilter() {
-        return this;
     }
 
     @Override
@@ -62,11 +61,6 @@ class JsonFilter extends Filter {
                 break;
         }
     }
-
-//    @Override
-//    public QScope createQueryScope(Conjunction conjunction) {
-//        return new JsonFilter(this.parent, this.key, conjunction);
-//    }
 
     @Override
     public String getColumnName(String key) {

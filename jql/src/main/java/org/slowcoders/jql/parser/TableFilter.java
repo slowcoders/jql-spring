@@ -35,14 +35,14 @@ class TableFilter extends Filter {
     }
 
     @Override
-    public Filter getQueryScope_impl(String key, ValueNodeType nodeType, boolean fetchData) {
+    public Filter getFilter_impl(String key, ValueNodeType nodeType, boolean fetchData) {
         JqlEntityJoin join = schema.getEntityJoinBy(key);
         if (join == null) {
             JqlColumn column = schema.getColumn(key);
             if (column.getValueFormat() != JsonNodeType.Object) return this;
         }
 
-        Filter subQuery = subQueries.get(key);
+        Filter subQuery = subFilters.get(key);
         if (subQuery == null) {
             if (join != null) {
                 JqlSchema subSchema = getTopQuery().addTableJoin(join, fetchData);
@@ -51,7 +51,7 @@ class TableFilter extends Filter {
             else {
                 subQuery = new JsonFilter(this, key);
             }
-            subQueries.put(key, subQuery);
+            subFilters.put(key, subQuery);
         }
         return subQuery;
     }
@@ -85,7 +85,7 @@ class TableFilter extends Filter {
     }
 
     public void accept(JqlEntityJoinVisitor jqlEntityJoinVisitor) {
-        for (Filter q : subQueries.values()) {
+        for (Filter q : subFilters.values()) {
             TableFilter table = q.asTableFilter();
             if (table != null) {
                 jqlEntityJoinVisitor.visitJoinedSchema(table);

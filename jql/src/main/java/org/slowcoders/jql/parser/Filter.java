@@ -5,7 +5,7 @@ import java.util.HashMap;
 abstract class Filter extends PredicateSet {
 
     private final Filter parent;
-    final HashMap<String, Filter> subQueries = new HashMap<>();
+    final HashMap<String, Filter> subFilters = new HashMap<>();
     private PredicateSet orSet = null;
 
     public Filter(Filter parentQuery) {
@@ -44,10 +44,10 @@ abstract class Filter extends PredicateSet {
                 return scope;
             }
             String token = key.substring(0, p);
-            scope = scope.getQueryScope_impl(token, nodeType, fetchData);
+            scope = scope.getFilter_impl(token, nodeType, fetchData);
             key = key.substring(p + 1);
         }
-        scope = scope.getQueryScope_impl(key, nodeType, fetchData);
+        scope = scope.getFilter_impl(key, nodeType, fetchData);
         if (nodeType == ValueNodeType.Entities) {
             return scope.getOrPredicates();
         } else {
@@ -63,7 +63,7 @@ abstract class Filter extends PredicateSet {
         return this.orSet;
     }
 
-    protected abstract Filter getQueryScope_impl(String key, ValueNodeType nodeType, boolean fetchData);
+    protected abstract Filter getFilter_impl(String key, ValueNodeType nodeType, boolean fetchData);
 
     public abstract void writeAttribute(SourceWriter sb, String key, Class<?> valueType);
 
