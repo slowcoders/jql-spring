@@ -2,7 +2,7 @@ package org.slowcoders.jql.parser;
 
 import java.util.HashMap;
 
-abstract class EntityQuery extends PredicateSet {
+abstract class Filter extends PredicateSet {
 
     enum Type {
         Leaf,
@@ -10,28 +10,28 @@ abstract class EntityQuery extends PredicateSet {
         Entities
     }
 
-    private final EntityQuery parent;
-    final HashMap<String, EntityQuery> subQueries = new HashMap<>();
+    private final Filter parent;
+    final HashMap<String, Filter> subQueries = new HashMap<>();
     private PredicateSet orSet = null;
 
-    public EntityQuery(EntityQuery parentQuery) {
+    public Filter(Filter parentQuery) {
         super(Conjunction.AND);
         this.parent = parentQuery;
     }
 
-    public JsonQuery asJsonQuery() { return null; }
+    public JsonFilter asJsonFilter() { return null; }
 
-    public TableQuery asTableQuery() { return null; }
+    public RowFilter asRowFilter() { return null; }
 
-    public final EntityQuery getParent() {
+    public final Filter getParent() {
         return this.parent;
     }
 
-    EntityQuery getEntityPredicates() { return this; }
+    Filter getEntityPredicates() { return this; }
 
 
-    public TableQuery getTableQuery() {
-        return parent.getTableQuery();
+    public RowFilter getRowFilter() {
+        return parent.getRowFilter();
     }
 
     public JqlQuery getTopQuery() {
@@ -39,10 +39,10 @@ abstract class EntityQuery extends PredicateSet {
     }
 
     public PredicateSet getQueryScope(String key, Type type, boolean fetchData) {
-        EntityQuery scope = this;
+        Filter scope = this;
         int p;
         while ((p = key.indexOf('.')) > 0) {
-            TableQuery table = scope.asTableQuery();
+            RowFilter table = scope.asRowFilter();
             if (table != null && table.getSchema().hasColumn(key)) {
                 // TODO 고려 사항
                 //  1) '.' 으로 이어진 Composite Key 는 Leaf-Column(Not joined) 에만 사용 가능.
@@ -69,22 +69,22 @@ abstract class EntityQuery extends PredicateSet {
         return this.orSet;
     }
 
-    protected abstract EntityQuery getQueryScope_impl(String key, Type type, boolean fetchData);
+    protected abstract Filter getQueryScope_impl(String key, Type type, boolean fetchData);
 
     public abstract void writeAttribute(SourceWriter sb, String key, Class<?> valueType);
 
     public abstract String getColumnName(String key);
 
     private class OrPredicates extends PredicateSet {
-        private final EntityQuery query;
+        private final Filter query;
 
-        public OrPredicates(EntityQuery query) {
+        public OrPredicates(Filter query) {
             super(Conjunction.OR);
             this.query = query;
         }
 
         @Override
-        EntityQuery getEntityPredicates() {
+        Filter getEntityPredicates() {
             return query;
         }
     }

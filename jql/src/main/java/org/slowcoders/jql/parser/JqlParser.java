@@ -34,7 +34,7 @@ public class JqlParser {
         // "select+@" : ["attr1", "attr2", "attr3" ] 추가??
         // "groupBy@" : ["attr1", "attr2/attr3" ]
 
-        EntityQuery baseScope = predicates.getEntityPredicates();
+        Filter baseScope = predicates.getEntityPredicates();
         List<String> selectedAttrs = (List<String>)filter.get(SELECT_MORE);
         for (Map.Entry<String, Object> entry : filter.entrySet()) {
             String key = entry.getKey();
@@ -54,16 +54,16 @@ public class JqlParser {
                 key = null;
             }
 
-            EntityQuery.Type valueCategory = this.getValueCategory(value);
+            Filter.Type valueCategory = this.getValueCategory(value);
             PredicateSet targetPS = key == null ? predicates
                 : baseScope.getQueryScope(key, valueCategory, op.needFetchData());
 
             Predicate cond;
-            if (valueCategory == EntityQuery.Type.Entity) {
+            if (valueCategory == Filter.Type.Entity) {
                 this.parse(targetPS, (Map<String, Object>)value);
                 cond = targetPS;
             }
-            else if (valueCategory == EntityQuery.Type.Entities) {
+            else if (valueCategory == Filter.Type.Entities) {
                 for (Map<String, Object> c : (Collection<Map<String, Object>>)value) {
                     this.parse(targetPS, (Map)c);
                 }
@@ -74,15 +74,15 @@ public class JqlParser {
                     selectedAttrs.add(key);
                 }
 
-                EntityQuery targetScope = targetPS.getEntityPredicates();
+                Filter targetScope = targetPS.getEntityPredicates();
                 String columnName = targetScope.getColumnName(key);
                 QAttribute column;
                 if (value == null) {
                     column = new QAttribute(targetScope, columnName, null);
                 }
                 else {
-                    if (targetScope.asJsonQuery() == null) {
-                        Class<?> fieldType = targetScope.getTableQuery().getSchema().getColumn(columnName).getJavaType();
+                    if (targetScope.asJsonFilter() == null) {
+                        Class<?> fieldType = targetScope.getRowFilter().getSchema().getColumn(columnName).getJavaType();
                         Class<?> accessType = op.getAccessType(value, fieldType);
                         value = conversionService.convert(value, accessType);
                     }
@@ -147,16 +147,16 @@ public class JqlParser {
         registerAutoFetchFields(fields, entityType.getSuperclass());
     }
 
-    private EntityQuery.Type getValueCategory(Object value) {
+    private Filter.Type getValueCategory(Object value) {
         if (value instanceof Collection) {
             if (((Collection)value).iterator().next() instanceof Map) {
-                return EntityQuery.Type.Entities;
+                return Filter.Type.Entities;
             }
         }
         if (value instanceof Map) {
-            return EntityQuery.Type.Entity;
+            return Filter.Type.Entity;
         }
-        return EntityQuery.Type.Leaf;
+        return Filter.Type.Leaf;
     }
 
 }

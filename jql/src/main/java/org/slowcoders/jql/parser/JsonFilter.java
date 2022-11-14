@@ -3,33 +3,33 @@ package org.slowcoders.jql.parser;
 import org.slowcoders.jql.JqlSchema;
 import org.slowcoders.jql.JsonNodeType;
 
-class JsonQuery extends EntityQuery {
+class JsonFilter extends Filter {
     private final String key;
 
-    JsonQuery(EntityQuery parentQuery, String key) {
+    JsonFilter(Filter parentQuery, String key) {
         super(parentQuery);
         this.key = key;
     }
 
     public JqlSchema getSchema() {
-        return getTableQuery().getSchema();
+        return getRowFilter().getSchema();
     }
 
     @Override
-    public EntityQuery getQueryScope_impl(String key, Type type, boolean fetchData_unused) {
+    public Filter getQueryScope_impl(String key, Type type, boolean fetchData_unused) {
         if (type == Type.Leaf) {
             return this;
         }
-        EntityQuery entity = subQueries.get(key);
+        Filter entity = subQueries.get(key);
         if (entity == null) {
-            entity = new JsonQuery(this, key);
+            entity = new JsonFilter(this, key);
             subQueries.put(key, entity);
 //            super.add(entity);
         }
         return entity;
     }
 
-    public JsonQuery asJsonQuery() {
+    public JsonFilter asJsonFilter() {
         return this;
     }
 
@@ -65,7 +65,7 @@ class JsonQuery extends EntityQuery {
 
 //    @Override
 //    public QScope createQueryScope(Conjunction conjunction) {
-//        return new JsonQuery(this.parent, this.key, conjunction);
+//        return new JsonFilter(this.parent, this.key, conjunction);
 //    }
 
     @Override
@@ -74,7 +74,7 @@ class JsonQuery extends EntityQuery {
     }
 
     private void dumpColumnName(SourceWriter sb) {
-        JsonQuery p = getParent().asJsonQuery();
+        JsonFilter p = getParent().asJsonFilter();
         if (p != null) {
             p.dumpColumnName(sb);
             sb.write(" -> '").write(key).write('\'');

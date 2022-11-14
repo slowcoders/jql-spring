@@ -6,7 +6,7 @@ import org.slowcoders.jql.JqlSchema;
 import java.util.ArrayList;
 import java.util.List;
 
-public class JqlQuery extends TableQuery {
+public class JqlQuery extends RowFilter {
 
 //    private final ArrayList<JqlEntityJoin> entityJoins = new ArrayList<>();
 //    private final ArrayList<JqlEntityJoin> pkJoins = new ArrayList<>();

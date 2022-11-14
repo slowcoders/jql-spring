@@ -5,23 +5,17 @@ import org.slowcoders.jql.JqlEntityJoin;
 import org.slowcoders.jql.JqlSchema;
 import org.slowcoders.jql.JsonNodeType;
 
-import java.util.ArrayList;
-
-class TableQuery extends EntityQuery {
+class RowFilter extends Filter {
     private final JqlSchema schema;
 
-    private final ArrayList<TableQuery> joinedTables = new ArrayList<>();
     private final JqlEntityJoin join;
 
-    protected TableQuery(TableQuery parentQuery, JqlSchema schema) {
-        this(null, schema, null, true);
+    protected RowFilter(RowFilter parentQuery, JqlSchema schema) {
+        this(parentQuery, schema, null, true);
     }
 
-    public TableQuery(TableQuery parentQuery, JqlSchema schema, JqlEntityJoin join, boolean fetchData) {
+    public RowFilter(RowFilter parentQuery, JqlSchema schema, JqlEntityJoin join, boolean fetchData) {
         super(parentQuery);
-        if (parentQuery != null) {// && parentQuery.joinedTables.indexOf(join) < 0) {
-            parentQuery.joinedTables.add(this);
-        }
         this.schema = schema;
         this.join = join;
     }
@@ -30,32 +24,32 @@ class TableQuery extends EntityQuery {
         return schema;
     }
 
-    public TableQuery asTableQuery() {
+    public RowFilter asRowFilter() {
         return this;
     }
 
     public String getTableName() { return schema.getTableName(); }
 
-    public TableQuery getTableQuery() {
+    public RowFilter getRowFilter() {
         return this;
     }
 
     @Override
-    public EntityQuery getQueryScope_impl(String key, Type isLeaf_unused, boolean fetchData) {
+    public Filter getQueryScope_impl(String key, Type isLeaf_unused, boolean fetchData) {
         JqlEntityJoin join = schema.getEntityJoinBy(key);
         if (join == null) {
             JqlColumn column = schema.getColumn(key);
             if (column.getValueFormat() != JsonNodeType.Object) return this;
         }
 
-        EntityQuery subQuery = subQueries.get(key);
+        Filter subQuery = subQueries.get(key);
         if (subQuery == null) {
             if (join != null) {
                 JqlSchema subSchema = getTopQuery().addTableJoin(join, fetchData);
-                subQuery = new TableQuery(this, subSchema, join, fetchData);
+                subQuery = new RowFilter(this, subSchema, join, fetchData);
             }
             else {
-                subQuery = new JsonQuery(this, key);
+                subQuery = new JsonFilter(this, key);
             }
             subQueries.put(key, subQuery);
         }
@@ -91,8 +85,11 @@ class TableQuery extends EntityQuery {
     }
 
     public void accept(JqlEntityJoinVisitor jqlEntityJoinVisitor) {
-        for (TableQuery table : joinedTables) {
-            jqlEntityJoinVisitor.visitJoinedSchema(table);
+        for (Filter q : subQueries.values()) {
+            RowFilter table = q.asRowFilter();
+            if (table != null) {
+                jqlEntityJoinVisitor.visitJoinedSchema(table);
+            }
         }
     }
 }

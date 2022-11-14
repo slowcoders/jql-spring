@@ -9,7 +9,7 @@ class PredicateSet extends ArrayList<Predicate> implements Predicate {
         this.conjunction = conjunction;
     }
 
-    EntityQuery getEntityPredicates() { return null; }
+    Filter getEntityPredicates() { return null; }
 
     public boolean add(Predicate predicate) {
         return super.add(predicate);
