@@ -12,7 +12,7 @@ class JsonFilter extends Filter {
     }
 
     public JqlSchema getSchema() {
-        return getRowFilter().getSchema();
+        return getTableFilter().getSchema();
     }
 
     @Override

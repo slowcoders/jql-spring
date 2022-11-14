@@ -160,15 +160,15 @@ public class SqlBuilder implements JqlPredicateVisitor, JqlEntityJoinVisitor, Qu
         sb.write(")");
     }
 
-    public void visitJoinedSchema(RowFilter rowFilter) {
-        JqlEntityJoin join = rowFilter.getEntityJoin();
+    public void visitJoinedSchema(TableFilter tableFilter) {
+        JqlEntityJoin join = tableFilter.getEntityJoin();
         writeJoinStatement(join);
         join = join.getAssociativeJoin();
         if (join != null) {
             writeJoinStatement(join);
         }
-//        rowFilter.accept((JqlPredicateVisitor)this);
-        rowFilter.accept((JqlEntityJoinVisitor)this);
+//        tableFilter.accept((JqlPredicateVisitor)this);
+        tableFilter.accept((JqlEntityJoinVisitor)this);
     }
 
 //    public void visitJoinedSchema(JsonFilter jsonFilter) {

@@ -21,7 +21,7 @@ abstract class Filter extends PredicateSet {
 
     public JsonFilter asJsonFilter() { return null; }
 
-    public RowFilter asRowFilter() { return null; }
+    public TableFilter asTableFilter() { return null; }
 
     public final Filter getParent() {
         return this.parent;
@@ -30,19 +30,19 @@ abstract class Filter extends PredicateSet {
     Filter getEntityPredicates() { return this; }
 
 
-    public RowFilter getRowFilter() {
-        return parent.getRowFilter();
+    public TableFilter getTableFilter() {
+        return parent.getTableFilter();
     }
 
     public JqlQuery getTopQuery() {
         return parent.getTopQuery();
     }
 
-    public PredicateSet getQueryScope(String key, Type type, boolean fetchData) {
+    public PredicateSet getFilterNode(String key, Type type, boolean fetchData) {
         Filter scope = this;
         int p;
         while ((p = key.indexOf('.')) > 0) {
-            RowFilter table = scope.asRowFilter();
+            TableFilter table = scope.asTableFilter();
             if (table != null && table.getSchema().hasColumn(key)) {
                 // TODO 고려 사항
                 //  1) '.' 으로 이어진 Composite Key 는 Leaf-Column(Not joined) 에만 사용 가능.

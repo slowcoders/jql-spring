@@ -5,16 +5,16 @@ import org.slowcoders.jql.JqlEntityJoin;
 import org.slowcoders.jql.JqlSchema;
 import org.slowcoders.jql.JsonNodeType;
 
-class RowFilter extends Filter {
+class TableFilter extends Filter {
     private final JqlSchema schema;
 
     private final JqlEntityJoin join;
 
-    protected RowFilter(RowFilter parentQuery, JqlSchema schema) {
+    protected TableFilter(TableFilter parentQuery, JqlSchema schema) {
         this(parentQuery, schema, null, true);
     }
 
-    public RowFilter(RowFilter parentQuery, JqlSchema schema, JqlEntityJoin join, boolean fetchData) {
+    public TableFilter(TableFilter parentQuery, JqlSchema schema, JqlEntityJoin join, boolean fetchData) {
         super(parentQuery);
         this.schema = schema;
         this.join = join;
@@ -24,13 +24,13 @@ class RowFilter extends Filter {
         return schema;
     }
 
-    public RowFilter asRowFilter() {
+    public TableFilter asTableFilter() {
         return this;
     }
 
     public String getTableName() { return schema.getTableName(); }
 
-    public RowFilter getRowFilter() {
+    public TableFilter getTableFilter() {
         return this;
     }
 
@@ -46,7 +46,7 @@ class RowFilter extends Filter {
         if (subQuery == null) {
             if (join != null) {
                 JqlSchema subSchema = getTopQuery().addTableJoin(join, fetchData);
-                subQuery = new RowFilter(this, subSchema, join, fetchData);
+                subQuery = new TableFilter(this, subSchema, join, fetchData);
             }
             else {
                 subQuery = new JsonFilter(this, key);
@@ -86,7 +86,7 @@ class RowFilter extends Filter {
 
     public void accept(JqlEntityJoinVisitor jqlEntityJoinVisitor) {
         for (Filter q : subQueries.values()) {
-            RowFilter table = q.asRowFilter();
+            TableFilter table = q.asTableFilter();
             if (table != null) {
                 jqlEntityJoinVisitor.visitJoinedSchema(table);
             }

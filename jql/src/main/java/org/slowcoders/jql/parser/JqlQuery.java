@@ -6,13 +6,10 @@ import org.slowcoders.jql.JqlSchema;
 import java.util.ArrayList;
 import java.util.List;
 
-public class JqlQuery extends RowFilter {
+public class JqlQuery extends TableFilter {
 
-//    private final ArrayList<JqlEntityJoin> entityJoins = new ArrayList<>();
-//    private final ArrayList<JqlEntityJoin> pkJoins = new ArrayList<>();
     private final ArrayList<JqlResultMapping> resultMappings = new ArrayList<>();
     private static final String[] emptyJsonPath = new String[0];
-
 
     public JqlQuery(JqlSchema schema) {
         super(null, schema);
@@ -60,11 +57,6 @@ public class JqlQuery extends RowFilter {
         }
         return path;
     }
-
-
-//    public List<JqlEntityJoin> getEntityJoins() {
-//        return entityJoins;
-//    }
 
     public List<JqlResultMapping> getResultMappings() {
         return this.resultMappings;

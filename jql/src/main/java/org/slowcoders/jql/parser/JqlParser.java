@@ -56,7 +56,7 @@ public class JqlParser {
 
             Filter.Type valueCategory = this.getValueCategory(value);
             PredicateSet targetPS = key == null ? predicates
-                : baseScope.getQueryScope(key, valueCategory, op.needFetchData());
+                : baseScope.getFilterNode(key, valueCategory, op.needFetchData());
 
             Predicate cond;
             if (valueCategory == Filter.Type.Entity) {
@@ -82,7 +82,7 @@ public class JqlParser {
                 }
                 else {
                     if (targetScope.asJsonFilter() == null) {
-                        Class<?> fieldType = targetScope.getRowFilter().getSchema().getColumn(columnName).getJavaType();
+                        Class<?> fieldType = targetScope.getTableFilter().getSchema().getColumn(columnName).getJavaType();
                         Class<?> accessType = op.getAccessType(value, fieldType);
                         value = conversionService.convert(value, accessType);
                     }
