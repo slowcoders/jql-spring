@@ -4,12 +4,6 @@ import java.util.HashMap;
 
 abstract class Filter extends PredicateSet {
 
-    enum Type {
-        Leaf,
-        Entity,
-        Entities
-    }
-
     private final Filter parent;
     final HashMap<String, Filter> subQueries = new HashMap<>();
     private PredicateSet orSet = null;
@@ -27,7 +21,7 @@ abstract class Filter extends PredicateSet {
         return this.parent;
     }
 
-    Filter getEntityPredicates() { return this; }
+    Filter getBaseFilter() { return this; }
 
 
     public TableFilter getTableFilter() {
@@ -38,7 +32,7 @@ abstract class Filter extends PredicateSet {
         return parent.getTopQuery();
     }
 
-    public PredicateSet getFilterNode(String key, Type type, boolean fetchData) {
+    public PredicateSet getFilterNode(String key, ValueNodeType nodeType, boolean fetchData) {
         Filter scope = this;
         int p;
         while ((p = key.indexOf('.')) > 0) {
@@ -50,11 +44,11 @@ abstract class Filter extends PredicateSet {
                 return scope;
             }
             String token = key.substring(0, p);
-            scope = scope.getQueryScope_impl(token, type, fetchData);
+            scope = scope.getQueryScope_impl(token, nodeType, fetchData);
             key = key.substring(p + 1);
         }
-        scope = scope.getQueryScope_impl(key, type, fetchData);
-        if (type == Type.Entities) {
+        scope = scope.getQueryScope_impl(key, nodeType, fetchData);
+        if (nodeType == ValueNodeType.Entities) {
             return scope.getOrPredicates();
         } else {
             return scope;
@@ -69,7 +63,7 @@ abstract class Filter extends PredicateSet {
         return this.orSet;
     }
 
-    protected abstract Filter getQueryScope_impl(String key, Type type, boolean fetchData);
+    protected abstract Filter getQueryScope_impl(String key, ValueNodeType nodeType, boolean fetchData);
 
     public abstract void writeAttribute(SourceWriter sb, String key, Class<?> valueType);
 
@@ -84,7 +78,7 @@ abstract class Filter extends PredicateSet {
         }
 
         @Override
-        Filter getEntityPredicates() {
+        Filter getBaseFilter() {
             return query;
         }
     }

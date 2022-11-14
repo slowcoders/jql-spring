@@ -35,7 +35,7 @@ class TableFilter extends Filter {
     }
 
     @Override
-    public Filter getQueryScope_impl(String key, Type isLeaf_unused, boolean fetchData) {
+    public Filter getQueryScope_impl(String key, ValueNodeType nodeType, boolean fetchData) {
         JqlEntityJoin join = schema.getEntityJoinBy(key);
         if (join == null) {
             JqlColumn column = schema.getColumn(key);

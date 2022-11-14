@@ -16,8 +16,8 @@ class JsonFilter extends Filter {
     }
 
     @Override
-    public Filter getQueryScope_impl(String key, Type type, boolean fetchData_unused) {
-        if (type == Type.Leaf) {
+    public Filter getQueryScope_impl(String key, ValueNodeType nodeType, boolean fetchData_unused) {
+        if (nodeType == ValueNodeType.Leaf) {
             return this;
         }
         Filter entity = subQueries.get(key);

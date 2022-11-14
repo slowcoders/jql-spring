@@ -162,13 +162,16 @@ public class SqlBuilder implements JqlPredicateVisitor, JqlEntityJoinVisitor, Qu
 
     public void visitJoinedSchema(TableFilter tableFilter) {
         JqlEntityJoin join = tableFilter.getEntityJoin();
-        writeJoinStatement(join);
-        join = join.getAssociativeJoin();
-        if (join != null) {
+        if (join.isUniqueJoin()) {
             writeJoinStatement(join);
+            join = join.getAssociativeJoin();
+            if (join != null) {
+                writeJoinStatement(join);
+            }
+            tableFilter.accept((JqlEntityJoinVisitor) this);
+        } else {
+
         }
-//        tableFilter.accept((JqlPredicateVisitor)this);
-        tableFilter.accept((JqlEntityJoinVisitor)this);
     }
 
 //    public void visitJoinedSchema(JsonFilter jsonFilter) {

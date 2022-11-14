@@ -34,7 +34,7 @@ public class JqlParser {
         // "select+@" : ["attr1", "attr2", "attr3" ] 추가??
         // "groupBy@" : ["attr1", "attr2/attr3" ]
 
-        Filter baseScope = predicates.getEntityPredicates();
+        Filter baseFilter = predicates.getBaseFilter();
         List<String> selectedAttrs = (List<String>)filter.get(SELECT_MORE);
         for (Map.Entry<String, Object> entry : filter.entrySet()) {
             String key = entry.getKey();
@@ -54,16 +54,16 @@ public class JqlParser {
                 key = null;
             }
 
-            Filter.Type valueCategory = this.getValueCategory(value);
+            ValueNodeType valueCategory = this.getValueCategory(value);
             PredicateSet targetPS = key == null ? predicates
-                : baseScope.getFilterNode(key, valueCategory, op.needFetchData());
+                : baseFilter.getFilterNode(key, valueCategory, op.needFetchData());
 
             Predicate cond;
-            if (valueCategory == Filter.Type.Entity) {
+            if (valueCategory == ValueNodeType.Entity) {
                 this.parse(targetPS, (Map<String, Object>)value);
                 cond = targetPS;
             }
-            else if (valueCategory == Filter.Type.Entities) {
+            else if (valueCategory == ValueNodeType.Entities) {
                 for (Map<String, Object> c : (Collection<Map<String, Object>>)value) {
                     this.parse(targetPS, (Map)c);
                 }
@@ -74,7 +74,7 @@ public class JqlParser {
                     selectedAttrs.add(key);
                 }
 
-                Filter targetScope = targetPS.getEntityPredicates();
+                Filter targetScope = targetPS.getBaseFilter();
                 String columnName = targetScope.getColumnName(key);
                 QAttribute column;
                 if (value == null) {
@@ -147,16 +147,16 @@ public class JqlParser {
         registerAutoFetchFields(fields, entityType.getSuperclass());
     }
 
-    private Filter.Type getValueCategory(Object value) {
+    private ValueNodeType getValueCategory(Object value) {
         if (value instanceof Collection) {
             if (((Collection)value).iterator().next() instanceof Map) {
-                return Filter.Type.Entities;
+                return ValueNodeType.Entities;
             }
         }
         if (value instanceof Map) {
-            return Filter.Type.Entity;
+            return ValueNodeType.Entity;
         }
-        return Filter.Type.Leaf;
+        return ValueNodeType.Leaf;
     }
 
 }
