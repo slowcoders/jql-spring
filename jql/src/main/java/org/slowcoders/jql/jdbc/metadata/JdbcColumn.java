@@ -100,7 +100,6 @@ public class JdbcColumn extends JqlColumn {
         }
         CharSequence rawFieldName = (col != this) ? sb.append(col.getColumnName()) : this.getColumnName();
 
-
         String name = getSchema().getSchemaLoader().getNameConverter().toLogicalAttributeName(rawFieldName.toString());
         return name;
     }
