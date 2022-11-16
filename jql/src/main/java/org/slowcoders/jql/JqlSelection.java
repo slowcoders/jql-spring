@@ -14,7 +14,7 @@ public interface JqlSelection {
      * @param offset start index to read
      * @return read entities
      */
-    List<Map<String, Object>> read(Sort sort, int limit, int offset);
+    List<KVEntity> read(Sort sort, int limit, int offset);
 
     /**
      * @return count of entities in this selection
@@ -25,10 +25,10 @@ public interface JqlSelection {
      * @param updateSet
      * @return updated entity count
      */
-    long update(Map<String, Object> updateSet);
+    long updateAll(Map<String, Object> updateSet);
 
     /**
      * @return deleted entity count;
      */
-    long delete();
+    long deleteAll();
 }

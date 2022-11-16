@@ -14,7 +14,6 @@ public class JqlParser {
     private final ConversionService conversionService;
     private final JqlQuery where;
 
-
     public JqlParser(JqlSchema schema, ConversionService conversionService) {
         this.where = new JqlQuery(schema);
         this.conversionService = conversionService;
@@ -94,7 +93,7 @@ public class JqlParser {
             if (cond == null) {
                 throw new IllegalArgumentException("invalid value type for " + entry.getKey() + " value: " + value);
             }
-            if (cond != predicates) {
+            if (cond != predicates && !cond.isEmpty()) {
                 predicates.add(cond);
             }
         }

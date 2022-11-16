@@ -2,10 +2,10 @@ package org.slowcoders.jql.jdbc;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slowcoders.jql.JQLRepository;
-import org.slowcoders.jql.JQLService;
 import org.slowcoders.jql.JqlColumn;
 import org.slowcoders.jql.JqlSchema;
-import org.slowcoders.jql.jdbc.metadata.JqlRowMapper;
+import org.slowcoders.jql.parser.JqlParser;
+import org.slowcoders.jql.parser.JqlQuery;
 import org.slowcoders.jql.util.KVEntity;
 import org.springframework.core.convert.ConversionService;
 import org.springframework.data.domain.Page;
@@ -27,6 +27,7 @@ public class JDBCRepositoryBase<ID> /*extends JDBCQueryBuilder*/ implements JQLR
     private final SqlGenerator sqlGenerator;
     private final JQLJdbcService service;
     private final List<JqlColumn> pkColumns;
+    private final JqlSchema jqlSchema;
 
     public JDBCRepositoryBase(JQLJdbcService service, Class<?> entityType) {
         this(service, service.loadSchema(entityType)); //  JqlSchema.loadSchema(entityType));
@@ -34,9 +35,10 @@ public class JDBCRepositoryBase<ID> /*extends JDBCQueryBuilder*/ implements JQLR
 
     public JDBCRepositoryBase(JQLJdbcService service, JqlSchema jqlSchema) {
         this.service = service;
-        this.sqlGenerator = new SqlGenerator(service.getConversionService(), jqlSchema);
+        this.sqlGenerator = new SqlGenerator(jqlSchema);
         this.jdbc = service.getJdbcTemplate();
         this.objectMapper = service.getJsonConverter().getObjectMapper();
+        this.jqlSchema = jqlSchema;
         this.pkColumns = jqlSchema.getPKColumns();
     }
 
@@ -45,7 +47,7 @@ public class JDBCRepositoryBase<ID> /*extends JDBCQueryBuilder*/ implements JQLR
     }
 
     public JqlSchema getSchema() {
-        return sqlGenerator.getSchema();
+        return jqlSchema;
     }
 
     @Override
@@ -56,7 +58,7 @@ public class JDBCRepositoryBase<ID> /*extends JDBCQueryBuilder*/ implements JQLR
     @Override
     public ID convertId(Object v) {
         ConversionService cvtService = service.getConversionService();
-        List<JqlColumn> pkColumns = sqlGenerator.getSchema().getPKColumns();
+        List<JqlColumn> pkColumns = jqlSchema.getPKColumns();
         if (pkColumns.size() == 1) {
             return (ID)service.getConversionService().convert(v, pkColumns.get(0).getJavaType());
         }
@@ -111,61 +113,56 @@ public class JDBCRepositoryBase<ID> /*extends JDBCQueryBuilder*/ implements JQLR
         map.put(key, value);
         return map;
     }
+
     @Override
     public KVEntity find(ID id) {
         Map<String, Object> filter = createJqlFilterWithId(id);
-        SearchQuery query = sqlGenerator.select(filter);
-        List<KVEntity> res = query.execute(jdbc, null, 1, 0);
-        return res.size() == 0 ? null : res.get(0);
-//        String sql = sqlGenerator.findById(id);
-//        return jdbc.queryForObject(sql, getColumnMapRowMapper());
+        List<KVEntity> res = find_impl(filter, null,1, 0);
+        return res.size() > 0 ? res.get(0) : null;
     }
 
-//    protected RowMapper<KVEntity> getColumnMapRowMapper() {
-//        return new JqlRowMapper(this.getSchema());
-//    }
+    protected RowMapper<KVEntity> getColumnMapRowMapper(JqlQuery filter) {
+        return new JqlRowMapper(filter.getResultColumnMappings());
+    }
+
+    protected List<KVEntity> find_impl(Map<String, Object> jqlFilter, Sort sort, int limit, int offset) {
+        JqlQuery query = this.buildQuery(jqlFilter);
+        String sql = sqlGenerator.createSelectQuery(query, sort, limit, offset);
+        List<KVEntity> res = (List)jdbc.query(sql, getColumnMapRowMapper(query));
+        return res;
+    }
 
     @Override
     public Page<KVEntity> find(Map<String, Object> jqlFilter, @NotNull Pageable pageReq) {
         int size = pageReq.getPageSize();
         int offset = (pageReq.getPageNumber()) * size;
-        SearchQuery query = sqlGenerator.select(jqlFilter);
-        List<KVEntity> res = query.execute(jdbc, pageReq.getSort(), size, offset);
+        List<KVEntity> res = find_impl(jqlFilter, pageReq.getSort(), size, offset);
         long count = count(jqlFilter);
         return new PageImpl(res, pageReq, count);
     }
 
     @Override
     public long count(Map<String, Object> jqlFilter) {
-        String sqlCount = sqlGenerator.count(jqlFilter);
+        JqlQuery query = this.buildQuery(jqlFilter);
+        String sqlCount = sqlGenerator.createCountQuery(query);
         long count = jdbc.queryForObject(sqlCount, Long.class);
         return count;
     }
 
     @Override
     public Iterable<KVEntity> find(Map<String, Object> jqlFilter, Sort sort, int limit) {
-        SearchQuery query = sqlGenerator.select(jqlFilter);
-        List<KVEntity> res = query.execute(jdbc, sort, limit, 0);
-//        String query = sqlGenerator.select(jqlFilter, sort, limit, 0);
-//        List<KVEntity> res = (List)jdbc.query(query, getColumnMapRowMapper());
-        return res;
+        return this.find_impl(jqlFilter, sort, limit, 0);
     }
 
     @Override
     public List<KVEntity> list(Collection<ID> idList) {
         Map<String, Object> filter = createJqlFilterWithIdList( idList);
-        SearchQuery query = sqlGenerator.select(filter);
-        List<KVEntity> res = query.execute(jdbc, null, -1, 0);
-//        String query = sqlGenerator.select(filter, null, idList.size(), 0);
-//        List<KVEntity> res = (List)jdbc.query(query, getColumnMapRowMapper());
-        return res;
+        return find_impl(filter, null, -1, 0);
     }
 
     @Override
     public KVEntity findTop(Map<String, Object> jqlFilter, Sort sort) {
-        SearchQuery query = sqlGenerator.select(jqlFilter);
-        List<KVEntity> res = query.execute(jdbc, sort, 1, 0);
-//        List<KVEntity> res = (List)jdbc.query(query, getColumnMapRowMapper());
+        List<KVEntity> res = this.find_impl(jqlFilter, sort, 1, 0);
         return res.size() > 0 ? res.get(0) : null;
     }
 
@@ -198,7 +195,7 @@ public class JDBCRepositoryBase<ID> /*extends JDBCQueryBuilder*/ implements JQLR
     public List<ID> insertAll(Collection<Map<String, Object>> entities) {
         if (entities.isEmpty()) return null;
 
-        BatchUpsert batch = sqlGenerator.prepareInsert(entities);
+        BatchUpsert batch = sqlGenerator.prepareInsert(this.getSchema(), entities);
         jdbc.batchUpdate(batch.getSql(), batch);
         return batch.getEntityIDs();
     }
@@ -211,22 +208,22 @@ public class JDBCRepositoryBase<ID> /*extends JDBCQueryBuilder*/ implements JQLR
 
     @Override
     public void update(Collection<ID> idList, Map<String, Object> updateSet) throws IOException {
-        Map<String, Object> filter = createJqlFilterWithIdList(idList);
-        String sql = sqlGenerator.update(filter, updateSet);
+        JqlQuery filter = buildQuery(createJqlFilterWithIdList(idList));
+        String sql = sqlGenerator.createUpdateQuery(filter, updateSet);
         jdbc.update(sql);
     }
 
     @Override
     public void delete(ID id) {
-        Map<String, Object> filter = createJqlFilterWithId(id);
-        String sql = sqlGenerator.delete(filter);
+        JqlQuery filter = buildQuery(createJqlFilterWithId(id));
+        String sql = sqlGenerator.createDeleteQuery(filter);
         jdbc.update(sql);
     }
 
     @Override
     public int delete(Collection<ID> idList) {
-        Map<String, Object> filter = createJqlFilterWithIdList(idList);
-        String sql = sqlGenerator.delete(filter);
+        JqlQuery filter = buildQuery(createJqlFilterWithIdList(idList));
+        String sql = sqlGenerator.createDeleteQuery(filter);
         return jdbc.update(sql);
     }
 
@@ -246,5 +243,38 @@ public class JDBCRepositoryBase<ID> /*extends JDBCQueryBuilder*/ implements JQLR
         }
     }
 
+    private static final Map _emptyMap = new HashMap();
+    public JqlQuery buildQuery(Map<String, Object> filter) {
+        Map filterMap;
+        if (filter instanceof Map) {
+            filterMap = (Map) filter;
+        }
+        else if (filter != null) {
+            filterMap = new HashMap();
+            throw new RuntimeException("Not implemented");
+            //filterMap.put(this.pkColName + "@eq", filter);
+            /** 참고 ID 검색 함수를 아래와 같이 처리할 수도 있다. (단, FetchType.EAGER 로 인한 다중 query 발생)
+             Expression<?> column = root.get(this.pkColName).as(this.idType);
+             return JQLOperator.EQ.createPredicate(cb, column, filter);
+             */
+        }
+//        else if (!fetchData) {
+//            return new JqlQuery(this.jqlSchema);
+//        }
+        else {
+            /**
+             * 참고) 왜 불필요하게 JQLParser 를 수행하는가?
+             * CriteriaQuery 는 FetchType.EAGER 가 지정된 Column 에 대해
+             * 자동으로 fetch 하는 기능이 없다. (2022.02.18 현재) 이에 대량 쿼리 발생시
+             * 그 개수만큼 Join 된 칼럼을 읽어오는 추가적인 쿼리가 발생한다.
+             * Parser 는 내부에서 이를 별도 검사하여 처리한다.
+             */
+            filterMap = _emptyMap;
+        }
+
+        JqlParser parser = new JqlParser(this.getSchema(), this.service.getConversionService());
+        JqlQuery where = parser.parse(filterMap);
+        return where;
+    }
 
 }

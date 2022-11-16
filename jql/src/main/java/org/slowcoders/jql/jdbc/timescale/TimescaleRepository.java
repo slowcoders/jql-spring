@@ -6,7 +6,6 @@ import org.slowcoders.jql.JsonNodeType;
 import org.slowcoders.jql.jdbc.JDBCRepositoryBase;
 import org.slowcoders.jql.jdbc.JQLJdbcService;
 import org.slowcoders.jql.parser.SourceWriter;
-import org.slowcoders.jql.parser.SqlBuilder;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 import java.lang.reflect.Field;

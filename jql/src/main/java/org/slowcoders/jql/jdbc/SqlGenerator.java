@@ -1,138 +1,207 @@
 package org.slowcoders.jql.jdbc;
 
 import org.slowcoders.jql.JqlColumn;
+import org.slowcoders.jql.JqlEntityJoin;
 import org.slowcoders.jql.JqlSchema;
-import org.slowcoders.jql.parser.JqlParser;
-import org.slowcoders.jql.parser.JqlQuery;
-import org.slowcoders.jql.parser.SourceWriter;
-import org.slowcoders.jql.parser.SqlBuilder;
-import org.springframework.core.convert.ConversionService;
+import org.slowcoders.jql.parser.*;
+import org.springframework.data.domain.Sort;
 
 import java.util.*;
 
-public class SqlGenerator extends SqlBuilder {
+public class SqlGenerator implements QueryBuilder {
 
-    private JqlSchema jqlSchema;
-    private ConversionService conversionService;
+    private final SqlWriter sw;
 
-    public SqlGenerator(ConversionService conversionService, JqlSchema jqlSchema) {
-        super(jqlSchema);
-        this.jqlSchema = jqlSchema;
-        this.conversionService = conversionService;
+    public SqlGenerator(JqlSchema schema) {
+        this(new SqlWriter(schema));
     }
 
-    
-    public SearchQuery select(Map<String, Object> filter) {
-        JqlQuery where = build_where(filter, true);
-        return new SearchQuery(where, this);
+    public SqlGenerator(SqlWriter sqlWriter) {
+        this.sw = sqlWriter;//new SqlWriter(schema, null);
     }
 
-
-    public String count(Map<String, Object> filter) {
-        JqlQuery where = build_where(filter, false);
-        SqlBuilder sb = new SqlBuilder(jqlSchema);
-        String sql = sb.createCountQuery(where);
-        return sql;//sb.toString();
-    }
-
-
-    
-    public String update(Map<String, Object> filter, Map<String, Object> updateSet) {
-        JqlQuery where = build_where(filter, false);
-        if (where.isEmpty()) {
-            throw new RuntimeException("Update All is not permitted");
-        }
-
-        SqlBuilder sb = new SqlBuilder(jqlSchema);
-        String sql = sb.createUpdateQuery(where, updateSet);
-        return sql;
-    }
-
-    
-    public String delete(Map<String, Object> filter) {
-        JqlQuery where = build_where(filter, false);
-        if (where.isEmpty()) {
-            throw new RuntimeException("Delete All is not permitted");
-        }
-
-        SqlBuilder sb = new SqlBuilder(jqlSchema);
-        String sql = sb.createDeleteQuery(where);
-        return sql;
-    }
-
-
-    public <T> T convert(Object arg, Class<T> type) {
-        return conversionService.convert(arg, type);
-    }
-
-    private static final Map _emptyMap = new HashMap();
-    private JqlQuery build_where(Map<String, Object> filter, boolean fetchData) {
-        Map filterMap;
-        if (filter instanceof Map) {
-            filterMap = (Map) filter;
-        }
-        else if (filter != null) {
-            filterMap = new HashMap();
-            throw new RuntimeException("Not implemented");
-            //filterMap.put(this.pkColName + "@eq", filter);
-            /** 참고 ID 검색 함수를 아래와 같이 처리할 수도 있다. (단, FetchType.EAGER 로 인한 다중 query 발생)
-                Expression<?> column = root.get(this.pkColName).as(this.idType);
-                return JQLOperator.EQ.createPredicate(cb, column, filter);
-            */
-        }
-        else if (!fetchData) {
-            return new JqlQuery(this.jqlSchema);
-        }
-        else {
-            /**
-             * 참고) 왜 불필요하게 JQLParser 를 수행하는가?
-             * CriteriaQuery 는 FetchType.EAGER 가 지정된 Column 에 대해
-             * 자동으로 fetch 하는 기능이 없다. (2022.02.18 현재) 이에 대량 쿼리 발생시
-             * 그 개수만큼 Join 된 칼럼을 읽어오는 추가적인 쿼리가 발생한다.
-             * Parser 는 내부에서 이를 별도 검사하여 처리한다.
-             */
-            filterMap = _emptyMap;
-        }
-
-        JqlParser parser = new JqlParser(this.jqlSchema, conversionService);
-        JqlQuery where = parser.parse(filterMap);
-        return where;
-    }
-
-
-    
-    public String findById(Object id) {
-        SqlBuilder sb = new SqlBuilder(jqlSchema);
-        String sql = sb.prepareFindByIdStatement();
-        return sql;
-    }
-
-    protected String getCommand(Command command) {
+    protected String getCommand(SqlWriter.Command command) {
         return command.toString();
     }
 
-    
-    public String insert(Map entity, boolean ignoreConflict) {
-        SqlBuilder sb = new SqlBuilder(jqlSchema);
-        String sql = sb.createInsertStatement(entity, ignoreConflict);
+    protected void writeWhere(JqlQuery where) {
+        if (!where.isEmpty()) {
+            sw.writeRaw("\nWHERE ");
+            where.accept(sw);
+        }
+    }
+
+    private void writeFrom(JqlQuery where) {
+        sw.write("FROM ").write(where.getSchema().getTableName());
+        for (JqlResultMapping fetch : where.getResultColumnMappings()) {
+            JqlEntityJoin join = fetch.getEntityJoin();
+            if (join == null) continue;
+
+            if (true || join.isUniqueJoin()) {
+                writeJoinStatement(join);
+                join = join.getAssociativeJoin();
+                if (join != null) {
+                    writeJoinStatement(join);
+                }
+            } else {
+
+            }
+        }
+    }
+
+
+    private void writeJoinStatement(JqlEntityJoin joinKeys) {
+        boolean isInverseMapped = joinKeys.isInverseMapped();
+        String joinedTable = joinKeys.getJoinedSchema().getTableName();
+        sw.write("\nleft outer join ").write(joinedTable).write(" on\n\t");
+        for (JqlColumn fk : joinKeys.getForeignKeyColumns()) {
+            JqlColumn anchor, linked;
+            if (isInverseMapped) {
+                linked = fk; anchor = fk.getJoinedPrimaryColumn();
+            } else {
+                anchor = fk; linked = fk.getJoinedPrimaryColumn();
+            }
+            sw.write(joinKeys.getBaseSchema().getTableName()).write(".").write(anchor.getColumnName());
+            sw.write(" = ").write(linked.getSchema().getTableName()).write(".")
+                    .write(linked.getColumnName()).write(" and\n\t");
+        }
+        sw.shrinkLength(6);
+    }
+
+    public String createCountQuery(JqlQuery where) {
+        sw.write("\nSELECT count(*) ");
+        writeFrom(where);
+        writeWhere(where);
+        String sql = sw.reset();
         return sql;
     }
 
+    public String createSelectQuery(JqlQuery where, Sort sort, int limit, int offset) {
+        sw.write("\nSELECT ");
 
-    public JqlSchema getSchema() {
-        return jqlSchema;
+        for (JqlResultMapping fetch : where.getResultColumnMappings()) {
+            String table = fetch.getSchema().getTableName();
+            List<JqlColumn> selectColumns = fetch.getSelectColumns();
+            if (selectColumns == null) {
+                sw.write(table).write(".*, ");
+            }
+            else {
+                for (JqlColumn col : selectColumns) {
+                    sw.write(table).write('.').write(col.getColumnName()).
+                            write(" as ").write('\"').write(col.getJsonKey()).write("\",\n");
+                }
+            }
+        }
+        sw.replaceTrailingComma("\n");
+        writeFrom(where);
+        writeWhere(where);
+        write_orderBy(where.getSchema(), sort);
+        if (offset > 0) sw.write("\nOFFSET " + limit);
+        if (limit > 0) sw.write("\nLIMIT " + limit);
+
+        String sql = sw.reset();
+        return sql;
     }
 
-    
-    public BatchUpsert prepareInsert(Collection<Map<String, Object>> entities) {
-        return prepareInsert(entities, getSchema().getTableName(), true);
+    private void write_orderBy(JqlSchema schema, Sort sort) {
+        if (sort == null) return;
+
+        sw.write("\nORDER BY ");
+        sort.forEach(order -> {
+            String p = order.getProperty();
+            sw.write(schema.getColumn(p).getColumnName());
+            sw.write(order.isAscending() ? " asc" : " desc").write(", ");
+        });
+        sw.replaceTrailingComma("\n");
     }
 
-    
-    public BatchUpsert prepareInsert(Collection<Map<String, Object>> entities, String extendedTableName, boolean ignoreConflict) {
-        SqlBuilder sb = new SqlBuilder(jqlSchema);
-        String sql = sb.prepareBatchInsertStatement(ignoreConflict);
-        return new BatchUpsert(entities, this.getSchema(), sql);
+
+    public String createUpdateQuery(JqlQuery where, Map<String, Object> updateSet) {
+        sw.write("\nUPDATE ").write(where.getTableName()).write(" SET\n");
+
+        for (Map.Entry<String, Object> entry : updateSet.entrySet()) {
+            String key = entry.getKey();
+            Object value = entry.getValue();
+            sw.write("  ");
+            sw.writeEquals(key, value);
+            sw.write(",\n");
+        }
+        sw.replaceTrailingComma("\n");
+        this.writeWhere(where);
+        String sql = sw.reset();
+        return sql;
+
+    }
+
+    public String createDeleteQuery(JqlQuery where) {
+        sw.write("\nDELETE ");
+        this.writeFrom(where);
+        this.writeWhere(where);
+        String sql = sw.reset();
+        return sql;
+    }
+
+    public String prepareFindByIdStatement(JqlSchema schema) {
+        sw.write("\nSELECT * FROM ").write(schema.getTableName()).write("\nWHERE ");
+        List<JqlColumn> keys = schema.getPKColumns();
+        for (int i = 0; i < keys.size(); ) {
+            String key = keys.get(i).getColumnName();
+            sw.write(key).write(" = ? ");
+            if (++ i < keys.size()) {
+                sw.write(" AND ");
+            }
+        }
+        String sql = sw.reset();
+        return sql;
+    }
+
+    public String createInsertStatement(JqlSchema schema, Map entity, boolean ignoreConflict) {
+
+        Set<String> keys = ((Map<String, ?>)entity).keySet();
+        sw.writeln();
+        sw.write(getCommand(SqlWriter.Command.Insert)).write(" INTO ").write(schema.getTableName()).writeln("(");
+        sw.incTab();
+        sw.writeColumnNames(schema.getPhysicalColumnNames(keys), false);
+        sw.decTab();
+        sw.writeln("\n) VALUES (");
+        for (String k : keys) {
+            Object v = entity.get(k);
+            sw.writeValue(v).write(", ");
+        }
+        sw.replaceTrailingComma(")");
+        if (ignoreConflict) {
+            sw.write("\nON CONFLICT DO NOTHING");
+        }
+        String sql = sw.reset();
+        return sql;
+    }
+
+    public String prepareBatchInsertStatement(JqlSchema schema, boolean ignoreConflict) {
+        sw.writeln();
+        sw.write(getCommand(SqlWriter.Command.Insert)).write(" INTO ").write(schema.getTableName()).writeln("(");
+        for (JqlColumn col : schema.getWritableColumns()) {
+            sw.write(col.getColumnName()).write(", ");
+        }
+        sw.replaceTrailingComma("\n) VALUES (");
+        for (JqlColumn col : schema.getWritableColumns()) {
+            sw.write("?,");
+        }
+        sw.replaceTrailingComma(")");
+        if (ignoreConflict) {
+            sw.write("\nON CONFLICT DO NOTHING");
+        }
+        String sql = sw.reset();
+        return sql;
+    }
+
+    public BatchUpsert prepareInsert(JqlSchema schema, Collection<Map<String, Object>> entities) {
+        return prepareInsert(schema, entities, schema.getTableName(), true);
+    }
+
+
+    public BatchUpsert prepareInsert(JqlSchema schema, Collection<Map<String, Object>> entities, String extendedTableName, boolean ignoreConflict) {
+        String sql = prepareBatchInsertStatement(schema, ignoreConflict);
+        return new BatchUpsert(entities, schema, sql);
     }
 
 

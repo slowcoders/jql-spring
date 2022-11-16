@@ -32,6 +32,7 @@ abstract class Filter extends PredicateSet {
         return parent.getTopQuery();
     }
 
+
     public PredicateSet getFilterNode(String key, ValueNodeType nodeType, boolean fetchData) {
         Filter scope = this;
         int p;

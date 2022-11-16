@@ -4,12 +4,18 @@ import java.util.ArrayList;
 
 class PredicateSet extends ArrayList<Predicate> implements Predicate {
     private final Conjunction conjunction;
+    private final Filter baseFilter;
 
     public PredicateSet(Conjunction conjunction) {
-        this.conjunction = conjunction;
+        this(conjunction, null);
     }
 
-    Filter getBaseFilter() { return null; }
+    protected PredicateSet(Conjunction conjunction, Filter baseFilter) {
+        this.conjunction = conjunction;
+        this.baseFilter = baseFilter;
+    }
+
+    Filter getBaseFilter() { return baseFilter; }
 
     public boolean add(Predicate predicate) {
         return super.add(predicate);

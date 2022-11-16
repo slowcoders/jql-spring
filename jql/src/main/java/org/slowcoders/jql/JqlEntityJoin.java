@@ -87,7 +87,7 @@ public class JqlEntityJoin {
         if (fk_name.endsWith("_" + pk_name)) {
             return fk_name.substring(0, fk_name.length() - pk_name.length() - 1);
         } else {
-            return joinedPk.getSchema().getBaseTableName();
+            return joinedPk.getSchema().getSimpleTableName();
         }
     }
 

@@ -64,7 +64,7 @@ public abstract class JqlSchema {
         return columnMap.get(key) != null;
     }
 
-    public String getBaseTableName() {
+    public String getSimpleTableName() {
         return this.tableName.substring(this.tableName.indexOf('.') + 1);
     }
 

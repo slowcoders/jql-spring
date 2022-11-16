@@ -4,19 +4,27 @@ import org.slowcoders.jql.JqlColumn;
 import org.slowcoders.jql.JqlEntityJoin;
 import org.slowcoders.jql.JqlSchema;
 import org.slowcoders.jql.JsonNodeType;
+import org.slowcoders.jql.jdbc.JqlResultMapping;
 
-class TableFilter extends Filter {
+import java.util.List;
+
+public class TableFilter extends Filter implements JqlResultMapping {
     private final JqlSchema schema;
 
     private final JqlEntityJoin join;
+    private String[] entityMappingPath;
+    private static final String[] emptyPath = new String[0];
 
-    protected TableFilter(TableFilter parentQuery, JqlSchema schema) {
-        this(parentQuery, schema, null, true);
+    protected TableFilter(JqlSchema schema) {
+        super(null);
+        this.schema = schema;
+        this.join = null;
+        this.entityMappingPath = emptyPath;
     }
 
-    public TableFilter(TableFilter parentQuery, JqlSchema schema, JqlEntityJoin join, boolean fetchData) {
-        super(parentQuery);
-        this.schema = schema;
+    public TableFilter(TableFilter baseFilter, JqlEntityJoin join) {
+        super(baseFilter);
+        this.schema = join.getAssociatedSchema();
         this.join = join;
     }
 
@@ -27,8 +35,26 @@ class TableFilter extends Filter {
     public TableFilter asTableFilter() {
         return this;
     }
+    
+    public String[] getEntityMappingPath() {
+        String[] jsonPath = this.entityMappingPath;
+        if (jsonPath == null) {
+            String[] basePath = getParent().asTableFilter().getEntityMappingPath();
+            jsonPath = new String[basePath.length + 1];
+            System.arraycopy(basePath, 0, jsonPath, 0, basePath.length);
+            jsonPath[basePath.length] = join.getJsonKey();
+            this.entityMappingPath = jsonPath;
+        }
+        return jsonPath;
+    }
+
 
     public String getTableName() { return schema.getTableName(); }
+
+    @Override
+    public List<JqlColumn> getSelectColumns() {
+        return null;
+    }
 
     public TableFilter getTableFilter() {
         return this;
@@ -45,8 +71,8 @@ class TableFilter extends Filter {
         Filter subQuery = subFilters.get(key);
         if (subQuery == null) {
             if (join != null) {
-                JqlSchema subSchema = getTopQuery().addTableJoin(join, fetchData);
-                subQuery = new TableFilter(this, subSchema, join, fetchData);
+//                JqlSchema subSchema = getTopQuery().addTableJoin(join, fetchData);
+                subQuery = new TableFilter(this, join);
             }
             else {
                 subQuery = new JsonFilter(this, key);
@@ -84,11 +110,17 @@ class TableFilter extends Filter {
         return this.join;
     }
 
-    public void accept(JqlEntityJoinVisitor jqlEntityJoinVisitor) {
+    @Override
+    public boolean hasSelectedColumns() {
+        return getSelectColumns() == null || getSelectColumns().size() > 0;
+    }
+
+    protected void gatherColumnMappings(List<JqlResultMapping> columnGroupMappings) {
+        columnGroupMappings.add(this);
         for (Filter q : subFilters.values()) {
             TableFilter table = q.asTableFilter();
             if (table != null) {
-                jqlEntityJoinVisitor.visitJoinedSchema(table);
+                table.gatherColumnMappings(columnGroupMappings);
             }
         }
     }

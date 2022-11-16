@@ -1,17 +1,15 @@
 package org.slowcoders.jql.jdbc.metadata;
 
 import org.slowcoders.jql.JqlColumn;
-import org.slowcoders.jql.JqlEntityJoin;
 import org.slowcoders.jql.JqlSchema;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
 class EntityJoinHelper extends HashMap<JqlSchema, List<JqlColumn>> {
     private String tableName;
     public EntityJoinHelper(JqlSchema pkSchema) {
-        this.tableName = pkSchema.getBaseTableName();
+        this.tableName = pkSchema.getSimpleTableName();
     }
 
     public List<JqlColumn> put(JqlSchema schema, List<JqlColumn> fkColumns) {

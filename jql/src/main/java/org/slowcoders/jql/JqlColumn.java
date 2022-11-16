@@ -6,6 +6,7 @@ public abstract class JqlColumn {
     private final JsonNodeType valueFormat;
 
     private final JqlSchema schema;
+    private String javaFieldName;
 
     protected JqlColumn(JqlSchema schema, String columnName, Class<?> javaType, JsonNodeType valueFormat) {
         this.schema = schema;
@@ -27,6 +28,14 @@ public abstract class JqlColumn {
     }
 
     public abstract String getJsonKey();
+
+    public final String getJavaFieldName() {
+        if (javaFieldName == null) {
+            String qName = getJsonKey();
+            javaFieldName = qName.substring(qName.lastIndexOf('.') + 1);
+        }
+        return javaFieldName;
+    }
 
     public final String getColumnName() {
         return columnName;

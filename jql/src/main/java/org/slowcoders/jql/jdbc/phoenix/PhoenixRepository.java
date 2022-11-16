@@ -43,30 +43,16 @@ public class PhoenixRepository extends PhoenixJdbcHelper {
     }
 
 
-    public void upsertAll(ArrayList<Map<String, Object>> entities) {
-        try {
-            connection.setAutoCommit(true);
-            Statement statement = connection.createStatement();
-            for (Map<String, Object> entity : entities) {
-                //getSchema().autoArrangeColumns(entity, objectMapper);
-                String sql = super.insert(entity, false);
-                statement.executeUpdate(sql);
-            }
-        } catch (Exception throwables) {
-            throwables.printStackTrace();
-        }
-    }
-
     //@Transactional("phoenixTxManager")
     public void upsertAll2(List<Map<String, Object>> entities) {
-        BatchUpsert batch = super.prepareInsert(entities);
-        jdbc.batchUpdate(batch.getSql(), batch);
+//        BatchUpsert batch = super.prepareInsert(entities);
+//        jdbc.batchUpdate(batch.getSql(), batch);
     }
 
     public void createTable() {
-        jdbc.execute("DROP TABLE " + getSchema().getTableName());
-
-        String ddl = this.getSchema().generateDDL();
-        jdbc.execute(ddl);
+//        jdbc.execute("DROP TABLE " + getSchema().getTableName());
+//
+//        String ddl = this.getSchema().generateDDL();
+//        jdbc.execute(ddl);
     }
 }

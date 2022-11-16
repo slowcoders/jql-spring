@@ -3,13 +3,14 @@ package org.slowcoders.jql.parser;
 import org.slowcoders.jql.JqlColumn;
 import org.slowcoders.jql.JqlEntityJoin;
 import org.slowcoders.jql.JqlSchema;
+import org.springframework.data.domain.Sort;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Map;
 
 public interface QueryBuilder {
-    String createSelectQuery(JqlQuery where);
+    String createSelectQuery(JqlQuery where, Sort sort, int limit, int offset);
 
     String createCountQuery(JqlQuery where);
 
@@ -17,7 +18,7 @@ public interface QueryBuilder {
 
     String createDeleteQuery(JqlQuery where);
 
-    String prepareFindByIdStatement();
+    String prepareFindByIdStatement(JqlSchema schema);
 
-    String createInsertStatement(Map entity, boolean ignoreConflict);
+    String createInsertStatement(JqlSchema schema, Map entity, boolean ignoreConflict);
 }
