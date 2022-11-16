@@ -7,13 +7,15 @@ import org.slowcoders.jql.JqlSchema;
 import java.util.List;
 
 public interface JqlResultMapping {
-    String[] getEntityMappingPath();
-
     JqlSchema getSchema();
 
     List<JqlColumn> getSelectColumns();
 
+    String[] getEntityMappingPath();
+
     JqlEntityJoin getEntityJoin();
 
-    boolean hasSelectedColumns();
+    default boolean hasSelectedColumns() {
+        return getSelectColumns() == null || getSelectColumns().size() > 0;
+    }
 }

@@ -110,11 +110,6 @@ public class TableFilter extends Filter implements JqlResultMapping {
         return this.join;
     }
 
-    @Override
-    public boolean hasSelectedColumns() {
-        return getSelectColumns() == null || getSelectColumns().size() > 0;
-    }
-
     protected void gatherColumnMappings(List<JqlResultMapping> columnGroupMappings) {
         columnGroupMappings.add(this);
         for (Filter q : subFilters.values()) {
