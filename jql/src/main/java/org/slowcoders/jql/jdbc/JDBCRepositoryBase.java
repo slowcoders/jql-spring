@@ -13,7 +13,9 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.core.RowMapper;
+import org.springframework.jdbc.support.rowset.SqlRowSet;
 
 import javax.validation.constraints.NotNull;
 import java.io.IOException;
@@ -121,7 +123,7 @@ public class JDBCRepositoryBase<ID> /*extends JDBCQueryBuilder*/ implements JQLR
         return res.size() > 0 ? res.get(0) : null;
     }
 
-    protected RowMapper<KVEntity> getColumnMapRowMapper(JqlQuery filter) {
+    protected ResultSetExtractor<List<KVEntity>> getColumnMapRowMapper(JqlQuery filter) {
         return new JqlRowMapper(filter.getResultColumnMappings());
     }
 

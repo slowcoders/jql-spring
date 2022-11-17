@@ -1,37 +1,66 @@
 package org.slowcoders.jql.jdbc;
 
 import org.slowcoders.jql.JqlColumn;
-import org.slowcoders.jql.JqlSchema;
 import org.slowcoders.jql.util.KVEntity;
+import org.springframework.dao.DataAccessException;
+import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.support.JdbcUtils;
 
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-public class JqlRowMapper implements RowMapper<KVEntity> {
+public class JqlRowMapper implements ResultSetExtractor<List<KVEntity>> {
     private final List<JqlResultMapping> resultMappings;
     private JqlColumn[] mappedColumns;
     private String[][] entityPaths;
+    private Object[] columnValues;
+    private KVEntity baseEntity;
+    private final ArrayList<KVEntity> results = new ArrayList<>();
 
     public JqlRowMapper(List<JqlResultMapping> rowMappings) {
         this.resultMappings = rowMappings;
     }
 
     @Override
-    public KVEntity mapRow(ResultSet rs, int rowNum) throws SQLException {
-        if (mappedColumns == null) {
-            initMappedColumns(rs);
+    public List<KVEntity> extractData(ResultSet rs) throws SQLException, DataAccessException {
+        initMappedColumns(rs);
+
+        columnValues = new Object[mappedColumns.length];
+        int idxColumn = 0;
+        int columnCount = mappedColumns.length;
+        if (baseEntity != null) {
+            int lastMappingIndex = resultMappings.size() - 1;
+            check_duplicated_columns:
+            for (int i = 0; i < lastMappingIndex; i ++) {
+                JqlResultMapping mapping = resultMappings.get(i);
+                List<JqlColumn> pkColumns = mapping.getSchema().getPKColumns();
+                int pkIndex = idxColumn;
+                for (int pkCount = pkColumns.size(); --pkCount >= 0; pkIndex++) {
+                    Object value = getColumnValue(rs, pkIndex + 1);
+                    if (value == null) {
+                        columnCount = idxColumn;
+                        break check_duplicated_columns;
+                    }
+                    if (!value.equals(columnValues[pkIndex])) {
+                        break check_duplicated_columns;
+                    }
+                }
+                idxColumn += mapping.getSelectedColumns().size();
+            }
         }
 
-        KVEntity baseEntity = new KVEntity();
+        if (idxColumn == 0) {
+            baseEntity = new KVEntity();
+            results.add(baseEntity);
+        }
         KVEntity entity = baseEntity;
         String[] currentPath = null;
-        final int columnCount = mappedColumns.length;
-        for (int idxColumn = 0; idxColumn < columnCount; ) {
+        for (; idxColumn < columnCount; ) {
             String[] entityPath = entityPaths[idxColumn];
             if (currentPath != entityPath) {
                 currentPath = entityPath;
@@ -44,9 +73,10 @@ public class JqlRowMapper implements RowMapper<KVEntity> {
             String fieldName = jqlColumn.getJavaFieldName();
 
             Object value = getColumnValue(rs, ++idxColumn);
+            columnValues[idxColumn-1] = value;
             entity.putIfAbsent(fieldName, value);
         }
-        return baseEntity;
+        return results;
     }
 
     private KVEntity makeSubEntity(KVEntity entity, String key) {
@@ -76,29 +106,26 @@ public class JqlRowMapper implements RowMapper<KVEntity> {
         this.entityPaths = new String[columnCount][];
         ColumnMappingHelper helper = new ColumnMappingHelper();
 
-        JqlSchema jqlSchema = null;
-        JqlResultMapping rowMapping = null;
+        int cntColumn = 0;
+        int idxMappingColumn = 0;
+        List<JqlColumn> columns = null;
         for (int idxColumn = 1; idxColumn <= columnCount; idxColumn++) {
-            String columnName = JdbcUtils.lookupColumnName(rsmd, idxColumn);
-            String tableName = rsmd.getTableName(idxColumn);
-            String dbSchema = rsmd.getSchemaName(idxColumn);
-            if (!tableName.equals(currTableName) || !dbSchema.equals(currDbSchema)) {
+            if (++idxMappingColumn >= cntColumn) {
+                JqlResultMapping rowMapping;
                 do {
                     rowMapping = resultMappings.get(idxFetch++);
-                } while (!rowMapping.hasSelectedColumns());
-                jqlSchema = rowMapping.getSchema();
-                if (!jqlSchema.getSimpleTableName().equals(tableName)) {
-                    throw new RuntimeException("wrong result mappings");
-                }
+                    columns = rowMapping.getSelectedColumns();
+                    cntColumn = columns.size();
+                } while (cntColumn == 0);
                 helper.reset(rowMapping.getEntityMappingPath());
-                currTableName = tableName;
-                currDbSchema = dbSchema;
+                idxMappingColumn = 0;
             }
-            JqlColumn jqlColumn = jqlSchema.getColumn(columnName);
+            JqlColumn jqlColumn = columns.get(idxMappingColumn);
             this.entityPaths[idxColumn-1] = helper.getEntityMappingPath(jqlColumn);
             this.mappedColumns[idxColumn-1] = jqlColumn;
         }
     }
+
 
     private static class ColumnMappingHelper extends HashMap<String, ColumnMappingHelper> {
         String[] entityPath;

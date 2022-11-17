@@ -9,13 +9,14 @@ import java.util.List;
 public interface JqlResultMapping {
     JqlSchema getSchema();
 
-    List<JqlColumn> getSelectColumns();
+    List<JqlColumn> getSelectedColumns();
 
     String[] getEntityMappingPath();
 
+    String getMappingAlias();
+
+    JqlResultMapping getContainingMapping();
+
     JqlEntityJoin getEntityJoin();
 
-    default boolean hasSelectedColumns() {
-        return getSelectColumns() == null || getSelectColumns().size() > 0;
-    }
 }

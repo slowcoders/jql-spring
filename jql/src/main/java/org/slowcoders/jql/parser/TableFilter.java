@@ -6,26 +6,31 @@ import org.slowcoders.jql.JqlSchema;
 import org.slowcoders.jql.JsonNodeType;
 import org.slowcoders.jql.jdbc.JqlResultMapping;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class TableFilter extends Filter implements JqlResultMapping {
     private final JqlSchema schema;
 
     private final JqlEntityJoin join;
+    private final String mappingAlias;
     private String[] entityMappingPath;
+    private List<JqlColumn> selectedColumns;
     private static final String[] emptyPath = new String[0];
 
-    protected TableFilter(JqlSchema schema) {
+    protected TableFilter(JqlSchema schema, String mappingAlias) {
         super(null);
         this.schema = schema;
         this.join = null;
         this.entityMappingPath = emptyPath;
+        this.mappingAlias = mappingAlias;
     }
 
     public TableFilter(TableFilter baseFilter, JqlEntityJoin join) {
         super(baseFilter);
         this.schema = join.getAssociatedSchema();
         this.join = join;
+        this.mappingAlias = baseFilter.getRootFilter().createUniqueMappingAlias();
     }
 
     public JqlSchema getSchema() {
@@ -35,7 +40,14 @@ public class TableFilter extends Filter implements JqlResultMapping {
     public TableFilter asTableFilter() {
         return this;
     }
-    
+
+    public JqlResultMapping getContainingMapping() { return getParent().asTableFilter(); }
+
+    @Override
+    public String getMappingAlias() {
+        return mappingAlias;
+    }
+
     public String[] getEntityMappingPath() {
         String[] jsonPath = this.entityMappingPath;
         if (jsonPath == null) {
@@ -52,8 +64,8 @@ public class TableFilter extends Filter implements JqlResultMapping {
     public String getTableName() { return schema.getTableName(); }
 
     @Override
-    public List<JqlColumn> getSelectColumns() {
-        return null;
+    public List<JqlColumn> getSelectedColumns() {
+        return selectedColumns != null ? selectedColumns : schema.getReadableColumns();
     }
 
     public TableFilter getTableFilter() {

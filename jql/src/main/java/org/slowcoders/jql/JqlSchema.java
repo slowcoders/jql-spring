@@ -36,8 +36,8 @@ public abstract class JqlSchema {
         return this.alias;
     }
 
-    public Iterable<JqlColumn> getReadableColumns() {
-        return (Iterable) this.allColumns;
+    public List<JqlColumn> getReadableColumns() {
+        return this.allColumns;
     }
 
     public List<JqlColumn> getWritableColumns() {
@@ -75,21 +75,28 @@ public abstract class JqlSchema {
     protected void init(ArrayList<? extends JqlColumn> columns) {
         ArrayList<JqlColumn> writableColumns = new ArrayList<>();
         ArrayList<JqlColumn> pkColumns = new ArrayList<>();
+        ArrayList<JqlColumn> allColumns = new ArrayList<>();
         for (JqlColumn ci: columns) {
             if (ci.isPrimaryKey()) {
                 pkColumns.add(ci);
+                allColumns.add(ci);
             }
+        }
 
+        for (JqlColumn ci: columns) {
             String colName = ci.getColumnName().toLowerCase();
             this.columnMap.put(colName, ci);
 
+            if (!ci.isPrimaryKey()) {
+                allColumns.add(ci);
+            }
             if (!ci.isReadOnly() && ci.getValueFormat().isPrimitive()) {
                 writableColumns.add(ci);
             }
         }
 
         this.pkColumns = Collections.unmodifiableList(pkColumns);
-        this.allColumns = Collections.unmodifiableList(columns);
+        this.allColumns = Collections.unmodifiableList(allColumns);
         this.writableColumns = Collections.unmodifiableList(writableColumns);
     }
 

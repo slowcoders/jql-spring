@@ -28,8 +28,8 @@ abstract class Filter extends PredicateSet {
         return parent.getTableFilter();
     }
 
-    public JqlQuery getTopQuery() {
-        return parent.getTopQuery();
+    public JqlQuery getRootFilter() {
+        return parent.getRootFilter();
     }
 
 

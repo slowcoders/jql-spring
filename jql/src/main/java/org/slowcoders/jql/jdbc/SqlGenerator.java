@@ -32,16 +32,18 @@ public class SqlGenerator implements QueryBuilder {
     }
 
     private void writeFrom(JqlQuery where) {
-        sw.write("FROM ").write(where.getSchema().getTableName());
+        sw.write("FROM ").write(where.getTableName()).write(" as ").write(where.getMappingAlias());
         for (JqlResultMapping fetch : where.getResultColumnMappings()) {
             JqlEntityJoin join = fetch.getEntityJoin();
             if (join == null) continue;
 
+            String parentAlias = fetch.getContainingMapping().getMappingAlias();
+            String alias = fetch.getMappingAlias();
             if (true || join.isUniqueJoin()) {
-                writeJoinStatement(join);
-                join = join.getAssociativeJoin();
-                if (join != null) {
-                    writeJoinStatement(join);
+                JqlEntityJoin associated = join.getAssociativeJoin();
+                writeJoinStatement(join, parentAlias, associated == null ? alias : "p" + alias);
+                if (associated != null) {
+                    writeJoinStatement(associated, "p" + alias, alias);
                 }
             } else {
 
@@ -50,10 +52,10 @@ public class SqlGenerator implements QueryBuilder {
     }
 
 
-    private void writeJoinStatement(JqlEntityJoin joinKeys) {
+    private void writeJoinStatement(JqlEntityJoin joinKeys, String baseAlias, String alias) {
         boolean isInverseMapped = joinKeys.isInverseMapped();
         String joinedTable = joinKeys.getJoinedSchema().getTableName();
-        sw.write("\nleft outer join ").write(joinedTable).write(" on\n\t");
+        sw.write("\nleft outer join ").write(joinedTable).write(" as ").write(alias).write(" on\n\t");
         for (JqlColumn fk : joinKeys.getForeignKeyColumns()) {
             JqlColumn anchor, linked;
             if (isInverseMapped) {
@@ -61,9 +63,8 @@ public class SqlGenerator implements QueryBuilder {
             } else {
                 anchor = fk; linked = fk.getJoinedPrimaryColumn();
             }
-            sw.write(joinKeys.getBaseSchema().getTableName()).write(".").write(anchor.getColumnName());
-            sw.write(" = ").write(linked.getSchema().getTableName()).write(".")
-                    .write(linked.getColumnName()).write(" and\n\t");
+            sw.write(baseAlias).write(".").write(anchor.getColumnName());
+            sw.write(" = ").write(alias).write(".").write(linked.getColumnName()).write(" and\n\t");
         }
         sw.shrinkLength(6);
     }
@@ -80,16 +81,16 @@ public class SqlGenerator implements QueryBuilder {
         sw.write("\nSELECT ");
 
         for (JqlResultMapping fetch : where.getResultColumnMappings()) {
-            String table = fetch.getSchema().getTableName();
-            List<JqlColumn> selectColumns = fetch.getSelectColumns();
+            String table = fetch.getMappingAlias();
+            List<JqlColumn> selectColumns = fetch.getSelectedColumns();
             if (selectColumns == null) {
                 sw.write(table).write(".*, ");
             }
             else {
                 for (JqlColumn col : selectColumns) {
-                    sw.write(table).write('.').write(col.getColumnName()).
-                            write(" as ").write('\"').write(col.getJsonKey()).write("\",\n");
+                    sw.write(table).write('.').write(col.getColumnName()).write(", ");
                 }
+                sw.write('\n');
             }
         }
         sw.replaceTrailingComma("\n");

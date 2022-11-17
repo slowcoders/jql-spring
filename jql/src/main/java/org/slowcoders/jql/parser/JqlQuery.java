@@ -9,12 +9,13 @@ import java.util.List;
 public class JqlQuery extends TableFilter {
 
     private final ArrayList<JqlResultMapping> columnGroupMappings = new ArrayList<>();
+    private int cntMappingAlias;
 
     public JqlQuery(JqlSchema schema) {
-        super(schema);
+        super(schema, "t_0");
     }
 
-    public JqlQuery getTopQuery() {
+    public JqlQuery getRootFilter() {
         return this;
     }
 
@@ -23,5 +24,14 @@ public class JqlQuery extends TableFilter {
             gatherColumnMappings(columnGroupMappings);
         }
         return columnGroupMappings;
+    }
+
+    public String createUniqueMappingAlias() {
+        cntMappingAlias ++;
+        if (cntMappingAlias < 10) {
+            return "t_" + cntMappingAlias;
+        } else {
+            return "t" + cntMappingAlias;
+        }
     }
 }
