@@ -19,4 +19,5 @@ public interface JqlResultMapping {
 
     JqlEntityJoin getEntityJoin();
 
+    boolean isUniqueInRow();
 }

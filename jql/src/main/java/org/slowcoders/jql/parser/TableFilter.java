@@ -122,6 +122,11 @@ public class TableFilter extends Filter implements JqlResultMapping {
         return this.join;
     }
 
+    @Override
+    public boolean isUniqueInRow() {
+        return this.join.isUniqueJoin();
+    }
+
     protected void gatherColumnMappings(List<JqlResultMapping> columnGroupMappings) {
         columnGroupMappings.add(this);
         for (Filter q : subFilters.values()) {

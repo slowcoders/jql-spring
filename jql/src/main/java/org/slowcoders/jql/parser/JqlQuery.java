@@ -19,6 +19,11 @@ public class JqlQuery extends TableFilter {
         return this;
     }
 
+    @Override
+    public boolean isUniqueInRow() {
+        return true;
+    }
+
     public List<JqlResultMapping> getResultColumnMappings() {
         if (columnGroupMappings.size() == 0) {
             gatherColumnMappings(columnGroupMappings);
