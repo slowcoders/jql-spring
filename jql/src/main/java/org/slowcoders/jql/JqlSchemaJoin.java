@@ -3,8 +3,8 @@ package org.slowcoders.jql;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class JqlEntityJoin {
-    private final JqlEntityJoin associateJoin;
+public class JqlSchemaJoin {
+    private final JqlSchemaJoin associateJoin;
     private final String jsonKey;
     private final boolean isUnique;
     private final boolean inverseMapped;
@@ -12,11 +12,11 @@ public class JqlEntityJoin {
     private final JqlSchema baseSchema;
     private final JqlSchema joinedSchema;
 
-    public JqlEntityJoin(JqlSchema baseSchema, List<JqlColumn> fkColumns) {
+    public JqlSchemaJoin(JqlSchema baseSchema, List<JqlColumn> fkColumns) {
         this(baseSchema, fkColumns, null);
     }
 
-    public JqlEntityJoin(JqlSchema baseSchema, List<JqlColumn> fkColumns, JqlEntityJoin associatedJoin) {
+    public JqlSchemaJoin(JqlSchema baseSchema, List<JqlColumn> fkColumns, JqlSchemaJoin associatedJoin) {
         this.fkColumns = fkColumns;
         this.baseSchema = baseSchema;
         this.inverseMapped = baseSchema != fkColumns.get(0).getSchema();
@@ -45,7 +45,7 @@ public class JqlEntityJoin {
         return fkColumns;
     }
 
-    public JqlEntityJoin getAssociativeJoin() {
+    public JqlSchemaJoin getAssociativeJoin() {
         return associateJoin;
     }
 

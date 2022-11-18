@@ -14,12 +14,6 @@ import java.util.HashMap;
 import java.util.List;
 
 public class JqlRowMapper implements ResultSetExtractor<List<KVEntity>> {
-    static class MappedColumn {
-        private JqlColumn jqlColumn;
-        private String[] entityPath;
-        private Object   value;
-        private boolean  isArray;
-    }
     private final List<JqlResultMapping> resultMappings;
 
     public JqlRowMapper(List<JqlResultMapping> rowMappings) {
@@ -62,18 +56,18 @@ public class JqlRowMapper implements ResultSetExtractor<List<KVEntity>> {
                 results.add(baseEntity);
             }
             KVEntity entity = baseEntity;
-            String[] currentPath = mappedColumns[0].entityPath;
+            JqlResultMapping mapping = mappedColumns[0].mapping;
             for (; idxColumn < columnCount; ) {
                 MappedColumn mappedColumn = mappedColumns[idxColumn];
-                String[] entityPath = mappedColumn.entityPath;
-                if (currentPath != entityPath) {
-                    currentPath = entityPath;
+                if (mapping != mappedColumn.mapping) {
+                    mapping = mappedColumn.mapping;
                     entity = baseEntity;
+                    String[] entityPath = mapping.getEntityMappingPath();
                     int idxLastPath = entityPath.length - 1;
                     for (int i = 0; i < idxLastPath; i++) {
                         entity = makeSubEntity(entity, entityPath[i], false);
                     }
-                    entity = makeSubEntity(entity, entityPath[idxLastPath], mappedColumn.isArray);
+                    entity = makeSubEntity(entity, entityPath[idxLastPath], mapping.isArrayNode());
                 }
                 JqlColumn jqlColumn = mappedColumn.jqlColumn;
                 String fieldName = jqlColumn.getJavaFieldName();
@@ -121,29 +115,16 @@ public class JqlRowMapper implements ResultSetExtractor<List<KVEntity>> {
         MappedColumn[] mappedColumns = new MappedColumn[columnCount];
         ColumnMappingHelper helper = new ColumnMappingHelper();
 
-        int cntColumn = 0;
-        int idxMappingColumn = 0;
-        int idxMapping = 0;
-        boolean isArray = false;
-        List<JqlColumn> columns = null;
-        for (int idxColumn = 0; idxColumn < columnCount; idxColumn++) {
-            MappedColumn mappedColumn = new MappedColumn();
-            mappedColumns[idxColumn] = mappedColumn;
-            if (++idxMappingColumn >= cntColumn) {
-                JqlResultMapping rowMapping;
-                do {
-                    rowMapping = resultMappings.get(idxMapping++);
-                    columns = rowMapping.getSelectedColumns();
-                    cntColumn = columns.size();
-                } while (cntColumn == 0);
-                helper.reset(rowMapping.getEntityMappingPath());
-                idxMappingColumn = 0;
-                isArray = !rowMapping.isUniqueInRow();
+        int idxColumn = 0;
+        for (JqlResultMapping mapping : resultMappings) {
+            helper.reset(mapping.getEntityMappingPath());
+            for (JqlColumn column : mapping.getSelectedColumns()) {
+                String[] path = helper.getEntityMappingPath(column);
+                mappedColumns[idxColumn++] = new MappedColumn(mapping, column, path);
             }
-            JqlColumn jqlColumn = columns.get(idxMappingColumn);
-            mappedColumn.entityPath = helper.getEntityMappingPath(jqlColumn);
-            mappedColumn.jqlColumn = jqlColumn;
-            mappedColumn.isArray = isArray;
+        }
+        if (idxColumn != columnCount) {
+            throw new RuntimeException("Something wrong!");
         }
         return mappedColumns;
     }
@@ -183,6 +164,18 @@ public class JqlRowMapper implements ResultSetExtractor<List<KVEntity>> {
             jsonPath[basePath.length] = key;
             return jsonPath;
         }
+    }
 
+    private static class MappedColumn {
+        final JqlColumn jqlColumn;
+        final JqlResultMapping mapping;
+        final String[] mappingPath;
+        private Object   value;
+
+        public MappedColumn(JqlResultMapping mapping, JqlColumn column, String[] path) {
+            this.mapping = mapping;
+            this.jqlColumn = column;
+            this.mappingPath = path;
+        }
     }
 }

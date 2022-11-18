@@ -1,12 +1,8 @@
 package org.slowcoders.jql.parser;
 
-import org.slowcoders.jql.JqlColumn;
-import org.slowcoders.jql.JqlEntityJoin;
 import org.slowcoders.jql.JqlSchema;
 import org.springframework.data.domain.Sort;
 
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Map;
 
 public interface QueryBuilder {

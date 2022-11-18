@@ -1,22 +1,22 @@
 package org.slowcoders.jql.parser;
 
 import org.slowcoders.jql.JqlColumn;
-import org.slowcoders.jql.JqlEntityJoin;
+import org.slowcoders.jql.JqlSchemaJoin;
 import org.slowcoders.jql.JqlSchema;
 import org.slowcoders.jql.JsonNodeType;
 import org.slowcoders.jql.jdbc.JqlResultMapping;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class TableFilter extends Filter implements JqlResultMapping {
     private final JqlSchema schema;
 
-    private final JqlEntityJoin join;
+    private final JqlSchemaJoin join;
     private final String mappingAlias;
     private String[] entityMappingPath;
     private List<JqlColumn> selectedColumns;
     private static final String[] emptyPath = new String[0];
+    private List<JqlResultMapping> subMappingNodes;
 
     protected TableFilter(JqlSchema schema, String mappingAlias) {
         super(null);
@@ -26,7 +26,7 @@ public class TableFilter extends Filter implements JqlResultMapping {
         this.mappingAlias = mappingAlias;
     }
 
-    public TableFilter(TableFilter baseFilter, JqlEntityJoin join) {
+    public TableFilter(TableFilter baseFilter, JqlSchemaJoin join) {
         super(baseFilter);
         this.schema = join.getAssociatedSchema();
         this.join = join;
@@ -74,7 +74,7 @@ public class TableFilter extends Filter implements JqlResultMapping {
 
     @Override
     public Filter getFilter_impl(String key, ValueNodeType nodeType, boolean fetchData) {
-        JqlEntityJoin join = schema.getEntityJoinBy(key);
+        JqlSchemaJoin join = schema.getEntityJoinBy(key);
         if (join == null) {
             JqlColumn column = schema.getColumn(key);
             if (column.getValueFormat() != JsonNodeType.Object) return this;
@@ -118,13 +118,13 @@ public class TableFilter extends Filter implements JqlResultMapping {
         return this.schema.getColumn(key).getColumnName();
     }
 
-    public JqlEntityJoin getEntityJoin() {
+    public JqlSchemaJoin getEntityJoin() {
         return this.join;
     }
 
     @Override
-    public boolean isUniqueInRow() {
-        return this.join.isUniqueJoin();
+    public boolean isArrayNode() {
+        return !this.join.isUniqueJoin();
     }
 
     protected void gatherColumnMappings(List<JqlResultMapping> columnGroupMappings) {

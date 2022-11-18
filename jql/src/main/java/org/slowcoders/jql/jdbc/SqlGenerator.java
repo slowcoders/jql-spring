@@ -1,7 +1,7 @@
 package org.slowcoders.jql.jdbc;
 
 import org.slowcoders.jql.JqlColumn;
-import org.slowcoders.jql.JqlEntityJoin;
+import org.slowcoders.jql.JqlSchemaJoin;
 import org.slowcoders.jql.JqlSchema;
 import org.slowcoders.jql.parser.*;
 import org.springframework.data.domain.Sort;
@@ -34,13 +34,13 @@ public class SqlGenerator implements QueryBuilder {
     private void writeFrom(JqlQuery where) {
         sw.write("FROM ").write(where.getTableName()).write(" as ").write(where.getMappingAlias());
         for (JqlResultMapping fetch : where.getResultColumnMappings()) {
-            JqlEntityJoin join = fetch.getEntityJoin();
+            JqlSchemaJoin join = fetch.getEntityJoin();
             if (join == null) continue;
 
             String parentAlias = fetch.getContainingMapping().getMappingAlias();
             String alias = fetch.getMappingAlias();
             if (true || join.isUniqueJoin()) {
-                JqlEntityJoin associated = join.getAssociativeJoin();
+                JqlSchemaJoin associated = join.getAssociativeJoin();
                 writeJoinStatement(join, parentAlias, associated == null ? alias : "p" + alias);
                 if (associated != null) {
                     writeJoinStatement(associated, "p" + alias, alias);
@@ -52,7 +52,7 @@ public class SqlGenerator implements QueryBuilder {
     }
 
 
-    private void writeJoinStatement(JqlEntityJoin joinKeys, String baseAlias, String alias) {
+    private void writeJoinStatement(JqlSchemaJoin joinKeys, String baseAlias, String alias) {
         boolean isInverseMapped = joinKeys.isInverseMapped();
         String joinedTable = joinKeys.getJoinedSchema().getTableName();
         sw.write("\nleft outer join ").write(joinedTable).write(" as ").write(alias).write(" on\n\t");

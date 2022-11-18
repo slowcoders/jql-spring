@@ -15,7 +15,7 @@ public abstract class JqlSchema {
     private List<JqlColumn> allColumns;
     private List<JqlColumn> writableColumns;
     private Map<String, JqlColumn> columnMap = new HashMap<>();
-    private final HashMap<String, JqlEntityJoin> entityJoinMap = new HashMap<>();
+    private final HashMap<String, JqlSchemaJoin> entityJoinMap = new HashMap<>();
 
     public JqlSchema(SchemaLoader schemaLoader, String tableName, String jpaClassName) {
         this.tableName = tableName;
@@ -48,7 +48,7 @@ public abstract class JqlSchema {
         return this.pkColumns;
     }
 
-    public JqlEntityJoin getEntityJoinBy(String jsonKey) {
+    public JqlSchemaJoin getEntityJoinBy(String jsonKey) {
         return entityJoinMap.get(jsonKey);
     }
 
@@ -158,7 +158,7 @@ public abstract class JqlSchema {
         return out;
     }
 
-    protected void registerEntityJoin(JqlEntityJoin join) {
+    protected void registerEntityJoin(JqlSchemaJoin join) {
         this.entityJoinMap.put(join.getJsonKey(), join);
     }
 
@@ -170,7 +170,7 @@ public abstract class JqlSchema {
         return this.tableName;
     }
 
-    public Collection<JqlEntityJoin> getEntityJoins() {
+    public Collection<JqlSchemaJoin> getEntityJoins() {
         return this.entityJoinMap.values();
     }
 }

@@ -20,8 +20,8 @@ public class JqlQuery extends TableFilter {
     }
 
     @Override
-    public boolean isUniqueInRow() {
-        return true;
+    public boolean isArrayNode() {
+        return false;
     }
 
     public List<JqlResultMapping> getResultColumnMappings() {

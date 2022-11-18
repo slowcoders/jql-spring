@@ -2,7 +2,7 @@ package org.slowcoders.jql.jdbc.metadata;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import org.slowcoders.jql.JqlColumn;
-import org.slowcoders.jql.JqlEntityJoin;
+import org.slowcoders.jql.JqlSchemaJoin;
 import org.slowcoders.jql.JqlSchema;
 import org.slowcoders.jql.SchemaLoader;
 import org.slowcoders.jql.util.AttributeNameConverter;
@@ -75,15 +75,15 @@ public class JdbcSchema extends JqlSchema {
     protected void initMappedColumns(Collection<List<JqlColumn>> mappedJoins) {
         super.initJsonKeys();
         for (List<JqlColumn> mc : fkConstraints.values()) {
-            super.registerEntityJoin(new JqlEntityJoin(this, mc));
+            super.registerEntityJoin(new JqlSchemaJoin(this, mc));
         }
         for (List<JqlColumn> mc : mappedJoins) {
-            super.registerEntityJoin(new JqlEntityJoin(this, mc));
+            super.registerEntityJoin(new JqlSchemaJoin(this, mc));
 
-            Collection<JqlEntityJoin> joins = mc.get(0).getSchema().getEntityJoins();
-            for (JqlEntityJoin j2 : joins) {
+            Collection<JqlSchemaJoin> joins = mc.get(0).getSchema().getEntityJoins();
+            for (JqlSchemaJoin j2 : joins) {
                 if (mc != j2.getForeignKeyColumns() && !j2.isInverseMapped()) {
-                    JqlEntityJoin j3 = new JqlEntityJoin(this, mc, j2);
+                    JqlSchemaJoin j3 = new JqlSchemaJoin(this, mc, j2);
                     super.registerEntityJoin(j3);
                 }
             }

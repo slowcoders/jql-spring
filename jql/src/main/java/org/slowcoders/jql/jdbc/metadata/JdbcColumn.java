@@ -95,7 +95,7 @@ public class JdbcColumn extends JqlColumn {
         StringBuilder sb = new StringBuilder();
         JqlColumn col = this;
         for (JqlColumn joinedPk; (joinedPk = col.getJoinedPrimaryColumn()) != null; col = joinedPk) {
-            String token = JqlEntityJoin.initJsonKey(col);
+            String token = JqlSchemaJoin.initJsonKey(col);
             sb.append(token).append('.');
         }
         CharSequence rawFieldName = (col != this) ? sb.append(col.getColumnName()) : this.getColumnName();
