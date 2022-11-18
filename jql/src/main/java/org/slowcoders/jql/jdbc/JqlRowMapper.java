@@ -101,6 +101,9 @@ public class JqlRowMapper implements ResultSetExtractor<List<KVEntity>> {
             ArrayList<Object> array = (ArrayList<Object>) subEntity;
             subEntity = new KVEntity();
             array.add(subEntity);
+        } else if (subEntity instanceof ArrayList) {
+            ArrayList<KVEntity> list = (ArrayList<KVEntity>) subEntity;
+            subEntity = list.get(list.size()-1);
         }
         return (KVEntity)subEntity;
     }
