@@ -96,14 +96,14 @@ public class TableFilter extends Filter implements JqlResultMapping {
 
     @Override
     public void writeAttribute(SourceWriter sb, String key, Class<?> valueType) {
-        sb.write(getSchema().getTableName()).write(".").write(key);
+        sb.write(mappingAlias).write(".").write(key);
     }
 
     @Override
     public void accept(JqlPredicateVisitor visitor) {
-        JqlSchema old = visitor.setWorkingSchema(this.schema);
+        JqlSchema old = visitor.setWorkingSchema(this.schema, this.mappingAlias);
         super.accept(visitor);
-        visitor.setWorkingSchema(old);
+        visitor.setWorkingSchema(old, this.mappingAlias);
     }
 
     @Override

@@ -8,8 +8,7 @@ import java.util.*;
 public class SqlWriter extends SourceWriter<SqlWriter> implements JqlPredicateVisitor {//}, QueryBuilder {
     private final JqlSchema rootSchema;
     private JqlSchema workingSchema;
-    private final SourceWriter<SourceWriter> sb = new SourceWriter<SourceWriter>('\'');
-    protected ArrayList<JqlResultMapping> rowMappings = new ArrayList<>();
+    private String mappingAlias;
 
     public enum Command {
         Insert,
@@ -22,36 +21,25 @@ public class SqlWriter extends SourceWriter<SqlWriter> implements JqlPredicateVi
         this.workingSchema = this.rootSchema = rootSchema;
     }
 
-    public JqlSchema getRootSchema() {
-        return this.rootSchema;
-    }
-
-    public JqlSchema getWorkingSchema() {
-        return workingSchema;
-    }
-
-    public ArrayList<JqlResultMapping> getRowMappings() {
-        return rowMappings;
-    }
-
-    public JqlSchema setWorkingSchema(JqlSchema jqlSchema) {
+    public JqlSchema setWorkingSchema(JqlSchema jqlSchema, String mappingAlias) {
         JqlSchema old = this.workingSchema;
         this.workingSchema = jqlSchema;
+        this.mappingAlias = mappingAlias;
         return old;
     }
 
     public void writeColumnNames(Iterable<String> names, boolean withTableName) {
         for (String name : names) {
             writeColumnName(name, withTableName);
-            sb.write(", ");
+            this.write(", ");
         }
-        sb.shrinkLength(2);
+        this.shrinkLength(2);
     }
 
 
     @Override
     public void visitCompare(QAttribute column, CompareOperator operator, Object value) {
-        column.printSQL(sb);
+        column.printSQL(this);
         String op = "";
         assert (value != null);
         switch (operator) {
@@ -62,17 +50,18 @@ public class SqlWriter extends SourceWriter<SqlWriter> implements JqlPredicateVi
                 op = " != ";
                 break;
 
+            case GE:
+                op = " >= ";
+                break;
             case GT:
                 op = " > ";
                 break;
+
+            case LE:
+                op = " <= ";
+                break;
             case LT:
                 op = " < ";
-                break;
-            case LE:
-                op = " >= ";
-                break;
-            case GE:
-                op = " <= ";
                 break;
 
             case LIKE:
@@ -82,47 +71,47 @@ public class SqlWriter extends SourceWriter<SqlWriter> implements JqlPredicateVi
                 op = " NOT LIKE ";
                 break;
         }
-        sb.write(op).writeValue(value);
+        this.write(op).writeValue(value);
     }
 
     @Override
     public void visitNot(Expression statement) {
-        sb.write(" NOT (");
+        this.write(" NOT (");
         statement.accept(this);
-        sb.write(")");
+        this.write(")");
 
     }
 
     @Override
     public void visitMatchAny(QAttribute key, CompareOperator operator, Collection values) {
         if (operator == CompareOperator.EQ || operator == CompareOperator.NE) {
-            key.printSQL(sb);
+            key.printSQL(this);
         }
         switch (operator) {
             case NE:
-                sb.write("NOT ");
+                this.write("NOT ");
                 // no-break;
             case EQ:
-                sb.write(" IN(");
-                sb.writeValues(values);
-                sb.write(")");
+                this.write(" IN(");
+                this.writeValues(values);
+                this.write(")");
                 break;
 
             case NOT_LIKE:
-                sb.write("NOT ");
+                this.write("NOT ");
                 // no-break;
             case LIKE:
-                sb.write("(");
+                this.write("(");
                 boolean first = true;
                 for (Object v : values) {
                     if (first) {
                         first = false;
                     } else {
-                        sb.writeQuoted(" OR ");
+                        this.writeQuoted(" OR ");
                     }
-                    key.printSQL(sb);
-                    sb.write(" LIKE ");
-                    sb.writeQuoted(v);
+                    key.printSQL(this);
+                    this.write(" LIKE ");
+                    this.writeQuoted(v);
                 }
                 break;
 
@@ -144,30 +133,30 @@ public class SqlWriter extends SourceWriter<SqlWriter> implements JqlPredicateVi
             default:
                 throw new RuntimeException("Invalid match operator with null value: " + operator);
         }
-        key.printSQL(sb);
-        sb.write(value);
+        key.printSQL(this);
+        this.write(value);
     }
 
     @Override
     public void visitAlwaysTrue() {
-        sb.write("true");
+        this.write("true");
     }
 
     @Override
     public void visitPredicateSet(ArrayList<Predicate> predicates, Conjunction conjunction) {
-        sb.write("(");
+        this.write("(");
         boolean first = true;
         int cnt_predicate = predicates.size();
         for (int i = 0; i < cnt_predicate; i++) {
             if (first) {
                 first = false;
             } else {
-                sb.write(conjunction.toString());
+                this.write(conjunction.toString());
             }
             Predicate item = predicates.get(i);
             item.accept(this);
         }
-        sb.write(")");
+        this.write(")");
     }
 
 //    public void visitJoinedSchema(JsonFilter jsonFilter) {
@@ -177,19 +166,14 @@ public class SqlWriter extends SourceWriter<SqlWriter> implements JqlPredicateVi
 
     private SqlWriter writeColumnName(String name, boolean withTableName) {
         if (withTableName) {
-            sb.writeRaw(workingSchema.getTableName()).write('.');
+            this.writeRaw(mappingAlias).write('.');
         }
-        sb.writeRaw(name);
-        return this;
-    }
-
-    private SqlWriter writeTableName() {
-        sb.writeRaw(this.workingSchema.getTableName());
+        this.writeRaw(name);
         return this;
     }
 
     public SqlWriter writeEquals(String columnName, Object value) {
-        sb.write(columnName).write(" = ").writeValue(value);
+        this.write(columnName).write(" = ").writeValue(value);
         return this;
     }
 

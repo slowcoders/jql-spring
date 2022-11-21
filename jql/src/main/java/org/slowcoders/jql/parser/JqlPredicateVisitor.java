@@ -19,5 +19,5 @@ public interface JqlPredicateVisitor {
 
     void visitPredicateSet(ArrayList<Predicate> predicates, Conjunction conjunction);
 
-    JqlSchema setWorkingSchema(JqlSchema schema);
+    JqlSchema setWorkingSchema(JqlSchema schema, String mappingAlias);
 }
