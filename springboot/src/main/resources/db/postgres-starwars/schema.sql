@@ -10,7 +10,8 @@ create table if not exists starwars.character
     primary_function varchar(255),
     height real,
     home_planet varchar(255),
-    mass real
+    mass real,
+    note jsonb
 );
 alter table starwars.character owner to jql_demo;
 

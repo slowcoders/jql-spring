@@ -15,7 +15,7 @@ public interface JqlResultMapping {
 
     String getMappingAlias();
 
-    JqlResultMapping getContainingMapping();
+    JqlResultMapping getParentNode();
 
     JqlSchemaJoin getEntityJoin();
 

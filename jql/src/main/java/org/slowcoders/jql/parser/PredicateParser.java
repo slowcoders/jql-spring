@@ -47,7 +47,7 @@ abstract class PredicateParser {
         }
 
         public Predicate createPredicate(QAttribute column, Object value) {
-            return new Predicate.Compare(column, value.toString(), operator);
+            return new Predicate.Compare(column, value, operator);
         }
     }
 

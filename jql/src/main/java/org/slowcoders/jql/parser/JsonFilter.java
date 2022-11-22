@@ -3,7 +3,7 @@ package org.slowcoders.jql.parser;
 import org.slowcoders.jql.JqlSchema;
 import org.slowcoders.jql.JsonNodeType;
 
-class JsonFilter extends Filter {
+class JsonFilter extends Filter implements JqlFilterNode {
     private final String key;
 
     JsonFilter(Filter parentQuery, String key) {
@@ -17,6 +17,15 @@ class JsonFilter extends Filter {
 
     public JsonFilter asJsonFilter() {
         return this;
+    }
+
+    public boolean isJsonNode() {
+        return true;
+    }
+
+    @Override
+    public String getMappingAlias() {
+        return this.key;
     }
 
     @Override
@@ -33,33 +42,10 @@ class JsonFilter extends Filter {
     }
 
     @Override
-    public void writeAttribute(SourceWriter sb, String key, Class<?> valueType) {
-        sb.write("(");
-        this.dumpColumnName(sb);
-        sb.write(" ->> '").write(key).write("')");
-        JsonNodeType vf = JsonNodeType.getNodeType(valueType);
-        switch (vf) {
-            case Integer:
-            case Float:
-                sb.write("::NUMERIC");
-                break;
-            case Date:
-                sb.write("::DATE");
-                break;
-            case Time:
-                sb.write("::TIME");
-                break;
-            case Timestamp:
-                sb.write("::TIMESTAMP");
-                break;
-            case Text:
-                sb.write("::TEXT");
-                break;
-            case Array:
-            case Object:
-                sb.write("::JSONB");
-                break;
-        }
+    public void accept(JqlPredicateVisitor visitor) {
+        JqlFilterNode old = visitor.setCurrentNode(this);
+        super.accept(visitor);
+        visitor.setCurrentNode(old);
     }
 
     @Override
@@ -67,14 +53,5 @@ class JsonFilter extends Filter {
         return key.substring(key.lastIndexOf('.') + 1);
     }
 
-    private void dumpColumnName(SourceWriter sb) {
-        JsonFilter p = getParent().asJsonFilter();
-        if (p != null) {
-            p.dumpColumnName(sb);
-            sb.write(" -> '").write(key).write('\'');
-        } else {
-            sb.write(key);
-        }
-    }
 
 }

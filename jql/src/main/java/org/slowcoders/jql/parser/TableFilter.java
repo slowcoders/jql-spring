@@ -33,6 +33,10 @@ public class TableFilter extends Filter implements JqlResultMapping {
         this.mappingAlias = baseFilter.getRootFilter().createUniqueMappingAlias();
     }
 
+    public boolean isJsonNode() {
+        return false;
+    }
+
     public JqlSchema getSchema() {
         return schema;
     }
@@ -41,7 +45,7 @@ public class TableFilter extends Filter implements JqlResultMapping {
         return this;
     }
 
-    public JqlResultMapping getContainingMapping() { return getParent().asTableFilter(); }
+    public TableFilter getParentNode() { return super.getParentNode().asTableFilter(); }
 
     @Override
     public String getMappingAlias() {
@@ -51,7 +55,7 @@ public class TableFilter extends Filter implements JqlResultMapping {
     public String[] getEntityMappingPath() {
         String[] jsonPath = this.entityMappingPath;
         if (jsonPath == null) {
-            String[] basePath = getParent().asTableFilter().getEntityMappingPath();
+            String[] basePath = getParentNode().asTableFilter().getEntityMappingPath();
             jsonPath = new String[basePath.length + 1];
             System.arraycopy(basePath, 0, jsonPath, 0, basePath.length);
             jsonPath[basePath.length] = join.getJsonKey();
@@ -94,16 +98,16 @@ public class TableFilter extends Filter implements JqlResultMapping {
         return subQuery;
     }
 
-    @Override
-    public void writeAttribute(SourceWriter sb, String key, Class<?> valueType) {
-        sb.write(mappingAlias).write(".").write(key);
-    }
+//    @Override
+//    public void writeAttribute(SourceWriter sb, String key, Class<?> valueType) {
+//        sb.write(mappingAlias).write(".").write(key);
+//    }
 
     @Override
     public void accept(JqlPredicateVisitor visitor) {
-        JqlSchema old = visitor.setWorkingSchema(this.schema, this.mappingAlias);
+        JqlFilterNode old = visitor.setCurrentNode(this);
         super.accept(visitor);
-        visitor.setWorkingSchema(old, this.mappingAlias);
+        visitor.setCurrentNode(old);
     }
 
     @Override

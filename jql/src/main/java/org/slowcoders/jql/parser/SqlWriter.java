@@ -1,14 +1,11 @@
 package org.slowcoders.jql.parser;
 
-import org.slowcoders.jql.JqlSchema;
-import org.slowcoders.jql.jdbc.JqlResultMapping;
+import org.slowcoders.jql.JsonNodeType;
 
 import java.util.*;
 
 public class SqlWriter extends SourceWriter<SqlWriter> implements JqlPredicateVisitor {//}, QueryBuilder {
-    private final JqlSchema rootSchema;
-    private JqlSchema workingSchema;
-    private String mappingAlias;
+    private JqlFilterNode currentNode;
 
     public enum Command {
         Insert,
@@ -16,30 +13,72 @@ public class SqlWriter extends SourceWriter<SqlWriter> implements JqlPredicateVi
         Update,
     }
 
-    public SqlWriter(JqlSchema rootSchema) {
+    public SqlWriter() {
         super('\'');
-        this.workingSchema = this.rootSchema = rootSchema;
     }
 
-    public JqlSchema setWorkingSchema(JqlSchema jqlSchema, String mappingAlias) {
-        JqlSchema old = this.workingSchema;
-        this.workingSchema = jqlSchema;
-        this.mappingAlias = mappingAlias;
+    public JqlFilterNode setCurrentNode(JqlFilterNode node) {
+        JqlFilterNode old = this.currentNode;
+        this.currentNode = node;
         return old;
     }
 
-    public void writeColumnNames(Iterable<String> names, boolean withTableName) {
-        for (String name : names) {
-            writeColumnName(name, withTableName);
-            this.write(", ");
+    private void writeJsonPath(JqlFilterNode node) {
+        if (node.isJsonNode()) {
+            JqlFilterNode parent = node.getParentNode();
+            writeJsonPath(parent);
+            if (parent.isJsonNode()) {
+                write('\'').write(node.getMappingAlias()).write("' -> ");
+            } else {
+                write(node.getMappingAlias()).write(" -> ");
+            }
+        } else {
+            write(node.getMappingAlias()).write('.');
         }
-        this.shrinkLength(2);
     }
 
+    private void writeTypeCast(Class valueType) {
+        JsonNodeType vf = JsonNodeType.getNodeType(valueType);
+        switch (vf) {
+            case Integer:
+            case Float:
+                write("::NUMERIC");
+                break;
+            case Date:
+                write("::DATE");
+                break;
+            case Time:
+                write("::TIME");
+                break;
+            case Timestamp:
+                write("::TIMESTAMP");
+                break;
+            case Text:
+                write("::TEXT");
+                break;
+            case Array:
+            case Object:
+                write("::JSONB");
+                break;
+        }
+    }
+
+    private void writeQualifiedName(String name, Object value) {
+        if (!currentNode.isJsonNode()) {
+            write(this.currentNode.getMappingAlias()).write('.').write(name);
+        }
+        else {
+            writeJsonPath(currentNode);
+            write("'").write(name).write('\'');
+            if (value != null) {
+                writeTypeCast(value.getClass());
+            }
+        }
+    }
 
     @Override
     public void visitCompare(QAttribute column, CompareOperator operator, Object value) {
-        column.printSQL(this);
+        writeQualifiedName(column.getColumnName(), value);
         String op = "";
         assert (value != null);
         switch (operator) {
@@ -85,7 +124,7 @@ public class SqlWriter extends SourceWriter<SqlWriter> implements JqlPredicateVi
     @Override
     public void visitMatchAny(QAttribute key, CompareOperator operator, Collection values) {
         if (operator == CompareOperator.EQ || operator == CompareOperator.NE) {
-            key.printSQL(this);
+            writeQualifiedName(key.getColumnName(), values);
         }
         switch (operator) {
             case NE:
@@ -109,7 +148,7 @@ public class SqlWriter extends SourceWriter<SqlWriter> implements JqlPredicateVi
                     } else {
                         this.writeQuoted(" OR ");
                     }
-                    key.printSQL(this);
+                    writeQualifiedName(key.getColumnName(), values);
                     this.write(" LIKE ");
                     this.writeQuoted(v);
                 }
@@ -133,7 +172,8 @@ public class SqlWriter extends SourceWriter<SqlWriter> implements JqlPredicateVi
             default:
                 throw new RuntimeException("Invalid match operator with null value: " + operator);
         }
-        key.printSQL(this);
+        writeQualifiedName(key.getColumnName(), null);
+        //key.printSQL(this);
         this.write(value);
     }
 
@@ -158,24 +198,5 @@ public class SqlWriter extends SourceWriter<SqlWriter> implements JqlPredicateVi
         }
         this.write(")");
     }
-
-//    public void visitJoinedSchema(JsonFilter jsonFilter) {
-//        jsonFilter.accept((JqlPredicateVisitor)this);
-//    }
-
-
-    private SqlWriter writeColumnName(String name, boolean withTableName) {
-        if (withTableName) {
-            this.writeRaw(mappingAlias).write('.');
-        }
-        this.writeRaw(name);
-        return this;
-    }
-
-    public SqlWriter writeEquals(String columnName, Object value) {
-        this.write(columnName).write(" = ").writeValue(value);
-        return this;
-    }
-
 
 }

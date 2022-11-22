@@ -13,7 +13,7 @@ public class SqlGenerator implements QueryBuilder {
     private final SqlWriter sw;
 
     public SqlGenerator(JqlSchema schema) {
-        this(new SqlWriter(schema));
+        this(new SqlWriter());
     }
 
     public SqlGenerator(SqlWriter sqlWriter) {
@@ -37,7 +37,7 @@ public class SqlGenerator implements QueryBuilder {
             JqlSchemaJoin join = fetch.getEntityJoin();
             if (join == null) continue;
 
-            String parentAlias = fetch.getContainingMapping().getMappingAlias();
+            String parentAlias = fetch.getParentNode().getMappingAlias();
             String alias = fetch.getMappingAlias();
             if (true || join.isUniqueJoin()) {
                 JqlSchemaJoin associated = join.getAssociativeJoin();
@@ -124,7 +124,7 @@ public class SqlGenerator implements QueryBuilder {
             String key = entry.getKey();
             Object value = entry.getValue();
             sw.write("  ");
-            sw.writeEquals(key, value);
+            sw.write(key).write(" = ").writeValue(value);
             sw.write(",\n");
         }
         sw.replaceTrailingComma("\n");
@@ -162,7 +162,11 @@ public class SqlGenerator implements QueryBuilder {
         sw.writeln();
         sw.write(getCommand(SqlWriter.Command.Insert)).write(" INTO ").write(schema.getTableName()).writeln("(");
         sw.incTab();
-        sw.writeColumnNames(schema.getPhysicalColumnNames(keys), false);
+        for (String name : schema.getPhysicalColumnNames(keys)) {
+            sw.write(name);
+            sw.write(", ");
+        }
+        sw.shrinkLength(2);
         sw.decTab();
         sw.writeln("\n) VALUES (");
         for (String k : keys) {

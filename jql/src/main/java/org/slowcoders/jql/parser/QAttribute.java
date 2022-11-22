@@ -11,7 +11,11 @@ class QAttribute {
         this.valueType = valueType;
     }
 
+    public String getColumnName() {
+        return key;
+    }
+
     public void printSQL(SourceWriter sb) {
-        scope.writeAttribute(sb, key, valueType);
+//        scope.writeAttribute(sb, key, valueType);
     }
 }

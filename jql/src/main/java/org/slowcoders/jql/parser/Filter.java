@@ -2,7 +2,7 @@ package org.slowcoders.jql.parser;
 
 import java.util.HashMap;
 
-abstract class Filter extends PredicateSet {
+abstract class Filter extends PredicateSet implements JqlFilterNode {
 
     private final Filter parent;
     final HashMap<String, Filter> subFilters = new HashMap<>();
@@ -17,9 +17,7 @@ abstract class Filter extends PredicateSet {
 
     public TableFilter asTableFilter() { return null; }
 
-    public final Filter getParent() {
-        return this.parent;
-    }
+    public Filter getParentNode() { return this.parent; }
 
     Filter getBaseFilter() { return this; }
 
@@ -66,7 +64,7 @@ abstract class Filter extends PredicateSet {
 
     protected abstract Filter getFilter_impl(String key, ValueNodeType nodeType, boolean fetchData);
 
-    public abstract void writeAttribute(SourceWriter sb, String key, Class<?> valueType);
+//    public abstract void writeAttribute(SourceWriter sb, String key, Class<?> valueType);
 
     public abstract String getColumnName(String key);
 
