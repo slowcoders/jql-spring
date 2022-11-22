@@ -28,10 +28,11 @@ public class SqlWriter extends SourceWriter<SqlWriter> implements JqlPredicateVi
             JqlFilterNode parent = node.getParentNode();
             writeJsonPath(parent);
             if (parent.isJsonNode()) {
-                write('\'').write(node.getMappingAlias()).write("' -> ");
+                writeQuoted(node.getMappingAlias());
             } else {
-                write(node.getMappingAlias()).write(" -> ");
+                write(node.getMappingAlias());
             }
+            write("->");
         } else {
             write(node.getMappingAlias()).write('.');
         }
@@ -69,7 +70,7 @@ public class SqlWriter extends SourceWriter<SqlWriter> implements JqlPredicateVi
         }
         else {
             writeJsonPath(currentNode);
-            write("'").write(name).write('\'');
+            writeQuoted(name);
             if (value != null) {
                 writeTypeCast(value.getClass());
             }
