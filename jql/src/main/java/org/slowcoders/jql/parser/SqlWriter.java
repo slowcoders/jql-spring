@@ -129,7 +129,7 @@ public class SqlWriter extends SourceWriter<SqlWriter> implements JqlPredicateVi
         }
         switch (operator) {
             case NE:
-                this.write("NOT ");
+                this.write("NOT");
                 // no-break;
             case EQ:
                 this.write(" IN(");
@@ -147,9 +147,9 @@ public class SqlWriter extends SourceWriter<SqlWriter> implements JqlPredicateVi
                     if (first) {
                         first = false;
                     } else {
-                        this.writeQuoted(" OR ");
+                        this.write(" OR ");
                     }
-                    writeQualifiedName(key.getColumnName(), values);
+                    writeQualifiedName(key.getColumnName(), "");
                     this.write(" LIKE ");
                     this.writeQuoted(v);
                 }

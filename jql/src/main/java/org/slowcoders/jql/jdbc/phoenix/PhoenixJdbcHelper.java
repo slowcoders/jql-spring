@@ -18,7 +18,7 @@ public class PhoenixJdbcHelper extends SqlGenerator {
 
     public PhoenixJdbcHelper(JdbcTemplate jdbc, Class<?> entityType, String tableName) {
         super(
-                schemaLoader.loadSchema(entityType, tableName));
+        );
         this.jdbc = jdbc;
         this.entityType = entityType;
         this.tableName = tableName;

@@ -14,8 +14,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.ResultSetExtractor;
-import org.springframework.jdbc.core.RowMapper;
-import org.springframework.jdbc.support.rowset.SqlRowSet;
 
 import javax.validation.constraints.NotNull;
 import java.io.IOException;
@@ -37,7 +35,7 @@ public class JDBCRepositoryBase<ID> /*extends JDBCQueryBuilder*/ implements JQLR
 
     public JDBCRepositoryBase(JQLJdbcService service, JqlSchema jqlSchema) {
         this.service = service;
-        this.sqlGenerator = new SqlGenerator(jqlSchema);
+        this.sqlGenerator = new SqlGenerator();
         this.jdbc = service.getJdbcTemplate();
         this.objectMapper = service.getJsonConverter().getObjectMapper();
         this.jqlSchema = jqlSchema;

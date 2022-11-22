@@ -12,7 +12,7 @@ public class SqlGenerator implements QueryBuilder {
 
     private final SqlWriter sw;
 
-    public SqlGenerator(JqlSchema schema) {
+    public SqlGenerator() {
         this(new SqlWriter());
     }
 
@@ -78,20 +78,14 @@ public class SqlGenerator implements QueryBuilder {
     }
 
     public String createSelectQuery(JqlQuery where, Sort sort, int limit, int offset) {
-        sw.write("\nSELECT ");
-
-        for (JqlResultMapping fetch : where.getResultColumnMappings()) {
-            String table = fetch.getMappingAlias();
-            List<JqlColumn> selectColumns = fetch.getSelectedColumns();
-            if (selectColumns == null) {
-                sw.write(table).write(".*, ");
+        sw.write("\nSELECT\n");
+        for (JqlResultMapping mapping : where.getResultColumnMappings()) {
+            sw.write('\t');
+            String alias = mapping.getMappingAlias();
+            for (JqlColumn col : mapping.getSelectedColumns()) {
+                sw.write(alias).write('.').write(col.getColumnName()).write(", ");
             }
-            else {
-                for (JqlColumn col : selectColumns) {
-                    sw.write(table).write('.').write(col.getColumnName()).write(", ");
-                }
-                sw.write('\n');
-            }
+            sw.write('\n');
         }
         sw.replaceTrailingComma("\n");
         writeFrom(where);
@@ -188,7 +182,7 @@ public class SqlGenerator implements QueryBuilder {
             sw.write(col.getColumnName()).write(", ");
         }
         sw.replaceTrailingComma("\n) VALUES (");
-        for (JqlColumn col : schema.getWritableColumns()) {
+        for (int i = schema.getWritableColumns().size(); --i >= 0; ) {
             sw.write("?,");
         }
         sw.replaceTrailingComma(")");

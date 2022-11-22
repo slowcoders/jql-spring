@@ -5,10 +5,14 @@ import java.util.Collection;
 public class SourceWriter<Self extends SourceWriter> {
     private final StringBuilder sb = new StringBuilder();
     private final char quote;
+    private final String quoteChar;
+    private final String quoteEscape;
     private int tab;
 
     public SourceWriter(char quote) {
         this.quote = quote;
+        this.quoteChar = "" + quote;
+        this.quoteEscape = "\\" + quote;
     }
 
     public Self writeln(String text) {
@@ -79,7 +83,12 @@ public class SourceWriter<Self extends SourceWriter> {
     }
 
     public Self writeQuoted(Object value) {
-        sb.append(quote).append(value).append(quote);
+        if (value == null) {
+            sb.append("null");
+        } else {
+            value = value.toString().replace(quoteChar, quoteEscape);
+            sb.append(quote).append(value).append(quote);
+        }
         return (Self)this;
     }
 
