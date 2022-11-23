@@ -85,12 +85,15 @@ public class SqlGenerator implements QueryBuilder {
         return sql;
     }
 
-    private boolean hasJoinedFilterConditions(JqlQuery where) {
+    private boolean needDistinctPagination(JqlQuery where) {
         for (JqlResultMapping mapping : where.getResultColumnMappings()) {
             JqlSchemaJoin join = mapping.getSchemaJoin();
             if (join == null) continue;
 
-            if (mapping.hasFilterPredicates() || mapping.isArrayNode()) {
+            if (mapping.hasFilterPredicates()) {
+                return true;
+            }
+            if (mapping.isArrayNode() && mapping.getEntityMappingPath().length == 1) {
                 return true;
             }
         }
@@ -101,7 +104,7 @@ public class SqlGenerator implements QueryBuilder {
         sw.reset();
         String tableName = where.getTableName();
 
-        boolean need_complex_pagination = (limit > 0 || offset > 0) && hasJoinedFilterConditions(where);
+        boolean need_complex_pagination = (limit > 0 || offset > 0) && needDistinctPagination(where);
         if (need_complex_pagination) {
             sw.write("\nWITH _cte AS NOT MATERIALIZED (\n");
             sw.incTab();
