@@ -4,3 +4,7 @@ jql/build
 springboot/.gradle
 springboot/build
 springboot/tutorial/postgres_data
+tutorial/postgres_data
+sample/.gradle
+sample/target
+sample/build
