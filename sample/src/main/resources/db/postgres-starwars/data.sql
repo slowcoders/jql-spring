@@ -18,22 +18,11 @@ INSERT INTO starwars.character (dtype, id, name, primary_function) values
 on conflict DO NOTHING;
 
 
-INSERT INTO starwars.starship (id, name, length) values
-(3000, 'Millenium Falcon', 34.37),
-(3001, 'X-Wing', 12.5),
-(3002, 'TIE Advanced x1', 9.2),
-(3003, 'Imperial shuttle', 20)
-on conflict DO NOTHING;
-
-
-INSERT INTO starwars.human_starship_link (human_id, starship_id) values
-(1000, 3001),
-(1000, 3003),
-
-(1001, 3002),
-
-(1002, 3000),
-(1002, 3003)
+INSERT INTO starwars.starship (id, name, length, pilot_id) values
+(3000, 'Millenium Falcon', 34.37, 1002),
+(3001, 'X-Wing', 12.5, 1000),
+(3002, 'TIE Advanced x1', 9.2, 1001),
+(3003, 'Imperial shuttle', 20, NULL)
 on conflict DO NOTHING;
 
 

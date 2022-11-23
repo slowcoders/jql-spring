@@ -59,13 +59,14 @@ public class JqlParser {
 
             Predicate cond;
             if (valueCategory == ValueNodeType.Entity) {
-                this.parse(targetPS, (Map<String, Object>)value);
+                op.parse(this, targetPS, (Map<String, Object>)value);
                 cond = targetPS;
             }
             else if (valueCategory == ValueNodeType.Entities) {
-                for (Map<String, Object> c : (Collection<Map<String, Object>>)value) {
-                    this.parse(targetPS, (Map)c);
-                }
+                op.parse(this, targetPS, (Collection<Map<String, Object>>)value);
+//                for (Map<String, Object> c : (Collection<Map<String, Object>>)value) {
+//                    op.parse(this, targetPS, (Map)c);
+//                }
                 cond = targetPS;
             }
             else {

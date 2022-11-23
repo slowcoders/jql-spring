@@ -6,7 +6,6 @@ abstract class Filter extends PredicateSet implements JqlFilterNode {
 
     private final Filter parent;
     final HashMap<String, Filter> subFilters = new HashMap<>();
-    private PredicateSet orSet = null;
 
     public Filter(Filter parentQuery) {
         super(Conjunction.AND);
@@ -47,38 +46,11 @@ abstract class Filter extends PredicateSet implements JqlFilterNode {
             key = key.substring(p + 1);
         }
         scope = scope.getFilter_impl(key, nodeType, fetchData);
-        if (nodeType == ValueNodeType.Entities) {
-            return scope.getOrPredicates();
-        } else {
-            return scope;
-        }
-    }
-
-    private PredicateSet getOrPredicates() {
-        if (this.orSet == null) {
-            this.orSet = new OrPredicates(this);
-            this.add(0, this.orSet);
-        }
-        return this.orSet;
+        return scope;
     }
 
     protected abstract Filter getFilter_impl(String key, ValueNodeType nodeType, boolean fetchData);
 
-//    public abstract void writeAttribute(SourceWriter sb, String key, Class<?> valueType);
-
     public abstract String getColumnName(String key);
 
-    private class OrPredicates extends PredicateSet {
-        private final Filter query;
-
-        public OrPredicates(Filter query) {
-            super(Conjunction.OR);
-            this.query = query;
-        }
-
-        @Override
-        Filter getBaseFilter() {
-            return query;
-        }
-    }
 }

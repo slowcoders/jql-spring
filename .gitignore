@@ -8,3 +8,4 @@ tutorial/postgres_data
 sample/.gradle
 sample/target
 sample/build
+sample/postgres_data

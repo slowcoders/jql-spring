@@ -4,6 +4,7 @@ import org.eipgrid.jql.util.ClassUtils;
 
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Map;
 
 abstract class PredicateParser {
 
@@ -22,14 +23,23 @@ abstract class PredicateParser {
         return operators.get(function);
     }
 
-//    public Predicate parse(JqlParser parser, QScope baseScope, Map<String, Object> filter) {
-//        return null;
-//    }
-//
-//    public Predicate parse(JqlParser parser, QScope baseScope, Collection<Map<String, Object>> filters) {
-//        return null;
-//    }
+    public Predicate parse(JqlParser parser, PredicateSet baseScope, Map<String, Object> filter) {
+        return null;
+    }
 
+    public Predicate parse(JqlParser parser, PredicateSet baseScope, Collection<Map<String, Object>> filters) {
+        return null;
+    }
+
+    public PredicateSet getParserNode(PredicateSet baseScope, ValueNodeType nodeType) {
+        if (nodeType == ValueNodeType.Entities) {
+            PredicateSet or_qs = new PredicateSet(Conjunction.OR, baseScope.getBaseFilter());
+            baseScope.add(or_qs);
+            return or_qs;
+        }
+        return baseScope;
+    }
+    
     public boolean needFetchData() { return true; }
 
     private static final HashMap<String, PredicateParser> operators = new HashMap<>();
@@ -71,18 +81,27 @@ abstract class PredicateParser {
 
         public boolean needFetchData() { return fetchData; }
 
-//        public Predicate parse(JqlParser parser, QScope baseScope, Map<String, Object> filter) {
-//            parser.parse(baseScope, filter);
-//            return baseScope;
-//        }
-//
-//        public Predicate parse(JqlParser parser, QScope baseScope, Collection<Map<String, Object>> filters) {
-//            QScope or_qs = baseScope.createQueryScope(Conjunction.OR);
-//            for (Map<String, Object> filter : filters) {
-//                parser.parse(or_qs, (Map)filter);
-//            }
-//            return or_qs;
-//        }
+        public Predicate parse(JqlParser parser, PredicateSet baseScope, Map<String, Object> filter) {
+            if (this.operator == CompareOperator.NE) {
+                PredicateSet and_ps = new PredicateSet(Conjunction.AND, baseScope.getBaseFilter());
+                parser.parse(and_ps, filter);
+                baseScope.add(new Predicate.Not(and_ps));
+            } else {
+                parser.parse(baseScope, filter);
+            }
+            return baseScope;
+        }
+
+        public Predicate parse(JqlParser parser, PredicateSet baseScope, Collection<Map<String, Object>> filters) {
+            PredicateSet or_qs = new PredicateSet(Conjunction.OR, baseScope.getBaseFilter());
+            for (Map<String, Object> filter : filters) {
+                parser.parse(or_qs, (Map)filter);
+            }
+            if (this.operator == CompareOperator.NE) {
+                baseScope.add(new Predicate.Not(or_qs));
+            }
+            return baseScope;
+        }
 
         public Predicate createPredicate(QAttribute column, Object value) {
             Predicate cond;
@@ -97,21 +116,25 @@ abstract class PredicateParser {
         }
     };
 
-//    static class Excepts extends MatchAny {
-//        Excepts() {
-//            super(CompareOperator.EQ, true);
-//        }
-//
-//        public Predicate parse(JqlParser parser, QScope baseScope, Map<String, Object> filter) {
-//            Expression result = super.parse(parser, baseScope, filter);
-//            return new Predicate.Not(result);
-//        }
-//
-//        public Predicate parse(JqlParser parser, QScope baseScope, Collection<Map<String, Object>> filters) {
-//            Expression result = super.parse(parser, baseScope, filters);
-//            return new Predicate.Not(result);
-//        }
-//    };
+    static class Excepts extends MatchAny {
+        Excepts() {
+            super(CompareOperator.EQ, true);
+        }
+
+        public PredicateSet getParserNode(PredicateSet baseScope, ValueNodeType nodeType) {
+            if (nodeType == ValueNodeType.Entities) {
+                PredicateSet or_qs = new PredicateSet(Conjunction.OR, baseScope.getBaseFilter());
+                baseScope.add(or_qs);
+                return or_qs;
+            }
+            return baseScope;
+        }
+
+        public Predicate parse(JqlParser parser, PredicateSet baseScope, Collection<Map<String, Object>> filters) {
+            Expression result = super.parse(parser, baseScope, filters);
+            return new Predicate.Not(result);
+        }
+    };
 
     static class PairedPredicate extends PredicateParser {
         private final PredicateParser operator1;
@@ -156,8 +179,8 @@ abstract class PredicateParser {
         operators.put("lt", LT);
         operators.put("ge", GE);
         operators.put("le", LE);
-        operators.put("between", new PairedPredicate(GE, LT, Conjunction.AND));
-        operators.put("not between", new PairedPredicate(LT, GE, Conjunction.OR));
+        operators.put("between", new PairedPredicate(GE, LE, Conjunction.AND));
+        operators.put("not between", new PairedPredicate(LT, GT, Conjunction.OR));
 
 //        operators.put("excepts", new Excepts());
     }
