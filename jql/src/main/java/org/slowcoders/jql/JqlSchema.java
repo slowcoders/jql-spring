@@ -48,7 +48,7 @@ public abstract class JqlSchema {
         return this.pkColumns;
     }
 
-    public JqlSchemaJoin getEntityJoinBy(String jsonKey) {
+    public JqlSchemaJoin getSchemaJoinBy(String jsonKey) {
         return entityJoinMap.get(jsonKey);
     }
 
@@ -158,7 +158,7 @@ public abstract class JqlSchema {
         return out;
     }
 
-    protected void registerEntityJoin(JqlSchemaJoin join) {
+    protected void registerSchemaJoin(JqlSchemaJoin join) {
         this.entityJoinMap.put(join.getJsonKey(), join);
     }
 
@@ -170,7 +170,7 @@ public abstract class JqlSchema {
         return this.tableName;
     }
 
-    public Collection<JqlSchemaJoin> getEntityJoins() {
+    public Collection<JqlSchemaJoin> getSchemaJoins() {
         return this.entityJoinMap.values();
     }
 }

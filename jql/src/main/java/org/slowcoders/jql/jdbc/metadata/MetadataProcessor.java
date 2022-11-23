@@ -58,7 +58,7 @@ public class MetadataProcessor extends SchemaLoader {
         HashMap<String, List<String>> uniqueConstraints = getUniqueConstraints(conn, dbSchema, tableName);
         schema.init(columns, uniqueConstraints);
         getJoinedKeyInfos(conn, true, schema,  dbSchema, tableName);
-        EntityJoinHelper exportedJoins = getJoinedKeyInfos(conn, false, schema, dbSchema, tableName);
+        SchemaJoinHelper exportedJoins = getJoinedKeyInfos(conn, false, schema, dbSchema, tableName);
         schema.initMappedColumns(exportedJoins.values());
         return schema;
     }
@@ -158,11 +158,11 @@ public class MetadataProcessor extends SchemaLoader {
         return indexMap;
     }
 
-    private EntityJoinHelper getJoinedKeyInfos(Connection conn, boolean isForeignKeyJoin, JdbcSchema baseSchema, String dbSchema, String tableName) throws SQLException {
+    private SchemaJoinHelper getJoinedKeyInfos(Connection conn, boolean isForeignKeyJoin, JdbcSchema baseSchema, String dbSchema, String tableName) throws SQLException {
         JdbcSchema fkSchema = isForeignKeyJoin ? baseSchema : null;
         JdbcSchema pkSchema = !isForeignKeyJoin ? baseSchema : null;
 
-        EntityJoinHelper joins = isForeignKeyJoin ? null : new EntityJoinHelper(pkSchema);
+        SchemaJoinHelper joins = isForeignKeyJoin ? null : new SchemaJoinHelper(pkSchema);
 
         DatabaseMetaData md = conn.getMetaData();
         ResultSet rs;

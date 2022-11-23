@@ -75,16 +75,16 @@ public class JdbcSchema extends JqlSchema {
     protected void initMappedColumns(Collection<List<JqlColumn>> mappedJoins) {
         super.initJsonKeys();
         for (List<JqlColumn> mc : fkConstraints.values()) {
-            super.registerEntityJoin(new JqlSchemaJoin(this, mc));
+            super.registerSchemaJoin(new JqlSchemaJoin(this, mc));
         }
         for (List<JqlColumn> mc : mappedJoins) {
-            super.registerEntityJoin(new JqlSchemaJoin(this, mc));
+            super.registerSchemaJoin(new JqlSchemaJoin(this, mc));
 
-            Collection<JqlSchemaJoin> joins = mc.get(0).getSchema().getEntityJoins();
+            Collection<JqlSchemaJoin> joins = mc.get(0).getSchema().getSchemaJoins();
             for (JqlSchemaJoin j2 : joins) {
                 if (mc != j2.getForeignKeyColumns() && !j2.isInverseMapped()) {
                     JqlSchemaJoin j3 = new JqlSchemaJoin(this, mc, j2);
-                    super.registerEntityJoin(j3);
+                    super.registerSchemaJoin(j3);
                 }
             }
         }

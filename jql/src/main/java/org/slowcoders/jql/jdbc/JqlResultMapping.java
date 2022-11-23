@@ -17,7 +17,7 @@ public interface JqlResultMapping {
 
     JqlResultMapping getParentNode();
 
-    JqlSchemaJoin getEntityJoin();
+    JqlSchemaJoin getSchemaJoin();
 
     boolean isArrayNode();
 

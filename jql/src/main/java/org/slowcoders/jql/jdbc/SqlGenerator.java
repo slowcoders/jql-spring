@@ -32,9 +32,13 @@ public class SqlGenerator implements QueryBuilder {
     }
 
     private void writeFrom(JqlQuery where) {
-        sw.write("FROM ").write(where.getTableName()).write(" as ").write(where.getMappingAlias());
+        writeFrom(where, where.getTableName(), false);
+    }
+
+    private void writeFrom(JqlQuery where, String tableName, boolean ignoreEmptyFilter) {
+        sw.write("FROM ").write(tableName).write(" as ").write(where.getMappingAlias());
         for (JqlResultMapping fetch : where.getResultColumnMappings()) {
-            JqlSchemaJoin join = fetch.getEntityJoin();
+            JqlSchemaJoin join = fetch.getSchemaJoin();
             if (join == null) continue;
 
             String parentAlias = fetch.getParentNode().getMappingAlias();
@@ -77,7 +81,23 @@ public class SqlGenerator implements QueryBuilder {
         return sql;
     }
 
-    public String createSelectQuery(JqlQuery where, Sort sort, int limit, int offset) {
+
+    public String createSelectQuery(JqlQuery where, Sort sort, int offset, int limit) {
+        sw.reset();
+        String tableName = where.getTableName();
+        boolean need_complex_pagination = where.getResultColumnMappings().size() > 1 && (limit > 0 || offset > 0);
+        if (need_complex_pagination) {
+            sw.write("\nWITH _cte AS NOT MATERIALIZED (\n");
+            sw.incTab();
+            sw.write("SELECT DISTINCT t_0.* ");
+            writeFrom(where, tableName, true);
+            writeWhere(where);
+            tableName = "_cte";
+            write_orderBy(where.getSchema(), sort, offset, limit);
+            sw.decTab();
+            sw.write("\n)");
+        }
+
         sw.write("\nSELECT\n");
         for (JqlResultMapping mapping : where.getResultColumnMappings()) {
             sw.write('\t');
@@ -88,17 +108,17 @@ public class SqlGenerator implements QueryBuilder {
             sw.write('\n');
         }
         sw.replaceTrailingComma("\n");
-        writeFrom(where);
+        writeFrom(where, tableName, false);
         writeWhere(where);
-        write_orderBy(where.getSchema(), sort);
-        if (offset > 0) sw.write("\nOFFSET " + limit);
-        if (limit > 0) sw.write("\nLIMIT " + limit);
+        if (!need_complex_pagination) {
+            write_orderBy(where.getSchema(), sort, offset, limit);
+        }
 
         String sql = sw.reset();
         return sql;
     }
 
-    private void write_orderBy(JqlSchema schema, Sort sort) {
+    private void write_orderBy(JqlSchema schema, Sort sort, int offset, int limit) {
         if (sort == null) return;
 
         sw.write("\nORDER BY ");
@@ -107,7 +127,9 @@ public class SqlGenerator implements QueryBuilder {
             sw.write(schema.getColumn(p).getColumnName());
             sw.write(order.isAscending() ? " asc" : " desc").write(", ");
         });
-        sw.replaceTrailingComma("\n");
+        sw.replaceTrailingComma("");
+        if (offset > 0) sw.write("\nOFFSET " + offset);
+        if (limit > 0) sw.write("\nLIMIT " + limit);
     }
 
 

@@ -7,6 +7,7 @@ JQL 은 RDB 환경에 쉽게 적용할 수 있도록 설계 되었으며, 연산
 
 ## Tutorial 실행 준비.
 ```
+cd 
 sh run_postgres.sh
 ```
 

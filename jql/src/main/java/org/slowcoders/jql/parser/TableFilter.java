@@ -78,7 +78,7 @@ public class TableFilter extends Filter implements JqlResultMapping {
 
     @Override
     public Filter getFilter_impl(String key, ValueNodeType nodeType, boolean fetchData) {
-        JqlSchemaJoin join = schema.getEntityJoinBy(key);
+        JqlSchemaJoin join = schema.getSchemaJoinBy(key);
         if (join == null) {
             JqlColumn column = schema.getColumn(key);
             if (column.getValueFormat() != JsonNodeType.Object) return this;
@@ -122,7 +122,7 @@ public class TableFilter extends Filter implements JqlResultMapping {
         return this.schema.getColumn(key).getColumnName();
     }
 
-    public JqlSchemaJoin getEntityJoin() {
+    public JqlSchemaJoin getSchemaJoin() {
         return this.join;
     }
 

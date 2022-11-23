@@ -70,7 +70,6 @@ public abstract class JQLReadOnlyController<ENTITY, ID> {
             return repository.find(filter, sort, limit == null ? -1 : limit);
         }
 
-        page = page - 1;
         PageRequest pageReq = sort == null ?
                 PageRequest.of(page, limit) : PageRequest.of(page, limit, sort);
         return repository.find(filter, pageReq);

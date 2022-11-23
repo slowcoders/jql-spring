@@ -117,7 +117,7 @@ public class JDBCRepositoryBase<ID> /*extends JDBCQueryBuilder*/ implements JQLR
     @Override
     public KVEntity find(ID id) {
         Map<String, Object> filter = createJqlFilterWithId(id);
-        List<KVEntity> res = find_impl(filter, null,1, 0);
+        List<KVEntity> res = find_impl(filter, null, 0, 1);
         return res.size() > 0 ? res.get(0) : null;
     }
 
@@ -125,9 +125,9 @@ public class JDBCRepositoryBase<ID> /*extends JDBCQueryBuilder*/ implements JQLR
         return new JqlRowMapper(filter.getResultColumnMappings());
     }
 
-    protected List<KVEntity> find_impl(Map<String, Object> jqlFilter, Sort sort, int limit, int offset) {
+    protected List<KVEntity> find_impl(Map<String, Object> jqlFilter, Sort sort, int offset, int limit) {
         JqlQuery query = this.buildQuery(jqlFilter);
-        String sql = sqlGenerator.createSelectQuery(query, sort, limit, offset);
+        String sql = sqlGenerator.createSelectQuery(query, sort, offset, limit);
         List<KVEntity> res = (List)jdbc.query(sql, getColumnMapRowMapper(query));
         return res;
     }
@@ -136,7 +136,7 @@ public class JDBCRepositoryBase<ID> /*extends JDBCQueryBuilder*/ implements JQLR
     public Page<KVEntity> find(Map<String, Object> jqlFilter, @NotNull Pageable pageReq) {
         int size = pageReq.getPageSize();
         int offset = (pageReq.getPageNumber()) * size;
-        List<KVEntity> res = find_impl(jqlFilter, pageReq.getSort(), size, offset);
+        List<KVEntity> res = find_impl(jqlFilter, pageReq.getSort(), offset, size);
         long count = count(jqlFilter);
         return new PageImpl(res, pageReq, count);
     }
@@ -151,18 +151,18 @@ public class JDBCRepositoryBase<ID> /*extends JDBCQueryBuilder*/ implements JQLR
 
     @Override
     public Iterable<KVEntity> find(Map<String, Object> jqlFilter, Sort sort, int limit) {
-        return this.find_impl(jqlFilter, sort, limit, 0);
+        return this.find_impl(jqlFilter, sort, 0, limit);
     }
 
     @Override
     public List<KVEntity> list(Collection<ID> idList) {
         Map<String, Object> filter = createJqlFilterWithIdList( idList);
-        return find_impl(filter, null, -1, 0);
+        return find_impl(filter, null, 0, -1);
     }
 
     @Override
     public KVEntity findTop(Map<String, Object> jqlFilter, Sort sort) {
-        List<KVEntity> res = this.find_impl(jqlFilter, sort, 1, 0);
+        List<KVEntity> res = this.find_impl(jqlFilter, sort, 0, 1);
         return res.size() > 0 ? res.get(0) : null;
     }
 

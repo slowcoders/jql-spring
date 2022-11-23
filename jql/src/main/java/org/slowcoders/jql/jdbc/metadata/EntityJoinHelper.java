@@ -6,9 +6,9 @@ import org.slowcoders.jql.JqlSchema;
 import java.util.HashMap;
 import java.util.List;
 
-class EntityJoinHelper extends HashMap<JqlSchema, List<JqlColumn>> {
+class SchemaJoinHelper extends HashMap<JqlSchema, List<JqlColumn>> {
     private String tableName;
-    public EntityJoinHelper(JqlSchema pkSchema) {
+    public SchemaJoinHelper(JqlSchema pkSchema) {
         this.tableName = pkSchema.getSimpleTableName();
     }
 

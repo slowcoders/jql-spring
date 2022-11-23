@@ -6,7 +6,7 @@ import org.springframework.data.domain.Sort;
 import java.util.Map;
 
 public interface QueryBuilder {
-    String createSelectQuery(JqlQuery where, Sort sort, int limit, int offset);
+    String createSelectQuery(JqlQuery where, Sort sort, int offset, int limit);
 
     String createCountQuery(JqlQuery where);
 
