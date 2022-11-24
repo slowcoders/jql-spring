@@ -86,14 +86,15 @@ public class SqlGenerator implements QueryBuilder {
     }
 
     private boolean needDistinctPagination(JqlQuery where) {
+        if (where.isLinearNode()) return false;
+
         for (JqlResultMapping mapping : where.getResultColumnMappings()) {
             JqlSchemaJoin join = mapping.getSchemaJoin();
             if (join == null) continue;
 
-            if (mapping.hasFilterPredicates()) {
-                return true;
-            }
-            if (mapping.isArrayNode() && mapping.getEntityMappingPath().length == 1) {
+            if (mapping.getSelectedColumns().size() == 0) continue;
+
+            if (mapping.isArrayNode() && mapping.hasFilterPredicates()) {
                 return true;
             }
         }

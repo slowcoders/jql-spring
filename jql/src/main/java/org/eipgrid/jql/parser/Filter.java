@@ -29,8 +29,11 @@ abstract class Filter extends PredicateSet implements JqlFilterNode {
         return parent.getRootFilter();
     }
 
+    public void setSelectedColumns(String[] jsonKeys) {}
 
-    public PredicateSet getFilterNode(String key, ValueNodeType nodeType, boolean fetchData) {
+    public Filter getFilterNode(String key, ValueNodeType nodeType) {
+        if (key == null) return this;
+
         Filter scope = this;
         int p;
         while ((p = key.indexOf('.')) > 0) {
@@ -42,14 +45,14 @@ abstract class Filter extends PredicateSet implements JqlFilterNode {
                 return scope;
             }
             String token = key.substring(0, p);
-            scope = scope.getFilter_impl(token, nodeType, fetchData);
+            scope = scope.getFilter_impl(token, nodeType);
             key = key.substring(p + 1);
         }
-        scope = scope.getFilter_impl(key, nodeType, fetchData);
+        scope = scope.getFilter_impl(key, nodeType);
         return scope;
     }
 
-    protected abstract Filter getFilter_impl(String key, ValueNodeType nodeType, boolean fetchData);
+    protected abstract Filter getFilter_impl(String key, ValueNodeType nodeType);
 
     public abstract String getColumnName(String key);
 

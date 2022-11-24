@@ -116,10 +116,9 @@ public class SqlWriter extends SourceWriter<SqlWriter> implements JqlPredicateVi
 
     @Override
     public void visitNot(Expression statement) {
-        this.write(" NOT (");
+        this.write(" NOT ");
         statement.accept(this);
-        this.write(")");
-
+//        this.write(")");
     }
 
     @Override

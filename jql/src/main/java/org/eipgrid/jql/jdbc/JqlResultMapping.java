@@ -7,19 +7,22 @@ import org.eipgrid.jql.JqlSchema;
 import java.util.List;
 
 public interface JqlResultMapping {
+    JqlResultMapping getParentNode();
+
     JqlSchema getSchema();
+
+    String getMappingAlias();
+
+    JqlSchemaJoin getSchemaJoin();
 
     List<JqlColumn> getSelectedColumns();
 
     String[] getEntityMappingPath();
 
-    String getMappingAlias();
-
-    JqlResultMapping getParentNode();
-
-    JqlSchemaJoin getSchemaJoin();
-
     boolean isArrayNode();
+
+    // It has not any array node in descendants.
+    boolean isLinearNode();
 
     boolean hasFilterPredicates();
 }

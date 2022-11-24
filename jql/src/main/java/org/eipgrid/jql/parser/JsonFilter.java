@@ -28,7 +28,7 @@ class JsonFilter extends Filter implements JqlFilterNode {
     }
 
     @Override
-    public Filter getFilter_impl(String key, ValueNodeType nodeType, boolean fetchData_unused) {
+    public Filter getFilter_impl(String key, ValueNodeType nodeType) {
         if (nodeType == ValueNodeType.Leaf) {
             return this;
         }

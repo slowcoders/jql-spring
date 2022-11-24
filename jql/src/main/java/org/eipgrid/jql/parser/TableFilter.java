@@ -6,6 +6,8 @@ import org.eipgrid.jql.JqlSchemaJoin;
 import org.eipgrid.jql.JsonNodeType;
 import org.eipgrid.jql.jdbc.JqlResultMapping;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class TableFilter extends Filter implements JqlResultMapping {
@@ -16,7 +18,7 @@ public class TableFilter extends Filter implements JqlResultMapping {
     private String[] entityMappingPath;
     private List<JqlColumn> selectedColumns;
     private static final String[] emptyPath = new String[0];
-    private List<JqlResultMapping> subMappingNodes;
+    private boolean isLinear;
 
     protected TableFilter(JqlSchema schema, String mappingAlias) {
         super(null);
@@ -72,12 +74,25 @@ public class TableFilter extends Filter implements JqlResultMapping {
         return selectedColumns != null ? selectedColumns : schema.getReadableColumns();
     }
 
+    public void setSelectedColumns(String[] jsonKeys) {
+        if (jsonKeys == null) {
+            selectedColumns = null;
+        } else if (jsonKeys.length == 0) {
+            selectedColumns = Collections.EMPTY_LIST;
+        } else {
+            selectedColumns = new ArrayList<>();
+            for (String key : jsonKeys) {
+                selectedColumns.add(schema.getColumn(key));
+            }
+        }
+    }
+
     public TableFilter getTableFilter() {
         return this;
     }
 
     @Override
-    public Filter getFilter_impl(String key, ValueNodeType nodeType, boolean fetchData) {
+    public Filter getFilter_impl(String key, ValueNodeType nodeType) {
         JqlSchemaJoin join = schema.getSchemaJoinBy(key);
         if (join == null) {
             JqlColumn column = schema.getColumn(key);
@@ -87,7 +102,6 @@ public class TableFilter extends Filter implements JqlResultMapping {
         Filter subQuery = subFilters.get(key);
         if (subQuery == null) {
             if (join != null) {
-//                JqlSchema subSchema = getTopQuery().addTableJoin(join, fetchData);
                 subQuery = new TableFilter(this, join);
             }
             else {
@@ -130,12 +144,37 @@ public class TableFilter extends Filter implements JqlResultMapping {
         return !this.join.isUniqueJoin();
     }
 
+    @Override
+    public boolean isLinearNode() {
+        return this.isLinear;
+    }
+
     protected void gatherColumnMappings(List<JqlResultMapping> columnGroupMappings) {
         columnGroupMappings.add(this);
+        this.isLinear = true;
         for (Filter q : subFilters.values()) {
             TableFilter table = q.asTableFilter();
             if (table != null) {
                 table.gatherColumnMappings(columnGroupMappings);
+                this.isLinear &= table.isLinear && !table.isArrayNode();
+            }
+        }
+        if (!this.isLinear && this.getSelectedColumns() != schema.getReadableColumns()) {
+            if (selectedColumns == Collections.EMPTY_LIST) {
+                selectedColumns = new ArrayList<>();
+            }
+            List<JqlColumn> pkColumns = schema.getPKColumns();
+            for (int idxPk = pkColumns.size(); --idxPk >= 0; ) {
+                JqlColumn pk = pkColumns.get(idxPk);
+                int i = this.selectedColumns.indexOf(pk);
+                if (i == idxPk) continue;
+                if (i >= 0) {
+                    JqlColumn col = this.selectedColumns.get(idxPk);
+                    this.selectedColumns.set(i, col);
+                    this.selectedColumns.set(idxPk, pk);
+                } else {
+                    this.selectedColumns.add(idxPk, pk);
+                }
             }
         }
     }

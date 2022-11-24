@@ -13,6 +13,7 @@ public class JqlParser {
 
     private final ConversionService conversionService;
     private final JqlQuery where;
+    private static String[] emptyColumns = new String[0];
 
     public JqlParser(JqlSchema schema, ConversionService conversionService) {
         this.where = new JqlQuery(schema);
@@ -28,9 +29,6 @@ public class JqlParser {
     public void parse(PredicateSet predicates, Map<String, Object> filter) {
         // "joinColumn명" : { "id@?EQ" : "joinedColumn2.joinedColumn3.columnName" }; // Fetch 자동 수행.
         //   --> @?EQ 기능은 넣되, 숨겨진 고급기능으로..
-        // "@except" : {},  "@except" : [ {}, {} ] 추가
-        // "select@" : ["attr1", "attr2", "attr3" ] 추가??
-        // "select+@" : ["attr1", "attr2", "attr3" ] 추가??
         // "groupBy@" : ["attr1", "attr2/attr3" ]
 
         Filter baseFilter = predicates.getBaseFilter();
@@ -41,11 +39,23 @@ public class JqlParser {
             int op_start = key.indexOf('@');
             String function = null;
             if (op_start >= 0) {
-                function = key.substring(op_start + 1).toLowerCase().intern();
-                key = key.substring(0, op_start);
+                function = key.substring(op_start + 1).toLowerCase().trim();
+                key = key.substring(0, op_start).trim();
             }
 
+            boolean fetchData = true;
             PredicateParser op = PredicateParser.getParser(function);
+            String selectedKeys[] = null;
+            if (key.charAt(key.length() - 1) == '>') {
+                int p = key.lastIndexOf('<');
+                String keys = key.substring(p + 1, key.length()-1);
+                if (keys.length() == 0) {
+                    selectedKeys = emptyColumns;
+                } else {
+                    selectedKeys = keys.split(",");
+                }
+                key = key.substring(0, p).trim();
+            }
             if (!isValidKey(key)) {
                 if (op.isAttributeNameRequired()) {
                     throw new IllegalArgumentException("invalid JQL key: " + entry.getKey());
@@ -54,27 +64,30 @@ public class JqlParser {
             }
 
             ValueNodeType valueCategory = this.getValueCategory(value);
-            PredicateSet targetPS = key == null ? predicates
-                : baseFilter.getFilterNode(key, valueCategory, op.needFetchData());
+            Filter targetNode = baseFilter.getFilterNode(key, valueCategory);
+            if (targetNode != baseFilter) {
+                targetNode.setSelectedColumns(selectedKeys);
+            }
 
             Predicate cond;
             if (valueCategory == ValueNodeType.Entity) {
-                op.parse(this, targetPS, (Map<String, Object>)value);
-                cond = targetPS;
+                PredicateSet ps = op.getPredicateNode(targetNode, valueCategory);
+                this.parse(ps, (Map<String, Object>)value);
+                cond = targetNode;
             }
             else if (valueCategory == ValueNodeType.Entities) {
-                op.parse(this, targetPS, (Collection<Map<String, Object>>)value);
-//                for (Map<String, Object> c : (Collection<Map<String, Object>>)value) {
-//                    op.parse(this, targetPS, (Map)c);
-//                }
-                cond = targetPS;
+                PredicateSet ps = op.getPredicateNode(targetNode, valueCategory);
+                for (Map<String, Object> c : (Collection<Map<String, Object>>)value) {
+                    this.parse(ps, (Map)c);
+                }
+                cond = targetNode;
             }
             else {
                 if (selectedAttrs != null && !selectedAttrs.contains(key)) {
                     selectedAttrs.add(key);
                 }
 
-                Filter targetScope = targetPS.getBaseFilter();
+                Filter targetScope = targetNode.getBaseFilter();
                 String columnName = targetScope.getColumnName(key);
                 QAttribute column;
                 if (value == null) {
