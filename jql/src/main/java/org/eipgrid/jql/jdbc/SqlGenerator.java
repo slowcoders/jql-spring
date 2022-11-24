@@ -63,7 +63,7 @@ public class SqlGenerator implements QueryBuilder {
     private void writeJoinStatement(JqlSchemaJoin joinKeys, String baseAlias, String alias) {
         boolean isInverseMapped = joinKeys.isInverseMapped();
         String joinedTable = joinKeys.getJoinedSchema().getTableName();
-        sw.write("\nleft outer join ").write(joinedTable).write(" as ").write(alias).write(" on\n\t");
+        sw.write("\ninner join ").write(joinedTable).write(" as ").write(alias).write(" on\n\t");
         for (JqlColumn fk : joinKeys.getForeignKeyColumns()) {
             JqlColumn anchor, linked;
             if (isInverseMapped) {
@@ -114,6 +114,7 @@ public class SqlGenerator implements QueryBuilder {
             writeWhere(where);
             tableName = "_cte";
             write_orderBy(where, sort, offset, limit);
+            offset = limit = 0;
             sw.decTab();
             sw.write("\n)");
         }
@@ -130,8 +131,24 @@ public class SqlGenerator implements QueryBuilder {
         sw.replaceTrailingComma("\n");
         writeFrom(where, tableName, false);
         writeWhere(where);
-        if (!need_complex_pagination) {
+        if (where.isLinearNode()) {
             write_orderBy(where, sort, offset, limit);
+        }
+        else {
+            sw.write("\nORDER BY ");
+            for (JqlResultMapping mapping : where.getResultColumnMappings()) {
+                if (mapping == where && sort != null) {
+                    write_orderBy(where, sort, offset, limit);
+                    continue;
+                }
+                if (mapping.isLinearNode()) break;
+
+                String table = mapping.getMappingAlias();
+                for (JqlColumn column : mapping.getSchema().getPKColumns()) {
+                    sw.write(table).write('.').write(column.getColumnName()).write(", ");
+                }
+            }
+            sw.replaceTrailingComma("\n");
         }
 
         String sql = sw.reset();
