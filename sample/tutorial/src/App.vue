@@ -23,9 +23,21 @@ export default {
           header: "JQL Tutorial"
         },
         {
-          href: "/",
-          title: "Home",
-          icon: "fa fa-download"
+          href: "/basic",
+          title: "Basic Usage",
+          icon: "fa fa-download",
+          child: [
+            {
+              href: "/basic/select",
+              title: "Simple Listing",
+              icon: "fa fa-file-alt"
+            },
+            {
+              href: "/basic/sort",
+              title: "Simple Sorting",
+              icon: "fa fa-file-alt"
+            },
+          ]
         },
         {
           href: "/about",

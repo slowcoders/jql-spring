@@ -9,3 +9,4 @@ sample/.gradle
 sample/target
 sample/build
 sample/postgres_data
+sample/tutorial/postgres_data

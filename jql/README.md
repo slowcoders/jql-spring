@@ -40,7 +40,7 @@ JQL-JDBC 구현체는 JDBC metadata 를 분석하여 Table 간 join 관계를 �
 {
   "name@like": "Luke%",
   "+friend": {
-    "dtype": "Droid"
+    "species": "Droid"
   }
 }
 ```
@@ -49,7 +49,7 @@ JQL-JDBC 구현체는 JDBC metadata 를 분석하여 Table 간 join 관계를 �
 [
   {
     "id": 1000,
-    "dtype": "Human",
+    "species": "Human",
     "name": "Luke Skywalker",
     "primaryFunction": null,
     "height": 1.72,
@@ -58,7 +58,7 @@ JQL-JDBC 구현체는 JDBC metadata 를 분석하여 Table 간 join 관계를 �
     "+friend": [
       {
         "id": 2000,
-        "dtype": "Droid",
+        "species": "Droid",
         "name": "C-3PO",
         "primaryFunction": "protocol",
         "height": null,
@@ -67,7 +67,7 @@ JQL-JDBC 구현체는 JDBC metadata 를 분석하여 Table 간 join 관계를 �
       },
       {
         "id": 2001,
-        "dtype": "Droid",
+        "species": "Droid",
         "name": "R2-D2",
         "primaryFunction": "Astromech",
         "height": null,

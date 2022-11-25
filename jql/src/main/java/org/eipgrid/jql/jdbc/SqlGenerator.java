@@ -107,14 +107,14 @@ public class SqlGenerator implements QueryBuilder {
 
         boolean need_complex_pagination = (limit > 0 || offset > 0) && needDistinctPagination(where);
         if (need_complex_pagination) {
-            sw.write("\nWITH _cte AS NOT MATERIALIZED (\n");
+            sw.write("\nWITH _cte AS (\n"); // WITH _cte AS NOT MATERIALIZED
             sw.incTab();
             sw.write("SELECT DISTINCT t_0.* ");
             writeFrom(where, tableName, true);
             writeWhere(where);
             tableName = "_cte";
-            write_orderBy(where, sort, offset, limit);
-            offset = limit = 0;
+            writeOrderBy(where, sort, false);
+            writePagination(offset, limit);
             sw.decTab();
             sw.write("\n)");
         }
@@ -131,33 +131,19 @@ public class SqlGenerator implements QueryBuilder {
         sw.replaceTrailingComma("\n");
         writeFrom(where, tableName, false);
         writeWhere(where);
-        if (where.isLinearNode()) {
-            write_orderBy(where, sort, offset, limit);
+        writeOrderBy(where, sort, !where.isLinearNode());
+        if (!need_complex_pagination) {
+            writePagination(offset, limit);
         }
-        else {
-            sw.write("\nORDER BY ");
-            for (JqlResultMapping mapping : where.getResultColumnMappings()) {
-                if (mapping == where && sort != null) {
-                    write_orderBy(where, sort, offset, limit);
-                    continue;
-                }
-                if (mapping.isLinearNode()) break;
-
-                String table = mapping.getMappingAlias();
-                for (JqlColumn column : mapping.getSchema().getPKColumns()) {
-                    sw.write(table).write('.').write(column.getColumnName()).write(", ");
-                }
-            }
-            sw.replaceTrailingComma("\n");
-        }
-
         String sql = sw.reset();
         return sql;
     }
 
-    private void write_orderBy(JqlQuery where, Sort sort, int offset, int limit) {
+    private void writeOrderBy(JqlQuery where, Sort sort, boolean need_joined_result_set_ordering) {
+        if (sort == null && !need_joined_result_set_ordering) return;
+
+        sw.write("\nORDER BY ");
         if (sort != null) {
-            sw.write("\nORDER BY ");
             JqlSchema schema = where.getSchema();
             sort.forEach(order -> {
                 String p = order.getProperty();
@@ -165,13 +151,21 @@ public class SqlGenerator implements QueryBuilder {
                 sw.write(schema.getColumn(p).getColumnName());
                 sw.write(order.isAscending() ? " asc" : " desc").write(", ");
             });
-            sw.replaceTrailingComma("");
         }
+        for (JqlResultMapping mapping : where.getResultColumnMappings()) {
+            if (mapping.isLinearNode()) break;
+            String table = mapping.getMappingAlias();
+            for (JqlColumn column : mapping.getSchema().getPKColumns()) {
+                sw.write(table).write('.').write(column.getColumnName()).write(", ");
+            }
+        }
+        sw.replaceTrailingComma("");
+    }
 
+    private void writePagination(int offset, int limit) {
         if (offset > 0) sw.write("\nOFFSET " + offset);
         if (limit > 0) sw.write("\nLIMIT " + limit);
     }
-
 
     public String createUpdateQuery(JqlQuery where, Map<String, Object> updateSet) {
         sw.write("\nUPDATE ").write(where.getTableName()).write(" SET\n");

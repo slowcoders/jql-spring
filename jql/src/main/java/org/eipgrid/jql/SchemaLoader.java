@@ -80,4 +80,6 @@ public abstract class SchemaLoader {
         String alias = (id < 10 ? "t_" : "t") + id;
         return alias;
     }
+
+    protected abstract HashMap<String, JqlSchemaJoin> loadJoinMap(JqlSchema jqlSchema);
 }

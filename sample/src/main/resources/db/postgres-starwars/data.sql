@@ -3,7 +3,7 @@ INSERT INTO starwars.episode (title) values
 on conflict DO NOTHING;
 
 
-INSERT INTO starwars.character (dtype, id, name, home_planet, height, mass) values
+INSERT INTO starwars.character (species, id, name, home_planet, height, mass) values
 ('Human', 1000, 'Luke Skywalker', 'Tatooine', 1.72, 77),
 ('Human', 1001, 'Darth Vader', 'Tatooine', 2.02, 136),
 ('Human', 1002, 'Han Solo', null, 1.8, 80),
@@ -12,7 +12,7 @@ INSERT INTO starwars.character (dtype, id, name, home_planet, height, mass) valu
 on conflict DO NOTHING;
 
 
-INSERT INTO starwars.character (dtype, id, name, primary_function) values
+INSERT INTO starwars.character (species, id, name, primary_function) values
 ('Droid', 2000, 'C-3PO', 'protocol'),
 ('Droid', 2001, 'R2-D2', 'Astromech')
 on conflict DO NOTHING;

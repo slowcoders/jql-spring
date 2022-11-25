@@ -21,16 +21,12 @@ public class JqlSchemaJoin {
         this.baseSchema = baseSchema;
         this.inverseMapped = baseSchema != fkColumns.get(0).getSchema();
         if (inverseMapped) {
-            if (!(associatedJoin == null || !associatedJoin.inverseMapped)) {
-                throw new RuntimeException("invalid associatedJoin");
-            }
+            assert(associatedJoin == null || !associatedJoin.inverseMapped);
             this.joinedSchema = fkColumns.get(0).getSchema();
             this.isUnique = (associatedJoin == null || associatedJoin.isUnique)
                             && joinedSchema.isUniqueConstrainedColumnSet(fkColumns);
         } else {
-            if (associatedJoin != null) {
-                throw new RuntimeException("invalid associatedJoin");
-            }
+            assert(associatedJoin == null);
             List<JqlColumn> pkColumns = fkColumns.stream()
                     .map(col -> col.getJoinedPrimaryColumn())
                     .collect(Collectors.toList());

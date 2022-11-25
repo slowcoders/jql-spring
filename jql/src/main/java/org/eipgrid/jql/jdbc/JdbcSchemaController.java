@@ -2,6 +2,7 @@ package org.eipgrid.jql.jdbc;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import org.eipgrid.jql.JqlColumn;
 import org.eipgrid.jql.JqlSchema;
 import org.eipgrid.jql.jdbc.metadata.JdbcSchema;
 import org.eipgrid.jql.spring.JQLReadOnlyController;
@@ -14,10 +15,7 @@ import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.HttpServerErrorException;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public abstract class JdbcSchemaController {
 
@@ -92,6 +90,19 @@ public abstract class JdbcSchemaController {
         JQLRepository<KVEntity, Object> repository = getRepository(table);
         Sort sort = JQLReadOnlyController.buildSort(_sort);
         return repository.findTop(filter, sort);
+    }
+
+    @GetMapping("/{table}/metadata/columns")
+    @ResponseBody
+    @Operation(summary = "JPA Entity 소스 생성")
+    public List<String> columns(@PathVariable("table") String tableName) throws Exception {
+        String tablePath = service.makeTablePath(db_schema, tableName);
+        JqlSchema schema = service.loadSchema(tablePath);
+        ArrayList<String> columns = new ArrayList<>();
+        for (JqlColumn column : schema.getReadableColumns()) {
+            columns.add(column.getJsonKey());
+        }
+        return columns;
     }
 
     @PostMapping(path = "/{table}/", consumes = { MediaType.APPLICATION_JSON_VALUE })

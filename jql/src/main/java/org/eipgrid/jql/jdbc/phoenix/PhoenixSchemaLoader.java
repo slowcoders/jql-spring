@@ -2,9 +2,11 @@ package org.eipgrid.jql.jdbc.phoenix;
 
 import org.eipgrid.jql.JqlColumn;
 import org.eipgrid.jql.JqlSchema;
+import org.eipgrid.jql.JqlSchemaJoin;
 import org.eipgrid.jql.SchemaLoader;
 import org.eipgrid.jql.jdbc.metadata.JdbcColumn;
 import org.eipgrid.jql.jdbc.metadata.JdbcSchema;
+import org.eipgrid.jql.jdbc.metadata.JdbcSchemaLoader;
 import org.eipgrid.jql.util.AttributeNameConverter;
 
 import javax.validation.constraints.Max;
@@ -13,6 +15,7 @@ import java.sql.Date;
 import java.sql.Time;
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -79,6 +82,11 @@ public class PhoenixSchemaLoader extends SchemaLoader {
             }
         }
         return colType;
+    }
+
+    @Override
+    protected HashMap<String, JqlSchemaJoin> loadJoinMap(JqlSchema jqlSchema) {
+        return (HashMap<String, JqlSchemaJoin>)Collections.EMPTY_MAP;
     }
 
     static {

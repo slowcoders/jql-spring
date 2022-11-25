@@ -1,6 +1,5 @@
 import { createWebHistory, createRouter } from "vue-router";
-import Home from "../views/Home.vue"
-import About from "../views/About.vue"
+import SelectAll from "../views/basic/SelectAll.vue"
 import Team from "../views/Team.vue"
 import Contact from "../views/Contact.vue"
 
@@ -8,12 +7,16 @@ const router = createRouter({
     history: createWebHistory(),
     routes: [
         {
-            path: '/',
-            component: Home,
+            path: '/basic',
+            component: SelectAll,
         },
         {
-            path: '/about',
-            component: About,
+            path: '/basic/select',
+            component: SelectAll,
+        },
+        {
+            path: '/basic/sort',
+            component: SelectAll,
         },
         {
             path: '/contact',

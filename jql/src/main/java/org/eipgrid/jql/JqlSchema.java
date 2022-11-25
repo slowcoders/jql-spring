@@ -15,7 +15,7 @@ public abstract class JqlSchema {
     private List<JqlColumn> allColumns;
     private List<JqlColumn> writableColumns;
     private Map<String, JqlColumn> columnMap = new HashMap<>();
-    private final HashMap<String, JqlSchemaJoin> entityJoinMap = new HashMap<>();
+    private HashMap<String, JqlSchemaJoin> entityJoinMap;
 
     public JqlSchema(SchemaLoader schemaLoader, String tableName, String jpaClassName) {
         this.tableName = tableName;
@@ -49,7 +49,7 @@ public abstract class JqlSchema {
     }
 
     public JqlSchemaJoin getSchemaJoinBy(String jsonKey) {
-        return entityJoinMap.get(jsonKey);
+        return loadJoinMap().get(jsonKey);
     }
 
     public JqlColumn getColumn(String key) throws IllegalArgumentException {
@@ -98,6 +98,7 @@ public abstract class JqlSchema {
         this.pkColumns = Collections.unmodifiableList(pkColumns);
         this.allColumns = Collections.unmodifiableList(allColumns);
         this.writableColumns = Collections.unmodifiableList(writableColumns);
+        this.initJsonKeys();
     }
 
     protected void initJsonKeys() {
@@ -105,7 +106,6 @@ public abstract class JqlSchema {
             String fieldName = ci.getJsonKey();
             columnMap.put(fieldName, ci);
         }
-
     }
 
     public Map<String, Object> splitUnknownProperties(Map<String, Object> metric)  {
@@ -128,6 +128,12 @@ public abstract class JqlSchema {
         return schemaLoader.createDDL(this);
     }
 
+    private HashMap<String, JqlSchemaJoin> loadJoinMap() {
+        if (this.entityJoinMap == null) {
+            this.entityJoinMap = schemaLoader.loadJoinMap(this);
+        }
+        return this.entityJoinMap;
+    }
     //==========================================================================
     // Attribute Name Conversion
     //--------------------------------------------------------------------------
@@ -158,10 +164,6 @@ public abstract class JqlSchema {
         return out;
     }
 
-    protected void registerSchemaJoin(JqlSchemaJoin join) {
-        this.entityJoinMap.put(join.getJsonKey(), join);
-    }
-
     public boolean isUniqueConstrainedColumnSet(List<JqlColumn> fkColumns) {
         return false;
     }
@@ -171,6 +173,12 @@ public abstract class JqlSchema {
     }
 
     public Collection<JqlSchemaJoin> getSchemaJoins() {
-        return this.entityJoinMap.values();
+        return loadJoinMap().values();
+    }
+
+    public String getNamespace() {
+        String tableName = this.getTableName();
+        int p = tableName.lastIndexOf('.');
+        return p < 0 ? "" : tableName.substring(0, p);
     }
 }

@@ -1,30 +1,57 @@
 <template>
   <form>
     <div class="mb-3">
-      <label class="form-label">Email address</label>
-      <CodeMirror
-          v-model:value="code"
+      <table><row><td>
+        <label class="form-label">Table: </label>
+      </td><td>
+        <b-form-select :name="field.key"
+                       class="form-control"
+                       v-model="selectedTable"
+                       @input="onTableChanged()">
+          <b-form-select-option
+              v-for="(option, i) in field.dropdownOptions"
+              :key="i"
+              :value="option">
+            {{ option }}
+          </b-form-select-option>
+        </b-form-select>
+      </td><td>
+        <b-form-select :name="sortOrder"
+                       class="form-control"
+                       v-model="sortOrder"
+                       @input="onTableChanged()">
+          <b-form-select-option
+              v-for="(option, i) in columnNames"
+              :key="i"
+              :value="option">
+            {{ option }}
+          </b-form-select-option>
+        </b-form-select>
+      </td>
+      </row></table>
+      <CodeMirror ref="codeView"
+          v-model:value="sampleCode"
           :options="editOptions"
           border
           placeholder="test placeholder"
           :height="200"
-          @change="change"
       />
     </div>
+
     <b-button @click="execute">
       run
     </b-button>
+
     <div class="mb-3">
       <label class="form-label">Example textarea</label>
-      <CodeMirror
-          class="test-result-view" ref="resultView"
+      <CodeMirror ref="resultView"
+          class="test-result-view"
           v-model:value="test_result"
           :options="viewOptions"
           border
           placeholder="test placeholder"
           :height="600"
           :aria-readonly="true"
-          @change="change"
       />
     </div>
   </form>
@@ -39,6 +66,20 @@ import { ref } from "vue";
 
 import axios from "axios";
 
+const dbSchema = 'starwars';
+function make_sample_code(table, js_code) {
+  return ` // JQL Sample
+const dbSchema = '${dbSchema}'
+const dbTable = '${table}'
+${js_code}`
+}
+
+const sampleTables = [
+  "character",
+  "starship",
+  "episode"
+]
+
 export default {
   props : {
     js_code : String
@@ -47,7 +88,13 @@ export default {
   components: { CodeMirror },
   setup(props) {
     return {
-      code: props.js_code,
+      selectedTable: sampleTables[0],
+      field: {
+        key: "table name",
+        dropdownOptions: sampleTables
+      },
+      columnNames: null,
+      sampleCode: make_sample_code('character', props.js_code),
       test_result: '',
       axios: axios,
       editOptions: {
@@ -67,7 +114,7 @@ export default {
         indentUnit: 4, // The smart indent unit is 2 spaces in length
         foldGutter: true, // Code folding
         styleActiveLine: true, // Display the style of the selected row
-      },
+      }
     };
   },
   data() {
@@ -76,11 +123,26 @@ export default {
     }
   },
   mounted() {
+    this.codeView = this.$refs.codeView.cminstance;
     this.resultView = this.$refs.resultView.cminstance;
   },
   methods : {
     execute() {
-      eval(this.code);
+      eval(this.sampleCode);
+    },
+
+    onTableChanged() {
+      const vm = this;
+      vm.sortColumn = null;
+      vm.codeView.setValue(make_sample_code(vm.selectedTable, vm.js_code));
+      vm.resetColumns();
+    },
+
+    resetColumns() {
+      const vm = this;
+      axios.post(`http://localhost:6090/api/${dbSchema}/${vm.selectedTable}/metadata/colums`).then((res) => {
+        vm.resultView.setValue(JSON.stringify(res.data, null, 4));
+      })
     },
 
     http_post(url, jql) {
@@ -105,6 +167,9 @@ export default {
   }
   .test-result-view .CodeMirror-cursor {
     display: none !important
+  }
+  table td {
+    padding: 5px
   }
 
 </style>

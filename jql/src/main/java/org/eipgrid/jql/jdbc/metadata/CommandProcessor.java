@@ -33,7 +33,7 @@ public class CommandProcessor implements CommandLineRunner {
 
 //        Connection conn = ds.getConnection();
 
-        MetadataProcessor mp = new MetadataProcessor(ds, AttributeNameConverter.defaultConverter);
+        JdbcSchemaLoader mp = new JdbcSchemaLoader(ds, AttributeNameConverter.defaultConverter);
         for (String dbSchema : mp.getDBSchemas()) {
             List<String> tableNames = mp.getTableNames(dbSchema);
             ArrayList<JqlSchema> jqlSchemas = new ArrayList<>();

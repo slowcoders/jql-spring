@@ -2,6 +2,7 @@ package org.eipgrid.jql.jdbc.metadata;
 
 import org.eipgrid.jql.JqlColumn;
 import org.eipgrid.jql.JqlSchema;
+import org.eipgrid.jql.JqlSchemaJoin;
 import org.eipgrid.jql.SchemaLoader;
 import org.eipgrid.jql.util.AttributeNameConverter;
 import org.springframework.dao.DataAccessException;
@@ -10,18 +11,15 @@ import org.springframework.jdbc.core.JdbcTemplate;
 
 import javax.sql.DataSource;
 import java.sql.*;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
-public class MetadataProcessor extends SchemaLoader {
+public class JdbcSchemaLoader extends SchemaLoader {
     private final JdbcTemplate jdbc;
     private final String defaultSchema;
     private String catalog;
     private final HashMap<String, JqlSchema> metadataMap = new HashMap<>();
 
-    public MetadataProcessor(DataSource dataSource, AttributeNameConverter nameConverter) {
+    public JdbcSchemaLoader(DataSource dataSource, AttributeNameConverter nameConverter) {
         super(nameConverter);
         this.jdbc = new JdbcTemplate(dataSource);
         this.defaultSchema = jdbc.execute(new ConnectionCallback<String>() {
@@ -49,7 +47,7 @@ public class MetadataProcessor extends SchemaLoader {
     }
 
     private JqlSchema loadSchema(Connection conn, String tablePath) throws SQLException {
-        JdbcSchema schema = new JdbcSchema(MetadataProcessor.this, tablePath);
+        JdbcSchema schema = new JdbcSchema(JdbcSchemaLoader.this, tablePath);
         metadataMap.put(tablePath, schema);
 
         int dot_p = tablePath.indexOf('.');
@@ -58,17 +56,43 @@ public class MetadataProcessor extends SchemaLoader {
         ArrayList<String> primaryKeys = getPrimaryKeys(conn, dbSchema, tableName);
         ArrayList<JqlColumn> columns = getColumns(conn, dbSchema, tableName, schema, primaryKeys);
         HashMap<String, List<String>> uniqueConstraints = getUniqueConstraints(conn, dbSchema, tableName);
+        processForeignKeyConstraints(conn, schema, dbSchema, tableName, columns);
         schema.init(columns, uniqueConstraints);
-        getJoinedKeyInfos(conn, true, schema,  dbSchema, tableName);
-        SchemaJoinHelper exportedJoins = getJoinedKeyInfos(conn, false, schema, dbSchema, tableName);
-        schema.initMappedColumns(exportedJoins.values());
         return schema;
     }
 
-    private boolean hasNameToken(String jsKey, String tableName) {
-        return jsKey.startsWith(tableName) && jsKey.charAt(tableName.length()) == '.';
+    @Override
+    protected HashMap<String, JqlSchemaJoin> loadJoinMap(JqlSchema pkSchema) {
+        SchemaJoinHelper exportedJoins = jdbc.execute(new ConnectionCallback<SchemaJoinHelper>() {
+            @Override
+            public SchemaJoinHelper doInConnection(Connection conn) throws SQLException, DataAccessException {
+                return getChildJoins(conn, (JdbcSchema)pkSchema, pkSchema.getNamespace(), pkSchema.getSimpleTableName());
+            }
+        });
+        return createJoinMap((JdbcSchema)pkSchema, exportedJoins);
     }
 
+    private HashMap<String, JqlSchemaJoin> createJoinMap(JdbcSchema schema, SchemaJoinHelper mappedJoins) {
+        HashMap<String, JqlSchemaJoin> joinMap = new HashMap<>();
+        for (JqlSchemaJoin join : schema.getForeignKeyConstraints().values()) {
+            joinMap.put(join.getJsonKey(), join);
+        }
+        for (JqlSchemaJoin fkJoin : mappedJoins.values()) {
+            List<JqlColumn> fkColumns = fkJoin.getForeignKeyColumns();
+            JqlSchemaJoin childJoin = new JqlSchemaJoin(schema, fkColumns);
+            joinMap.put(childJoin.getJsonKey(), childJoin);
+            JdbcSchema childSchema = (JdbcSchema) fkJoin.getBaseSchema();
+            Collection<JqlSchemaJoin> joins = childSchema.getForeignKeyConstraints().values();
+            for (JqlSchemaJoin j2 : joins) {
+                assert(!j2.isInverseMapped());
+                if (j2 != fkJoin) {
+                    JqlSchemaJoin associative = new JqlSchemaJoin(schema, fkColumns, j2);
+                    joinMap.put(associative.getJsonKey(), associative);
+                }
+            }
+        }
+        return joinMap;
+    }
 
     private ArrayList<String> getPrimaryKeys(Connection conn, String dbSchema, String tableName) throws SQLException {
         DatabaseMetaData md = conn.getMetaData();
@@ -160,57 +184,36 @@ public class MetadataProcessor extends SchemaLoader {
         return indexMap;
     }
 
-    private SchemaJoinHelper getJoinedKeyInfos(Connection conn, boolean isForeignKeyJoin, JdbcSchema baseSchema, String dbSchema, String tableName) throws SQLException {
-        JdbcSchema fkSchema = isForeignKeyJoin ? baseSchema : null;
-        JdbcSchema pkSchema = !isForeignKeyJoin ? baseSchema : null;
-
-        SchemaJoinHelper joins = isForeignKeyJoin ? null : new SchemaJoinHelper(pkSchema);
-
-        DatabaseMetaData md = conn.getMetaData();
-        ResultSet rs;
-        if (isForeignKeyJoin) {
-            rs = md.getImportedKeys(catalog, dbSchema, tableName);
-        } else {
-            rs = md.getExportedKeys(catalog, dbSchema, tableName);
+    private JdbcColumn getColumn(ArrayList<JqlColumn> columns, String columnName) {
+        for (JqlColumn column : columns) {
+            if (columnName.equals(column.getColumnName())) {
+                return (JdbcColumn)column;
+            }
         }
+        throw new RuntimeException("column not found: " + columnName);
+    }
+
+    private void processForeignKeyConstraints(Connection conn, JdbcSchema fkSchema, String dbSchema, String tableName, ArrayList<JqlColumn> columns) throws SQLException {
+        DatabaseMetaData md = conn.getMetaData();
+        ResultSet rs = md.getImportedKeys(catalog, dbSchema, tableName);
         while (rs.next()) {
-            String pk_name = rs.getString("pk_name");
-            String pktable_schem = rs.getString("pktable_schem");
-            String pktable_name  = rs.getString("pktable_name");
+            JoinData join = new JoinData(rs, this);
+            JdbcColumn fk = getColumn(columns, join.fkColumnName);
+            fk.bindPrimaryKey(new ColumnBinder(this, join.pkTableQName, join.pkColumnName));
+            fkSchema.addForeignKeyConstraint(join.fk_name, fk);
+        }
+    }
 
-            // 참고) fk_name 은 column-name 이 아니라, fk constraint 의 name 이다.
-            String fk_name = rs.getString("fk_name");
-            String fktable_schem = rs.getString("fktable_schem");
-            String fktable_name  = rs.getString("fktable_name");
+    private SchemaJoinHelper getChildJoins(Connection conn, JdbcSchema pkSchema, String dbSchema, String tableName) throws SQLException {
+        DatabaseMetaData md = conn.getMetaData();
+        ResultSet rs = md.getExportedKeys(catalog, dbSchema, tableName);
 
-            String pkColumnName = rs.getString("pkcolumn_name");
-            String fkColumnName = rs.getString("fkcolumn_name");
-            String fkTableName = makeTablePath(fktable_schem, fktable_name);
-            String pkTableName = makeTablePath(pktable_schem, pktable_name);
-
-            int key_seq = rs.getInt("key_seq");
-            int update_rule = rs.getInt("update_rule");
-            int delete_rule = rs.getInt("delete_rule");
-            int deferrability = rs.getInt("deferrability");
-            String pktable_cat = rs.getString("pktable_cat");
-            String fktable_cat = rs.getString("fktable_cat");
-            assert (pktable_cat == null && fktable_cat == null);
-
-            JqlColumn fk;
-            if (isForeignKeyJoin) {
-                fk = fkSchema.getColumn(fkColumnName);
-                ((JdbcColumn) fk).bindPrimaryKey(new ColumnBinder(this, pkTableName, pkColumnName));
-            } else {
-                fkSchema = (JdbcSchema) loadSchema(fkTableName);
-                fk = fkSchema.getColumn(fkColumnName);
-            }
-
-            List<JqlColumn> fkColumns = fkSchema.makeForeignKeyConstraint(fk_name);
-            if (isForeignKeyJoin) {
-                fkColumns.add(fk);
-            } else {
-                joins.put(fkSchema, fkColumns);
-            }
+        SchemaJoinHelper joins = new SchemaJoinHelper(pkSchema);
+        while (rs.next()) {
+            JoinData join = new JoinData(rs, this);
+            JdbcSchema fkSchema = (JdbcSchema) loadSchema(join.fkTableQName);
+            JqlSchemaJoin fkJoin = fkSchema.getForeignKeyConstraints().get(join.fk_name);
+            joins.put(fkSchema, fkJoin);
         }
         return joins;
     }
@@ -275,5 +278,50 @@ public class MetadataProcessor extends SchemaLoader {
         throw new RuntimeException("not implemented");
     }
 
+    static class JoinData {
+        String pk_name;
+        String pktable_schem;
+        String pktable_name;
 
+        // 참고) fk_name 은 column-name 이 아니라, fk constraint 의 name 이다.
+        String fk_name;
+        String fktable_schem;
+        String fktable_name;
+
+        String pkColumnName;
+        String fkColumnName;
+        String fkTableQName;
+        String pkTableQName;
+
+        int key_seq;
+        int update_rule;
+        int delete_rule;
+        int deferrability;
+        String pktable_cat;
+        String fktable_cat;
+
+        JoinData(ResultSet rs, SchemaLoader loader) throws SQLException {
+            this.pk_name = rs.getString("pk_name");
+            this.pktable_schem = rs.getString("pktable_schem");
+            this.pktable_name  = rs.getString("pktable_name");
+
+            // 참고) fk_name 은 column-name 이 아니라, fk constraint 의 name 이다.
+            this.fk_name = rs.getString("fk_name");
+            this.fktable_schem = rs.getString("fktable_schem");
+            this.fktable_name  = rs.getString("fktable_name");
+
+            this.pkColumnName = rs.getString("pkcolumn_name");
+            this.fkColumnName = rs.getString("fkcolumn_name");
+            this.fkTableQName = loader.makeTablePath(fktable_schem, fktable_name);
+            this.pkTableQName = loader.makeTablePath(pktable_schem, pktable_name);
+
+            this.key_seq = rs.getInt("key_seq");
+            this.update_rule = rs.getInt("update_rule");
+            this.delete_rule = rs.getInt("delete_rule");
+            this.deferrability = rs.getInt("deferrability");
+            this.pktable_cat = rs.getString("pktable_cat");
+            this.fktable_cat = rs.getString("fktable_cat");
+            assert (pktable_cat == null && fktable_cat == null);
+        }
+    }
 }

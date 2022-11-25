@@ -2,8 +2,8 @@ package org.eipgrid.jql.jdbc.metadata;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import org.eipgrid.jql.JqlColumn;
-import org.eipgrid.jql.JqlSchemaJoin;
 import org.eipgrid.jql.JqlSchema;
+import org.eipgrid.jql.JqlSchemaJoin;
 import org.eipgrid.jql.SchemaLoader;
 import org.eipgrid.jql.util.AttributeNameConverter;
 
@@ -14,7 +14,7 @@ import java.util.*;
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
 public class JdbcSchema extends JqlSchema {
     private HashMap<String, List<String>> uniqueConstraints = new HashMap<>();
-    private final HashMap<String, List<JqlColumn>> fkConstraints = new HashMap<>();
+    private final HashMap<String, JqlSchemaJoin> fkConstraints = new HashMap<>();
 
     protected JdbcSchema(SchemaLoader schemaLoader, String tableName) {
         super(schemaLoader, tableName,
@@ -72,23 +72,6 @@ public class JdbcSchema extends JqlSchema {
         out.println("\t" + col.getJavaType().getName() + " " + col.getJsonKey() + ";");
     }
 
-    protected void initMappedColumns(Collection<List<JqlColumn>> mappedJoins) {
-        super.initJsonKeys();
-        for (List<JqlColumn> mc : fkConstraints.values()) {
-            super.registerSchemaJoin(new JqlSchemaJoin(this, mc));
-        }
-        for (List<JqlColumn> mc : mappedJoins) {
-            super.registerSchemaJoin(new JqlSchemaJoin(this, mc));
-
-            Collection<JqlSchemaJoin> joins = mc.get(0).getSchema().getSchemaJoins();
-            for (JqlSchemaJoin j2 : joins) {
-                if (mc != j2.getForeignKeyColumns() && !j2.isInverseMapped()) {
-                    JqlSchemaJoin j3 = new JqlSchemaJoin(this, mc, j2);
-                    super.registerSchemaJoin(j3);
-                }
-            }
-        }
-    }
 
     public boolean isUniqueConstrainedColumnSet(List<JqlColumn> fkColumns) {
         int cntColumn = fkColumns.size();
@@ -106,13 +89,21 @@ public class JdbcSchema extends JqlSchema {
         return false;
     }
 
-    protected List<JqlColumn> makeForeignKeyConstraint(String fk_name) {
-        List<JqlColumn> fkColumns = fkConstraints.get(fk_name);
-        if (fkColumns == null) {
-            fkColumns = new ArrayList<>();
-            fkConstraints.put(fk_name, fkColumns);
-        }
-        return fkColumns;
+    public HashMap<String, JqlSchemaJoin> getForeignKeyConstraints() {
+        return this.fkConstraints;
     }
 
+    protected void addForeignKeyConstraint(String fk_name, JdbcColumn fkColumn) {
+        JqlSchemaJoin fkJoin = fkConstraints.get(fk_name);
+        List<JqlColumn> fkColumns;
+        if (fkJoin == null) {
+            fkColumns = new ArrayList<>();
+            fkColumns.add(fkColumn);
+            JqlSchemaJoin join = new JqlSchemaJoin(this, fkColumns);
+            fkConstraints.put(fk_name, join);
+        } else {
+            fkColumns = fkJoin.getForeignKeyColumns();
+            fkColumns.add(fkColumn);
+        }
+    }
 }

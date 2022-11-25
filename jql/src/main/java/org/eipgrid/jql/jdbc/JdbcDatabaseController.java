@@ -1,12 +1,16 @@
 package org.eipgrid.jql.jdbc;
 
 import io.swagger.v3.oas.annotations.Operation;
+import org.eipgrid.jql.JqlColumn;
 import org.eipgrid.jql.jdbc.metadata.JdbcSchema;
 import org.eipgrid.jql.spring.JQLRepository;
 import org.eipgrid.jql.JqlSchema;
 import org.eipgrid.jql.json.JsonJql;
 import org.eipgrid.jql.util.KVEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public abstract class JdbcDatabaseController {
 
@@ -39,6 +43,18 @@ public abstract class JdbcDatabaseController {
             source = tableName + " is not a JdbcSchema";
         }
         return source;
+    }
+
+    @GetMapping("/jpa-schema/{schema}/{table}/columns")
+    @ResponseBody
+    @Operation(summary = "JPA Entity 소스 생성")
+    public List<String> columns(@PathVariable("schema") String db_schema, @PathVariable("table") String tableName) throws Exception {
+        JqlSchema schema = getSchema(db_schema, tableName);
+        ArrayList<String> columns = new ArrayList<>();
+        for (JqlColumn column : schema.getReadableColumns()) {
+            columns.add(column.getJsonKey());
+        }
+        return columns;
     }
 
     @GetMapping("/jpa-schema/{schema}/")

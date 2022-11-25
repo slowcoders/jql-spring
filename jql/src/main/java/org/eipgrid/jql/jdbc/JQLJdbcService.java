@@ -2,7 +2,7 @@ package org.eipgrid.jql.jdbc;
 
 import org.eipgrid.jql.JqlSchema;
 import org.eipgrid.jql.SchemaLoader;
-import org.eipgrid.jql.jdbc.metadata.MetadataProcessor;
+import org.eipgrid.jql.jdbc.metadata.JdbcSchemaLoader;
 import org.eipgrid.jql.spring.JQLRepository;
 import org.eipgrid.jql.spring.JQLService;
 import org.eipgrid.jql.util.AttributeNameConverter;
@@ -21,7 +21,7 @@ import java.util.List;
 
 @Service
 public class JQLJdbcService extends JQLService {
-    MetadataProcessor metadataProcessor;
+    JdbcSchemaLoader jdbcSchemaLoader;
     private HashMap<String, JQLRepository> repositories = new HashMap<>();
 
     public JQLJdbcService(DataSource dataSource, TransactionTemplate transactionTemplate,
@@ -32,17 +32,17 @@ public class JQLJdbcService extends JQLService {
                           EntityManagerFactory entityManagerFactory) throws Exception {
         super(dataSource, transactionTemplate, jsonConverter, conversionService,
                 handlerMapping, entityManager, entityManagerFactory);
-        metadataProcessor = new MetadataProcessor(dataSource, AttributeNameConverter.defaultConverter);
+        jdbcSchemaLoader = new JdbcSchemaLoader(dataSource, AttributeNameConverter.defaultConverter);
     }
 
     public SchemaLoader getSchemaLoader() {
-        return metadataProcessor;
+        return jdbcSchemaLoader;
     }
 
     public JQLRepository makeRepository(String tableName) {
         JQLRepository repo = repositories.get(tableName);
         if (repo == null) {
-            JqlSchema jqlSchema = metadataProcessor.loadSchema(tableName);
+            JqlSchema jqlSchema = jdbcSchemaLoader.loadSchema(tableName);
             repo = new JDBCRepositoryBase(this, jqlSchema);
             repositories.put(tableName, repo);
         }
@@ -50,18 +50,18 @@ public class JQLJdbcService extends JQLService {
     }
 
     public JqlSchema loadSchema(String tablePath) {
-        return metadataProcessor.loadSchema(tablePath);
+        return jdbcSchemaLoader.loadSchema(tablePath);
     }
 
     public JqlSchema loadSchema(Class entityType) {
-        return metadataProcessor.loadSchema(entityType);
+        return jdbcSchemaLoader.loadSchema(entityType);
     }
 
     public List<String> getTableNames(String dbSchema) throws SQLException {
-        return metadataProcessor.getTableNames(dbSchema);
+        return jdbcSchemaLoader.getTableNames(dbSchema);
     }
 
     public List<String> getDBSchemas() {
-        return metadataProcessor.getDBSchemas();
+        return jdbcSchemaLoader.getDBSchemas();
     }
 }
