@@ -4,22 +4,18 @@
       <table><row><td>
         <label class="form-label">Table: </label>
       </td><td>
-        <b-form-select :name="field.key"
-                       class="form-control"
-                       v-model="selectedTable"
+        <b-form-select v-model="selectedTable"
+                       :options="tableNames"
                        @input="onTableChanged()">
-          <b-form-select-option
-              v-for="(option, i) in field.dropdownOptions"
-              :key="i"
-              :value="option">
-            {{ option }}
-          </b-form-select-option>
         </b-form-select>
       </td><td>
-        <b-form-select :name="sortOrder"
+        <b-form-select
                        class="form-control"
-                       v-model="sortOrder"
-                       @input="onTableChanged()">
+                       v-model="first_sort"
+                       @input="onFirstSortChanged()">
+          <b-form-select-option :value="null" key="-1">
+             First sort
+          </b-form-select-option>
           <b-form-select-option
               v-for="(option, i) in columnNames"
               :key="i"
@@ -28,32 +24,32 @@
           </b-form-select-option>
         </b-form-select>
       </td>
-      </row></table>
-      <CodeMirror ref="codeView"
-          v-model:value="sampleCode"
-          :options="editOptions"
-          border
-          placeholder="test placeholder"
-          :height="200"
-      />
+      </row>
+      </table>
     </div>
+
+    <!------------>
+    <CodeMirror ref="codeView"
+                v-model:value="sampleCode"
+                :options="editOptions"
+                border
+                placeholder="test placeholder"
+                :height="200"
+    />
 
     <b-button @click="execute">
       run
     </b-button>
-
-    <div class="mb-3">
-      <label class="form-label">Example textarea</label>
-      <CodeMirror ref="resultView"
-          class="test-result-view"
-          v-model:value="test_result"
-          :options="viewOptions"
-          border
-          placeholder="test placeholder"
-          :height="600"
-          :aria-readonly="true"
-      />
-    </div>
+    <br>
+    <CodeMirror ref="resultView"
+        class="test-result-view"
+        v-model:value="test_result"
+        :options="viewOptions"
+        border
+        placeholder="test placeholder"
+        :height="600"
+        :aria-readonly="true"
+    />
   </form>
 </template>
 
@@ -86,15 +82,13 @@ export default {
   },
 
   components: { CodeMirror },
-  setup(props) {
+  data() {
     return {
       selectedTable: sampleTables[0],
-      field: {
-        key: "table name",
-        dropdownOptions: sampleTables
-      },
-      columnNames: null,
-      sampleCode: make_sample_code('character', props.js_code),
+      tableNames: sampleTables,
+      columnNames: ['aaa', 'bbb', 'ccc'],
+      first_sort: null,
+      sampleCode: make_sample_code('character', this.js_code),
       test_result: '',
       axios: axios,
       editOptions: {
@@ -115,17 +109,17 @@ export default {
         foldGutter: true, // Code folding
         styleActiveLine: true, // Display the style of the selected row
       }
-    };
-  },
-  data() {
-    return {
-      http_res: ''
     }
   },
+
   mounted() {
     this.codeView = this.$refs.codeView.cminstance;
     this.resultView = this.$refs.resultView.cminstance;
   },
+
+  computed: {
+  },
+
   methods : {
     execute() {
       eval(this.sampleCode);
@@ -140,14 +134,20 @@ export default {
 
     resetColumns() {
       const vm = this;
-      axios.post(`http://localhost:6090/api/${dbSchema}/${vm.selectedTable}/metadata/colums`).then((res) => {
-        vm.resultView.setValue(JSON.stringify(res.data, null, 4));
+      axios.get(`http://localhost:6090/api/jql/${dbSchema}/${vm.selectedTable}/metadata/columns`).
+      then((res) => {
+        vm.columnNames = res.data;
+        console.log(res.data);
       })
+    },
+
+    onFirstSortChanged() {
     },
 
     http_post(url, jql) {
       const vm = this;
-      axios.post(url, jql).then((res) => {
+      axios.post(url, jql).
+      then((res) => {
         vm.resultView.setValue(JSON.stringify(res.data, null, 4));
       })
     }
