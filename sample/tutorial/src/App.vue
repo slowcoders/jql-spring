@@ -33,7 +33,12 @@ export default {
               icon: "fa fa-file-alt"
             },
             {
-              href: "/basic/sort",
+              href: "/basic/compare",
+              title: "Simple Sorting",
+              icon: "fa fa-file-alt"
+            },
+            {
+              href: "/basic/join",
               title: "Simple Sorting",
               icon: "fa fa-file-alt"
             },

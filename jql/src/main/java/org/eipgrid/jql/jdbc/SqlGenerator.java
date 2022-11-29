@@ -5,31 +5,30 @@ import org.eipgrid.jql.JqlSchema;
 import org.eipgrid.jql.JqlSchemaJoin;
 import org.eipgrid.jql.parser.JqlQuery;
 import org.eipgrid.jql.parser.QueryBuilder;
-import org.eipgrid.jql.parser.SqlWriter;
+import org.eipgrid.jql.parser.SourceWriter;
+import org.eipgrid.jql.parser.SqlConverter;
 import org.springframework.data.domain.Sort;
 
 import java.util.*;
 
-public class SqlGenerator implements QueryBuilder {
-
-    private final SqlWriter sw;
+public class SqlGenerator extends SqlConverter implements QueryBuilder {
 
     public SqlGenerator() {
-        this(new SqlWriter());
+        super(new SourceWriter('\''));
     }
 
-    public SqlGenerator(SqlWriter sqlWriter) {
-        this.sw = sqlWriter;//new SqlWriter(schema, null);
-    }
+//    public SqlGenerator(SourceWriter out) {
+//        this.sw = sqlConverter;//new SqlWriter(schema, null);
+//    }
 
-    protected String getCommand(SqlWriter.Command command) {
+    protected String getCommand(SqlConverter.Command command) {
         return command.toString();
     }
 
     protected void writeWhere(JqlQuery where) {
         if (!where.isEmpty()) {
             sw.writeRaw("\nWHERE ");
-            where.accept(sw);
+            where.accept(this);
         }
     }
 
@@ -94,7 +93,7 @@ public class SqlGenerator implements QueryBuilder {
 
             if (mapping.getSelectedColumns().size() == 0) continue;
 
-            if (mapping.isArrayNode() && mapping.hasFilterPredicates()) {
+            if (mapping.isArrayNode()) {// && mapping.hasFilterPredicates()) {
                 return true;
             }
         }
@@ -210,7 +209,7 @@ public class SqlGenerator implements QueryBuilder {
 
         Set<String> keys = ((Map<String, ?>)entity).keySet();
         sw.writeln();
-        sw.write(getCommand(SqlWriter.Command.Insert)).write(" INTO ").write(schema.getTableName()).writeln("(");
+        sw.write(getCommand(SqlConverter.Command.Insert)).write(" INTO ").write(schema.getTableName()).writeln("(");
         sw.incTab();
         for (String name : schema.getPhysicalColumnNames(keys)) {
             sw.write(name);
@@ -233,7 +232,7 @@ public class SqlGenerator implements QueryBuilder {
 
     public String prepareBatchInsertStatement(JqlSchema schema, boolean ignoreConflict) {
         sw.writeln();
-        sw.write(getCommand(SqlWriter.Command.Insert)).write(" INTO ").write(schema.getTableName()).writeln("(");
+        sw.write(getCommand(SqlConverter.Command.Insert)).write(" INTO ").write(schema.getTableName()).writeln("(");
         for (JqlColumn col : schema.getWritableColumns()) {
             sw.write(col.getColumnName()).write(", ");
         }

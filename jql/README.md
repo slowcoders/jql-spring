@@ -41,6 +41,8 @@ curl -X 'POST' \
 ```
 { "name@like" : "%e" }       /* --> where name like '%e%' */ 
 { "name@not like" : "%e" }   /* --> where name not like '%e%' */ 
+{ "name@like" : ["%e", "%f"] }       /* --> where name like '%e%' or like '%f%' */ 
+{ "name@not like" : ["%e", "%f"] }   /* --> where name not (like '%e%' or like '%f%') */
 ```
 ### le, lt, ge, gt
 * SQL 문 '<=', '<', '>=', '>' 에 해당

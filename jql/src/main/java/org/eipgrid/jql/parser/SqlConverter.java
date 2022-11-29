@@ -4,7 +4,8 @@ import org.eipgrid.jql.JsonNodeType;
 
 import java.util.*;
 
-public class SqlWriter extends SourceWriter<SqlWriter> implements JqlPredicateVisitor {//}, QueryBuilder {
+public class SqlConverter implements JqlPredicateVisitor {
+    protected final SourceWriter sw;
     private JqlFilterNode currentNode;
 
     public enum Command {
@@ -13,8 +14,8 @@ public class SqlWriter extends SourceWriter<SqlWriter> implements JqlPredicateVi
         Update,
     }
 
-    public SqlWriter() {
-        super('\'');
+    public SqlConverter(SourceWriter sw) {
+        this.sw = sw;
     }
 
     public JqlFilterNode setCurrentNode(JqlFilterNode node) {
@@ -28,13 +29,13 @@ public class SqlWriter extends SourceWriter<SqlWriter> implements JqlPredicateVi
             JqlFilterNode parent = node.getParentNode();
             writeJsonPath(parent);
             if (parent.isJsonNode()) {
-                writeQuoted(node.getMappingAlias());
+                sw.writeQuoted(node.getMappingAlias());
             } else {
-                write(node.getMappingAlias());
+                sw.write(node.getMappingAlias());
             }
-            write("->");
+            sw.write("->");
         } else {
-            write(node.getMappingAlias()).write('.');
+            sw.write(node.getMappingAlias()).write('.');
         }
     }
 
@@ -43,34 +44,34 @@ public class SqlWriter extends SourceWriter<SqlWriter> implements JqlPredicateVi
         switch (vf) {
             case Integer:
             case Float:
-                write("::NUMERIC");
+                sw.write("::NUMERIC");
                 break;
             case Date:
-                write("::DATE");
+                sw.write("::DATE");
                 break;
             case Time:
-                write("::TIME");
+                sw.write("::TIME");
                 break;
             case Timestamp:
-                write("::TIMESTAMP");
+                sw.write("::TIMESTAMP");
                 break;
             case Text:
-                write("::TEXT");
+                sw.write("::TEXT");
                 break;
             case Array:
             case Object:
-                write("::JSONB");
+                sw.write("::JSONB");
                 break;
         }
     }
 
     private void writeQualifiedName(String name, Object value) {
         if (!currentNode.isJsonNode()) {
-            write(this.currentNode.getMappingAlias()).write('.').write(name);
+            sw.write(this.currentNode.getMappingAlias()).write('.').write(name);
         }
         else {
             writeJsonPath(currentNode);
-            writeQuoted(name);
+            sw.writeQuoted(name);
             if (value != null) {
                 writeTypeCast(value.getClass());
             }
@@ -111,14 +112,14 @@ public class SqlWriter extends SourceWriter<SqlWriter> implements JqlPredicateVi
                 op = " NOT LIKE ";
                 break;
         }
-        this.write(op).writeValue(value);
+        sw.write(op).writeValue(value);
     }
 
     @Override
     public void visitNot(Expression statement) {
-        this.write(" NOT ");
+        sw.write(" NOT ");
         statement.accept(this);
-//        this.write(")");
+//        out.write(")");
     }
 
     @Override
@@ -128,30 +129,31 @@ public class SqlWriter extends SourceWriter<SqlWriter> implements JqlPredicateVi
         }
         switch (operator) {
             case NE:
-                this.write("NOT");
+                sw.write("NOT");
                 // no-break;
             case EQ:
-                this.write(" IN(");
-                this.writeValues(values);
-                this.write(")");
+                sw.write(" IN(");
+                sw.writeValues(values);
+                sw.write(")");
                 break;
 
             case NOT_LIKE:
-                this.write("NOT ");
+                sw.write("NOT ");
                 // no-break;
             case LIKE:
-                this.write("(");
+                sw.write("(");
                 boolean first = true;
                 for (Object v : values) {
                     if (first) {
                         first = false;
                     } else {
-                        this.write(" OR ");
+                        sw.write(" OR ");
                     }
                     writeQualifiedName(key.getColumnName(), "");
-                    this.write(" LIKE ");
-                    this.writeQuoted(v);
+                    sw.write(" LIKE ");
+                    sw.writeQuoted(v);
                 }
+                sw.write(")");
                 break;
 
             default:
@@ -174,29 +176,29 @@ public class SqlWriter extends SourceWriter<SqlWriter> implements JqlPredicateVi
         }
         writeQualifiedName(key.getColumnName(), null);
         //key.printSQL(this);
-        this.write(value);
+        sw.write(value);
     }
 
     @Override
     public void visitAlwaysTrue() {
-        this.write("true");
+        sw.write("true");
     }
 
     @Override
     public void visitPredicateSet(ArrayList<Predicate> predicates, Conjunction conjunction) {
-        this.write("(");
+        sw.write("(");
         boolean first = true;
         int cnt_predicate = predicates.size();
         for (int i = 0; i < cnt_predicate; i++) {
             if (first) {
                 first = false;
             } else {
-                this.write(conjunction.toString());
+                sw.write(conjunction.toString());
             }
             Predicate item = predicates.get(i);
             item.accept(this);
         }
-        this.write(")");
+        sw.write(")");
     }
 
 }

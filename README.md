@@ -5,6 +5,9 @@
 cd sample
 docker-compose up -d
 ./gradlew bootRun
+# to start tutorial
+cd tutorial
+npm run serve
 ```
 
 ### Swagger page for sample-api test.

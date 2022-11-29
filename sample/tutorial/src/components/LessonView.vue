@@ -6,14 +6,17 @@
       </td><td>
         <b-form-select v-model="selectedTable"
                        :options="tableNames"
+                       :disabled="!enable_table_selector"
                        @input="onTableChanged()">
         </b-form-select>
+      </td><td>
+        <label class="form-label">Sort: </label>
       </td><td>
         <b-form-select
                        class="form-control"
                        v-model="first_sort"
-                       @input="onFirstSortChanged()">
-          <b-form-select-option :value="null" key="-1">
+                       @input="onTableChanged()">
+          <b-form-select-option :value="''" key="-1">
              First sort
           </b-form-select-option>
           <b-form-select-option
@@ -23,6 +26,12 @@
             {{ option }}
           </b-form-select-option>
         </b-form-select>
+      </td><td>
+        <label class="form-label">Limit: </label>
+      </td><td>
+        <b-form-input v-model="limit"
+                       @input="onTableChanged()">
+        </b-form-input>
       </td>
       </row>
       </table>
@@ -34,7 +43,7 @@
                 :options="editOptions"
                 border
                 placeholder="test placeholder"
-                :height="200"
+                :height="100 + source_lines * 20"
     />
 
     <b-button @click="execute">
@@ -63,12 +72,12 @@ import { ref } from "vue";
 import axios from "axios";
 
 const dbSchema = 'starwars';
-function make_sample_code(table, js_code) {
-  return ` // JQL Sample
-const dbSchema = '${dbSchema}'
-const dbTable = '${table}'
-${js_code}`
+
+function count_lines(code) {
+  const lines = code.split("\n");
+  return lines.length;
 }
+
 
 const sampleTables = [
   "character",
@@ -78,18 +87,23 @@ const sampleTables = [
 
 export default {
   props : {
-    js_code : String
+    js_code : String,
+    enable_table_select: Boolean,
   },
 
   components: { CodeMirror },
   data() {
     return {
+      enable_table_selector: this.enable_table_select,
       selectedTable: sampleTables[0],
       tableNames: sampleTables,
       columnNames: ['aaa', 'bbb', 'ccc'],
-      first_sort: null,
-      sampleCode: make_sample_code('character', this.js_code),
+      first_sort: '',
+      limit: 3,
+      sampleCode: this.make_sample_code(),
+      source_lines: count_lines(this.js_code),
       test_result: '',
+      sortBy: null,
       axios: axios,
       editOptions: {
         mode: "text/javascript", // Language mode
@@ -115,6 +129,7 @@ export default {
   mounted() {
     this.codeView = this.$refs.codeView.cminstance;
     this.resultView = this.$refs.resultView.cminstance;
+    setTimeout(this.onTableChanged, 10);
   },
 
   computed: {
@@ -126,22 +141,40 @@ export default {
     },
 
     onTableChanged() {
+      console.log("onTableChanged")
       const vm = this;
       vm.sortColumn = null;
-      vm.codeView.setValue(make_sample_code(vm.selectedTable, vm.js_code));
+      vm.codeView.setValue(vm.make_sample_code());
       vm.resetColumns();
+    },
+
+    make_sample_code() {
+      const vm = this;
+
+      return ` // JQL Sample
+const dbSchema = '${dbSchema}'
+const dbTable = '${vm.selectedTable}'
+const sortBy = '${vm.first_sort}'
+const limit = '${vm.limit}'
+${vm.js_code}`
     },
 
     resetColumns() {
       const vm = this;
       axios.get(`http://localhost:6090/api/jql/${dbSchema}/${vm.selectedTable}/metadata/columns`).
       then((res) => {
-        vm.columnNames = res.data;
+        const columns = [];
+        for (const column of res.data) {
+          columns.push(column);
+          columns.push("-" + column);
+        }
+        this.columnNames = columns;
         console.log(res.data);
       })
     },
 
-    onFirstSortChanged() {
+    onFirstSortChanged(column) {
+      this.onTableChanged();
     },
 
     http_post(url, jql) {
