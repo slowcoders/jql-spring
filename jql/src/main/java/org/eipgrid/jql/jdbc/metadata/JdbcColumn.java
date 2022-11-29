@@ -10,6 +10,7 @@ import org.eipgrid.jql.util.ClassUtils;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Map;
 
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.NONE)
 public class JdbcColumn extends JqlColumn {
@@ -113,13 +114,14 @@ public class JdbcColumn extends JqlColumn {
     private static Class resolveJavaType(ResultSetMetaData md, int col) throws SQLException {
         String colTypeName = md.getColumnTypeName(col);
         int colType = md.getColumnType(col);
+        String javaClassName = md.getColumnClassName(col);
         try {
             switch (colTypeName) {
                 case "json":
                 case "jsonb":
-                    return Object.class;
+                    return Map.class;
                 default:
-                    String javaClassName = md.getColumnClassName(col);
+//                    String javaClassName = md.getColumnClassName(col);
                     return ClassUtils.getBoxedType(Class.forName(javaClassName));
             }
 

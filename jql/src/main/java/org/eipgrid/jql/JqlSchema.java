@@ -49,7 +49,7 @@ public abstract class JqlSchema {
     }
 
     public JqlSchemaJoin getSchemaJoinBy(String jsonKey) {
-        return loadJoinMap().get(jsonKey);
+        return getSchemaJoinMap().get(jsonKey);
     }
 
     public JqlColumn getColumn(String key) throws IllegalArgumentException {
@@ -128,7 +128,7 @@ public abstract class JqlSchema {
         return schemaLoader.createDDL(this);
     }
 
-    private HashMap<String, JqlSchemaJoin> loadJoinMap() {
+    public HashMap<String, JqlSchemaJoin> getSchemaJoinMap() {
         if (this.entityJoinMap == null) {
             this.entityJoinMap = schemaLoader.loadJoinMap(this);
         }
@@ -170,10 +170,6 @@ public abstract class JqlSchema {
 
     public String toString() {
         return this.tableName;
-    }
-
-    public Collection<JqlSchemaJoin> getSchemaJoins() {
-        return loadJoinMap().values();
     }
 
     public String getNamespace() {

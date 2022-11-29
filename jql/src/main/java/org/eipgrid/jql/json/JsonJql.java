@@ -2,21 +2,34 @@ package org.eipgrid.jql.json;
 
 import org.eipgrid.jql.JqlColumn;
 import org.eipgrid.jql.JqlSchema;
+import org.eipgrid.jql.JqlSchemaJoin;
 import org.eipgrid.jql.jdbc.metadata.JdbcColumn;
 import org.eipgrid.jql.util.ClassUtils;
 
 import java.util.HashMap;
+import java.util.Map;
 
 public class JsonJql {
 
     public static String createDDL(JqlSchema schema) {
         StringBuilder sb = new StringBuilder();
-        sb.append("const " + schema.getTableName() + "Schema = [\n");
+        sb.append("const " + schema.getSimpleTableName() + "Schema_columns = [\n");
         for (JqlColumn col : schema.getReadableColumns()) {
             dumpJSONSchema(sb, (JdbcColumn)col);
             sb.append(",\n");
         }
-        sb.append("]\n");
+        sb.append("];\n");
+
+        if (!schema.getSchemaJoinMap().isEmpty()) {
+            sb.append("\nconst " + schema.getSimpleTableName() + "Schema_external_entities = [\n");
+            for (Map.Entry<String, JqlSchemaJoin> entry : schema.getSchemaJoinMap().entrySet()) {
+                sb.append("  jql.externalJoin(\"").append(entry.getKey()).append("\", ");
+                sb.append(entry.getValue().getJoinedSchema().getSimpleTableName()).append("Schema, \n");
+                sb.append(entry.getValue().isUniqueJoin() ? "{}" : "[]").append("),\n");
+            }
+            sb.append("];\n");
+        }
+
         return sb.toString();
     }
 
@@ -26,13 +39,13 @@ public class JsonJql {
             throw new RuntimeException("JsonType not registered: " + col.getJavaType() + " " + col.getColumnName());
         }
 
-//        String max = getPrecision(col, jsonType);
-        sb.append("  ").append(col.getJsonKey());
-        while (sb.length() < 20) {
-            sb.append(' ');
-        }
-        sb.append(" : jql.").append(jsonType).append("('")
-                .append(col.getLabel()).append("'");
+////        String max = getPrecision(col, jsonType);
+//        sb.append("  \"").append(col.getJsonKey()).append('"');
+//        while (sb.length() < 20) {
+//            sb.append(' ');
+//        }
+        sb.append("  jql.").append(jsonType).append("(\"")
+                .append(col.getJsonKey()).append("\"");
 //        if (max != null) {
 //            sb.append(", ").append(max);
 //        }
@@ -56,11 +69,10 @@ public class JsonJql {
             JqlColumn joined_pk = jqlColumn.getJoinedPrimaryColumn();
             if (joined_pk == null) continue;
 
-            sb.append(schema.getTableName()).append("Schema.join(\"");
-            sb.append(jqlColumn.getColumnName()).append("\", ");
+            sb.append(schema.getSimpleTableName()).append("Schema.join(\"");
+            sb.append(jqlColumn.getJsonKey()).append("\", ");
             sb.append(joined_pk.getSchema().getEntityClassName()).append("Schema, \"");
-            sb.append(joined_pk.getJsonKey()).append("\", \"");
-            sb.append(jqlColumn.getJsonKey()).append("\");\n");
+            sb.append(joined_pk.getJsonKey()).append("\");\n");
         }
         return sb.toString();
     }
@@ -112,11 +124,15 @@ public class JsonJql {
         mdkTypes.put("java.sql.Timestamp", "Timestamp");
         mdkTypes.put("org.postgresql.util.PGInterval", "TimeInterval");
 
+        mdkTypes.put("java.util.Map", "Object");
+        mdkTypes.put("java.util.Map", "Object");
+        mdkTypes.put("Array", "Array");
+
         /**
          * https://www.postgresql.org/docs/current/datatype.html
          */
-        mdkTypes.put("json", "Object");
-        mdkTypes.put("jsonb", "Object");
+        mdkTypes.put("json", "EmbeddedObject");
+        mdkTypes.put("jsonb", "EmbeddedObject");
         mdkTypes.put("Array", "Array");
 
         if (false) {
