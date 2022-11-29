@@ -44,13 +44,15 @@ curl -X 'POST' \
 { "name@like" : ["%e", "%f"] }       /* --> where name like '%e%' or like '%f%' */ 
 { "name@not like" : ["%e", "%f"] }   /* --> where name not (like '%e%' or like '%f%') */
 ```
-### le, lt, ge, gt
+### le, lt, ge, gt, between, not between 
 * SQL 문 '<=', '<', '>=', '>' 에 해당
 ```
-{ "id@lt" : 1000 }           /* --> where name <  1000 */ 
-{ "id@le" : 1000 }           /* --> where name <= 1000 */ 
-{ "id@gt" : 1000 }           /* --> where name >  1000 */ 
-{ "id@ge" : 1000 }           /* --> where name >= 1000 */ 
+{ "id@lt" : 1000 }                      /* --> where id <  1000 */ 
+{ "id@le" : 1000 }                      /* --> where id <= 1000 */ 
+{ "id@gt" : 1000 }                      /* --> where id >  1000 */ 
+{ "id@ge" : 1000 }                      /* --> where id >= 1000 */ 
+{ "id@between" : [1000, 1001] }         /* --> where id >= 1000 and id <= 1001 */ 
+{ "id@not between" : [1000, 10001] }    /* --> where not (id >= 1000 and id <= 1001) */ 
 ```
 
 
