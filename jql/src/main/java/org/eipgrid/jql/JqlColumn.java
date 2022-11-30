@@ -32,7 +32,11 @@ public abstract class JqlColumn {
     public final String getJavaFieldName() {
         if (javaFieldName == null) {
             String qName = getJsonKey();
-            javaFieldName = qName.substring(qName.lastIndexOf('.') + 1);
+            int idx = qName.indexOf('.');
+            if (idx > 0) {
+                qName = qName.substring(0, idx);
+            }
+            javaFieldName = qName;
         }
         return javaFieldName;
     }
