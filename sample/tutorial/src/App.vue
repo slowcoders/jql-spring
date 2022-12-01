@@ -34,7 +34,7 @@ export default {
             },
             {
               href: "/basic/compare",
-              title: "Simple Sorting",
+              title: "Simple Operators",
               icon: "fa fa-file-alt"
             },
             {

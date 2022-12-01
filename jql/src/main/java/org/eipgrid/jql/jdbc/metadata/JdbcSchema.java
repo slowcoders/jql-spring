@@ -1,12 +1,17 @@
 package org.eipgrid.jql.jdbc.metadata;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import org.eipgrid.jql.JqlColumn;
 import org.eipgrid.jql.JqlSchema;
 import org.eipgrid.jql.JqlSchemaJoin;
 import org.eipgrid.jql.SchemaLoader;
+import org.eipgrid.jql.parser.SourceWriter;
 import org.eipgrid.jql.util.AttributeNameConverter;
 
+import javax.persistence.FetchType;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.util.*;
@@ -27,49 +32,68 @@ public class JdbcSchema extends JqlSchema {
     }
 
     public String dumpJPAEntitySchema() {
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        PrintStream out = new PrintStream(baos);
-        out.println("import lombok.*;");
-        out.println("import javax.persistence.*;");
-        out.println("import javax.validation.constraints.*;");
-        out.println();
+        SourceWriter sb = new SourceWriter('"');
+        sb.writeln("import lombok.*;");
+        sb.writeln("import javax.persistence.*;");
+        sb.writeln("import javax.validation.constraints.*;");
+        sb.writeln();
 
-        out.println("public class " + getTableName() + " {");
+        sb.writeln("public class " + getTableName() + " {");
         for (JqlColumn col : getReadableColumns()) {
-            dumpORM(col, out);
-            out.println();
+            dumpORM(col, sb);
+            sb.writeln();
         }
-        out.println("}");
-        return baos.toString();
+
+        for (Map.Entry<String, JqlSchemaJoin> entry : this.getSchemaJoinMap().entrySet()) {
+            sb.write("  jql.externalJoin(\"").write(entry.getKey()).write("\", ");
+            sb.write(entry.getValue().getJoinedSchema().getSimpleTableName()).write("Schema, \n");
+            sb.write(entry.getValue().isUniqueJoin() ? "{}" : "[]").write("),\n");
+        }
+        sb.write("];\n");
+
+//        JqlColumn pk = col.getJoinedPrimaryColumn();
+//        if (col.getJoinedPrimaryColumn() != null) {
+//            sb.write(col.);
+//            sb.write("@ManyToOne(fetch = FetchType.LAZY)");
+//            sb.write("@JoinColumn(name = \"" + col.getColumnName() + "\", referencedColumnName = \"" + pk.getColumnName() + "\")")
+//
+//        }
+
+        sb.writeln("}");
+        return sb.toString();
     }
 
-    private void dumpORM(JqlColumn col, PrintStream out) {
+    private void dumpORM(JqlColumn col, SourceWriter sb) {
 //        if (col.getLabel() != null) {
-//            out.print("\t/** ");
-//            out.print(col.getLabel());
-//            out.println(" */");
+//            sb.write("\t/** ");
+//            sb.write(col.getLabel());
+//            sb.writeln(" */");
 //        }
 //        if (primaryKeys.contains(col.getColumnName())) {
-//            out.println("\t@Id");
+//            sb.writeln("\t@Id");
 //            if (col.isAutoIncrement()) {
-//                out.println("\t@GeneratedValue(strategy = GenerationType.IDENTITY)");
+//                sb.writeln("\t@GeneratedValue(strategy = GenerationType.IDENTITY)");
 //            }
 //        }
 //        if (!col.isNullable()) {
-//            out.println("\t@NotNull");
-//            out.println("\t@Column(nullable = false)");
+//            sb.writeln("\t@NotNull");
+//            sb.writeln("\t@Column(nullable = false)");
 //        }
 //        if (col.getPrecision() > 0) {
-//            out.println("\t@Max(" + col.getPrecision() +")");
+//            sb.writeln("\t@Max(" + col.getPrecision() +")");
 //        }
 
-        out.print("\t@Getter");
-        if (!col.isReadOnly()) {
-            out.print(" @Setter");
-        }
-        out.println();
+        JqlColumn pk = col.getJoinedPrimaryColumn();
+        if (pk != null) return;
 
-        out.println("\t" + col.getJavaType().getName() + " " + col.getJsonKey() + ";");
+        sb.write("\t@Getter");
+        if (!col.isReadOnly()) {
+            sb.write(" @Setter");
+        }
+        sb.writeln();
+        String fieldName = col.getJavaFieldName();
+
+        sb.writeln("\t" + col.getJavaType().getName() + " " + fieldName + ";");
     }
 
 

@@ -1,5 +1,5 @@
 import { createWebHistory, createRouter } from "vue-router";
-import SelectAll from "../views/basic/SelectAll.vue"
+import SimpleList from "../views/basic/SimpleList.vue"
 import CompareOp from "../views/basic/CompareOp.vue"
 import SimpleJoin from "../views/basic/SimpleJoin.vue"
 import Team from "../views/Team.vue"
@@ -9,11 +9,11 @@ const router = createRouter({
     routes: [
         {
             path: '/basic',
-            component: SelectAll,
+            component: SimpleList,
         },
         {
             path: '/basic/select',
-            component: SelectAll,
+            component: SimpleList,
         },
         {
             path: '/basic/compare',
