@@ -11,6 +11,7 @@ import org.springframework.core.convert.ConversionService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.eipgrid.jql.JqlSelect;
 import org.springframework.data.domain.Sort;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.ResultSetExtractor;
@@ -117,7 +118,7 @@ public class JDBCRepositoryBase<ID> /*extends JDBCQueryBuilder*/ implements JQLR
     @Override
     public KVEntity find(ID id) {
         Map<String, Object> filter = createJqlFilterWithId(id);
-        List<KVEntity> res = find_impl(filter, null, 0, 1);
+        List<KVEntity> res = find_impl(filter, JqlSelect.selectAny());
         return res.size() > 0 ? res.get(0) : null;
     }
 
@@ -125,21 +126,22 @@ public class JDBCRepositoryBase<ID> /*extends JDBCQueryBuilder*/ implements JQLR
         return new JqlRowMapper(filter.getResultColumnMappings());
     }
 
-    protected List<KVEntity> find_impl(Map<String, Object> jqlFilter, Sort sort, int offset, int limit) {
+    protected List<KVEntity> find_impl(Map<String, Object> jqlFilter, JqlSelect columns) {
         JqlQuery query = this.buildQuery(jqlFilter);
-        String sql = sqlGenerator.createSelectQuery(query, sort, offset, limit);
+        query.setSelectedColumns(columns);
+        String sql = sqlGenerator.createSelectQuery(query, columns);
         List<KVEntity> res = (List)jdbc.query(sql, getColumnMapRowMapper(query));
         return res;
     }
 
-    @Override
-    public Page<KVEntity> find(Map<String, Object> jqlFilter, @NotNull Pageable pageReq) {
-        int size = pageReq.getPageSize();
-        int offset = (pageReq.getPageNumber()) * size;
-        List<KVEntity> res = find_impl(jqlFilter, pageReq.getSort(), offset, size);
-        long count = count(jqlFilter);
-        return new PageImpl(res, pageReq, count);
-    }
+//    @Override
+//    public Page<KVEntity> find(Map<String, Object> jqlFilter, @NotNull Pageable pageReq) {
+//        int size = pageReq.getPageSize();
+//        int offset = (pageReq.getPageNumber()) * size;
+//        List<KVEntity> res = find_impl(jqlFilter, pageReq.getSort(), offset, size);
+//        long count = count(jqlFilter);
+//        return new PageImpl(res, pageReq, count);
+//    }
 
     @Override
     public long count(Map<String, Object> jqlFilter) {
@@ -150,19 +152,19 @@ public class JDBCRepositoryBase<ID> /*extends JDBCQueryBuilder*/ implements JQLR
     }
 
     @Override
-    public Iterable<KVEntity> find(Map<String, Object> jqlFilter, Sort sort, int limit) {
-        return this.find_impl(jqlFilter, sort, 0, limit);
+    public List<KVEntity> find(Map<String, Object> jqlFilter, JqlSelect columns) {
+        return this.find_impl(jqlFilter, columns);
     }
 
     @Override
     public List<KVEntity> list(Collection<ID> idList) {
         Map<String, Object> filter = createJqlFilterWithIdList( idList);
-        return find_impl(filter, null, 0, -1);
+        return find_impl(filter, JqlSelect.selectAny());
     }
 
     @Override
     public KVEntity findTop(Map<String, Object> jqlFilter, Sort sort) {
-        List<KVEntity> res = this.find_impl(jqlFilter, sort, 0, 1);
+        List<KVEntity> res = this.find_impl(jqlFilter, JqlSelect.by(sort, 0, 1));
         return res.size() > 0 ? res.get(0) : null;
     }
 

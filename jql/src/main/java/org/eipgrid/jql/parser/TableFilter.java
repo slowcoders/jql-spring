@@ -178,4 +178,8 @@ public class TableFilter extends Filter implements JqlResultMapping {
             }
         }
     }
+
+    protected void setSelectedColumns(List<JqlColumn> columns) {
+        this.selectedColumns = columns;
+    }
 }

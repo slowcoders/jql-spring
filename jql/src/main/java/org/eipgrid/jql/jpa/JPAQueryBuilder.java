@@ -3,6 +3,7 @@ package org.eipgrid.jql.jpa;
 import org.eipgrid.jql.spring.JQLService;
 import org.eipgrid.jql.util.ClassUtils;
 import org.springframework.core.convert.ConversionService;
+import org.eipgrid.jql.JqlSelect;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.query.QueryUtils;
 

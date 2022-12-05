@@ -6,6 +6,7 @@ import org.eipgrid.jql.spring.JQLService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.eipgrid.jql.JqlSelect;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.repository.NoRepositoryBean;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
@@ -53,10 +54,10 @@ public abstract class JPARepositoryBase<ENTITY, ID> extends JPAQueryBuilder<ENTI
         return super.find(id);
     }
 
-    @Override
-    public Page<ENTITY> find(Map<String, Object> jqlFilter, @NotNull Pageable pageReq) {
-        return find(jqlFilter, pageReq, super.getEntityType());
-    }
+//    @Override
+//    public Page<ENTITY> find(Map<String, Object> jqlFilter, @NotNull Pageable pageReq) {
+//        return find(jqlFilter, pageReq, super.getEntityType());
+//    }
 
     //@Override
     public final <T> Page<T> find(Map<String, Object> conditions, Pageable pageReq, Class<T> resultType) {
@@ -76,13 +77,13 @@ public abstract class JPARepositoryBase<ENTITY, ID> extends JPAQueryBuilder<ENTI
     }
 
     @Override
-    public Iterable<ENTITY> find(Map<String, Object> jqlFilter, Sort sort, int limit) {
-        return find(jqlFilter, sort, limit, super.getEntityType());
+    public List<ENTITY> find(Map<String, Object> jqlFilter, JqlSelect columns) {
+        return find(jqlFilter, columns, columns.getLimit(), super.getEntityType());
     }
 
     //@Override
-    public <T> List<T> find(Map<String, Object> filterConditions, Sort sort, int limit, Class<T> resultType) {
-        Query query = super.buildSearchQuery(filterConditions, sort, resultType);
+    public <T> List<T> find(Map<String, Object> filterConditions, JqlSelect columns, int limit, Class<T> resultType) {
+        Query query = super.buildSearchQuery(filterConditions, columns.getOrders(), resultType);
 
         /** Hibernate 버그: limit 값이 생략되면, join 된 row 수만큼 entity 가 생성된다.
          *  이에 limit 값 항상 명시 필요함. */

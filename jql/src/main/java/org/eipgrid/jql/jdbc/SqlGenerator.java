@@ -7,6 +7,7 @@ import org.eipgrid.jql.parser.JqlQuery;
 import org.eipgrid.jql.parser.QueryBuilder;
 import org.eipgrid.jql.parser.SourceWriter;
 import org.eipgrid.jql.parser.SqlConverter;
+import org.eipgrid.jql.JqlSelect;
 import org.springframework.data.domain.Sort;
 
 import java.util.*;
@@ -100,11 +101,11 @@ public class SqlGenerator extends SqlConverter implements QueryBuilder {
         return false;
     }
 
-    public String createSelectQuery(JqlQuery where, Sort sort, int offset, int limit) {
+    public String createSelectQuery(JqlQuery where, JqlSelect columns) {
         sw.reset();
         String tableName = where.getTableName();
 
-        boolean need_complex_pagination = (limit > 0 || offset > 0) && needDistinctPagination(where);
+        boolean need_complex_pagination = (columns.getLimit() > 0 || columns.getOffset() > 0) && needDistinctPagination(where);
         if (need_complex_pagination) {
             sw.write("\nWITH _cte AS (\n"); // WITH _cte AS NOT MATERIALIZED
             sw.incTab();
@@ -112,8 +113,8 @@ public class SqlGenerator extends SqlConverter implements QueryBuilder {
             writeFrom(where, tableName, true);
             writeWhere(where);
             tableName = "_cte";
-            writeOrderBy(where, sort, false);
-            writePagination(offset, limit);
+            writeOrderBy(where, columns.getOrders(), false);
+            writePagination(columns);
             sw.decTab();
             sw.write("\n)");
         }
@@ -130,16 +131,18 @@ public class SqlGenerator extends SqlConverter implements QueryBuilder {
         sw.replaceTrailingComma("\n");
         writeFrom(where, tableName, false);
         writeWhere(where);
-        writeOrderBy(where, sort, !where.isLinearNode());
+        writeOrderBy(where, columns.getOrders(), !where.isLinearNode());
         if (!need_complex_pagination) {
-            writePagination(offset, limit);
+            writePagination(columns);
         }
         String sql = sw.reset();
         return sql;
     }
 
     private void writeOrderBy(JqlQuery where, Sort sort, boolean need_joined_result_set_ordering) {
-        if (sort == null && !need_joined_result_set_ordering) return;
+        if (!need_joined_result_set_ordering) {
+            if (sort == null || sort.isUnsorted()) return;
+        }
 
         sw.write("\nORDER BY ");
         if (sort != null) {
@@ -161,7 +164,9 @@ public class SqlGenerator extends SqlConverter implements QueryBuilder {
         sw.replaceTrailingComma("");
     }
 
-    private void writePagination(int offset, int limit) {
+    private void writePagination(JqlSelect pagination) {
+        int offset = pagination.getOffset();
+        int limit  = pagination.getLimit();
         if (offset > 0) sw.write("\nOFFSET " + offset);
         if (limit > 0) sw.write("\nLIMIT " + limit);
     }

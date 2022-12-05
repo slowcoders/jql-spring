@@ -5,10 +5,11 @@ import io.swagger.v3.oas.annotations.Parameter;
 import org.eipgrid.jql.JqlColumn;
 import org.eipgrid.jql.JqlSchema;
 import org.eipgrid.jql.jdbc.metadata.JdbcSchema;
-import org.eipgrid.jql.spring.JQLReadOnlyController;
 import org.eipgrid.jql.spring.JQLRepository;
 import org.eipgrid.jql.util.KVEntity;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
+import org.eipgrid.jql.JqlSelect;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -57,8 +58,8 @@ public abstract class JdbcSchemaController {
                        @RequestParam(value = "page", required = false) Integer page,
                        @Parameter(name = "limit", example = "10")
                        @RequestParam(value = "limit", required = false) Integer limit,
-                       @RequestParam(value = "sort", required = false) String[] _sort) {
-        return find(table, page, limit, _sort, null);
+                       @RequestParam(value = "columns", required = false) List<String> columns) {
+        return find(table, page, limit, columns, null);
     }
 
     @PostMapping(path = "/{table}/find")
@@ -67,28 +68,34 @@ public abstract class JdbcSchemaController {
     public Object find(@PathVariable("table") String table,
                        @RequestParam(value = "page", required = false) Integer page,
                        @Parameter(name = "limit", example = "10")
-                       @RequestParam(value = "limit", required = false) Integer limit,
-                       @RequestParam(value = "sort", required = false) String[] _sort,
+                       @RequestParam(value = "limit", required = false) Integer _limit,
+                       @RequestParam(value = "columns", required = false) List<String> _columns,
                        @RequestBody() HashMap<String, Object> filter) {
-        JQLRepository<KVEntity, Object> repository = getRepository(table);
-        Sort sort = JQLReadOnlyController.buildSort(_sort);
-        if (page == null) {
-            return repository.find(filter, sort, limit == null ? -1 : limit);
-        }
+        int limit = _limit == null ? 0 : _limit;
+        boolean need_pagination = page != null && limit > 1;
+        int offset = need_pagination ? page * limit : 0;
+        JqlSelect select = JqlSelect.by(_columns, offset, limit);
 
-        PageRequest pageReq = sort == null ?
-                PageRequest.of(page, limit) : PageRequest.of(page, limit, sort);
-        return repository.find(filter, pageReq);
+        JQLRepository<KVEntity, Object> repository = getRepository(table);
+        List<KVEntity> res = repository.find(filter, select);
+
+        if (need_pagination) {
+            long count = repository.count(filter);
+            PageRequest pageReq = PageRequest.of(page, limit, select.getOrders());
+            return new PageImpl(res, pageReq, count);
+        } else {
+            return res;
+        }
     }
 
     @PostMapping(path = "/{table}/top")
     @ResponseBody
     @Operation(summary = "조건 검색 첫 엔터티 읽기")
     public KVEntity top(@PathVariable("table") String table,
-                        @RequestParam(value = "sort", required = false) String[] _sort,
+                        @RequestParam(value = "columns", required = false) String[] _columns,
                         @RequestBody HashMap<String, Object> filter) {
         JQLRepository<KVEntity, Object> repository = getRepository(table);
-        Sort sort = JQLReadOnlyController.buildSort(_sort);
+        Sort sort = JqlSelect.buildSort(_columns);
         return repository.findTop(filter, sort);
     }
 

@@ -1,12 +1,12 @@
 package org.eipgrid.jql.parser;
 
 import org.eipgrid.jql.JqlSchema;
-import org.springframework.data.domain.Sort;
+import org.eipgrid.jql.JqlSelect;
 
 import java.util.Map;
 
 public interface QueryBuilder {
-    String createSelectQuery(JqlQuery where, Sort sort, int offset, int limit);
+    String createSelectQuery(JqlQuery where, JqlSelect columns);
 
     String createCountQuery(JqlQuery where);
 

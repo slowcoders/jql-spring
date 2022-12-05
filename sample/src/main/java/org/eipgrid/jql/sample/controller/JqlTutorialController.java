@@ -8,11 +8,14 @@ import org.eipgrid.jql.spring.JQLReadOnlyController;
 import org.eipgrid.jql.spring.JQLRepository;
 import org.eipgrid.jql.jdbc.JQLJdbcService;
 import org.eipgrid.jql.util.KVEntity;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
+import org.eipgrid.jql.JqlSelect;
 import org.springframework.data.domain.Sort;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/jql-tutorial")
@@ -121,16 +124,21 @@ public class JqlTutorialController {
     }
 
 
-    private Object find(String schema, String table, Integer page, Integer limit, String[] _sort, HashMap<String, Object> filter) {
-        JQLRepository<KVEntity, Object> repository = getRepository(schema, table);
-        Sort sort = JQLReadOnlyController.buildSort(_sort);
-        if (page == null) {
-            return repository.find(filter, sort, limit == null ? -1 : limit);
-        }
+    private Object find(String schema, String table, Integer page, Integer _limit, String[] _columns, HashMap<String, Object> filter) {
+        int limit = _limit == null ? 0 : _limit;
+        boolean need_pagination = page != null && limit > 1;
+        int offset = need_pagination ? page * limit : 0;
+        JqlSelect select = JqlSelect.by(_columns, offset, limit);
 
-        page = page - 1;
-        PageRequest pageReq = sort == null ?
-                PageRequest.of(page, limit) : PageRequest.of(page, limit, sort);
-        return repository.find(filter, pageReq);
+        JQLRepository<KVEntity, Object> repository = getRepository(schema, table);
+        List<KVEntity> res = repository.find(filter, select);
+
+        if (need_pagination) {
+            long count = repository.count(filter);
+            PageRequest pageReq = PageRequest.of(page, limit, select.getOrders());
+            return new PageImpl(res, pageReq, count);
+        } else {
+            return res;
+        }
     }
 }

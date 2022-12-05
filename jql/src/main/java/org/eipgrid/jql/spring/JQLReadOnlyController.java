@@ -2,7 +2,9 @@ package org.eipgrid.jql.spring;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
+import org.eipgrid.jql.JqlSelect;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
@@ -10,6 +12,7 @@ import org.springframework.web.client.HttpServerErrorException;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 public abstract class JQLReadOnlyController<ENTITY, ID> {
 
@@ -62,17 +65,22 @@ public abstract class JQLReadOnlyController<ENTITY, ID> {
     @Operation(summary = "조건 검색")
     public Object find(@RequestParam(value = "page", required = false) Integer page,
                        @Parameter(name = "limit", example = "10")
-                       @RequestParam(value = "limit", required = false) Integer limit,
+                       @RequestParam(value = "limit", required = false) Integer _limit,
                        @RequestParam(value = "sort", required = false) String[] _sort,
                        @RequestBody() HashMap<String, Object> filter) {
-        Sort sort = buildSort(_sort);
-        if (page == null) {
-            return repository.find(filter, sort, limit == null ? -1 : limit);
-        }
+        int limit = _limit == null ? 0 : _limit;
+        boolean need_pagination = page != null && limit > 1;
+        int offset = need_pagination ? page * limit : 0;
+        Sort sort = JqlSelect.buildSort(_sort);
+        List<ENTITY> res = repository.find(filter, JqlSelect.by(sort, offset, limit));
 
-        PageRequest pageReq = sort == null ?
-                PageRequest.of(page, limit) : PageRequest.of(page, limit, sort);
-        return repository.find(filter, pageReq);
+        if (need_pagination) {
+            long count = repository.count(filter);
+            PageRequest pageReq = PageRequest.of(page, limit, sort);
+            return new PageImpl(res, pageReq, count);
+        } else {
+            return res;
+        }
     }
 
     @PostMapping(path = "/top")
@@ -80,7 +88,7 @@ public abstract class JQLReadOnlyController<ENTITY, ID> {
     @Operation(summary = "조건 검색 첫 엔터티 읽기")
     public ENTITY top(@RequestParam(value = "sort", required = false) String[] _sort,
                       @RequestBody HashMap<String, Object> filter) {
-        Sort sort = buildSort(_sort);
+        Sort sort = JqlSelect.buildSort(_sort);
         return repository.findTop(filter, sort);
     }
 
@@ -91,30 +99,5 @@ public abstract class JQLReadOnlyController<ENTITY, ID> {
         repository.clearEntityCache(null);
     }
 
-
-    public static Sort buildSort(String columns[]) {
-        if (columns == null || columns.length == 0) return null;
-
-        ArrayList<Sort.Order> orders = new ArrayList<>();
-        for (String col : columns) {
-            col = col.trim();
-
-            Sort.Order order;
-            switch (col.charAt(0)) {
-                case '-':
-                    col = col.substring(1).trim();
-                    order = Sort.Order.desc(col);
-                    break;
-                case '+':
-                    col = col.substring(1).trim();
-                    // no-break;
-                default:
-                    order = Sort.Order.asc(col);
-                    break;
-            }
-            orders.add(order);
-        }
-        return Sort.by(orders);
-    }
 
 }

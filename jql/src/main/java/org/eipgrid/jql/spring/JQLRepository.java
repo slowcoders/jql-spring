@@ -2,6 +2,7 @@ package org.eipgrid.jql.spring;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.eipgrid.jql.JqlSelect;
 import org.springframework.data.domain.Sort;
 
 import javax.validation.constraints.NotNull;
@@ -16,13 +17,9 @@ public interface JQLRepository<ENTITY, ID> {
 
     ID convertId(Object v);
 
-    Iterable<ENTITY> find(Map<String, Object> jqlFilter, Sort sort, int limit);
+    List<ENTITY> find(Map<String, Object> jqlFilter, JqlSelect columns);
 
-    default Iterable<ENTITY> find(Map<String, Object> jqlFilter, int limit) {
-        return find(jqlFilter, null, limit);
-    }
-
-    Page<ENTITY> find(Map<String, Object> jqlFilter, @NotNull Pageable pageReq);
+//    Page<ENTITY> find(Map<String, Object> jqlFilter, @NotNull Pageable pageReq);
 
     ENTITY findTop(Map<String, Object> jqlFilter, Sort sort);
 
@@ -37,16 +34,12 @@ public interface JQLRepository<ENTITY, ID> {
 
     List<ENTITY> list(Collection<ID> idList);
 
-    default Page<ENTITY> list(@NotNull Pageable pageRequest) {
-        return find(null, pageRequest);
-    }
-
-    default Iterable<ENTITY> list(Sort sort, int limit) {
-        return find(null, sort, limit);
-    }
+//    default Page<ENTITY> list(@NotNull Pageable pageRequest) {
+//        return find(null, pageRequest);
+//    }
 
     default Iterable<ENTITY> listAll() {
-        return find(null, null, -1);
+        return find(null, JqlSelect.selectAny());
     }
 
 

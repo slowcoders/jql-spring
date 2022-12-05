@@ -1,6 +1,8 @@
 package org.eipgrid.jql.parser;
 
+import org.eipgrid.jql.JqlColumn;
 import org.eipgrid.jql.JqlSchema;
+import org.eipgrid.jql.JqlSelect;
 import org.eipgrid.jql.jdbc.JqlResultMapping;
 
 import java.util.ArrayList;
@@ -23,6 +25,12 @@ public class JqlQuery extends TableFilter {
     public boolean isArrayNode() {
         return false;
     }
+
+    public void setSelectedColumns(JqlSelect select) {
+        List<JqlColumn> columns = select.getSelectedColumns(this.getSchema());
+        super.setSelectedColumns(columns);
+    }
+
 
     public List<JqlResultMapping> getResultColumnMappings() {
         if (columnGroupMappings.size() == 0) {
