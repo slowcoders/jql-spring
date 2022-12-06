@@ -86,11 +86,11 @@ public class JqlSelect {
         return columns;
     }
 
-    public Sort getOrders() {
+    public Sort getSort() {
         return this.sort;
     }
 
-    private boolean addColumn(String property, ArrayList<Sort.Order> orders) {
+    private void addColumn(String property, ArrayList<Sort.Order> orders) {
 
         property = property.trim();
         char firstCh = property.charAt(0);
@@ -107,10 +107,12 @@ public class JqlSelect {
                 } else {
                     throw new IllegalArgumentException("invalid property name: [" + property + "]");
                 }
-                return true;
+                return;
         }
 
-        return addNormalColumn(property);
+        if (!this.selectAll) {
+            addNormalColumn(property);
+        }
     }
 
     private boolean addNormalColumn(String property) {
@@ -142,10 +144,7 @@ public class JqlSelect {
                 ascend = firstCh == '+';
                 break;
             default:
-                if (!Character.isJavaIdentifierStart(firstCh)) {
-                    throw new IllegalArgumentException("invalid property name: [" + property + "]");
-                }
-                ascend = true;
+                throw new IllegalArgumentException("Sort direction prefix required '+': ascend, '-': descend");
         }
         return new Sort.Order(ascend ? Sort.Direction.ASC : Sort.Direction.DESC, property);
     }

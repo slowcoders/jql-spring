@@ -81,7 +81,7 @@ public abstract class JdbcSchemaController {
 
         if (need_pagination) {
             long count = repository.count(filter);
-            PageRequest pageReq = PageRequest.of(page, limit, select.getOrders());
+            PageRequest pageReq = PageRequest.of(page, limit, select.getSort());
             return new PageImpl(res, pageReq, count);
         } else {
             return res;

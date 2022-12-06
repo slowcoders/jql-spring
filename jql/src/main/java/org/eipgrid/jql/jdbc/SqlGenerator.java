@@ -113,7 +113,7 @@ public class SqlGenerator extends SqlConverter implements QueryBuilder {
             writeFrom(where, tableName, true);
             writeWhere(where);
             tableName = "_cte";
-            writeOrderBy(where, columns.getOrders(), false);
+            writeOrderBy(where, columns.getSort(), false);
             writePagination(columns);
             sw.decTab();
             sw.write("\n)");
@@ -131,7 +131,7 @@ public class SqlGenerator extends SqlConverter implements QueryBuilder {
         sw.replaceTrailingComma("\n");
         writeFrom(where, tableName, false);
         writeWhere(where);
-        writeOrderBy(where, columns.getOrders(), !where.isLinearNode());
+        writeOrderBy(where, columns.getSort(), !where.isLinearNode());
         if (!need_complex_pagination) {
             writePagination(columns);
         }

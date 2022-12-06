@@ -15,7 +15,6 @@ import javax.annotation.PostConstruct;
 import javax.persistence.Cache;
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
-import javax.validation.constraints.NotNull;
 import java.io.IOException;
 import java.util.*;
 
@@ -83,7 +82,7 @@ public abstract class JPARepositoryBase<ENTITY, ID> extends JPAQueryBuilder<ENTI
 
     //@Override
     public <T> List<T> find(Map<String, Object> filterConditions, JqlSelect columns, int limit, Class<T> resultType) {
-        Query query = super.buildSearchQuery(filterConditions, columns.getOrders(), resultType);
+        Query query = super.buildSearchQuery(filterConditions, columns.getSort(), resultType);
 
         /** Hibernate 버그: limit 값이 생략되면, join 된 row 수만큼 entity 가 생성된다.
          *  이에 limit 값 항상 명시 필요함. */

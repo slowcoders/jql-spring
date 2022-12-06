@@ -11,7 +11,6 @@ import org.eipgrid.jql.util.KVEntity;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.eipgrid.jql.JqlSelect;
-import org.springframework.data.domain.Sort;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
@@ -135,7 +134,7 @@ public class JqlTutorialController {
 
         if (need_pagination) {
             long count = repository.count(filter);
-            PageRequest pageReq = PageRequest.of(page, limit, select.getOrders());
+            PageRequest pageReq = PageRequest.of(page, limit, select.getSort());
             return new PageImpl(res, pageReq, count);
         } else {
             return res;
