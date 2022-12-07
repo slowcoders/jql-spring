@@ -82,7 +82,7 @@ public class TableFilter extends Filter implements JqlResultMapping {
         } else {
             selectedColumns = new ArrayList<>();
             for (String key : jsonKeys) {
-                selectedColumns.add(schema.getColumn(key));
+                selectedColumns.add(schema.getColumn(key.trim()));
             }
         }
     }

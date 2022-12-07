@@ -166,8 +166,8 @@ ${vm.js_code}`
       then((res) => {
         const columns = [];
         for (const column of res.data) {
-          columns.push("+" + column);
-          columns.push("-" + column);
+          columns.push(column + "/");
+          columns.push(column + "/-");
         }
         this.columnNames = columns;
         console.log(res.data);

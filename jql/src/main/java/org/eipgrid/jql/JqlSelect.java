@@ -13,6 +13,7 @@ public class JqlSelect {
     private int offset;
     private int limit;
     private static JqlSelect selectAny = new JqlSelect(Sort.unsorted(), 0, 0);
+    private static char SORT_OPTION_SEPARATOR = '/';
 
     private JqlSelect(Sort sort, int offset, int limit) {
         this.sort = sort;
@@ -104,9 +105,9 @@ public class JqlSelect {
             this.selectAll = true;
             return;
         }
-        int idx = property.indexOf(':');
+        int idx = property.indexOf(SORT_OPTION_SEPARATOR);
         if (idx > 0) {
-            RankedOrder order = createOrder(property, idx);
+            RankedOrder order = createOrder(property, idx, orders.size());
             orders.add(order);
             property = order.getProperty();
         }
@@ -116,27 +117,24 @@ public class JqlSelect {
         }
     }
 
-    static RankedOrder createOrder(String property, int idx) {
+    static RankedOrder createOrder(String property, int idx, int minorRank) {
         if (idx <= 0) {
             throw new IllegalArgumentException("invalid ordered column expression: " + property);
         }
         String name = property.substring(0, idx);
+        int rank = 0;
         boolean ascend = true;
-        switch (property.charAt(++idx)) {
-            case 'd':
+        if (property.length() > ++idx) {
+            int ch = property.charAt(idx);
+            if (ch == '-') {
                 ascend = false;
-            case 'a':
-                idx++;
-            default:
+                idx ++;
+            }
+            if (property.length() > idx) {
+                rank = Integer.parseInt(property.substring(idx));
+            }
         }
-        String rank$ = property.substring(idx);
-        int rank;
-        if (rank$.length() == 0) {
-            rank = 0;
-        } else {
-            rank = Integer.parseInt(rank$);
-        }
-        RankedOrder order = new RankedOrder(name, ascend, rank);
+        RankedOrder order = new RankedOrder(name, ascend, rank * 100 + minorRank);
         return order;
     }
 
@@ -159,8 +157,8 @@ public class JqlSelect {
         }
         ArrayList<Sort.Order> orders = new ArrayList<>();
         for (String name : properties) {
-            int idx = name.indexOf(':');
-            orders.add(createOrder(name, idx));
+            int idx = name.indexOf(SORT_OPTION_SEPARATOR);
+            orders.add(createOrder(name, idx, 0));
         }
         return Sort.by(orders);
     }

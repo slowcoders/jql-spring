@@ -146,20 +146,27 @@ public class SqlGenerator extends SqlConverter implements QueryBuilder {
         }
 
         sw.write("\nORDER BY ");
+        final HashSet<String> explicitSortColumns = new HashSet<>();
         if (sort != null) {
             JqlSchema schema = where.getSchema();
             sort.forEach(order -> {
                 String p = order.getProperty();
-                sw.write(where.getMappingAlias()).write('.');
-                sw.write(schema.getColumn(p).getColumnName());
+                String qname = where.getMappingAlias() + '.' + schema.getColumn(p).getColumnName();
+                explicitSortColumns.add(qname);
+                sw.write(qname);
                 sw.write(order.isAscending() ? " asc" : " desc").write(", ");
             });
         }
-        for (JqlResultMapping mapping : where.getResultColumnMappings()) {
-            if (mapping.isLinearNode()) continue;
-            String table = mapping.getMappingAlias();
-            for (JqlColumn column : mapping.getSchema().getPKColumns()) {
-                sw.write(table).write('.').write(column.getColumnName()).write(", ");
+        if (need_joined_result_set_ordering) {
+            for (JqlResultMapping mapping : where.getResultColumnMappings()) {
+                if (mapping.isLinearNode()) continue;
+                String table = mapping.getMappingAlias();
+                for (JqlColumn column : mapping.getSchema().getPKColumns()) {
+                    String qname = table + '.' + column.getColumnName();
+                    if (!explicitSortColumns.contains(qname)) {
+                        sw.write(table).write('.').write(column.getColumnName()).write(", ");
+                    }
+                }
             }
         }
         sw.replaceTrailingComma("");
