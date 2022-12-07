@@ -59,7 +59,7 @@ public abstract class JdbcSchemaController {
                        @RequestParam(value = "page", required = false) Integer page,
                        @Parameter(name = "limit", example = "10")
                        @RequestParam(value = "limit", defaultValue = "0") int limit,
-                       @RequestParam(value = "columns", required = false) String columns) {
+                       @RequestParam(value = "select", required = false) String columns) {
         return find(table, page, limit, columns, null);
     }
 
@@ -70,7 +70,7 @@ public abstract class JdbcSchemaController {
                        @RequestParam(value = "page", required = false) Integer page,
                        @Parameter(name = "limit", example = "10")
                        @RequestParam(value = "limit", defaultValue = "0") int limit,
-                       @RequestParam(value = "columns", defaultValue = "*") String columns,
+                       @RequestParam(value = "select", defaultValue = "*") String columns,
                        @Schema(implementation = Object.class)
                        @RequestBody() HashMap<String, Object> filter) {
         boolean need_pagination = page != null && limit > 1;
@@ -93,7 +93,7 @@ public abstract class JdbcSchemaController {
     @ResponseBody
     @Operation(summary = "조건 검색 첫 엔터티 읽기")
     public KVEntity top(@PathVariable("table") String table,
-                        @RequestParam(value = "columns", defaultValue = "*") String columns,
+                        @RequestParam(value = "select", defaultValue = "*") String columns,
                         @Schema(implementation = Object.class)
                         @RequestBody HashMap<String, Object> filter) {
         JQLRepository<KVEntity, Object> repository = getRepository(table);

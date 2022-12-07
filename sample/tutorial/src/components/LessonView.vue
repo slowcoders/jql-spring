@@ -99,6 +99,7 @@ export default {
       tableNames: sampleTables,
       columnNames: ['aaa', 'bbb', 'ccc'],
       first_sort: '',
+      columns: '*',
       limit: 3,
       sampleCode: this.make_sample_code(),
       source_lines: count_lines(this.js_code),
@@ -154,7 +155,7 @@ export default {
       return ` // JQL Sample
 const dbSchema = '${dbSchema}'
 const dbTable = '${vm.selectedTable}'
-const sortBy = '${vm.first_sort}'
+const columns = '${vm.first_sort ? "*," + vm.first_sort : "*"}'
 const limit = '${vm.limit}'
 ${vm.js_code}`
     },
@@ -165,7 +166,7 @@ ${vm.js_code}`
       then((res) => {
         const columns = [];
         for (const column of res.data) {
-          columns.push(column);
+          columns.push("+" + column);
           columns.push("-" + column);
         }
         this.columnNames = columns;

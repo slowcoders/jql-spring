@@ -22,11 +22,6 @@ export default {
         {
           header: "JQL Tutorial"
         },
-        {
-          href: "/basic",
-          title: "Basic Usage",
-          icon: "fa fa-download",
-          child: [
             {
               href: "/basic/select",
               title: "Simple Listing",
@@ -39,32 +34,19 @@ export default {
             },
             {
               href: "/basic/join",
-              title: "Simple Sorting",
+              title: "Simple Join",
               icon: "fa fa-file-alt"
             },
-          ]
-        },
-        {
-          href: "/about",
-          title: "Basic Usage",
-          icon: "fa fa-code"        },
-        {
-          href: "/team",
-          title: "Dropdown Page",
-          icon: "fa fa-list-ul",
-          child: [
             {
-              href: "/team/team-1",
+              href: "/advanced/lesson-1",
               title: "Sub Page 01",
               icon: "fa fa-file-alt"
             },
             {
-              href: "/team/team-2",
+              href: "/advanced/lesson-2",
               title: "Sub Page 02",
               icon: "fa fa-file-alt"
             }
-          ]
-        }
       ],
       collapsed: false
     };

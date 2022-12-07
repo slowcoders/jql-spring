@@ -1,6 +1,6 @@
 
 <template>
-  <LI> Comment 를 해제하면서 Join 쿼리 사용법을 익혀본다. </LI>
+  <LI> Han Solo 의 친구 중 길이가 10m 이상인 우주선 비행사를 검색한다. </LI>
   <LessonView
       :js_code="code"
       :enable_table_select="false"
@@ -12,9 +12,12 @@ import LessonView from "@/components/LessonView";
 
 const sample_code = `
 const jql = {
-  // "starship": {},
-  // "+friend": {},
-  // "+episode": {},
+  "name" : "Han Solo",
+  "+friend": {
+    "starship": {
+      "length@ge": 10
+    }
+  }
 }
 this.http_post(\`http://localhost:6090/api/jql/\${dbSchema}/\${dbTable}/find?select=\${columns}&limit=\${limit}\`, jql);
 `

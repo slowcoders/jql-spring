@@ -23,21 +23,27 @@ public class JqlSelect {
     private JqlSelect(String[] properties, int offset, int limit) {
         this.offset = offset;
         this.limit  = limit;
-        ArrayList<Sort.Order> orders = new ArrayList<>();
+        ArrayList<RankedOrder> orders = new ArrayList<>();
         for (String name : properties) {
             addColumn(name, orders);
         }
-        this.sort = Sort.by(orders);
+        orders.sort((o1, o2) -> {
+            return o1.rank() - o2.rank();
+        });
+        this.sort = Sort.by((List)orders);
     }
 
     private JqlSelect(List<String> properties, int offset, int limit) {
         this.offset = offset;
         this.limit  = limit;
-        ArrayList<Sort.Order> orders = new ArrayList<>();
+        ArrayList<RankedOrder> orders = new ArrayList<>();
         for (String name : properties) {
             addColumn(name, orders);
         }
-        this.sort = Sort.by(orders);
+        orders.sort((o1, o2) -> {
+            return o1.rank() - o2.rank();
+        });
+        this.sort = Sort.by((List)orders);
     }
 
     public static JqlSelect by(Sort sort, int offset, int limit) {
@@ -91,29 +97,47 @@ public class JqlSelect {
         return this.sort;
     }
 
-    private void addColumn(String property, ArrayList<Sort.Order> orders) {
+    private void addColumn(String property, ArrayList<RankedOrder> orders) {
 
         property = property.trim();
-        char firstCh = property.charAt(0);
-        switch (firstCh) {
-            case '+':
-            case '-':
-                Sort.Order order = createOrder(property);
-                orders.add(order);
-                property = order.getProperty();
-                break;
-            case '*':
-                if (property.length() == 1) {
-                    this.selectAll = true;
-                } else {
-                    throw new IllegalArgumentException("invalid property name: [" + property + "]");
-                }
-                return;
+        if (!this.selectAll && property.equals("*")) {
+            this.selectAll = true;
+            return;
+        }
+        int idx = property.indexOf(':');
+        if (idx > 0) {
+            RankedOrder order = createOrder(property, idx);
+            orders.add(order);
+            property = order.getProperty();
         }
 
         if (!this.selectAll) {
             addNormalColumn(property);
         }
+    }
+
+    static RankedOrder createOrder(String property, int idx) {
+        if (idx <= 0) {
+            throw new IllegalArgumentException("invalid ordered column expression: " + property);
+        }
+        String name = property.substring(0, idx);
+        boolean ascend = true;
+        switch (property.charAt(++idx)) {
+            case 'd':
+                ascend = false;
+            case 'a':
+                idx++;
+            default:
+        }
+        String rank$ = property.substring(idx);
+        int rank;
+        if (rank$.length() == 0) {
+            rank = 0;
+        } else {
+            rank = Integer.parseInt(rank$);
+        }
+        RankedOrder order = new RankedOrder(name, ascend, rank);
+        return order;
     }
 
     private boolean addNormalColumn(String property) {
@@ -135,34 +159,22 @@ public class JqlSelect {
         }
         ArrayList<Sort.Order> orders = new ArrayList<>();
         for (String name : properties) {
-            orders.add(createOrder(name));
+            int idx = name.indexOf(':');
+            orders.add(createOrder(name, idx));
         }
         return Sort.by(orders);
     }
 
-    public static Sort.Order createOrder(String property) {
-        char firstCh = property.charAt(0);
-        boolean ascend;
-        switch (firstCh) {
-            case '+':
-            case '-':
-                property = property.substring(1).trim();
-                ascend = firstCh == '+';
-                break;
-            default:
-                throw new IllegalArgumentException("Sort direction prefix required '+': ascend, '-': descend");
+    static class RankedOrder extends Sort.Order {
+        int rank;
+        public RankedOrder(String property, boolean ascend, int rank) {
+            super(ascend ? Sort.Direction.ASC : Sort.Direction.DESC, property);
+            this.rank = rank;
         }
-        return new Sort.Order(ascend ? Sort.Direction.ASC : Sort.Direction.DESC, property);
-    }
 
-//    public boolean createOrder(String property, boolean ascend) {
-//        for (Sort.Order o : this.orders) {
-//            if (o.getProperty().equals(property)) return false;
-//        }
-//        Sort.Order order = new Sort.Order(ascend ? Sort.Direction.ASC : Sort.Direction.DESC, property);
-//        orders.add(order);
-//        addNormalColumn(property);
-//        return true;
-//    }
+        final int rank() {
+            return rank;
+        }
+    }
 
 }

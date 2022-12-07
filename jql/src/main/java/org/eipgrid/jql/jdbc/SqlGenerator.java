@@ -156,7 +156,7 @@ public class SqlGenerator extends SqlConverter implements QueryBuilder {
             });
         }
         for (JqlResultMapping mapping : where.getResultColumnMappings()) {
-            if (mapping.isLinearNode()) break;
+            if (mapping.isLinearNode()) continue;
             String table = mapping.getMappingAlias();
             for (JqlColumn column : mapping.getSchema().getPKColumns()) {
                 sw.write(table).write('.').write(column.getColumnName()).write(", ");

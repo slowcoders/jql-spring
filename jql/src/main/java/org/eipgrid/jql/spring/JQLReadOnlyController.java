@@ -41,7 +41,7 @@ public interface JQLReadOnlyController<ENTITY, ID> {
     default Object list(@RequestParam(value = "page", required = false) Integer page,
                        @Parameter(name = "limit", example = "10")
                        @RequestParam(value = "limit", defaultValue = "0") int limit,
-                       @RequestParam(value = "columns", defaultValue = "*") String columns) {
+                       @RequestParam(value = "select", defaultValue = "*") String columns) {
         return find(page, limit, columns, null);
     }
 
@@ -51,7 +51,7 @@ public interface JQLReadOnlyController<ENTITY, ID> {
     default Object find(@RequestParam(value = "page", required = false) Integer page,
                         @Parameter(name = "limit", example = "10")
                         @RequestParam(value = "limit", defaultValue = "0") int limit,
-                        @RequestParam(value = "columns", defaultValue = "*") String columns,
+                        @RequestParam(value = "select", defaultValue = "*") String columns,
                         @Schema(implementation = Object.class)
                         @RequestBody() HashMap<String, Object> filter) {
         boolean need_pagination = page != null && limit > 1;
@@ -71,7 +71,7 @@ public interface JQLReadOnlyController<ENTITY, ID> {
     @PostMapping(path = "/top")
     @ResponseBody
     @Operation(summary = "조건 검색 첫 엔터티 읽기")
-    default ENTITY top(@RequestParam(value = "columns", required = false) String columns,
+    default ENTITY top(@RequestParam(value = "select", required = false) String columns,
                        @Schema(implementation = Object.class)
                        @RequestBody HashMap<String, Object> filter) {
         JqlSelect select = JqlSelect.by(JqlSelect.buildSort(columns), 0, 1);

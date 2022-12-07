@@ -11,7 +11,7 @@ import LessonView from "@/components/LessonView";
 
 const sample_code = `
 const jql = {}
-this.http_post(\`http://localhost:6090/api/jql/\${dbSchema}/\${dbTable}/find?sort=\${sortBy}&limit=\${limit}\`, jql);
+this.http_post(\`http://localhost:6090/api/jql/\${dbSchema}/\${dbTable}/find?select=\${columns}&limit=\${limit}\`, jql);
 `
 
 export default {

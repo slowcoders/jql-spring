@@ -1,6 +1,6 @@
 
 <template>
-  <LI> Comment 를 해제하면서 Join 쿼리 사용법을 익혀본다. </LI>
+  <LI> 특정 Episode 출연자의 친구의 친구 중 동일한 Episode 출연한 캐릭터 검색. </LI>
   <LessonView
       :js_code="code"
       :enable_table_select="false"
@@ -12,9 +12,16 @@ import LessonView from "@/components/LessonView";
 
 const sample_code = `
 const jql = {
-  // "starship": {},
-  // "+friend": {},
-  // "+episode": {},
+  "+episode" : {
+      "title" : "JEDI"
+  },
+  "+friend<name>": {
+    "+friend<name>": {
+      "+episode" : {
+          "title" : "JEDI"
+      },
+    }
+  },
 }
 this.http_post(\`http://localhost:6090/api/jql/\${dbSchema}/\${dbTable}/find?select=\${columns}&limit=\${limit}\`, jql);
 `

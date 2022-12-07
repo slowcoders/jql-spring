@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/jql/starwars/character")
+@RequestMapping("/api/jql/starwars/character-table")
 public class CharacterController implements JdbcTableController<Object> {
 
     JQLRepository<KVEntity, Object> repository;
