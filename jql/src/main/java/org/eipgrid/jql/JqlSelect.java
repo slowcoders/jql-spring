@@ -48,6 +48,11 @@ public class JqlSelect {
         return new JqlSelect(properties, offset, limit);
     }
 
+    public static JqlSelect by(String commaSeperatedProperties, int offset, int limit) {
+        String[] properties = commaSeperatedProperties.split(",");
+        return new JqlSelect(properties, offset, limit);
+    }
+
     public static JqlSelect by(List<String> properties, int offset, int limit) {
         return new JqlSelect(properties, offset, limit);
     }
@@ -62,10 +67,6 @@ public class JqlSelect {
 
     public int getLimit() {
         return limit;
-    }
-
-    public boolean shouldSelectAll() {
-        return this.selectAll;
     }
 
     public List<JqlColumn> getSelectedColumns(JqlSchema schema) {
@@ -121,6 +122,11 @@ public class JqlSelect {
             return true;
         }
         return false;
+    }
+
+    public static Sort buildSort(String commaSeperatedProperties) {
+        String[] properties = commaSeperatedProperties.split(",");
+        return buildSort(properties);
     }
 
     public static Sort buildSort(String[] properties) {

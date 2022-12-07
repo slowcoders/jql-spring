@@ -10,11 +10,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 
-public abstract class JQLController<ENTITY, ID> extends JQLReadOnlyController<ENTITY, ID> {
-
-    protected JQLController(JQLRepository<ENTITY, ID> repository) {
-        super(repository);
-    }
+public abstract class JQLController<ENTITY, ID> implements JQLReadOnlyController<ENTITY, ID> {
 
     @PostMapping(path = "/", consumes = { MediaType.MULTIPART_FORM_DATA_VALUE })
     @ResponseBody

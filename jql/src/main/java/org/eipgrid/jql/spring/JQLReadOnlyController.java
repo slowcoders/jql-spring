@@ -2,38 +2,23 @@ package org.eipgrid.jql.spring;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Schema;
+import org.eipgrid.jql.JqlSelect;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
-import org.eipgrid.jql.JqlSelect;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.HttpServerErrorException;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-public abstract class JQLReadOnlyController<ENTITY, ID> {
+public interface JQLReadOnlyController<ENTITY, ID> {
 
-    private JQLRepository<ENTITY,ID> repository;
+    JQLRepository<ENTITY,ID> getRepository();
 
-    protected JQLReadOnlyController(JQLRepository<ENTITY, ID> repository) {
-        this.repository = repository;
-    }
-
-    protected JQLRepository<ENTITY,ID> getRepository() {
-        return repository;
-    }
-
-    protected void setRepository(JQLRepository<ENTITY, ID> repository) {
-        if (this.repository != null) {
-            throw new RuntimeException("repository already assigned");
-        }
-        this.repository = repository;
-    }
-
-    public static HashMap newSimpleMap(String key, Object value) {
+    static HashMap newSimpleMap(String key, Object value) {
         HashMap<String, Object> map = new HashMap<>();
         map.put(key, value);
         return map;
@@ -42,8 +27,8 @@ public abstract class JQLReadOnlyController<ENTITY, ID> {
     @GetMapping(path = "/{id}")
     @ResponseBody
     @Operation(summary = "지정 엔터티 읽기")
-    public ENTITY get(@PathVariable("id") ID id) {
-        ENTITY entity = repository.find(id);
+    default ENTITY get(@PathVariable("id") ID id) {
+        ENTITY entity = getRepository().find(id);
         if (entity == null) {
             throw new HttpServerErrorException("Entity(" + id + ") is not found", HttpStatus.NOT_FOUND, null, null, null, null);
         }
@@ -53,30 +38,30 @@ public abstract class JQLReadOnlyController<ENTITY, ID> {
     @GetMapping(path = "/")
     @ResponseBody
     @Operation(summary = "전체 엔터티 리스트")
-    public Object list(@RequestParam(value = "page", required = false) Integer page,
+    default Object list(@RequestParam(value = "page", required = false) Integer page,
                        @Parameter(name = "limit", example = "10")
-                       @RequestParam(value = "limit", required = false) Integer limit,
-                       @RequestParam(value = "sort", required = false) String[] _sort) {
-        return find(page, limit, _sort, null);
+                       @RequestParam(value = "limit", defaultValue = "0") int limit,
+                       @RequestParam(value = "columns", defaultValue = "*") String columns) {
+        return find(page, limit, columns, null);
     }
 
     @PostMapping(path = "/find")
     @ResponseBody
     @Operation(summary = "조건 검색")
-    public Object find(@RequestParam(value = "page", required = false) Integer page,
-                       @Parameter(name = "limit", example = "10")
-                       @RequestParam(value = "limit", required = false) Integer _limit,
-                       @RequestParam(value = "sort", required = false) String[] _sort,
-                       @RequestBody() HashMap<String, Object> filter) {
-        int limit = _limit == null ? 0 : _limit;
+    default Object find(@RequestParam(value = "page", required = false) Integer page,
+                        @Parameter(name = "limit", example = "10")
+                        @RequestParam(value = "limit", defaultValue = "0") int limit,
+                        @RequestParam(value = "columns", defaultValue = "*") String columns,
+                        @Schema(implementation = Object.class)
+                        @RequestBody() HashMap<String, Object> filter) {
         boolean need_pagination = page != null && limit > 1;
         int offset = need_pagination ? page * limit : 0;
-        Sort sort = JqlSelect.buildSort(_sort);
-        List<ENTITY> res = repository.find(filter, JqlSelect.by(sort, offset, limit));
+        JqlSelect select = JqlSelect.by(columns, offset, limit);
+        List<ENTITY> res = getRepository().find(filter, select);
 
         if (need_pagination) {
-            long count = repository.count(filter);
-            PageRequest pageReq = PageRequest.of(page, limit, sort);
+            long count = getRepository().count(filter);
+            PageRequest pageReq = PageRequest.of(page, limit, select.getSort());
             return new PageImpl(res, pageReq, count);
         } else {
             return res;
@@ -86,17 +71,19 @@ public abstract class JQLReadOnlyController<ENTITY, ID> {
     @PostMapping(path = "/top")
     @ResponseBody
     @Operation(summary = "조건 검색 첫 엔터티 읽기")
-    public ENTITY top(@RequestParam(value = "sort", required = false) String[] _sort,
-                      @RequestBody HashMap<String, Object> filter) {
-        Sort sort = JqlSelect.buildSort(_sort);
-        return repository.findTop(filter, sort);
+    default ENTITY top(@RequestParam(value = "columns", required = false) String columns,
+                       @Schema(implementation = Object.class)
+                       @RequestBody HashMap<String, Object> filter) {
+        JqlSelect select = JqlSelect.by(JqlSelect.buildSort(columns), 0, 1);
+        List<ENTITY> res = getRepository().find(filter, select);
+        return res.size() > 0 ? res.get(0) : null;
     }
 
     @PostMapping(path = "/clear-cache")
     @ResponseBody
     @Operation(summary = "Cache 비우기")
-    public void clearCache() {
-        repository.clearEntityCache(null);
+    default void clearCache() {
+        getRepository().clearEntityCache(null);
     }
 
 

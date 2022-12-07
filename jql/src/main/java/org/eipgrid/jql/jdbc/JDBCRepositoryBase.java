@@ -128,7 +128,6 @@ public class JDBCRepositoryBase<ID> /*extends JDBCQueryBuilder*/ implements JQLR
 
     protected List<KVEntity> find_impl(Map<String, Object> jqlFilter, JqlSelect columns) {
         JqlQuery query = this.buildQuery(jqlFilter);
-        query.setSelectedColumns(columns);
         String sql = sqlGenerator.createSelectQuery(query, columns);
         List<KVEntity> res = (List)jdbc.query(sql, getColumnMapRowMapper(query));
         return res;
