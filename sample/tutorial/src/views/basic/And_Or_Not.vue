@@ -14,7 +14,7 @@ import LessonView from "@/components/LessonView";
 
 const sample_code = `
 const jql = {
-  "name@like": ["%Han%, "%Darth"],
+  "name@like": ["Han%", "Darth%"],
   "height@between": [1, 3]
 }
 this.http_post(\`http://localhost:6090/api/jql/\${dbSchema}/\${dbTable}/find?sort=\${sort}&limit=\${limit}\`, jql);
