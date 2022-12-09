@@ -1,6 +1,7 @@
 package org.eipgrid.jql.parser;
 
 import org.eipgrid.jql.JqlSchema;
+import org.eipgrid.jql.JqlSelect;
 import org.springframework.core.convert.ConversionService;
 
 import javax.persistence.FetchType;
@@ -43,16 +44,14 @@ public class JqlParser {
                 key = key.substring(0, op_start).trim();
             }
 
-            boolean fetchData = true;
-            PredicateParser op = PredicateParser.getParser(function);
-            String selectedKeys[] = null;
-            if (key.charAt(key.length() - 1) == '>') {
+            PredicateFactory op = PredicateFactory.getFactory(function);
+            boolean fetchData = op.needFetchData();
+            JqlSelect select = JqlSelect.All;
+            if (key.length() > 0 && key.charAt(key.length() - 1) == '>') {
                 int p = key.lastIndexOf('<');
                 String keys = key.substring(p + 1, key.length()-1);
-                if (keys.length() == 0) {
-                    selectedKeys = emptyColumns;
-                } else {
-                    selectedKeys = keys.split(",");
+                if (keys.length() > 0) {
+                    select = JqlSelect.by(keys, null, 0, 0);
                 }
                 key = key.substring(0, p).trim();
             }
@@ -66,7 +65,11 @@ public class JqlParser {
             ValueNodeType valueCategory = this.getValueCategory(value);
             Filter targetNode = baseFilter.getFilterNode(key, valueCategory);
             if (targetNode != baseFilter) {
-                targetNode.setSelectedColumns(selectedKeys);
+                if (!fetchData) {
+                    targetNode.setSelectedColumns(JqlSelect.NotAtAll);
+                } else {
+                    targetNode.setSelectedColumns(select);
+                }
             }
 
             Predicate cond;

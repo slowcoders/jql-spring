@@ -4,7 +4,7 @@
       :js_code="code"
       :enable_table_select="false">
     <template v-slot:description>
-      <H5> Comment 를 각각 해제하면서 operator 사용법을 익혀본다. </H5>
+      <H5> 키가 1.5m 이하이거나 체중이 100kg 이상인 Character 검색 방법(2) </H5>
     </template>
   </LessonView>
 </template>
@@ -14,21 +14,10 @@ import LessonView from "@/components/LessonView";
 
 const sample_code = `
 const jql = {
-  // "id": 1001
-  // "id": [1001, 1004]
-  // "id@not": 1001
-  // "id@not": [1001, 1004]
-  // "id@le": 1001
-  // "id@lt": 1001
-  // "id@ge": 1001
-  // "id@gt": 1001
-  // "id@between": [1001, 1002]
-  // "id@not between": [1001, 1002]
-  // "id@ge": 1001, "id@le": 1002
-  // "name@like": "Luke%"
-  // "nema@not like": "Luke%"
-  // "name@like": [ "Luke%", "Darth%" ]
-  // "name@not like": [ "Luke%", "Darth%" ]
+  "@not": {
+    "height@gt": 1.5,
+    "mass@le": 100
+  }
 }
 this.http_post(\`http://localhost:6090/api/jql/\${dbSchema}/\${dbTable}/find?sort=\${sort}&limit=\${limit}\`, jql);
 `

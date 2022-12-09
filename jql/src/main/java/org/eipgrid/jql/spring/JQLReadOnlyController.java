@@ -6,7 +6,6 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import org.eipgrid.jql.JqlSelect;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.HttpServerErrorException;
@@ -39,10 +38,11 @@ public interface JQLReadOnlyController<ENTITY, ID> {
     @ResponseBody
     @Operation(summary = "전체 엔터티 리스트")
     default Object list(@RequestParam(value = "page", required = false) Integer page,
-                       @Parameter(name = "limit", example = "10")
-                       @RequestParam(value = "limit", defaultValue = "0") int limit,
-                       @RequestParam(value = "select", defaultValue = "*") String columns) {
-        return find(page, limit, columns, null);
+                        @Parameter(name = "limit", example = "10")
+                        @RequestParam(value = "limit", defaultValue = "0") int limit,
+                        @RequestParam(value = "columns", required = false) String columns,
+                        @RequestParam(value = "sort", required = false) String sort) {
+        return find(page, limit, columns, sort, null);
     }
 
     @PostMapping(path = "/find")
@@ -51,12 +51,13 @@ public interface JQLReadOnlyController<ENTITY, ID> {
     default Object find(@RequestParam(value = "page", required = false) Integer page,
                         @Parameter(name = "limit", example = "10")
                         @RequestParam(value = "limit", defaultValue = "0") int limit,
-                        @RequestParam(value = "select", defaultValue = "*") String columns,
+                        @RequestParam(value = "columns", required = false) String columns,
+                        @RequestParam(value = "sort", required = false) String sort,
                         @Schema(implementation = Object.class)
                         @RequestBody() HashMap<String, Object> filter) {
         boolean need_pagination = page != null && limit > 1;
         int offset = need_pagination ? page * limit : 0;
-        JqlSelect select = JqlSelect.by(columns, offset, limit);
+        JqlSelect select = JqlSelect.by(columns, sort, offset, limit);
         List<ENTITY> res = getRepository().find(filter, select);
 
         if (need_pagination) {
@@ -71,10 +72,11 @@ public interface JQLReadOnlyController<ENTITY, ID> {
     @PostMapping(path = "/top")
     @ResponseBody
     @Operation(summary = "조건 검색 첫 엔터티 읽기")
-    default ENTITY top(@RequestParam(value = "select", required = false) String columns,
+    default ENTITY top(@RequestParam(value = "columns", required = false) String columns,
+                       @RequestParam(value = "sort", required = false) String sort,
                        @Schema(implementation = Object.class)
                        @RequestBody HashMap<String, Object> filter) {
-        JqlSelect select = JqlSelect.by(JqlSelect.buildSort(columns), 0, 1);
+        JqlSelect select = JqlSelect.by(columns, sort, 0, 1);
         List<ENTITY> res = getRepository().find(filter, select);
         return res.size() > 0 ? res.get(0) : null;
     }

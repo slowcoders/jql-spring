@@ -26,12 +26,6 @@ public class JqlQuery extends TableFilter {
         return false;
     }
 
-    public void setSelectedColumns(JqlSelect select) {
-        List<JqlColumn> columns = select.getSelectedColumns(this.getSchema());
-        super.setSelectedColumns(columns);
-    }
-
-
     public List<JqlResultMapping> getResultColumnMappings() {
         if (columnGroupMappings.size() == 0) {
             gatherColumnMappings(columnGroupMappings);

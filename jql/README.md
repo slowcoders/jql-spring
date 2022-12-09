@@ -36,6 +36,7 @@ curl -X 'POST' \
 { "id@is" : [1000, 1001]}    /* --> where id in (1000, 1001) */ 
 { "id@not" : [1000, 1001]}   /* --> where id not in (1000, 1001) */ 
 ```
+
 ### like, not like
 * SQL 문 'like', 'not like' 에 해당
 ```
@@ -53,6 +54,33 @@ curl -X 'POST' \
 { "id@ge" : 1000 }                      /* --> where id >= 1000 */ 
 { "id@between" : [1000, 1001] }         /* --> where id >= 1000 and id <= 1001 */ 
 { "id@not between" : [1000, 10001] }    /* --> where not (id >= 1000 and id <= 1001) */ 
+```
+
+### is, in and not, not in
+* Join 검색 또는 부가적인 검색 조건절을 추가하기 위해 사용된다. is 와 in, not 과 not in 는 동일한 검색을 수행한다. <br>
+  단 in 영역의 property 들은 검색 결과에 포함되지 않는다.
+```
+{ "starship" : { id = 3000 } }           /* --> SELECT t_0.*, t_1.* FROM starwars.character as t_0
+                                                inner join starwars.starship as t_1 on
+                                                t_0.id = t_1.pilot_id
+                                                WHERE (t_1.id = 3000) */
+{ "starship@is" : { id = 3000 } } -> { "starship" : { id = 3000 } } 과 동일
+                                                  
+{ "starship@in" : { id = 3000 } }       /* --> SELECT t_0.* FROM starwars.character as t_0
+                                               inner join starwars.starship as t_1 on
+                                               t_0.id = t_1.pilot_id
+                                               WHERE (t_1.id = 3000) */
+                                        (starship entity 는 검색 결과에 포함하지 않음)
+                                        
+{ "starship@not" : { id = 3000 } }      /* --> SELECT t_0.* FROM starwars.character as t_0
+                                               inner join starwars.starship as t_1 on
+                                               NOT (t_0.id = t_1.pilot_id)
+                                               WHERE (t_1.id = 3000) */ 
+{ "starship@not" : { id = 3000 } }      /* --> SELECT t_0.* t_1.* FROM starwars.character as t_0
+                                               inner join starwars.starship as t_1 on
+                                               NOT (t_0.id = t_1.pilot_id)
+                                               WHERE (t_1.id = 3000) */ 
+                                        (starship entity 는 검색 결과에 포함하지 않음)
 ```
 
 

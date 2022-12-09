@@ -22,31 +22,48 @@ export default {
         {
           header: "JQL Tutorial"
         },
+        {
+          href: "/basic/select",
+          title: "Simple Listing",
+          icon: "fa fa-file-alt"
+        },
+        {
+          href: "/basic/compare",
+          title: "Simple Operators",
+          icon: "fa fa-file-alt"
+        },
+        {
+          href: "/basic/join",
+          title: "Simple Join",
+          icon: "fa fa-file-alt"
+        },
+        {
+          href: "/advanced/lesson-1",
+          title: "Joined Query",
+          icon: "fa fa-file-alt"
+        },
+        {
+          href: "/advanced/lesson-2",
+          title: "Recursive Joined Query",
+          icon: "fa fa-file-alt"
+        },
+        {
+          href: "/advanced/lesson-3",
+          title: "And <-> Or",
+          icon: "fa fa-download",
+          child: [
             {
-              href: "/basic/select",
-              title: "Simple Listing",
+              href: "/advanced/lesson-3-1",
+              title: "Or operation",
               icon: "fa fa-file-alt"
             },
             {
-              href: "/basic/compare",
-              title: "Simple Operators",
+              href: "/advanced/lesson-3-2",
+              title: "Or -> And conversion ",
               icon: "fa fa-file-alt"
             },
-            {
-              href: "/basic/join",
-              title: "Simple Join",
-              icon: "fa fa-file-alt"
-            },
-            {
-              href: "/advanced/lesson-1",
-              title: "Sub Page 01",
-              icon: "fa fa-file-alt"
-            },
-            {
-              href: "/advanced/lesson-2",
-              title: "Sub Page 02",
-              icon: "fa fa-file-alt"
-            }
+          ]
+        }
       ],
       collapsed: false
     };

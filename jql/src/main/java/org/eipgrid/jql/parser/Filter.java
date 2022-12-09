@@ -1,5 +1,7 @@
 package org.eipgrid.jql.parser;
 
+import org.eipgrid.jql.JqlSelect;
+
 import java.util.HashMap;
 
 abstract class Filter extends PredicateSet implements JqlFilterNode {
@@ -29,7 +31,7 @@ abstract class Filter extends PredicateSet implements JqlFilterNode {
         return parent.getRootFilter();
     }
 
-    public void setSelectedColumns(String[] jsonKeys) {}
+    public void setSelectedColumns(JqlSelect select) {}
 
     public Filter getFilterNode(String key, ValueNodeType nodeType) {
         if (key == null) return this;

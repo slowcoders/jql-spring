@@ -8,15 +8,11 @@ import org.eipgrid.jql.parser.JqlParser;
 import org.eipgrid.jql.parser.JqlQuery;
 import org.eipgrid.jql.util.KVEntity;
 import org.springframework.core.convert.ConversionService;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.Pageable;
 import org.eipgrid.jql.JqlSelect;
 import org.springframework.data.domain.Sort;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.ResultSetExtractor;
 
-import javax.validation.constraints.NotNull;
 import java.io.IOException;
 import java.util.*;
 
@@ -118,7 +114,7 @@ public class JDBCRepositoryBase<ID> /*extends JDBCQueryBuilder*/ implements JQLR
     @Override
     public KVEntity find(ID id) {
         Map<String, Object> filter = createJqlFilterWithId(id);
-        List<KVEntity> res = find_impl(filter, JqlSelect.selectAny());
+        List<KVEntity> res = find_impl(filter, JqlSelect.All);
         return res.size() > 0 ? res.get(0) : null;
     }
 
@@ -158,12 +154,12 @@ public class JDBCRepositoryBase<ID> /*extends JDBCQueryBuilder*/ implements JQLR
     @Override
     public List<KVEntity> list(Collection<ID> idList) {
         Map<String, Object> filter = createJqlFilterWithIdList( idList);
-        return find_impl(filter, JqlSelect.selectAny());
+        return find_impl(filter, JqlSelect.All);
     }
 
     @Override
     public KVEntity findTop(Map<String, Object> jqlFilter, Sort sort) {
-        List<KVEntity> res = this.find_impl(jqlFilter, JqlSelect.by(sort, 0, 1));
+        List<KVEntity> res = this.find_impl(jqlFilter, JqlSelect.by(null, sort, 0, 1));
         return res.size() > 0 ? res.get(0) : null;
     }
 

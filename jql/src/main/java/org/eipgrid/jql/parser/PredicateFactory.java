@@ -4,21 +4,28 @@ import org.eipgrid.jql.util.ClassUtils;
 
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.Map;
 
-abstract class PredicateParser {
+abstract class PredicateFactory {
 
-    static PredicateParser defaultParser = new MatchAny(CompareOperator.EQ, true);
+    private final boolean fetchData;
+    private final boolean propertyNameRequired;
+
+    static PredicateFactory defaultParser = new MatchAny(CompareOperator.EQ, true, false);
+
+    protected PredicateFactory(boolean fetchData, boolean propertyNameRequired) {
+        this.fetchData = fetchData;
+        this.propertyNameRequired = propertyNameRequired;
+    }
 
     public Class<?> getAccessType(Object value, Class<?> fieldType) {
         return fieldType;
     }
 
-    public boolean isAttributeNameRequired() { return false; }
+    public boolean isAttributeNameRequired() { return propertyNameRequired; }
 
     public abstract Predicate createPredicate(QAttribute column, Object value);
 
-    public static PredicateParser getParser(String function) {
+    public static PredicateFactory getFactory(String function) {
         if (function == null) return defaultParser;
         return operators.get(function);
     }
@@ -27,34 +34,27 @@ abstract class PredicateParser {
         switch (nodeType) {
             case Entities: {
                 PredicateSet or_qs = new PredicateSet(Conjunction.OR, baseScope.getBaseFilter());
-                baseScope.add(this.isNotOperation() ? new Predicate.Not(or_qs) : or_qs);
+                baseScope.add(or_qs);
                 return or_qs;
             }
-            case Entity:
-                if (this.isNotOperation()) {
-                    PredicateSet and_qs = new PredicateSet(Conjunction.AND, baseScope.getBaseFilter());
-                    baseScope.add(new Predicate.Not(and_qs));
-                    return and_qs;
-                }
-            default:
+            case Entity: default:
                 return baseScope;
         }
     }
 
-    protected boolean isNotOperation() { return false; }
+    public boolean needFetchData() { return fetchData; }
 
-    public boolean needFetchData() { return true; }
-
-    private static final HashMap<String, PredicateParser> operators = new HashMap<>();
+    private static final HashMap<String, PredicateFactory> operators = new HashMap<>();
 
     //=======================================================//
     // Operators
     // ------------------------------------------------------//
 
-    private static class Compare extends PredicateParser {
+    private static class Compare extends PredicateFactory {
         final CompareOperator operator;
 
         Compare(CompareOperator operator) {
+            super(false, true);
             this.operator = operator;
         }
 
@@ -63,11 +63,12 @@ abstract class PredicateParser {
         }
     }
 
-    private static class MatchAny extends PredicateParser {
+    private static class MatchAny extends PredicateFactory {
         final CompareOperator operator;
         final boolean fetchData;
 
-        MatchAny(CompareOperator operator, boolean fetchData) {
+        MatchAny(CompareOperator operator, boolean fetchData, boolean propertyNameRequired) {
+            super(fetchData, propertyNameRequired);
             this.operator = operator;
             this.fetchData = fetchData;
         }
@@ -99,28 +100,36 @@ abstract class PredicateParser {
         }
     };
 
-//    static class Excepts extends MatchAny {
-//        Excepts() {
-//            super(CompareOperator.EQ, true);
-//        }
-//
-//        public PredicateSet getParserNode(PredicateSet baseScope, ValueNodeType nodeType) {
-//            if (nodeType == ValueNodeType.Entities) {
-//                PredicateSet or_qs = new PredicateSet(Conjunction.OR, baseScope.getBaseFilter());
-//                baseScope.add(or_qs);
-//                return or_qs;
-//            }
-//            return baseScope;
-//        }
-//
-//    };
+    static class NotMatch extends MatchAny {
 
-    static class PairedPredicate extends PredicateParser {
-        private final PredicateParser operator1;
-        private final PredicateParser operator2;
+        NotMatch(CompareOperator operator, boolean fetchData, boolean propertyNameRequired) {
+            super(operator, fetchData, propertyNameRequired);
+        }
+
+        public PredicateSet getPredicateNode(PredicateSet baseScope, ValueNodeType nodeType) {
+            switch (nodeType) {
+                case Entities: {
+                    PredicateSet or_qs = new PredicateSet(Conjunction.OR, baseScope.getBaseFilter());
+                    baseScope.add(new Predicate.Not(or_qs));
+                    return or_qs;
+                }
+                case Entity:
+                    PredicateSet and_qs = new PredicateSet(Conjunction.AND, baseScope.getBaseFilter());
+                    baseScope.add(new Predicate.Not(and_qs));
+                    return and_qs;
+                default:
+                    return baseScope;
+            }
+        }
+    }
+
+    static class PairedPredicate extends PredicateFactory {
+        private final PredicateFactory operator1;
+        private final PredicateFactory operator2;
         private final Conjunction conjunction;
 
-        PairedPredicate(PredicateParser operator1, PredicateParser operator2, Conjunction conjunction) {
+        PairedPredicate(PredicateFactory operator1, PredicateFactory operator2, Conjunction conjunction) {
+            super(false, true);
             this.operator1 = operator1;
             this.operator2 = operator2;
             this.conjunction = conjunction;
@@ -140,11 +149,13 @@ abstract class PredicateParser {
     }
 
     static {
-        operators.put("is", new MatchAny(CompareOperator.EQ, false));
-        operators.put("not", new MatchAny(CompareOperator.NE, false));
+        operators.put("is", new MatchAny(CompareOperator.EQ, true, false));
+        operators.put("in", new MatchAny(CompareOperator.EQ, false, false));
+        operators.put("not", new NotMatch(CompareOperator.NE, true, false));
+        operators.put("not in", new NotMatch(CompareOperator.NE, false, false));
 
-        operators.put("like", new MatchAny(CompareOperator.LIKE, true));
-        operators.put("not like", new MatchAny(CompareOperator.NOT_LIKE, true));
+        operators.put("like", new MatchAny(CompareOperator.LIKE, true, true));
+        operators.put("not like", new NotMatch(CompareOperator.NOT_LIKE, true, true));
 
         Compare GT = new Compare(CompareOperator.GT);
         Compare LT = new Compare(CompareOperator.LT);

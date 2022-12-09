@@ -4,7 +4,7 @@
       :js_code="code"
       :enable_table_select="false">
     <template v-slot:description>
-      <H5> Comment 를 각각 해제하면서 operator 사용법을 익혀본다. </H5>
+      <H5> 한 Entity 내부에서 Or 조건으로 검색하는 방법 </H5>
     </template>
   </LessonView>
 </template>
@@ -14,21 +14,8 @@ import LessonView from "@/components/LessonView";
 
 const sample_code = `
 const jql = {
-  // "id": 1001
-  // "id": [1001, 1004]
-  // "id@not": 1001
-  // "id@not": [1001, 1004]
-  // "id@le": 1001
-  // "id@lt": 1001
-  // "id@ge": 1001
-  // "id@gt": 1001
-  // "id@between": [1001, 1002]
-  // "id@not between": [1001, 1002]
-  // "id@ge": 1001, "id@le": 1002
-  // "name@like": "Luke%"
-  // "nema@not like": "Luke%"
-  // "name@like": [ "Luke%", "Darth%" ]
-  // "name@not like": [ "Luke%", "Darth%" ]
+  "name@like": ["%Han%, "%Darth"],
+  "height@between": [1, 3]
 }
 this.http_post(\`http://localhost:6090/api/jql/\${dbSchema}/\${dbTable}/find?sort=\${sort}&limit=\${limit}\`, jql);
 `

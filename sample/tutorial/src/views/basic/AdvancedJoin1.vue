@@ -1,10 +1,12 @@
 
 <template>
-  <LI> Han Solo 의 친구 중 길이가 10m 이상인 우주선 비행사를 검색한다. </LI>
   <LessonView
       :js_code="code"
-      :enable_table_select="false"
-  />
+      :enable_table_select="false">
+    <template v-slot:description>
+      <H5> Han Solo 의 친구 중 길이가 10m 이상인 우주선을 조종하는 친구를 검색한다. </H5>
+    </template>
+  </LessonView>
 </template>
 
 <script>
@@ -19,7 +21,7 @@ const jql = {
     }
   }
 }
-this.http_post(\`http://localhost:6090/api/jql/\${dbSchema}/\${dbTable}/find?select=\${columns}&limit=\${limit}\`, jql);
+this.http_post(\`http://localhost:6090/api/jql/\${dbSchema}/\${dbTable}/find?sort=\${sort}&limit=\${limit}\`, jql);
 `
 
 export default {

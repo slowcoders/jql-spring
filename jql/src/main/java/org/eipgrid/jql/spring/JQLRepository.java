@@ -1,11 +1,8 @@
 package org.eipgrid.jql.spring;
 
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.eipgrid.jql.JqlSelect;
 import org.springframework.data.domain.Sort;
 
-import javax.validation.constraints.NotNull;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
@@ -39,7 +36,7 @@ public interface JQLRepository<ENTITY, ID> {
 //    }
 
     default Iterable<ENTITY> listAll() {
-        return find(null, JqlSelect.selectAny());
+        return find(null, JqlSelect.All);
     }
 
 

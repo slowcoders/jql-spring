@@ -11,7 +11,6 @@ import org.eipgrid.jql.util.KVEntity;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.eipgrid.jql.JqlSelect;
-import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
@@ -59,8 +58,9 @@ public abstract class JdbcSchemaController {
                        @RequestParam(value = "page", required = false) Integer page,
                        @Parameter(name = "limit", example = "10")
                        @RequestParam(value = "limit", defaultValue = "0") int limit,
-                       @RequestParam(value = "select", required = false) String columns) {
-        return find(table, page, limit, columns, null);
+                       @RequestParam(value = "columns", required = false) String columns,
+                       @RequestParam(value = "sort", required = false) String sort) {
+        return find(table, page, limit, columns, sort,null);
     }
 
     @PostMapping(path = "/{table}/find")
@@ -70,12 +70,13 @@ public abstract class JdbcSchemaController {
                        @RequestParam(value = "page", required = false) Integer page,
                        @Parameter(name = "limit", example = "10")
                        @RequestParam(value = "limit", defaultValue = "0") int limit,
-                       @RequestParam(value = "select", defaultValue = "*") String columns,
+                       @RequestParam(value = "columns", required = false) String columns,
+                       @RequestParam(value = "sort", required = false) String sort,
                        @Schema(implementation = Object.class)
                        @RequestBody() HashMap<String, Object> filter) {
         boolean need_pagination = page != null && limit > 1;
         int offset = need_pagination ? page * limit : 0;
-        JqlSelect select = JqlSelect.by(columns, offset, limit);
+        JqlSelect select = JqlSelect.by(columns, sort, offset, limit);
 
         JQLRepository<KVEntity, Object> repository = getRepository(table);
         List<KVEntity> res = repository.find(filter, select);
@@ -93,11 +94,12 @@ public abstract class JdbcSchemaController {
     @ResponseBody
     @Operation(summary = "조건 검색 첫 엔터티 읽기")
     public KVEntity top(@PathVariable("table") String table,
-                        @RequestParam(value = "select", defaultValue = "*") String columns,
+                        @RequestParam(value = "columns", required = false) String columns,
+                        @RequestParam(value = "sort", required = false) String sort,
                         @Schema(implementation = Object.class)
                         @RequestBody HashMap<String, Object> filter) {
         JQLRepository<KVEntity, Object> repository = getRepository(table);
-        JqlSelect select = JqlSelect.by(columns, 0, 1);
+        JqlSelect select = JqlSelect.by(columns, sort, 0, 1);
         List<KVEntity>  res = repository.find(filter, select);
         return res.size() > 0 ? res.get(0) : null;
     }

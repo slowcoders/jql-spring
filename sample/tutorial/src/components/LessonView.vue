@@ -20,10 +20,10 @@
              First sort
           </b-form-select-option>
           <b-form-select-option
-              v-for="(option, i) in columnNames"
+              v-for="(value, i) in columnNames"
               :key="i"
-              :value="option">
-            {{ option }}
+              :value="value.trim()">
+            {{ value }}
           </b-form-select-option>
         </b-form-select>
       </td><td>
@@ -36,6 +36,8 @@
       </row>
       </table>
     </div>
+
+    <slot name="description" />
 
     <!------------>
     <CodeMirror ref="codeView"
@@ -155,8 +157,8 @@ export default {
       return ` // JQL Sample
 const dbSchema = '${dbSchema}'
 const dbTable = '${vm.selectedTable}'
-const columns = '${vm.first_sort ? "*," + vm.first_sort : "*"}'
-const limit = '${vm.limit}'
+const sort = '${vm.first_sort}'
+const limit = ${vm.limit}
 ${vm.js_code}`
     },
 
@@ -166,8 +168,8 @@ ${vm.js_code}`
       then((res) => {
         const columns = [];
         for (const column of res.data) {
-          columns.push(column + "/");
-          columns.push(column + "/-");
+          columns.push(" " + column);
+          columns.push("-" + column);
         }
         this.columnNames = columns;
         console.log(res.data);

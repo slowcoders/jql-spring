@@ -1,9 +1,6 @@
 package org.eipgrid.jql.parser;
 
-import org.eipgrid.jql.JqlColumn;
-import org.eipgrid.jql.JqlSchema;
-import org.eipgrid.jql.JqlSchemaJoin;
-import org.eipgrid.jql.JsonNodeType;
+import org.eipgrid.jql.*;
 import org.eipgrid.jql.jdbc.JqlResultMapping;
 
 import java.util.ArrayList;
@@ -71,20 +68,11 @@ public class TableFilter extends Filter implements JqlResultMapping {
 
     @Override
     public List<JqlColumn> getSelectedColumns() {
-        return selectedColumns != null ? selectedColumns : schema.getReadableColumns();
+        return selectedColumns;
     }
 
-    public void setSelectedColumns(String[] jsonKeys) {
-        if (jsonKeys == null) {
-            selectedColumns = null;
-        } else if (jsonKeys.length == 0) {
-            selectedColumns = Collections.EMPTY_LIST;
-        } else {
-            selectedColumns = new ArrayList<>();
-            for (String key : jsonKeys) {
-                selectedColumns.add(schema.getColumn(key.trim()));
-            }
-        }
+    public void setSelectedColumns(JqlSelect select) {
+        this.selectedColumns = select.getSelectedColumns(schema);
     }
 
     public TableFilter getTableFilter() {
@@ -179,7 +167,4 @@ public class TableFilter extends Filter implements JqlResultMapping {
         }
     }
 
-    protected void setSelectedColumns(List<JqlColumn> columns) {
-        this.selectedColumns = columns;
-    }
 }
