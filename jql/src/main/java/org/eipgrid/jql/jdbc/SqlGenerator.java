@@ -160,6 +160,7 @@ public class SqlGenerator extends SqlConverter implements QueryBuilder {
         if (need_joined_result_set_ordering) {
             for (JqlResultMapping mapping : where.getResultColumnMappings()) {
                 if (mapping.isLinearNode()) continue;
+                if (mapping != where && !mapping.isArrayNode()) continue;
                 String table = mapping.getMappingAlias();
                 for (JqlColumn column : mapping.getSchema().getPKColumns()) {
                     String qname = table + '.' + column.getColumnName();

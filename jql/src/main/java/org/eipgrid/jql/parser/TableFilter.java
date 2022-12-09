@@ -44,7 +44,10 @@ public class TableFilter extends Filter implements JqlResultMapping {
         return this;
     }
 
-    public TableFilter getParentNode() { return super.getParentNode().asTableFilter(); }
+    public TableFilter getParentNode() {
+        Filter parent = super.getParentNode();
+        return parent == null ? null : parent.asTableFilter();
+    }
 
     @Override
     public String getMappingAlias() {

@@ -55,29 +55,46 @@ public class JqlRowMapper implements ResultSetExtractor<List<KVEntity>> {
                 baseEntity = new KVEntity();
                 results.add(baseEntity);
             }
-            KVEntity entity = baseEntity;
+            KVEntity currEntity = baseEntity;
             JqlResultMapping mapping = mappedColumns[0].mapping;
             for (; idxColumn < columnCount; ) {
                 MappedColumn mappedColumn = mappedColumns[idxColumn];
                 if (mapping != mappedColumn.mapping) {
                     mapping = mappedColumn.mapping;
-                    entity = baseEntity;
+                    currEntity = baseEntity;
                     String[] entityPath = mapping.getEntityMappingPath();
                     int idxLastPath = entityPath.length - 1;
                     for (int i = 0; i < idxLastPath; i++) {
-                        entity = makeSubEntity(entity, entityPath[i], false);
+                        currEntity = makeSubEntity(currEntity, entityPath[i], false);
                     }
-                    entity = makeSubEntity(entity, entityPath[idxLastPath], mapping.isArrayNode());
+                    currEntity = makeSubEntity(currEntity, entityPath[idxLastPath], mapping.isArrayNode());
                 }
                 JqlColumn jqlColumn = mappedColumn.jqlColumn;
-                String fieldName = jqlColumn.getJavaFieldName();
-
                 Object value = getColumnValue(rs, ++idxColumn);
                 mappedColumn.value = value;
-                entity.putIfAbsent(fieldName, value);
+
+                putValue(currEntity, jqlColumn, value);
             }
         }
         return results;
+    }
+
+    private static void putValue(KVEntity entity, JqlColumn column, Object value) {
+        KVEntity node = entity;
+        String fieldName = column.getJavaFieldName();
+        for (JqlColumn pk; (pk = column.getJoinedPrimaryColumn()) != null; ) {
+            KVEntity pkEntity = (KVEntity) node.get(fieldName);
+            if (pkEntity == null) {
+                node.put(fieldName, pkEntity = new KVEntity());
+            }
+            node = pkEntity;
+            column = pk;
+            fieldName = column.getJavaFieldName();
+        }
+        Object old = node.put(fieldName, value);
+        if (old != null && !old.equals(value)) {
+            throw new RuntimeException("something wrong");
+        }
     }
 
     private KVEntity makeSubEntity(KVEntity entity, String key, boolean isArray) {
