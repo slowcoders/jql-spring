@@ -129,7 +129,7 @@ public class SqlConverter implements JqlPredicateVisitor {
         }
         switch (operator) {
             case NE:
-                sw.write("NOT");
+                sw.write(" NOT");
                 // no-break;
             case EQ:
                 sw.write(" IN(");
@@ -138,7 +138,7 @@ public class SqlConverter implements JqlPredicateVisitor {
                 break;
 
             case NOT_LIKE:
-                sw.write("NOT ");
+                sw.write(" NOT ");
                 // no-break;
             case LIKE:
                 sw.write("(");

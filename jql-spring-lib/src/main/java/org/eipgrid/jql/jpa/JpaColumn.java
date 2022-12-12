@@ -9,11 +9,11 @@ import org.eipgrid.jql.SchemaLoader;
 import org.eipgrid.jql.util.AttributeNameConverter;
 import org.eipgrid.jql.util.ClassUtils;
 
-import javax.annotation.Nullable;
 import javax.persistence.Column;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.JoinColumn;
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.NONE)
@@ -39,11 +39,23 @@ public class JpaColumn extends JqlColumn {
         GeneratedValue gv = f.getAnnotation(GeneratedValue.class);
         this.isAutoIncrement = gv != null && gv.strategy() == GenerationType.IDENTITY;
         this.isPk = JPAUtils.isIdField(f);
-        this.isNullable = f.getAnnotation(Nullable.class) != null;
 
+        this.isNullable = resolveNullable(f);
         this.isReadOnly = gv != null;
         this.label = null;
     }
+
+    public static boolean resolveNullable(Field f) {
+        Column column = f.getAnnotation(Column.class);
+        if (column != null) return column.nullable();
+        for (Annotation a : f.getAnnotations()) {
+            if (a.annotationType().getSimpleName().contains("NotNull")) {
+                return false;
+            }
+        }
+        return true;
+    }
+
 
     @Override
     public String getJsonKey() {

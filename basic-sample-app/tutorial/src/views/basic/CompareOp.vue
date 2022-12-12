@@ -15,18 +15,21 @@ import LessonView from "@/components/LessonView";
 const sample_code = `
 const jql = {
   // "id": 1001
-  // "id": [1001, 1004]
+  // "id": [1001, 1002]
   // "id@not": 1001
-  // "id@not": [1001, 1004]
+  // "id@not": [1001, 1002]
+
   // "id@le": 1001
   // "id@lt": 1001
   // "id@ge": 1001
   // "id@gt": 1001
+  // "id@ge": 1001, "id@le": 1002
+
   // "id@between": [1001, 1002]
   // "id@not between": [1001, 1002]
-  // "id@ge": 1001, "id@le": 1002
+
   // "name@like": "Luke%"
-  // "nema@not like": "Luke%"
+  // "name@not like": "Luke%"
   // "name@like": [ "Luke%", "Darth%" ]
   // "name@not like": [ "Luke%", "Darth%" ]
 }

@@ -1,8 +1,8 @@
 package org.eipgrid.jql.csv;
 
+import org.eipgrid.jql.jpa.JpaColumn;
 import org.eipgrid.jql.util.ClassUtils;
 
-import javax.annotation.Nullable;
 import java.lang.reflect.Field;
 
 public class CsvColumn {
@@ -14,7 +14,7 @@ public class CsvColumn {
     public CsvColumn(Field f) {
         this.field = f;
         this.valueType = ValueType.resolveValueFormat(f);
-        this.isNullable = f.getAnnotation(Nullable.class) != null;
+        this.isNullable = JpaColumn.resolveNullable(f);
         if (this.valueType == ValueType.Collection) {
             this.elementType = ClassUtils.getElementType(f);
         } else {
