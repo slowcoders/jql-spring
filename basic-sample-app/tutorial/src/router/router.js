@@ -1,4 +1,4 @@
-import { createWebHistory, createRouter } from "vue-router";
+import { createWebHashHistory, createRouter } from "vue-router";
 import SimpleList from "../views/basic/SimpleList.vue"
 import CompareOp from "../views/basic/CompareOp.vue"
 import SimpleJoin from "../views/basic/SimpleJoin.vue"
@@ -10,7 +10,7 @@ import AndOp from "@/views/advanced/AndOp";
 import ExternalLinks from "@/views/ExternalLinks";
 
 const router = createRouter({
-    history: createWebHistory(),
+    history: createWebHashHistory(),
     routes: [
         {
             path: '/basic/list',
