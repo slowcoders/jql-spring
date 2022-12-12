@@ -47,7 +47,7 @@ export default {
         },
         {
           href: "/advanced/lesson-3",
-          title: "And <-> Or",
+          title: "And/Or queries",
           icon: "fa fa-download",
           child: [
             {

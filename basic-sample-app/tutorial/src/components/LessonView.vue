@@ -158,7 +158,7 @@ export default {
 const dbSchema = '${dbSchema}'
 const dbTable = '${vm.selectedTable}'
 const sort = '${vm.first_sort}'
-const limit = ${vm.limit}
+const limit = ${vm.limit?vm.limit:0}
 ${vm.js_code}`
     },
 

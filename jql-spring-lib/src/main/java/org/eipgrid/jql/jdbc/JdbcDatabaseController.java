@@ -33,7 +33,8 @@ public abstract class JdbcDatabaseController {
     @GetMapping("/jpa-schema/{schema}/{table}")
     @ResponseBody
     @Operation(summary = "JPA Entity 소스 생성")
-    public String jpaSchema(@PathVariable("schema") String db_schema, @PathVariable("table") String tableName) throws Exception {
+    public String jpaSchema(@PathVariable("schema") String db_schema,
+                            @PathVariable("table") String tableName) throws Exception {
         JqlSchema schema = getSchema(db_schema, tableName);
         String source;
         if (schema instanceof JdbcSchema) {
@@ -48,7 +49,8 @@ public abstract class JdbcDatabaseController {
     @GetMapping("/jpa-schema/{schema}/{table}/columns")
     @ResponseBody
     @Operation(summary = "JPA Entity 소스 생성")
-    public List<String> columns(@PathVariable("schema") String db_schema, @PathVariable("table") String tableName) throws Exception {
+    public List<String> columns(@PathVariable("schema") String db_schema,
+                                @PathVariable("table") String tableName) throws Exception {
         JqlSchema schema = getSchema(db_schema, tableName);
         ArrayList<String> columns = new ArrayList<>();
         for (JqlColumn column : schema.getReadableColumns()) {
@@ -74,7 +76,8 @@ public abstract class JdbcDatabaseController {
     @GetMapping("/json-schema/{schema}/{table}")
     @ResponseBody
     @Operation(summary = "JSON Schema 소스 생성")
-    public String jsonSchema(@PathVariable("schema") String db_schema, @PathVariable("table") String tableName) throws Exception {
+    public String jsonSchema(@PathVariable("schema") String db_schema,
+                             @PathVariable("table") String tableName) throws Exception {
         JqlSchema schema = getSchema(db_schema, tableName);
         String source = JsonJql.createDDL(schema);
         String join = JsonJql.createJoinJQL(schema);
@@ -99,7 +102,18 @@ public abstract class JdbcDatabaseController {
         return sb.toString();
     }
 
-    @GetMapping("/db-schema/")
+    @GetMapping("/{schema}")
+    @ResponseBody
+    @Operation(summary = "Table 목록")
+    public String listTables(@PathVariable("schema") String db_schema) throws Exception {
+        StringBuilder sb = new StringBuilder();
+        for (String tableName : service.getTableNames(db_schema)) {
+            sb.append(tableName).append('\n');
+        }
+        return sb.toString();
+    }
+
+    @GetMapping("/")
     @ResponseBody
     @Operation(summary = "DBSchema 목록")
     public String listSchemas() throws Exception {
