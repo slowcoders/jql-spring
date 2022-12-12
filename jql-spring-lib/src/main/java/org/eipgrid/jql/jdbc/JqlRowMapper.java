@@ -35,6 +35,8 @@ public class JqlRowMapper implements ResultSetExtractor<List<KVEntity>> {
                 check_duplicated_columns:
                 for (int i = 0; i < lastMappingIndex; i++) {
                     JqlResultMapping mapping = resultMappings.get(i);
+                    List<JqlColumn> columns = mapping.getSelectedColumns();
+                    if (columns.size() == 0) continue;
                     List<JqlColumn> pkColumns = mapping.getSchema().getPKColumns();
                     int pkIndex = idxColumn;
                     for (int pkCount = pkColumns.size(); --pkCount >= 0; pkIndex++) {
@@ -47,7 +49,7 @@ public class JqlRowMapper implements ResultSetExtractor<List<KVEntity>> {
                             break check_duplicated_columns;
                         }
                     }
-                    idxColumn += mapping.getSelectedColumns().size();
+                    idxColumn += columns.size();
                 }
             }
 
@@ -56,41 +58,43 @@ public class JqlRowMapper implements ResultSetExtractor<List<KVEntity>> {
                 results.add(baseEntity);
             }
             KVEntity currEntity = baseEntity;
-            JqlResultMapping mapping = mappedColumns[0].mapping;
+            JqlResultMapping currMapping = mappedColumns[0].mapping;
             for (; idxColumn < columnCount; ) {
                 MappedColumn mappedColumn = mappedColumns[idxColumn];
-                if (mapping != mappedColumn.mapping) {
-                    mapping = mappedColumn.mapping;
+                if (currMapping != mappedColumn.mapping) {
+                    currMapping = mappedColumn.mapping;
                     currEntity = baseEntity;
-                    String[] entityPath = mapping.getEntityMappingPath();
+                    String[] entityPath = currMapping.getEntityMappingPath();
                     int idxLastPath = entityPath.length - 1;
                     for (int i = 0; i < idxLastPath; i++) {
                         currEntity = makeSubEntity(currEntity, entityPath[i], false);
                     }
-                    currEntity = makeSubEntity(currEntity, entityPath[idxLastPath], mapping.isArrayNode());
+                    currEntity = makeSubEntity(currEntity, entityPath[idxLastPath], currMapping.isArrayNode());
                 }
-                JqlColumn jqlColumn = mappedColumn.jqlColumn;
                 Object value = getColumnValue(rs, ++idxColumn);
                 mappedColumn.value = value;
 
-                putValue(currEntity, jqlColumn, value);
+                putValue(currEntity, mappedColumn, value);
             }
         }
         return results;
     }
 
-    private static void putValue(KVEntity entity, JqlColumn column, Object value) {
+    private static void putValue(KVEntity entity, MappedColumn mappedColumn, Object value) {
         KVEntity node = entity;
+        JqlColumn column = mappedColumn.jqlColumn;
         String fieldName = column.getJavaFieldName();
         for (JqlColumn pk; (pk = column.getJoinedPrimaryColumn()) != null; ) {
             KVEntity pkEntity = (KVEntity) node.get(fieldName);
             if (pkEntity == null) {
-                node.put(fieldName, pkEntity = new KVEntity());
+                pkEntity = new KVEntity();
+                node.put(fieldName, pkEntity);
             }
             node = pkEntity;
             column = pk;
             fieldName = column.getJavaFieldName();
         }
+
         Object old = node.put(fieldName, value);
         if (old != null && !old.equals(value)) {
             throw new RuntimeException("something wrong");
@@ -109,9 +113,16 @@ public class JqlRowMapper implements ResultSetExtractor<List<KVEntity>> {
                 entity.put(key, subEntity);
             }
         } else if (isArray) {
-            ArrayList<Object> array = (ArrayList<Object>) subEntity;
-            subEntity = new KVEntity();
-            array.add(subEntity);
+            if (subEntity instanceof KVEntity) {
+                /** TODO remove this tricky code */
+                ArrayList<Object> array = new ArrayList<>();
+                entity.put(key, array);
+                array.add(subEntity);
+            } else {
+                ArrayList<Object> array = (ArrayList<Object>) subEntity;
+                subEntity = new KVEntity();
+                array.add(subEntity);
+            }
         } else if (subEntity instanceof ArrayList) {
             ArrayList<KVEntity> list = (ArrayList<KVEntity>) subEntity;
             subEntity = list.get(list.size()-1);
@@ -134,8 +145,12 @@ public class JqlRowMapper implements ResultSetExtractor<List<KVEntity>> {
 
         int idxColumn = 0;
         for (JqlResultMapping mapping : resultMappings) {
+            List<JqlColumn> columns = mapping.getSelectedColumns();
+            if (columns.size() == 0) {
+                continue;
+            }
             helper.reset(mapping.getEntityMappingPath());
-            for (JqlColumn column : mapping.getSelectedColumns()) {
+            for (JqlColumn column : columns) {
                 String[] path = helper.getEntityMappingPath(column);
                 mappedColumns[idxColumn++] = new MappedColumn(mapping, column, path);
             }

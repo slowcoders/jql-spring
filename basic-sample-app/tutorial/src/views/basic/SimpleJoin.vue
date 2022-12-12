@@ -15,8 +15,12 @@ import LessonView from "@/components/LessonView";
 const sample_code = `
 const jql = {
   // "starship": {},
-  // "+friend": {},
   // "+episode": {},
+
+  // 아래 3개는 검색 조건하나 동등하나, 출력 결과에 차이가 있다.
+  // "characterFriendLink.friend": {},
+  // "characterFriendLink": { "friend": {} },
+  // "+friend": {},
 }
 this.http_post(\`http://localhost:6090/api/jql/\${dbSchema}/\${dbTable}/find?sort=\${sort}&limit=\${limit}\`, jql);
 `

@@ -23,15 +23,16 @@ public class JqlSchemaJoin {
         if (inverseMapped) {
             assert(associatedJoin == null || !associatedJoin.inverseMapped);
             this.joinedSchema = fkColumns.get(0).getSchema();
-            this.isUnique = (associatedJoin == null || associatedJoin.isUnique)
-                            && joinedSchema.isUniqueConstrainedColumnSet(fkColumns);
-        } else {
-            assert(associatedJoin == null);
             List<JqlColumn> pkColumns = fkColumns.stream()
                     .map(col -> col.getJoinedPrimaryColumn())
                     .collect(Collectors.toList());
-            this.joinedSchema = pkColumns.get(0).getSchema();
-            this.isUnique = joinedSchema.isUniqueConstrainedColumnSet(pkColumns);
+            this.isUnique = (associatedJoin == null || associatedJoin.isUnique)
+                            && baseSchema.isUniqueConstrainedColumnSet(pkColumns);
+        } else {
+            assert(associatedJoin == null);
+            this.joinedSchema = fkColumns.get(0).getJoinedPrimaryColumn().getSchema();
+            this.isUnique = baseSchema.isUniqueConstrainedColumnSet(fkColumns);
+                    // joinedSchema.isUniqueConstrainedColumnSet(pkColumns);
         }
         this.associateJoin = associatedJoin;
         this.jsonKey = associatedJoin != null ? '+' + associatedJoin.getJsonKey() : initJsonKey();
@@ -65,7 +66,8 @@ public class JqlSchemaJoin {
         String name;
         if (inverseMapped) {
             // column 이 없으므로 타입을 이용하여 이름을 정한다.
-            name = first.getSchema().getEntityClassName();
+            name = // '+' +
+                    first.getSchema().getEntityClassName();
         }
         else if (fkColumns.size() == 1) {
             name = initJsonKey(first);

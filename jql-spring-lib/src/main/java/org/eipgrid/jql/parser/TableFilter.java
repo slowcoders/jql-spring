@@ -13,7 +13,7 @@ public class TableFilter extends Filter implements JqlResultMapping {
     private final JqlSchemaJoin join;
     private final String mappingAlias;
     private String[] entityMappingPath;
-    private List<JqlColumn> selectedColumns;
+    private List<JqlColumn> selectedColumns = Collections.EMPTY_LIST;
     private static final String[] emptyPath = new String[0];
     private boolean isLinear;
 
