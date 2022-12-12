@@ -10,3 +10,12 @@ sample/target
 sample/build
 sample/postgres_data
 sample/tutorial/postgres_data
+basic-sample-app/.gradle
+basic-sample-app/build
+basic-sample-app/target
+db/postgres_data
+jql+jpa-sample-app/build
+jql+jpa-sample-app/.gradle
+jql+jpa-sample-app/target
+jql-spring-lib/.gradle
+jql-spring-lib/build
