@@ -1,6 +1,7 @@
 package org.eipgrid.jql.sample.config;
 
 import org.eipgrid.jql.jdbc.JQLJdbcService;
+import org.eipgrid.jql.spring.config.DefaultJQLConfig;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.convert.ConversionService;
@@ -13,7 +14,7 @@ import javax.persistence.EntityManagerFactory;
 import javax.sql.DataSource;
 
 @Configuration
-public class JQLJdbcConfig {
+public class JQLJdbcConfig extends DefaultJQLConfig {
 
     @Bean
     public JQLJdbcService jqlJdbcService(DataSource dataSource, TransactionTemplate transactionTemplate,

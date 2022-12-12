@@ -7,8 +7,6 @@
         class="sidebar"
         :menu="menu"
         :hide-toggle="true"
-        @item-click="onItemClick"
-        @collapse="onCollapse"
     />
   </div>
 </template>
@@ -23,14 +21,9 @@ export default {
           header: "JQL Tutorial"
         },
         {
-          href: "/",
-          title: "JQL Basic Sample & Tutorial",
-          icon: "fa fa-file-alt"
-        },
-        {
           href: "/basic/list",
           title: "Simple Listing",
-          icon: "fa fa-file-alt"
+          icon: "favicon.ico"
         },
         {
           href: "/basic/compare",
@@ -68,20 +61,16 @@ export default {
               icon: "fa fa-file-alt"
             },
           ]
-        }
+        },
+        {
+          href: "/external",
+          title: "Links",
+          icon: "fa fa-file-alt"
+        },
       ],
       collapsed: false
     };
   },
-  methods: {
-    onItemClick(e, i) {
-      console.log("onItemClick");
-    },
-    onCollapse(c) {
-      console.log("onCollapse");
-      this.collapsed = c;
-    }
-  }
 };
 </script>
 

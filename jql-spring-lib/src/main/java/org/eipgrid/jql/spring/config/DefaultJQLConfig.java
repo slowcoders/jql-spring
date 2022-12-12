@@ -17,8 +17,7 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.persistence.Entity;
 import java.nio.charset.StandardCharsets;
 
-@Configuration
-public class JQLConfig {
+public class DefaultJQLConfig {
 
     /**
      * Serialize 시 무한 루프 방지를 위한 Jackson 모듈
@@ -87,16 +86,5 @@ public class JQLConfig {
         return hm;
     }
 
-//    @Bean
-//    public JQLService jqlService(DataSource dataSource, TransactionTemplate transactionTemplate,
-//                                 MappingJackson2HttpMessageConverter jsonConverter,
-//                                 ConversionService conversionService,
-//                                 RequestMappingHandlerMapping handlerMapping,
-//                                 EntityManager entityManager,
-//                                 EntityManagerFactory entityManagerFactory) throws Exception {
-//        JQLService service = new JQLService(dataSource, transactionTemplate, jsonConverter, conversionService,
-//                handlerMapping, entityManager, entityManagerFactory);
-//        return service;
-//    }
 }
 

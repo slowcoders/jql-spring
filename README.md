@@ -1,18 +1,10 @@
-## How to run samples
+## How to run tutorials
 
-### Start postgres DB and sample application
+### Build and run basic sample application
 ```
-cd sample
-docker-compose up -d
-./gradlew bootRun
-# to start tutorial
-cd tutorial
-npm run serve
+sh build_and_run_totorial.sh
 ```
 
-### Swagger page for sample-api test.
-http://localhost:6090/swagger-ui/index.html
+### See tutorial
+http://localhost:6090
 
-
-### see tutorials
-...

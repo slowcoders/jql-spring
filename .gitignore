@@ -19,3 +19,5 @@ jql+jpa-sample-app/.gradle
 jql+jpa-sample-app/target
 jql-spring-lib/.gradle
 jql-spring-lib/build
+basic-sample-app/db/postgres_data
+basic-sample-app/src/main/resources/static/static

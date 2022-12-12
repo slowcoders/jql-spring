@@ -7,15 +7,11 @@ import AdvancedJoin2 from "@/views/advanced/AdvancedJoin2";
 import And_Or_Not from "@/views/advanced/And_Or_Not";
 import OrOp from "@/views/advanced/OrOp";
 import AndOp from "@/views/advanced/AndOp";
-import HelloWorld from "@/components/HelloWorld";
+import ExternalLinks from "@/views/ExternalLinks";
 
 const router = createRouter({
     history: createWebHistory(),
     routes: [
-        {
-            path: '/',
-            component: HelloWorld,
-        },
         {
             path: '/basic/list',
             component: SimpleList,
@@ -47,6 +43,10 @@ const router = createRouter({
         {
             path: '/advanced/lesson-3-2',
             component: AndOp,
+        },
+        {
+            path: '/external',
+            component: ExternalLinks,
         },
     ]
 });

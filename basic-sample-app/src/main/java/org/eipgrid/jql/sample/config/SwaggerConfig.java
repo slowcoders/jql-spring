@@ -10,7 +10,7 @@ public class SwaggerConfig {
     @Bean
     public GroupedOpenApi publicApi() {
         return GroupedOpenApi.builder()
-                .group("MDK demo")
+                .group("JQL API")
                 .pathsToMatch("/api/**")
                 .build();
     }
