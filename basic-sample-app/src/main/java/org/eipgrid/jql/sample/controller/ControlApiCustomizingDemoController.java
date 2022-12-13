@@ -2,9 +2,7 @@ package org.eipgrid.jql.sample.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import org.eipgrid.jql.jdbc.JQLJdbcService;
-import org.eipgrid.jql.jdbc.JdbcController;
-import org.eipgrid.jql.spring.JQLController;
-import org.eipgrid.jql.spring.JQLRepository;
+import org.eipgrid.jql.jdbc.JdbcTableController;
 import org.eipgrid.jql.util.KVEntity;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
@@ -15,7 +13,7 @@ import java.util.Date;
 
 @RestController
 @RequestMapping("/api/jql/starwars/character")
-public class ControlApiCustomizingDemoController extends JdbcController<Object> {
+public class ControlApiCustomizingDemoController extends JdbcTableController<Object> {
 
     public ControlApiCustomizingDemoController(JQLJdbcService service) {
         super(service,"starwars.character");
@@ -28,7 +26,7 @@ public class ControlApiCustomizingDemoController extends JdbcController<Object> 
      */
     @DeleteMapping("/{idList}")
     @ResponseBody
-    @Operation(summary = "엔터티 삭제(사용 금지됨. secure-delete API 로 대체")
+    @Operation(summary = "엔터티 삭제 (사용 금지됨. secure-delete API 로 대체)")
     @Transactional
     public Collection<Object> delete(@PathVariable("idList") Collection<Object> idList) {
         throw new RuntimeException("Delete is forbidden by custom controller. Use ControlApiCustomizingDemoController.secure-delete api");

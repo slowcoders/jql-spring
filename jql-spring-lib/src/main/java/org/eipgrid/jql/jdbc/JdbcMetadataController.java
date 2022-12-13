@@ -12,11 +12,11 @@ import org.springframework.web.bind.annotation.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public abstract class JdbcDatabaseController {
+public abstract class JdbcMetadataController {
 
     private final JQLJdbcService service;
 
-    public JdbcDatabaseController(JQLJdbcService service) {
+    public JdbcMetadataController(JQLJdbcService service) {
         this.service = service;
     }
 
@@ -30,25 +30,9 @@ public abstract class JdbcDatabaseController {
         return service.loadSchema(tablePath);
     }
 
-    @GetMapping("/jpa-schema/{schema}/{table}")
+    @GetMapping("/{schema}/{table}")
     @ResponseBody
-    @Operation(summary = "JPA Entity 소스 생성")
-    public String jpaSchema(@PathVariable("schema") String db_schema,
-                            @PathVariable("table") String tableName) throws Exception {
-        JqlSchema schema = getSchema(db_schema, tableName);
-        String source;
-        if (schema instanceof JdbcSchema) {
-            source = ((JdbcSchema)schema).dumpJPAEntitySchema();
-        }
-        else {
-            source = tableName + " is not a JdbcSchema";
-        }
-        return source;
-    }
-
-    @GetMapping("/jpa-schema/{schema}/{table}/columns")
-    @ResponseBody
-    @Operation(summary = "JPA Entity 소스 생성")
+    @Operation(summary = "table column 목록")
     public List<String> columns(@PathVariable("schema") String db_schema,
                                 @PathVariable("table") String tableName) throws Exception {
         JqlSchema schema = getSchema(db_schema, tableName);
@@ -59,45 +43,52 @@ public abstract class JdbcDatabaseController {
         return columns;
     }
 
-    @GetMapping("/jpa-schema/{schema}/")
-    @ResponseBody
-    @Operation(summary = "JPA Entity 소스 생성 (전체 Table)")
-    public String jpaSchemas(@PathVariable("schema") String db_schema) throws Exception {
-        StringBuilder sb = new StringBuilder();
-        for (String tableName : service.getTableNames(db_schema)) {
-            sb.append("\n\n//-------------------------------------------------//\n\n");
-            String source = this.jpaSchema(db_schema, tableName);
-            sb.append(source);
-        }
-        return sb.toString();
-    }
 
-
-    @GetMapping("/json-schema/{schema}/{table}")
+    @GetMapping("/{schema}/{table}/{type}")
     @ResponseBody
-    @Operation(summary = "JSON Schema 소스 생성")
+    @Operation(summary = "Schema 소스 생성")
     public String jsonSchema(@PathVariable("schema") String db_schema,
-                             @PathVariable("table") String tableName) throws Exception {
+                             @PathVariable("table") String tableName,
+                             @PathVariable("type") SchemaType type) throws Exception {
+        if ("*".equals(tableName)) {
+            return jpaSchemas(db_schema, type);
+        }
+
         JqlSchema schema = getSchema(db_schema, tableName);
-        String source = JsonJql.createDDL(schema);
-        String join = JsonJql.createJoinJQL(schema);
-        StringBuilder sb = new StringBuilder();
-        sb.append(source).append("\n\n").append(join);
-        return sb.toString();
+        String source;
+        if (type == SchemaType.JS) {
+            source = JsonJql.createDDL(schema);
+            String join = JsonJql.createJoinJQL(schema);
+            StringBuilder sb = new StringBuilder();
+            sb.append(source).append("\n\n").append(join);
+            source = sb.toString();
+        } else {
+            if (schema instanceof JdbcSchema) {
+                source = ((JdbcSchema)schema).dumpJPAEntitySchema();
+            }
+            else {
+                source = tableName + " is not a JdbcSchema";
+            }
+        }
+        return source;
     }
 
-    @GetMapping("/json-schema/{schema}/")
-    @ResponseBody
-    @Operation(summary = "JSON Schema 소스 생성 (전체 Table)")
-    public String jsonSchemas(@PathVariable("schema") String db_schema) throws Exception {
+    private String jpaSchemas(@PathVariable("schema") String db_schema,
+                             @PathVariable("type") SchemaType type) throws Exception {
         StringBuilder sb = new StringBuilder();
         for (String tableName : service.getTableNames(db_schema)) {
             JqlSchema schema = getSchema(db_schema, tableName);
+            if (type == SchemaType.JS) {
+                String source = JsonJql.createDDL(schema);
+                String join = JsonJql.createJoinJQL(schema);
+                sb.append(source).append("\n\n").append(join);
+            } else if (schema instanceof JdbcSchema) {
+                String source = ((JdbcSchema) schema).dumpJPAEntitySchema();
+                sb.append(source);
+            } else {
+                continue;
+            }
             sb.append("\n\n//-------------------------------------------------//\n\n");
-            String source = JsonJql.createDDL(schema);
-            String join = JsonJql.createJoinJQL(schema);
-            sb.append(source).append("\n\n").append(join);
-            sb.append(source);
         }
         return sb.toString();
     }
@@ -115,7 +106,7 @@ public abstract class JdbcDatabaseController {
 
     @GetMapping("/")
     @ResponseBody
-    @Operation(summary = "DBSchema 목록")
+    @Operation(summary = "DB schema 목록")
     public String listSchemas() throws Exception {
         StringBuilder sb = new StringBuilder();
         for (String tableName : service.getDBSchemas()) {
@@ -124,4 +115,8 @@ public abstract class JdbcDatabaseController {
         return sb.toString();
     }
 
+    enum SchemaType {
+        JS,
+        JPA
+    }
 }

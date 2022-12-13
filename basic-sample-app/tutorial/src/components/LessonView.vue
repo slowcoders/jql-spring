@@ -164,7 +164,7 @@ ${vm.js_code}`
 
     resetColumns() {
       const vm = this;
-      axios.get(`http://localhost:6090/api/jql/${dbSchema}/${vm.selectedTable}/metadata/columns`).
+      axios.get(`http://localhost:6090/api/jql/metadata/${dbSchema}/${vm.selectedTable}`).
       then((res) => {
         const columns = [];
         for (const column of res.data) {
