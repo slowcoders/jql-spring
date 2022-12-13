@@ -38,7 +38,7 @@ public class JdbcColumn extends JqlColumn {
         super(schema, md.getColumnName(col), resolveJavaType(md, col));
 
         this.isAutoIncrement = md.isAutoIncrement(col);
-        this.isReadOnly = md.isReadOnly(col);
+        this.isReadOnly = md.isReadOnly(col) | this.isAutoIncrement;
         this.isNullable = md.isNullable(col) != ResultSetMetaData.columnNoNulls;
         this.isPk = primaryKeys.contains(this.getColumnName());
 

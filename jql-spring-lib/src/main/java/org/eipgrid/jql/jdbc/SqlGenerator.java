@@ -181,7 +181,7 @@ public class SqlGenerator extends SqlConverter implements QueryBuilder {
     }
 
     public String createUpdateQuery(JqlQuery where, Map<String, Object> updateSet) {
-        sw.write("\nUPDATE ").write(where.getTableName()).write(" SET\n");
+        sw.write("\nUPDATE ").write(where.getTableName()).write(" ").write(where.getMappingAlias()).writeln(" SET");
 
         for (Map.Entry<String, Object> entry : updateSet.entrySet()) {
             String key = entry.getKey();
