@@ -42,8 +42,10 @@ public abstract class JdbcSchemaController {
     @GetMapping(path = "/{table}/{id}")
     @ResponseBody
     @Operation(summary = "지정 엔터티 읽기")
-    public KVEntity get(@PathVariable("table") String table, @PathVariable("id") Object id) {
+    public KVEntity get(@PathVariable("table") String table,
+                        @PathVariable("id") String id$) {
         JQLRepository<KVEntity, Object> repository = getRepository(table);
+        Object id = repository.convertId(id$);
         KVEntity entity = repository.find(id);
         if (entity == null) {
             throw new HttpServerErrorException("Entity(" + id + ") is not found", HttpStatus.NOT_FOUND, null, null, null, null);
@@ -58,9 +60,9 @@ public abstract class JdbcSchemaController {
                        @RequestParam(value = "page", required = false) Integer page,
                        @Parameter(name = "limit", example = "10")
                        @RequestParam(value = "limit", defaultValue = "0") int limit,
-                       @RequestParam(value = "columns", required = false) String columns,
+//                       @RequestParam(value = "columns", required = false) String columns,
                        @RequestParam(value = "sort", required = false) String sort) {
-        return find(table, page, limit, columns, sort,null);
+        return find(table, page, limit, sort,null);
     }
 
     @PostMapping(path = "/{table}/find")
@@ -70,13 +72,13 @@ public abstract class JdbcSchemaController {
                        @RequestParam(value = "page", required = false) Integer page,
                        @Parameter(name = "limit", example = "10")
                        @RequestParam(value = "limit", defaultValue = "0") int limit,
-                       @RequestParam(value = "columns", required = false) String columns,
+//                       @RequestParam(value = "columns", required = false) String columns,
                        @RequestParam(value = "sort", required = false) String sort,
                        @Schema(implementation = Object.class)
                        @RequestBody() HashMap<String, Object> filter) {
         boolean need_pagination = page != null && limit > 1;
         int offset = need_pagination ? page * limit : 0;
-        JqlSelect select = JqlSelect.by(columns, sort, offset, limit);
+        JqlSelect select = JqlSelect.by(null, sort, offset, limit);
 
         JQLRepository<KVEntity, Object> repository = getRepository(table);
         List<KVEntity> res = repository.find(filter, select);
@@ -94,19 +96,19 @@ public abstract class JdbcSchemaController {
     @ResponseBody
     @Operation(summary = "조건 검색 첫 엔터티 읽기")
     public KVEntity top(@PathVariable("table") String table,
-                        @RequestParam(value = "columns", required = false) String columns,
+//                        @RequestParam(value = "columns", required = false) String columns,
                         @RequestParam(value = "sort", required = false) String sort,
                         @Schema(implementation = Object.class)
                         @RequestBody HashMap<String, Object> filter) {
         JQLRepository<KVEntity, Object> repository = getRepository(table);
-        JqlSelect select = JqlSelect.by(columns, sort, 0, 1);
+        JqlSelect select = JqlSelect.by(null, sort, 0, 1);
         List<KVEntity>  res = repository.find(filter, select);
         return res.size() > 0 ? res.get(0) : null;
     }
 
     @GetMapping("/{table}/metadata/columns")
     @ResponseBody
-    @Operation(summary = "JPA Entity 소스 생성")
+    @Operation(summary = "컬럼 목록 보기")
     public List<String> columns(@PathVariable("table") String tableName) throws Exception {
         String tablePath = service.makeTablePath(db_schema, tableName);
         JqlSchema schema = service.loadSchema(tablePath);
@@ -121,6 +123,7 @@ public abstract class JdbcSchemaController {
     @ResponseBody
     @Operation(summary = "엔터티 추가")
     public KVEntity add(@PathVariable("table") String table,
+                        @Schema(implementation = Object.class)
                         @RequestBody Map<String, Object> entity) throws Exception {
         JQLRepository<KVEntity, Object> repository = getRepository(table);
         Object id = repository.insert(entity);
@@ -132,7 +135,9 @@ public abstract class JdbcSchemaController {
     @ResponseBody
     @Operation(summary = "엔터티 일부 내용 변경")
     public List update(@PathVariable("table") String table,
+                       @Schema(implementation = String.class)
                        @PathVariable("idList") Collection<Object> idList,
+                       @Schema(implementation = Object.class)
                        @RequestBody HashMap<String, Object> updateSet) throws Exception {
         JQLRepository<KVEntity, Object> repository = getRepository(table);
         repository.update(idList, updateSet);
@@ -144,7 +149,8 @@ public abstract class JdbcSchemaController {
     @ResponseBody
     @Operation(summary = "엔터티 삭제")
     public Collection<String> delete(@PathVariable("table") String table,
-                                 @PathVariable("idList") Collection<String> idList) {
+                                     @Schema(implementation = String.class)
+                                     @PathVariable("idList") Collection<String> idList) {
         JQLRepository<KVEntity, Object> repository = getRepository(table);
         repository.delete(idList);
         return idList;
@@ -164,19 +170,19 @@ public abstract class JdbcSchemaController {
         return service.loadSchema(tablePath);
     }
 
-    @GetMapping("/metadata/jpa/{schema}/{table}")
-    @ResponseBody
-    @Operation(summary = "JPA Entity 소스 생성")
-    public String jpaSchema(@PathVariable("table") String tableName) throws Exception {
-        JqlSchema schema = getSchema(tableName);
-        String source;
-        if (schema instanceof JdbcSchema) {
-            source = ((JdbcSchema)schema).dumpJPAEntitySchema();
-        }
-        else {
-            source = tableName + " is not a JdbcSchema";
-        }
-        return source;
-    }
+//    @GetMapping("/metadata/jpa/{schema}/{table}")
+//    @ResponseBody
+//    @Operation(summary = "JPA Entity 소스 생성")
+//    public String jpaSchema(@PathVariable("table") String tableName) throws Exception {
+//        JqlSchema schema = getSchema(tableName);
+//        String source;
+//        if (schema instanceof JdbcSchema) {
+//            source = ((JdbcSchema)schema).dumpJPAEntitySchema();
+//        }
+//        else {
+//            source = tableName + " is not a JdbcSchema";
+//        }
+//        return source;
+//    }
 
 }

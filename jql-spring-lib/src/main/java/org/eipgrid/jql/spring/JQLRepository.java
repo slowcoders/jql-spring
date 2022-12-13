@@ -16,12 +16,9 @@ public interface JQLRepository<ENTITY, ID> {
 
     List<ENTITY> find(Map<String, Object> jqlFilter, JqlSelect columns);
 
-//    Page<ENTITY> find(Map<String, Object> jqlFilter, @NotNull Pageable pageReq);
-
     ENTITY findTop(Map<String, Object> jqlFilter, Sort sort);
 
     ENTITY find(ID id);
-
 
     default ENTITY get(ID id) throws IllegalArgumentException {
         ENTITY entity = find(id);
@@ -30,10 +27,6 @@ public interface JQLRepository<ENTITY, ID> {
     }
 
     List<ENTITY> list(Collection<ID> idList);
-
-//    default Page<ENTITY> list(@NotNull Pageable pageRequest) {
-//        return find(null, pageRequest);
-//    }
 
     default Iterable<ENTITY> listAll() {
         return find(null, JqlSelect.All);
@@ -44,9 +37,6 @@ public interface JQLRepository<ENTITY, ID> {
     long count(Map<String, Object> jqlFilter);
 
 
-    void update(ID id, Map<String, Object> updateSet) throws IOException;
-
-    void update(Collection<ID> idList, Map<String, Object> updateSet) throws IOException;
 
     ID insert(ENTITY entity);
 
@@ -54,9 +44,18 @@ public interface JQLRepository<ENTITY, ID> {
 
     List<ID> insertAll(Collection<Map<String, Object>> dataSet) throws IOException;
 
+
+    void update(ID id, Map<String, Object> updateSet) throws IOException;
+
+    void update(Collection<ID> idList, Map<String, Object> updateSet) throws IOException;
+
+//    void update(Map<String, Object> filter, Map<String, Object> updateSet) throws IOException;
+
     void delete(ID id);
 
     int delete(Collection<ID> idList);
+
+//    void delete(Map<String, Object> filter) throws IOException;
 
     void clearEntityCache(ID id);
 }

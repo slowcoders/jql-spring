@@ -5,6 +5,7 @@ import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.dynamic.scaffold.subclass.ConstructorStrategy;
 import net.bytebuddy.implementation.FixedValue;
+import org.eipgrid.jql.spring.JQLController;
 import org.eipgrid.jql.spring.JQLRepository;
 import org.eipgrid.jql.util.AttributeNameConverter;
 import org.eipgrid.jql.util.KVEntity;
@@ -61,14 +62,11 @@ public class DynamicMappingHelper extends RequestMappingHandlerMapping {
 
     }
 
-    public abstract static class DynamicController implements JdbcTableController<Object> {
+    public abstract static class DynamicController extends JQLController.SearchAndUpdate<KVEntity, Object> {
 
-        private JQLJdbcService service;
         private final JQLRepository<KVEntity, Object> repository;
 
         public DynamicController(JQLJdbcService service) {
-//            super(null);
-            this.service = service;
             this.repository = service.makeRepository(getTableName());
         }
 

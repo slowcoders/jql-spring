@@ -16,9 +16,4 @@ public class StarWarsController extends JdbcSchemaController {
         super(service, "starwars");
     }
 
-    @GetMapping("/hello")
-    @ResponseBody
-    public String hello() throws Exception {
-        return "hello";
-    }
 }
