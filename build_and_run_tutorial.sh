@@ -1,4 +1,5 @@
 pushd basic-sample-app/tutorial
+npm install
 npm run build
 popd
 pushd basic-sample-app
