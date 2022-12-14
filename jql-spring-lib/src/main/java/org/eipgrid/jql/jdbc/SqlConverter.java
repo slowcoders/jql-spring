@@ -1,12 +1,14 @@
-package org.eipgrid.jql.parser;
+package org.eipgrid.jql.jdbc;
 
 import org.eipgrid.jql.JsonNodeType;
+import org.eipgrid.jql.parser.*;
+import org.eipgrid.jql.util.SourceWriter;
 
 import java.util.*;
 
-public class SqlConverter implements JqlPredicateVisitor {
+public class SqlConverter implements AstVisitor {
     protected final SourceWriter sw;
-    private JqlFilterNode currentNode;
+    private JqlNode currentNode;
 
     public enum Command {
         Insert,
@@ -18,15 +20,16 @@ public class SqlConverter implements JqlPredicateVisitor {
         this.sw = sw;
     }
 
-    public JqlFilterNode setCurrentNode(JqlFilterNode node) {
-        JqlFilterNode old = this.currentNode;
+    public void visitNode(JqlNode node) {
+        JqlNode old = this.currentNode;
         this.currentNode = node;
-        return old;
+        node.getPredicates().accept(this);
+        this.currentNode = old;
     }
 
-    private void writeJsonPath(JqlFilterNode node) {
+    private void writeJsonPath(JqlNode node) {
         if (node.isJsonNode()) {
-            JqlFilterNode parent = node.getParentNode();
+            JqlNode parent = node.getParentNode();
             writeJsonPath(parent);
             if (parent.isJsonNode()) {
                 sw.writeQuoted(node.getMappingAlias());
@@ -79,8 +82,8 @@ public class SqlConverter implements JqlPredicateVisitor {
     }
 
     @Override
-    public void visitCompare(QAttribute column, CompareOperator operator, Object value) {
-        writeQualifiedName(column.getColumnName(), value);
+    public void visitPredicate(String column, JqlOp operator, Object value) {
+        writeQualifiedName(column, value);
         String op = "";
         assert (value != null);
         switch (operator) {
@@ -119,13 +122,12 @@ public class SqlConverter implements JqlPredicateVisitor {
     public void visitNot(Expression statement) {
         sw.write(" NOT ");
         statement.accept(this);
-//        out.write(")");
     }
 
     @Override
-    public void visitMatchAny(QAttribute key, CompareOperator operator, Collection values) {
-        if (operator == CompareOperator.EQ || operator == CompareOperator.NE) {
-            writeQualifiedName(key.getColumnName(), values);
+    public void visitMatchAny(String column, JqlOp operator, Collection values) {
+        if (operator == JqlOp.EQ || operator == JqlOp.NE) {
+            writeQualifiedName(column, values);
         }
         switch (operator) {
             case NE:
@@ -149,7 +151,7 @@ public class SqlConverter implements JqlPredicateVisitor {
                     } else {
                         sw.write(" OR ");
                     }
-                    writeQualifiedName(key.getColumnName(), "");
+                    writeQualifiedName(column, "");
                     sw.write(" LIKE ");
                     sw.writeQuoted(v);
                 }
@@ -162,7 +164,7 @@ public class SqlConverter implements JqlPredicateVisitor {
     }
 
     @Override
-    public void visitIsNull(QAttribute key, CompareOperator operator) {
+    public void visitCompareNull(String column, JqlOp operator) {
         String value;
         switch (operator) {
             case EQ:
@@ -174,7 +176,7 @@ public class SqlConverter implements JqlPredicateVisitor {
             default:
                 throw new RuntimeException("Invalid match operator with null value: " + operator);
         }
-        writeQualifiedName(key.getColumnName(), null);
+        writeQualifiedName(column, null);
         //key.printSQL(this);
         sw.write(value);
     }
@@ -185,17 +187,15 @@ public class SqlConverter implements JqlPredicateVisitor {
     }
 
     @Override
-    public void visitPredicateSet(ArrayList<Predicate> predicates, Conjunction conjunction) {
+    public void visitPredicates(Collection<Expression> predicates, Conjunction conjunction) {
         sw.write("(");
         boolean first = true;
-        int cnt_predicate = predicates.size();
-        for (int i = 0; i < cnt_predicate; i++) {
+        for (Expression item : predicates) {
             if (first) {
                 first = false;
             } else {
                 sw.write(conjunction.toString());
             }
-            Predicate item = predicates.get(i);
             item.accept(this);
         }
         sw.write(")");

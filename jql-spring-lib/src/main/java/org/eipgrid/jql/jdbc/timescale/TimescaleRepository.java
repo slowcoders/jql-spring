@@ -5,7 +5,7 @@ import org.eipgrid.jql.JqlSchema;
 import org.eipgrid.jql.JsonNodeType;
 import org.eipgrid.jql.jdbc.JDBCRepositoryBase;
 import org.eipgrid.jql.jdbc.JQLJdbcService;
-import org.eipgrid.jql.parser.SourceWriter;
+import org.eipgrid.jql.util.SourceWriter;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 import java.lang.reflect.Field;

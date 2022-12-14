@@ -1,4 +1,4 @@
-package org.eipgrid.jql.parser;
+package org.eipgrid.jql.util;
 
 import java.util.Collection;
 
@@ -52,11 +52,6 @@ public class SourceWriter<Self extends SourceWriter> {
         return (Self)this;
     }
 
-    public Self writeRaw(String text) {
-        sb.append(text);
-        return (Self)this;
-    }
-
     public void writeln() {
         sb.append('\n');
     }
@@ -93,7 +88,7 @@ public class SourceWriter<Self extends SourceWriter> {
     }
 
     public Self writeValue(Object v) {
-        return isQuotedColumn(v) ? writeQuoted(v) : writeRaw(String.valueOf(v));
+        return isQuotedColumn(v) ? writeQuoted(v) : write(String.valueOf(v));
     }
 
     public Self writeValues(Collection values) {

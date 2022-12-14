@@ -3,7 +3,7 @@ package org.eipgrid.jql.jdbc.phoenix;
 import org.eipgrid.jql.JqlColumn;
 import org.eipgrid.jql.SchemaLoader;
 import org.eipgrid.jql.jdbc.SqlGenerator;
-import org.eipgrid.jql.parser.SqlConverter;
+import org.eipgrid.jql.jdbc.SqlConverter;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 import java.util.ArrayList;

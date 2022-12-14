@@ -9,12 +9,14 @@ import org.springframework.jdbc.support.JdbcUtils;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 
 public class JqlRowMapper implements ResultSetExtractor<List<KVEntity>> {
     private final List<JqlResultMapping> resultMappings;
+    private ResultCache resultCacheRoot;
+    private CachedEntity baseEntity = null;
+    private ArrayList<KVEntity> results = new ArrayList<>();
+    private MappedColumn[] mappedColumns;
 
     public JqlRowMapper(List<JqlResultMapping> rowMappings) {
         this.resultMappings = rowMappings;
@@ -22,72 +24,83 @@ public class JqlRowMapper implements ResultSetExtractor<List<KVEntity>> {
 
     @Override
     public List<KVEntity> extractData(ResultSet rs) throws SQLException, DataAccessException {
-        MappedColumn[] mappedColumns = initMappedColumns(rs);
+        this.mappedColumns = initMappedColumns(rs);
+        this.resultCacheRoot = new ResultCache(0, resultMappings.size());
 
-        KVEntity baseEntity = null;
-        ArrayList<KVEntity> results = new ArrayList<>();
-
+        final int cntMapping = resultMappings.size();
         while (rs.next()) {
             int idxColumn = 0;
-            int columnCount = mappedColumns.length;
-            if (baseEntity != null) {
-                int lastMappingIndex = resultMappings.size() - 1;
-                check_duplicated_columns:
-                for (int i = 0; i < lastMappingIndex; i++) {
-                    JqlResultMapping mapping = resultMappings.get(i);
-                    List<JqlColumn> columns = mapping.getSelectedColumns();
-                    if (columns.size() == 0) continue;
-                    List<JqlColumn> pkColumns = mapping.getSchema().getPKColumns();
-                    int pkIndex = idxColumn;
-                    for (int pkCount = pkColumns.size(); --pkCount >= 0; pkIndex++) {
-                        Object value = getColumnValue(rs, pkIndex + 1);
-                        if (value == null) {
-                            columnCount = idxColumn;
-                            break check_duplicated_columns;
-                        }
-                        if (!value.equals(mappedColumns[pkIndex].value)) {
-                            break check_duplicated_columns;
-                        }
-                    }
-                    idxColumn += columns.size();
+            JqlResultMapping lastMapping = null;
+            ResultCache resultCache = resultCacheRoot;
+            CachedEntity entity = null;
+            read_mapping:
+            for (int idxMapping = 0; idxMapping < cntMapping; idxMapping++) {
+                JqlResultMapping mapping = resultMappings.get(idxMapping);
+                if (mapping.getParentNode() != lastMapping) {
+                    resultCache = resultCacheRoot;
                 }
-            }
+                lastMapping = mapping;
 
-            if (idxColumn == 0) {
-                baseEntity = new KVEntity();
-                results.add(baseEntity);
-            }
-            KVEntity currEntity = baseEntity;
-            JqlResultMapping currMapping = mappedColumns[0].mapping;
-            for (; idxColumn < columnCount; ) {
-                MappedColumn mappedColumn = mappedColumns[idxColumn];
-                if (currMapping != mappedColumn.mapping) {
-                    currMapping = mappedColumn.mapping;
-                    currEntity = baseEntity;
-                    String[] entityPath = currMapping.getEntityMappingPath();
-                    int idxLastPath = entityPath.length - 1;
-                    for (int i = 0; i < idxLastPath; i++) {
-                        currEntity = makeSubEntity(currEntity, entityPath[i], false);
-                    }
-                    currEntity = makeSubEntity(currEntity, entityPath[idxLastPath], currMapping.isArrayNode());
+                List<JqlColumn> columns = mapping.getSelectedColumns();
+                if (columns.size() == 0) continue;
+
+                boolean isCached = mapping.isArrayNode();
+                if (!isCached) {
+                    entity = readColumns(rs, idxColumn, columns.size());
+                    continue;
                 }
-                Object value = getColumnValue(rs, ++idxColumn);
-                mappedColumn.value = value;
 
-                putValue(currEntity, mappedColumn, value);
+                resultCache = resultCache.getCache(idxMapping);
+                List<JqlColumn> pkColumns = mapping.getSchema().getPKColumns();
+                int pkIndex = idxColumn;
+                for (int pkCount = pkColumns.size(); --pkCount >= 0; pkIndex++) {
+                    Object value = getColumnValue(rs, pkIndex + 1);
+                    mappedColumns[pkIndex].value = value;
+                    if (value == null) {
+                        continue read_mapping;
+                    }
+                }
+                Object key = makeCacheKey(pkColumns, idxColumn);
+                CachedEntity cachedEntity = resultCache.get(key);
+                if (cachedEntity == null) {
+                    cachedEntity = readColumns(rs, idxColumn, columns.size());
+                    resultCache.put(key, cachedEntity);
+                }
+                else if (idxMapping > 0) {
+                    entity = makeBaseEntity(mapping);
+                    if (cachedEntity.addParent(entity)) {
+                        String[] entityPath = mapping.getEntityMappingPath();
+                        String key2 = entityPath[entityPath.length - 1];
+                        List data = (List) entity.get(key2);
+                        if (data == null) {
+                            data = new ArrayList();
+                            entity.put(key2, data);
+                        }
+                        data.add(cachedEntity);
+                    }
+                }
+                entity = cachedEntity;
+                idxColumn += columns.size();
             }
         }
         return results;
     }
 
-    private static void putValue(KVEntity entity, MappedColumn mappedColumn, Object value) {
-        KVEntity node = entity;
+    private Object makeCacheKey(List<JqlColumn> pkColumns, int idxColumn) {
+        if (pkColumns.size() == 1) {
+            return mappedColumns[idxColumn].value;
+        }
+        throw new RuntimeException("not implemented");
+    }
+
+    private static void putValue(CachedEntity entity, MappedColumn mappedColumn, Object value) {
+        CachedEntity node = entity;
         JqlColumn column = mappedColumn.jqlColumn;
         String fieldName = column.getJavaFieldName();
         for (JqlColumn pk; (pk = column.getJoinedPrimaryColumn()) != null; ) {
-            KVEntity pkEntity = (KVEntity) node.get(fieldName);
+            CachedEntity pkEntity = (CachedEntity) node.get(fieldName);
             if (pkEntity == null) {
-                pkEntity = new KVEntity();
+                pkEntity = new CachedEntity(node);
                 node.put(fieldName, pkEntity);
             }
             node = pkEntity;
@@ -101,10 +114,46 @@ public class JqlRowMapper implements ResultSetExtractor<List<KVEntity>> {
         }
     }
 
-    private KVEntity makeSubEntity(KVEntity entity, String key, boolean isArray) {
+    private CachedEntity readColumns(ResultSet rs, int idxColumn, int count) throws SQLException {
+        int columnCount = idxColumn + count;
+        CachedEntity currEntity;
+        if (idxColumn == 0) {
+            currEntity = baseEntity = new CachedEntity(null);
+            results.add(baseEntity);
+        } else {
+            currEntity = makeSubEntity(mappedColumns[idxColumn].mapping);
+        }
+
+        for (; idxColumn < columnCount; ) {
+            MappedColumn mappedColumn = mappedColumns[idxColumn];
+            Object value = getColumnValue(rs, ++idxColumn);
+            mappedColumn.value = value;
+            putValue(currEntity, mappedColumn, value);
+        }
+        return currEntity;
+    }
+
+    private CachedEntity makeBaseEntity(JqlResultMapping currMapping) {
+        CachedEntity currEntity = baseEntity;
+        String[] entityPath = currMapping.getEntityMappingPath();
+        int idxLastPath = entityPath.length - 1;
+        for (int i = 0; i < idxLastPath; i++) {
+            currEntity = makeSubEntity(currEntity, entityPath[i], false);
+        }
+        return currEntity;
+    }
+
+    private CachedEntity makeSubEntity(JqlResultMapping currMapping) {
+        CachedEntity currEntity = makeBaseEntity(currMapping);
+        String[] entityPath = currMapping.getEntityMappingPath();
+        currEntity = makeSubEntity(currEntity, entityPath[entityPath.length - 1], currMapping.isArrayNode());
+        return currEntity;
+    }
+
+    private CachedEntity makeSubEntity(CachedEntity entity, String key, boolean isArray) {
         Object subEntity = entity.get(key);
         if (subEntity == null) {
-            subEntity = new KVEntity();
+            subEntity = new CachedEntity(entity);
             if (isArray) {
                 ArrayList<Object> array = new ArrayList<>();
                 array.add(subEntity);
@@ -113,21 +162,21 @@ public class JqlRowMapper implements ResultSetExtractor<List<KVEntity>> {
                 entity.put(key, subEntity);
             }
         } else if (isArray) {
-            if (subEntity instanceof KVEntity) {
+            if (subEntity instanceof CachedEntity) {
                 /** TODO remove this tricky code */
                 ArrayList<Object> array = new ArrayList<>();
                 entity.put(key, array);
                 array.add(subEntity);
             } else {
                 ArrayList<Object> array = (ArrayList<Object>) subEntity;
-                subEntity = new KVEntity();
+                subEntity = new CachedEntity(entity);
                 array.add(subEntity);
             }
         } else if (subEntity instanceof ArrayList) {
-            ArrayList<KVEntity> list = (ArrayList<KVEntity>) subEntity;
+            ArrayList<CachedEntity> list = (ArrayList<CachedEntity>) subEntity;
             subEntity = list.get(list.size()-1);
         }
-        return (KVEntity)subEntity;
+        return (CachedEntity)subEntity;
     }
 
     protected Object getColumnValue(ResultSet rs, int index) throws SQLException {
@@ -208,6 +257,57 @@ public class JqlRowMapper implements ResultSetExtractor<List<KVEntity>> {
             this.mapping = mapping;
             this.jqlColumn = column;
             this.mappingPath = path;
+        }
+    }
+
+    private static class ResultCache extends HashMap<Object, CachedEntity> {
+        private final int id;
+        private final ResultCache[] caches;
+
+        ResultCache(int id, int cntSlot) {
+            this.id = id;
+            caches = new ResultCache[cntSlot];
+        }
+
+        ResultCache getCache(int idxSlot) {
+            if (idxSlot == this.id) return this;
+
+            ResultCache cache = caches[idxSlot];
+            if (cache == null) {
+                caches[idxSlot] = cache = new ResultCache(idxSlot, caches.length);
+            }
+            return cache;
+        }
+    }
+
+    private static class CachedEntity extends KVEntity {
+        private static int g_sno;
+        private final int id;
+        private HashSet<CachedEntity> parents = new HashSet<>();
+
+        CachedEntity(CachedEntity parent) {
+            this.id = ++g_sno;
+            if (parent != null) {
+                parents.add(parent);
+            }
+        }
+
+        final boolean addParent(CachedEntity parent) {
+            if (!this.parents.contains(parent)) {
+                parents.add(parent);
+                return true;
+            }
+            return false;
+        }
+
+        @Override
+        public int hashCode() {
+            return id;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            return o == this;
         }
     }
 }

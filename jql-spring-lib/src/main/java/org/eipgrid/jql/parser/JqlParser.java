@@ -13,16 +13,16 @@ import java.util.*;
 public class JqlParser {
 
     private final ConversionService conversionService;
-    private final JqlQuery where;
+    private final AstRoot where;
     private static String[] emptyColumns = new String[0];
 
     public JqlParser(JqlSchema schema, ConversionService conversionService) {
-        this.where = new JqlQuery(schema);
+        this.where = new AstRoot(schema);
         this.conversionService = conversionService;
     }
 
-    public JqlQuery parse(Map<String, Object> filter) {
-        this.parse(where, filter);
+    public AstRoot parse(Map<String, Object> filter) {
+        this.parse(where.getPredicateSet(), filter);
         return where;
     }
 
@@ -32,7 +32,7 @@ public class JqlParser {
         //   --> @?EQ 기능은 넣되, 숨겨진 고급기능으로..
         // "groupBy@" : ["attr1", "attr2/attr3" ]
 
-        Filter baseFilter = predicates.getBaseFilter();
+        JqlNode baseFilter = predicates.getBaseFilter();
         List<String> selectedAttrs = (List<String>)filter.get(SELECT_MORE);
         for (Map.Entry<String, Object> entry : filter.entrySet()) {
             String key = entry.getKey();
@@ -63,7 +63,7 @@ public class JqlParser {
             }
 
             ValueNodeType valueCategory = this.getValueCategory(value);
-            Filter targetNode = baseFilter.getFilterNode(key, valueCategory);
+            JqlNode targetNode = baseFilter.getFilterNode(key, valueCategory);
             if (targetNode != baseFilter) {
                 if (!fetchData) {
                     targetNode.setSelectedColumns(JqlSelect.NotAtAll);
@@ -72,47 +72,38 @@ public class JqlParser {
                 }
             }
 
-            Predicate cond;
-            if (valueCategory == ValueNodeType.Entity) {
-                PredicateSet ps = op.getPredicateNode(targetNode, valueCategory);
-                this.parse(ps, (Map<String, Object>)value);
-                cond = targetNode;
-            }
-            else if (valueCategory == ValueNodeType.Entities) {
-                PredicateSet ps = op.getPredicateNode(targetNode, valueCategory);
-                for (Map<String, Object> c : (Collection<Map<String, Object>>)value) {
-                    this.parse(ps, (Map)c);
-                }
-                cond = targetNode;
-            }
-            else {
+            Expression cond;
+            if (valueCategory == ValueNodeType.Leaf) {
                 if (selectedAttrs != null && !selectedAttrs.contains(key)) {
                     selectedAttrs.add(key);
                 }
 
-                Filter targetScope = targetNode.getBaseFilter();
-                String columnName = targetScope.getColumnName(key);
-                QAttribute column;
-                if (value == null) {
-                    column = new QAttribute(targetScope, columnName, null);
-                }
-                else {
-                    if (targetScope.asJsonFilter() == null) {
-                        Class<?> fieldType = targetScope.getTableFilter().getSchema().getColumn(columnName).getJavaType();
+                String columnName = targetNode.getColumnName(key);
+                if (value != null) {
+                    JqlSchema schema = targetNode.getSchema();
+                    if (schema != null) {
+                        Class<?> fieldType = schema.getColumn(columnName).getJavaType();
                         Class<?> accessType = op.getAccessType(value, fieldType);
                         value = conversionService.convert(value, accessType);
                     }
-                    column = new QAttribute(targetScope, columnName, value.getClass());
                 }
-                cond = op.createPredicate(column, value);
+                cond = op.createPredicate(columnName, value);
+            }
+            else {
+                PredicateSet ps = op.getPredicates(targetNode, valueCategory);
+                if (valueCategory == ValueNodeType.Entity) {
+                    this.parse(ps, (Map<String, Object>)value);
+                }
+                else { // ValueNodeType.Entities
+                    for (Map<String, Object> c : (Collection<Map<String, Object>>)value) {
+                        this.parse(ps, (Map)c);
+                    }
+                }
+                if (baseFilter == targetNode || targetNode.isEmpty()) continue;
+                cond = targetNode;
             }
 
-            if (cond == null) {
-                throw new IllegalArgumentException("invalid value type for " + entry.getKey() + " value: " + value);
-            }
-            if (cond != predicates && !cond.isEmpty()) {
-                predicates.add(cond);
-            }
+            predicates.add(cond);
         }
     }
 

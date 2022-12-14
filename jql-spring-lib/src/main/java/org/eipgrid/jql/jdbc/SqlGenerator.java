@@ -3,10 +3,8 @@ package org.eipgrid.jql.jdbc;
 import org.eipgrid.jql.JqlColumn;
 import org.eipgrid.jql.JqlSchema;
 import org.eipgrid.jql.JqlSchemaJoin;
-import org.eipgrid.jql.parser.JqlQuery;
-import org.eipgrid.jql.parser.QueryBuilder;
-import org.eipgrid.jql.parser.SourceWriter;
-import org.eipgrid.jql.parser.SqlConverter;
+import org.eipgrid.jql.parser.AstRoot;
+import org.eipgrid.jql.util.SourceWriter;
 import org.eipgrid.jql.JqlSelect;
 import org.springframework.data.domain.Sort;
 
@@ -26,18 +24,18 @@ public class SqlGenerator extends SqlConverter implements QueryBuilder {
         return command.toString();
     }
 
-    protected void writeWhere(JqlQuery where) {
+    protected void writeWhere(AstRoot where) {
         if (!where.isEmpty()) {
-            sw.writeRaw("\nWHERE ");
+            sw.write("\nWHERE ");
             where.accept(this);
         }
     }
 
-    private void writeFrom(JqlQuery where) {
+    private void writeFrom(AstRoot where) {
         writeFrom(where, where.getTableName(), false);
     }
 
-    private void writeFrom(JqlQuery where, String tableName, boolean ignoreEmptyFilter) {
+    private void writeFrom(AstRoot where, String tableName, boolean ignoreEmptyFilter) {
         sw.write("FROM ").write(tableName).write(" as ").write(where.getMappingAlias());
         for (JqlResultMapping fetch : where.getResultColumnMappings()) {
             JqlSchemaJoin join = fetch.getSchemaJoin();
@@ -77,7 +75,7 @@ public class SqlGenerator extends SqlConverter implements QueryBuilder {
         sw.shrinkLength(6);
     }
 
-    public String createCountQuery(JqlQuery where) {
+    public String createCountQuery(AstRoot where) {
         sw.write("\nSELECT count(*) ");
         writeFrom(where);
         writeWhere(where);
@@ -85,7 +83,7 @@ public class SqlGenerator extends SqlConverter implements QueryBuilder {
         return sql;
     }
 
-    private boolean needDistinctPagination(JqlQuery where) {
+    private boolean needDistinctPagination(AstRoot where) {
         if (where.isLinearNode()) return false;
 
         for (JqlResultMapping mapping : where.getResultColumnMappings()) {
@@ -101,7 +99,7 @@ public class SqlGenerator extends SqlConverter implements QueryBuilder {
         return false;
     }
 
-    public String createSelectQuery(JqlQuery where, JqlSelect columns) {
+    public String createSelectQuery(AstRoot where, JqlSelect columns) {
         sw.reset();
         String tableName = where.getTableName();
         where.setSelectedColumns(columns);
@@ -140,7 +138,7 @@ public class SqlGenerator extends SqlConverter implements QueryBuilder {
         return sql;
     }
 
-    private void writeOrderBy(JqlQuery where, Sort sort, boolean need_joined_result_set_ordering) {
+    private void writeOrderBy(AstRoot where, Sort sort, boolean need_joined_result_set_ordering) {
         if (!need_joined_result_set_ordering) {
             if (sort == null || sort.isUnsorted()) return;
         }
@@ -180,7 +178,7 @@ public class SqlGenerator extends SqlConverter implements QueryBuilder {
         if (limit > 0) sw.write("\nLIMIT " + limit);
     }
 
-    public String createUpdateQuery(JqlQuery where, Map<String, Object> updateSet) {
+    public String createUpdateQuery(AstRoot where, Map<String, Object> updateSet) {
         sw.write("\nUPDATE ").write(where.getTableName()).write(" ").write(where.getMappingAlias()).writeln(" SET");
 
         for (Map.Entry<String, Object> entry : updateSet.entrySet()) {
@@ -197,7 +195,7 @@ public class SqlGenerator extends SqlConverter implements QueryBuilder {
 
     }
 
-    public String createDeleteQuery(JqlQuery where) {
+    public String createDeleteQuery(AstRoot where) {
         sw.write("\nDELETE ");
         this.writeFrom(where);
         this.writeWhere(where);

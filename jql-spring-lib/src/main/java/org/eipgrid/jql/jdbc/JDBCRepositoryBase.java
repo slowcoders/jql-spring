@@ -5,7 +5,7 @@ import org.eipgrid.jql.JqlColumn;
 import org.eipgrid.jql.JqlSchema;
 import org.eipgrid.jql.spring.JQLRepository;
 import org.eipgrid.jql.parser.JqlParser;
-import org.eipgrid.jql.parser.JqlQuery;
+import org.eipgrid.jql.parser.AstRoot;
 import org.eipgrid.jql.util.KVEntity;
 import org.springframework.core.convert.ConversionService;
 import org.eipgrid.jql.JqlSelect;
@@ -118,12 +118,12 @@ public class JDBCRepositoryBase<ID> /*extends JDBCQueryBuilder*/ implements JQLR
         return res.size() > 0 ? res.get(0) : null;
     }
 
-    protected ResultSetExtractor<List<KVEntity>> getColumnMapRowMapper(JqlQuery filter) {
+    protected ResultSetExtractor<List<KVEntity>> getColumnMapRowMapper(AstRoot filter) {
         return new JqlRowMapper(filter.getResultColumnMappings());
     }
 
     protected List<KVEntity> find_impl(Map<String, Object> jqlFilter, JqlSelect columns) {
-        JqlQuery query = this.buildQuery(jqlFilter);
+        AstRoot query = this.buildQuery(jqlFilter);
         String sql = sqlGenerator.createSelectQuery(query, columns);
         List<KVEntity> res = (List)jdbc.query(sql, getColumnMapRowMapper(query));
         return res;
@@ -140,7 +140,7 @@ public class JDBCRepositoryBase<ID> /*extends JDBCQueryBuilder*/ implements JQLR
 
     @Override
     public long count(Map<String, Object> jqlFilter) {
-        JqlQuery query = this.buildQuery(jqlFilter);
+        AstRoot query = this.buildQuery(jqlFilter);
         String sqlCount = sqlGenerator.createCountQuery(query);
         long count = jdbc.queryForObject(sqlCount, Long.class);
         return count;
@@ -205,21 +205,21 @@ public class JDBCRepositoryBase<ID> /*extends JDBCQueryBuilder*/ implements JQLR
 
     @Override
     public void update(Collection<ID> idList, Map<String, Object> updateSet) throws IOException {
-        JqlQuery filter = buildQuery(createJqlFilterWithIdList(idList));
+        AstRoot filter = buildQuery(createJqlFilterWithIdList(idList));
         String sql = sqlGenerator.createUpdateQuery(filter, updateSet);
         jdbc.update(sql);
     }
 
     @Override
     public void delete(ID id) {
-        JqlQuery filter = buildQuery(createJqlFilterWithId(id));
+        AstRoot filter = buildQuery(createJqlFilterWithId(id));
         String sql = sqlGenerator.createDeleteQuery(filter);
         jdbc.update(sql);
     }
 
     @Override
     public int delete(Collection<ID> idList) {
-        JqlQuery filter = buildQuery(createJqlFilterWithIdList(idList));
+        AstRoot filter = buildQuery(createJqlFilterWithIdList(idList));
         String sql = sqlGenerator.createDeleteQuery(filter);
         return jdbc.update(sql);
     }
@@ -241,7 +241,7 @@ public class JDBCRepositoryBase<ID> /*extends JDBCQueryBuilder*/ implements JQLR
     }
 
     private static final Map _emptyMap = new HashMap();
-    public JqlQuery buildQuery(Map<String, Object> filter) {
+    public AstRoot buildQuery(Map<String, Object> filter) {
         Map filterMap;
         if (filter instanceof Map) {
             filterMap = (Map) filter;
@@ -270,7 +270,7 @@ public class JDBCRepositoryBase<ID> /*extends JDBCQueryBuilder*/ implements JQLR
         }
 
         JqlParser parser = new JqlParser(this.getSchema(), this.service.getConversionService());
-        JqlQuery where = parser.parse(filterMap);
+        AstRoot where = parser.parse(filterMap);
         return where;
     }
 

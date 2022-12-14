@@ -5,40 +5,40 @@ import java.util.Collection;
 interface Predicate extends Expression {
 
     class MatchAny implements Predicate {
-        private final QAttribute key;
+        private final String column;
         private final Collection values;
-        private final CompareOperator operator;
+        private final JqlOp operator;
 
-        MatchAny(QAttribute key, CompareOperator operator, Collection values) {
-            this.key = key;
+        MatchAny(String column, JqlOp operator, Collection values) {
+            this.column = column;
             this.operator = operator;
             this.values = values;
         }
 
         @Override
-        public void accept(JqlPredicateVisitor sb) {
-            sb.visitMatchAny(key, operator, values);
+        public void accept(AstVisitor sb) {
+            sb.visitMatchAny(column, operator, values);
         }
     }
 
 
     class Compare implements Predicate {
-        private final QAttribute key;
+        private final String column;
         private final Object value;
-        private final CompareOperator operator;
+        private final JqlOp operator;
 
-        public Compare(QAttribute key, Object value, CompareOperator operator) {
-            this.key = key;
+        public Compare(String column, JqlOp operator, Object value) {
+            this.column = column;
             this.value = value;
             this.operator = operator;
         }
 
         @Override
-        public void accept(JqlPredicateVisitor sb) {
+        public void accept(AstVisitor sb) {
             if (value == null) {
-                sb.visitIsNull(key, operator);
+                sb.visitCompareNull(column, operator);
             } else {
-                sb.visitCompare(key, operator, value);
+                sb.visitPredicate(column, operator, value);
             }
         }
     }
@@ -52,7 +52,7 @@ interface Predicate extends Expression {
         }
 
         @Override
-        public void accept(JqlPredicateVisitor sb) {
+        public void accept(AstVisitor sb) {
             sb.visitNot(statement);
         }
     }

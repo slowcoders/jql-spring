@@ -1,8 +1,11 @@
 package org.eipgrid.jql.parser;
 
-enum CompareOperator {
+public enum JqlOp {
     EQ, NE,
+
+    LIKE, NOT_LIKE,
+
     LT, LE,
-    GT, GE,
-    LIKE, NOT_LIKE;
+
+    GT, GE;
 }

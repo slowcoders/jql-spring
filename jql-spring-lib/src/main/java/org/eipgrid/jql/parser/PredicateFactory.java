@@ -10,7 +10,7 @@ abstract class PredicateFactory {
     private final boolean fetchData;
     private final boolean propertyNameRequired;
 
-    static PredicateFactory defaultParser = new MatchAny(CompareOperator.EQ, true, false);
+    static PredicateFactory defaultParser = new MatchAny(JqlOp.EQ, true, false);
 
     protected PredicateFactory(boolean fetchData, boolean propertyNameRequired) {
         this.fetchData = fetchData;
@@ -23,22 +23,23 @@ abstract class PredicateFactory {
 
     public boolean isAttributeNameRequired() { return propertyNameRequired; }
 
-    public abstract Predicate createPredicate(QAttribute column, Object value);
+    public abstract Predicate createPredicate(String column, Object value);
 
     public static PredicateFactory getFactory(String function) {
         if (function == null) return defaultParser;
         return operators.get(function);
     }
 
-    public PredicateSet getPredicateNode(PredicateSet baseScope, ValueNodeType nodeType) {
+    public PredicateSet getPredicates(JqlNode node, ValueNodeType nodeType) {
+        PredicateSet basePredicates = node.getPredicateSet();
         switch (nodeType) {
             case Entities: {
-                PredicateSet or_qs = new PredicateSet(Conjunction.OR, baseScope.getBaseFilter());
-                baseScope.add(or_qs);
+                PredicateSet or_qs = new PredicateSet(Conjunction.OR, basePredicates.getBaseFilter());
+                basePredicates.add(or_qs);
                 return or_qs;
             }
             case Entity: default:
-                return baseScope;
+                return basePredicates;
         }
     }
 
@@ -51,29 +52,27 @@ abstract class PredicateFactory {
     // ------------------------------------------------------//
 
     private static class Compare extends PredicateFactory {
-        final CompareOperator operator;
+        final JqlOp operator;
 
-        Compare(CompareOperator operator) {
+        Compare(JqlOp operator) {
             super(false, true);
             this.operator = operator;
         }
 
-        public Predicate createPredicate(QAttribute column, Object value) {
-            return new Predicate.Compare(column, value, operator);
+        public Predicate createPredicate(String column, Object value) {
+            return new Predicate.Compare(column, operator, value);
         }
     }
 
     private static class MatchAny extends PredicateFactory {
-        final CompareOperator operator;
+        final JqlOp operator;
         final boolean fetchData;
 
-        MatchAny(CompareOperator operator, boolean fetchData, boolean propertyNameRequired) {
+        MatchAny(JqlOp operator, boolean fetchData, boolean propertyNameRequired) {
             super(fetchData, propertyNameRequired);
             this.operator = operator;
             this.fetchData = fetchData;
         }
-
-        protected boolean isNotOperation() { return operator == CompareOperator.NE || operator == CompareOperator.NOT_LIKE; }
 
         public Class<?> getAccessType(Object value, Class<?> fieldType) {
             /**
@@ -87,14 +86,14 @@ abstract class PredicateFactory {
 
         public boolean needFetchData() { return fetchData; }
 
-        public Predicate createPredicate(QAttribute column, Object value) {
+        public Predicate createPredicate(String column, Object value) {
             Predicate cond;
             Collection values = value == null ? null : ClassUtils.asCollection(value);
             if (values != null) {
                 cond = new Predicate.MatchAny(column, operator, values);
             }
             else {
-                cond = new Predicate.Compare(column, value, operator);
+                cond = new Predicate.Compare(column, operator, value);
             }
             return cond;
         }
@@ -102,11 +101,12 @@ abstract class PredicateFactory {
 
     static class NotMatch extends MatchAny {
 
-        NotMatch(CompareOperator operator, boolean fetchData, boolean propertyNameRequired) {
+        NotMatch(JqlOp operator, boolean fetchData, boolean propertyNameRequired) {
             super(operator, fetchData, propertyNameRequired);
         }
 
-        public PredicateSet getPredicateNode(PredicateSet baseScope, ValueNodeType nodeType) {
+        public PredicateSet getPredicates(JqlNode node, ValueNodeType nodeType) {
+            PredicateSet baseScope = node.getPredicateSet();
             switch (nodeType) {
                 case Entities: {
                     PredicateSet or_qs = new PredicateSet(Conjunction.OR, baseScope.getBaseFilter());
@@ -139,7 +139,7 @@ abstract class PredicateFactory {
             return ClassUtils.getArrayType(fieldType);
         }
 
-        public Predicate createPredicate(QAttribute column, Object value) {
+        public Predicate createPredicate(String column, Object value) {
             Object[] range = (Object[])value;
             PredicateSet predicates = new PredicateSet(conjunction);
             predicates.add(operator1.createPredicate(column, range[0]));
@@ -149,18 +149,18 @@ abstract class PredicateFactory {
     }
 
     static {
-        operators.put("is", new MatchAny(CompareOperator.EQ, true, false));
-        operators.put("in", new MatchAny(CompareOperator.EQ, false, false));
-        operators.put("not", new NotMatch(CompareOperator.NE, true, false));
-        operators.put("not in", new NotMatch(CompareOperator.NE, false, false));
+        operators.put("is", new MatchAny(JqlOp.EQ, true, false));
+        operators.put("in", new MatchAny(JqlOp.EQ, false, false));
+        operators.put("not", new NotMatch(JqlOp.NE, true, false));
+        operators.put("not in", new NotMatch(JqlOp.NE, false, false));
 
-        operators.put("like", new MatchAny(CompareOperator.LIKE, true, true));
-        operators.put("not like", new NotMatch(CompareOperator.NOT_LIKE, true, true));
+        operators.put("like", new MatchAny(JqlOp.LIKE, true, true));
+        operators.put("not like", new NotMatch(JqlOp.NOT_LIKE, true, true));
 
-        Compare GT = new Compare(CompareOperator.GT);
-        Compare LT = new Compare(CompareOperator.LT);
-        Compare GE = new Compare(CompareOperator.GE);
-        Compare LE = new Compare(CompareOperator.LE);
+        Compare GT = new Compare(JqlOp.GT);
+        Compare LT = new Compare(JqlOp.LT);
+        Compare GE = new Compare(JqlOp.GE);
+        Compare LE = new Compare(JqlOp.LE);
 
         operators.put("gt", GT);
         operators.put("lt", LT);

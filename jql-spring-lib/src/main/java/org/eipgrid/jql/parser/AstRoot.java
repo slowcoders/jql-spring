@@ -1,29 +1,27 @@
 package org.eipgrid.jql.parser;
 
-import org.eipgrid.jql.JqlColumn;
 import org.eipgrid.jql.JqlSchema;
-import org.eipgrid.jql.JqlSelect;
 import org.eipgrid.jql.jdbc.JqlResultMapping;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class JqlQuery extends TableFilter {
+public class AstRoot extends TableFilter {
 
     private final ArrayList<JqlResultMapping> columnGroupMappings = new ArrayList<>();
     private int cntMappingAlias;
 
-    public JqlQuery(JqlSchema schema) {
+    public AstRoot(JqlSchema schema) {
         super(schema, "t_0");
     }
 
-    public JqlQuery getRootFilter() {
+    public AstRoot getRootNode() {
         return this;
     }
 
     @Override
     public boolean isArrayNode() {
-        return false;
+        return true;
     }
 
     public List<JqlResultMapping> getResultColumnMappings() {

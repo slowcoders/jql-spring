@@ -1,6 +1,6 @@
 package org.eipgrid.jql.parser;
 
-enum Conjunction {
+public enum Conjunction {
     AND(" and "),
     OR(" or ");
 

@@ -1,19 +1,13 @@
 package org.eipgrid.jql.jdbc.metadata;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import org.eipgrid.jql.JqlColumn;
 import org.eipgrid.jql.JqlSchema;
 import org.eipgrid.jql.JqlSchemaJoin;
 import org.eipgrid.jql.SchemaLoader;
-import org.eipgrid.jql.parser.SourceWriter;
+import org.eipgrid.jql.util.SourceWriter;
 import org.eipgrid.jql.util.AttributeNameConverter;
 
-import javax.persistence.FetchType;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
-import java.io.ByteArrayOutputStream;
-import java.io.PrintStream;
 import java.util.*;
 
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
