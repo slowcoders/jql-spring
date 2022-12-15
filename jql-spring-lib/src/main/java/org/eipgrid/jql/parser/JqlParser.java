@@ -55,6 +55,21 @@ public class JqlParser {
                 }
                 key = key.substring(0, p).trim();
             }
+
+            /**
+                SELECT
+                    t_0.*, pt_1.episode_id --, t_1.published
+                FROM starwars.character as t_0
+                    left join starwars.character_episode_link as pt_1 on
+                    t_0.id = pt_1.character_id and pt_1.episode_id = 'JEDI'
+                where pt_1.character_id is null;
+                ---------------------------------
+                while (key.startsWith("../")) {
+                    baseFilter = baseFilter.getParentNode();
+                    key = key.substring(3);
+                }
+             */
+
             if (!isValidKey(key)) {
                 if (op.isAttributeNameRequired()) {
                     throw new IllegalArgumentException("invalid JQL key: " + entry.getKey());

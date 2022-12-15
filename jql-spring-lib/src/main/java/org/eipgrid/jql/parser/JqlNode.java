@@ -52,8 +52,7 @@ public abstract class JqlNode implements Expression {
         if (key == null) return this;
 
         JqlNode scope = this;
-        int p;
-        while ((p = key.indexOf('.')) > 0) {
+        for (int p; (p = key.indexOf('.')) > 0; ) {
             JqlSchema schema = scope.getSchema();
             if (schema != null && schema.hasColumn(key)) {
                 // TODO 고려 사항

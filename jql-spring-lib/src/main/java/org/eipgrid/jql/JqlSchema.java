@@ -52,8 +52,12 @@ public abstract class JqlSchema {
         return getSchemaJoinMap().get(jsonKey);
     }
 
+    public JqlColumn findColumn(String key) throws IllegalArgumentException {
+        return columnMap.get(key);
+    }
+
     public JqlColumn getColumn(String key) throws IllegalArgumentException {
-        JqlColumn ci = columnMap.get(key);
+        JqlColumn ci = findColumn(key);
         if (ci == null) {
             throw new IllegalArgumentException("unknown column: " + this.tableName + "." + key);
         }
