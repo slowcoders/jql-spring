@@ -5,6 +5,7 @@
       :enable_table_select="false">
     <template v-slot:description>
       <H5> 키가 1.5m 이하이거나 체중이 100kg 이상인 Character 검색 방법(2) </H5>
+      * "@in" 대신 "@not" 연산자를 써서 Or 연산을 보다 간결하게 처리할 수 있다.<br><br>
     </template>
   </LessonView>
 </template>

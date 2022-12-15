@@ -22,46 +22,49 @@ export default {
         },
         {
           href: "/basic/list",
-          title: "Simple Listing",
+          title: "Listing & Selection",
           icon: "favicon.ico"
         },
         {
           href: "/basic/compare",
-          title: "Simple Operators",
-          icon: "fa fa-file-alt"
-        },
-        {
-          href: "/basic/join",
-          title: "Simple Join",
-          icon: "fa fa-file-alt"
-        },
-        {
-          href: "/advanced/lesson-1",
-          title: "Joined Query",
-          icon: "fa fa-file-alt"
-        },
-        {
-          href: "/advanced/lesson-2",
-          title: "Recursive Joined Query",
-          icon: "fa fa-file-alt"
-        },
-        {
-          href: "/advanced/lesson-3",
-          title: "And/Or queries",
-          icon: "fa fa-download",
+          title: "Operators",
+          icon: "fa fa-file-alt",
           child: [
             {
-              href: "/advanced/lesson-3-1",
+              href: "/basic/or",
               title: "Or operation",
               icon: "fa fa-file-alt"
             },
             {
-              href: "/advanced/lesson-3-2",
-              title: "Or -> And conversion ",
+              href: "/basic/notAnd",
+              title: "Or -> Not + And",
               icon: "fa fa-file-alt"
             },
           ]
         },
+        {
+          href: "/basic/join",
+          title: "Join",
+          icon: "fa fa-file-alt",
+          child: [
+            {
+              href: "/join/or",
+              title: "Joined Or query",
+              icon: "fa fa-download",
+            },
+            {
+              href: "/join/lesson-1",
+              title: "Joined query",
+              icon: "fa fa-file-alt"
+            },
+            {
+              href: "/join/recursive",
+              title: "Recursive Joined query",
+              icon: "fa fa-file-alt"
+            },
+          ]
+        },
+
         {
           href: "/external",
           title: "Links",

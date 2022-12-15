@@ -172,11 +172,11 @@ class TableFilter extends JqlNode implements JqlResultMapping {
     }
 
     protected void addPrimaryColumnsIntoSelection() {
-        if (selectedColumns == schema.getReadableColumns()) return;
-
-        if (selectedColumns == Collections.EMPTY_LIST) {
-            selectedColumns = new ArrayList<>();
+        if (selectedColumns == schema.getReadableColumns()
+        ||  selectedColumns.size() == 0) {
+            return;
         }
+
         List<JqlColumn> pkColumns = schema.getPKColumns();
         for (int idxPk = pkColumns.size(); --idxPk >= 0; ) {
             JqlColumn pk = pkColumns.get(idxPk);
