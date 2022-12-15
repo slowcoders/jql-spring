@@ -182,9 +182,12 @@ ${vm.js_code}`
 
     http_post(url, jql) {
       const vm = this;
-      axios.post(url, jql).
-      then((res) => {
+
+      axios.post(url, jql).then(res => {
         vm.resultView.setValue(JSON.stringify(res.data, null, 4));
+      }).catch(err => {
+        let msg = "!!!! " + err.message + "\n" + JSON.stringify(err.response.data, null, 4);
+        vm.resultView.setValue(msg);
       })
     }
   }
