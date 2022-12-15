@@ -3,19 +3,16 @@ package org.eipgrid.jql.parser;
 import org.eipgrid.jql.*;
 import org.eipgrid.jql.jdbc.JqlResultMapping;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 
 class TableFilter extends JqlNode implements JqlResultMapping {
     private final JqlSchema schema;
 
     private final JqlSchemaJoin join;
     private final String mappingAlias;
-    private final HashMap<String, JqlNode> subFilters = new HashMap<>();
 
     private String[] entityMappingPath;
+    private List<JqlColumn> outputColumns = Collections.EMPTY_LIST;
     private List<JqlColumn> selectedColumns = Collections.EMPTY_LIST;
     private boolean isLinear;
 
@@ -75,11 +72,22 @@ class TableFilter extends JqlNode implements JqlResultMapping {
     }
 
     public void setSelectedColumns(JqlSelect select) {
-        this.selectedColumns = select.getSelectedColumns(schema);
+        this.selectedColumns = select.resolveSelectedColumns(schema);
     }
 
-    public TableFilter getTableFilter() {
-        return this;
+    private Set<JqlColumn> getHiddenForeignKeys() {
+        Set<JqlColumn> hiddenColumns = (Set<JqlColumn>) Collections.EMPTY_SET;
+        for (JqlNode node : this.subFilters.values()) {
+            TableFilter table = node.asTableFilter();
+            if (table == null) continue;
+            if (!table.join.isInverseMapped()) {
+                if (hiddenColumns == Collections.EMPTY_SET) hiddenColumns = new HashSet<>();
+                List<JqlColumn> fkColumns = table.join.getForeignKeyColumns();
+                assert(fkColumns.get(0).getSchema() == this.schema);
+                hiddenColumns.addAll(fkColumns);
+            }
+        }
+        return hiddenColumns;
     }
 
     @Override
@@ -103,8 +111,12 @@ class TableFilter extends JqlNode implements JqlResultMapping {
         return subQuery;
     }
 
-    public boolean hasFilterPredicates() {
-        return !this.isEmpty();
+    public boolean isEmpty() {
+        if (!super.isEmpty()) return false;
+        for (JqlNode subNode: subFilters.values()) {
+            if (!subNode.isEmpty()) return false;
+        }
+        return true;
     }
 
 
@@ -144,22 +156,38 @@ class TableFilter extends JqlNode implements JqlResultMapping {
                 this.isLinear &= table.isLinear && !table.isArrayNode();
             }
         }
-        if (!this.isLinear && this.getSelectedColumns() != schema.getReadableColumns()) {
-            if (selectedColumns == Collections.EMPTY_LIST) {
-                selectedColumns = new ArrayList<>();
+        if (this.isArrayNode()) {
+            addPrimaryColumnsIntoSelection();
+        }
+
+        Set<JqlColumn> hiddenKeys = getHiddenForeignKeys();
+        if (!hiddenKeys.isEmpty()) {
+            ArrayList<JqlColumn> columns = new ArrayList<>();
+            for (JqlColumn column : this.selectedColumns) {
+                if (hiddenKeys.contains(column)) continue;
+                columns.add(column);
             }
-            List<JqlColumn> pkColumns = schema.getPKColumns();
-            for (int idxPk = pkColumns.size(); --idxPk >= 0; ) {
-                JqlColumn pk = pkColumns.get(idxPk);
-                int i = this.selectedColumns.indexOf(pk);
-                if (i == idxPk) continue;
-                if (i >= 0) {
-                    JqlColumn col = this.selectedColumns.get(idxPk);
-                    this.selectedColumns.set(i, col);
-                    this.selectedColumns.set(idxPk, pk);
-                } else {
-                    this.selectedColumns.add(idxPk, pk);
-                }
+            this.selectedColumns = columns;
+        }
+    }
+
+    protected void addPrimaryColumnsIntoSelection() {
+        if (selectedColumns == schema.getReadableColumns()) return;
+
+        if (selectedColumns == Collections.EMPTY_LIST) {
+            selectedColumns = new ArrayList<>();
+        }
+        List<JqlColumn> pkColumns = schema.getPKColumns();
+        for (int idxPk = pkColumns.size(); --idxPk >= 0; ) {
+            JqlColumn pk = pkColumns.get(idxPk);
+            int i = this.selectedColumns.indexOf(pk);
+            if (i == idxPk) continue;
+            if (i >= 0) {
+                JqlColumn col = this.selectedColumns.get(idxPk);
+                this.selectedColumns.set(i, col);
+                this.selectedColumns.set(idxPk, pk);
+            } else {
+                this.selectedColumns.add(idxPk, pk);
             }
         }
     }

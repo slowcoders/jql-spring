@@ -6,7 +6,6 @@ import java.util.HashMap;
 
 class JsonFilter extends JqlNode {
     private final String key;
-    private final HashMap<String, JqlNode> subFilters = new HashMap<>();
 
     JsonFilter(JqlNode parentQuery, String key) {
         super(parentQuery);

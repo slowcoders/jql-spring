@@ -23,8 +23,8 @@ public class SqlConverter implements AstVisitor {
     public void visitNode(JqlNode node) {
         JqlNode old = this.currentNode;
         this.currentNode = node;
-        node.getPredicates().accept(this);
-        this.currentNode = old;
+//        node.getPredicates().accept(this);
+//        this.currentNode = old;
     }
 
     private void writeJsonPath(JqlNode node) {

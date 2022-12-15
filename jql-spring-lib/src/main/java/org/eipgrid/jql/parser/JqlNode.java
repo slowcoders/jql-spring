@@ -3,10 +3,13 @@ package org.eipgrid.jql.parser;
 import org.eipgrid.jql.JqlSchema;
 import org.eipgrid.jql.JqlSelect;
 
+import java.util.HashMap;
+
 public abstract class JqlNode implements Expression {
 
     private final JqlNode parent;
     private final PredicateSet predicates;
+    protected final HashMap<String, JqlNode> subFilters = new HashMap<>();
 
     protected JqlNode(JqlNode parentNode) {
         this.predicates = new PredicateSet(Conjunction.AND, this);
@@ -68,4 +71,7 @@ public abstract class JqlNode implements Expression {
         return scope;
     }
 
+    public Iterable<JqlNode> getChildNodes() {
+        return subFilters.values();
+    }
 }

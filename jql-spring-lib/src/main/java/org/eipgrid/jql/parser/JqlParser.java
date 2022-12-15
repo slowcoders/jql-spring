@@ -79,46 +79,42 @@ public class JqlParser {
 
             ValueNodeType valueCategory = this.getValueCategory(value);
             JqlNode targetNode = baseFilter.getFilterNode(key, valueCategory);
+            PredicateSet targetPredicates = predicates;
             if (targetNode != baseFilter) {
                 if (!fetchData) {
                     targetNode.setSelectedColumns(JqlSelect.NotAtAll);
                 } else {
                     targetNode.setSelectedColumns(select);
                 }
+                targetPredicates = targetNode.getPredicateSet();
             }
 
-            Expression cond;
-            if (valueCategory == ValueNodeType.Leaf) {
-                if (selectedAttrs != null && !selectedAttrs.contains(key)) {
-                    selectedAttrs.add(key);
-                }
-
-                String columnName = targetNode.getColumnName(key);
-                if (value != null) {
-                    JqlSchema schema = targetNode.getSchema();
-                    if (schema != null) {
-                        Class<?> fieldType = schema.getColumn(columnName).getJavaType();
-                        Class<?> accessType = op.getAccessType(value, fieldType);
-                        value = conversionService.convert(value, accessType);
-                    }
-                }
-                cond = op.createPredicate(columnName, value);
-            }
-            else {
+            if (valueCategory != ValueNodeType.Leaf) {
                 PredicateSet ps = op.getPredicates(targetNode, valueCategory);
                 if (valueCategory == ValueNodeType.Entity) {
-                    this.parse(ps, (Map<String, Object>)value);
-                }
-                else { // ValueNodeType.Entities
-                    for (Map<String, Object> c : (Collection<Map<String, Object>>)value) {
-                        this.parse(ps, (Map)c);
+                    this.parse(ps, (Map<String, Object>) value);
+                } else { // ValueNodeType.Entities
+                    for (Map<String, Object> c : (Collection<Map<String, Object>>) value) {
+                        this.parse(ps, (Map) c);
                     }
                 }
-                if (baseFilter == targetNode || targetNode.isEmpty()) continue;
-                cond = targetNode;
+                continue;
             }
 
-            predicates.add(cond);
+            if (selectedAttrs != null && !selectedAttrs.contains(key)) {
+                selectedAttrs.add(key);
+            }
+            String columnName = targetNode.getColumnName(key);
+            if (value != null) {
+                JqlSchema schema = targetNode.getSchema();
+                if (schema != null) {
+                    Class<?> fieldType = schema.getColumn(columnName).getJavaType();
+                    Class<?> accessType = op.getAccessType(value, fieldType);
+                    value = conversionService.convert(value, accessType);
+                }
+            }
+            Expression cond = op.createPredicate(columnName, value);
+            targetPredicates.add(cond);
         }
     }
 

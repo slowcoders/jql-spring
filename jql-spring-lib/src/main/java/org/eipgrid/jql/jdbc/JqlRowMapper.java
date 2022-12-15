@@ -32,7 +32,6 @@ public class JqlRowMapper implements ResultSetExtractor<List<KVEntity>> {
             int idxColumn = 0;
             JqlResultMapping lastMapping = null;
             ResultCache resultCache = resultCacheRoot;
-            CachedEntity entity = null;
             read_mapping:
             for (int idxMapping = 0; idxMapping < cntMapping; idxMapping++) {
                 JqlResultMapping mapping = resultMappings.get(idxMapping);
@@ -46,7 +45,8 @@ public class JqlRowMapper implements ResultSetExtractor<List<KVEntity>> {
 
                 boolean isCached = mapping.isArrayNode();
                 if (!isCached) {
-                    entity = readColumns(rs, idxColumn, columns.size());
+                    readColumns(rs, idxColumn, columns.size());
+                    idxColumn += columns.size();
                     continue;
                 }
 
@@ -67,7 +67,7 @@ public class JqlRowMapper implements ResultSetExtractor<List<KVEntity>> {
                     resultCache.put(key, cachedEntity);
                 }
                 else if (idxMapping > 0) {
-                    entity = makeBaseEntity(mapping);
+                    CachedEntity entity = makeBaseEntity(mapping);
                     if (cachedEntity.addParent(entity)) {
                         String[] entityPath = mapping.getEntityMappingPath();
                         String key2 = entityPath[entityPath.length - 1];
@@ -79,7 +79,6 @@ public class JqlRowMapper implements ResultSetExtractor<List<KVEntity>> {
                         data.add(cachedEntity);
                     }
                 }
-                entity = cachedEntity;
                 idxColumn += columns.size();
             }
         }
@@ -96,7 +95,7 @@ public class JqlRowMapper implements ResultSetExtractor<List<KVEntity>> {
     private static void putValue(CachedEntity entity, MappedColumn mappedColumn, Object value) {
         CachedEntity node = entity;
         JqlColumn column = mappedColumn.jqlColumn;
-        String fieldName = column.getJavaFieldName();
+        String fieldName = column.getJsonKey(); /* .getJavaFieldName();
         for (JqlColumn pk; (pk = column.getJoinedPrimaryColumn()) != null; ) {
             CachedEntity pkEntity = (CachedEntity) node.get(fieldName);
             if (pkEntity == null) {
@@ -107,7 +106,7 @@ public class JqlRowMapper implements ResultSetExtractor<List<KVEntity>> {
             column = pk;
             fieldName = column.getJavaFieldName();
         }
-
+        */
         Object old = node.put(fieldName, value);
         if (old != null && !old.equals(value)) {
             throw new RuntimeException("something wrong");

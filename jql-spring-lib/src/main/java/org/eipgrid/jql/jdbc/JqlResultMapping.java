@@ -5,6 +5,7 @@ import org.eipgrid.jql.JqlSchemaJoin;
 import org.eipgrid.jql.JqlSchema;
 
 import java.util.List;
+import java.util.Set;
 
 public interface JqlResultMapping {
     JqlResultMapping getParentNode();
@@ -24,5 +25,5 @@ public interface JqlResultMapping {
     // It has not any array node in descendants.
     boolean isLinearNode();
 
-    boolean hasFilterPredicates();
+    boolean isEmpty();
 }

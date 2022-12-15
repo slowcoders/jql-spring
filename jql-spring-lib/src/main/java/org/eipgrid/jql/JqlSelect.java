@@ -4,6 +4,7 @@ import org.springframework.data.domain.Sort;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 public class JqlSelect {
     private final String[] columns;
@@ -52,10 +53,11 @@ public class JqlSelect {
         return limit;
     }
 
-    public List<JqlColumn> getSelectedColumns(JqlSchema schema) {
+    public List<JqlColumn> resolveSelectedColumns(JqlSchema schema) {
         if (this.columns == null) {
             return schema.getReadableColumns();
         }
+
         ArrayList<JqlColumn> columns = new ArrayList<>();
         for (String name : this.columns) {
             JqlColumn column = schema.getColumn(name);

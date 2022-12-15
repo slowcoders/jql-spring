@@ -79,4 +79,8 @@ public abstract class JqlColumn {
         return null;
     }
 
+    @Override
+    public int hashCode() {
+        return columnName.hashCode();
+    }
 }

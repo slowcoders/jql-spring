@@ -4,6 +4,7 @@ import org.eipgrid.jql.JqlColumn;
 import org.eipgrid.jql.JqlSchema;
 import org.eipgrid.jql.JqlSchemaJoin;
 import org.eipgrid.jql.parser.AstRoot;
+import org.eipgrid.jql.parser.JqlNode;
 import org.eipgrid.jql.util.SourceWriter;
 import org.eipgrid.jql.JqlSelect;
 import org.springframework.data.domain.Sort;
@@ -24,10 +25,21 @@ public class SqlGenerator extends SqlConverter implements QueryBuilder {
         return command.toString();
     }
 
+    protected void writeFilter(JqlNode jql) {
+        super.visitNode(jql);
+        jql.getPredicates().accept(this);
+        for (JqlNode child : jql.getChildNodes()) {
+            if (!child.isEmpty()) {
+                sw.write(" AND ");
+                writeFilter(child);
+            }
+        }
+    }
+
     protected void writeWhere(AstRoot where) {
         if (!where.isEmpty()) {
             sw.write("\nWHERE ");
-            where.accept(this);
+            writeFilter(where);
         }
     }
 
@@ -41,7 +53,7 @@ public class SqlGenerator extends SqlConverter implements QueryBuilder {
             JqlSchemaJoin join = fetch.getSchemaJoin();
             if (join == null) continue;
 
-            if (ignoreEmptyFilter && !fetch.hasFilterPredicates()) continue;
+            if (ignoreEmptyFilter && fetch.isEmpty()) continue;
 
             String parentAlias = fetch.getParentNode().getMappingAlias();
             String alias = fetch.getMappingAlias();
@@ -61,7 +73,7 @@ public class SqlGenerator extends SqlConverter implements QueryBuilder {
     private void writeJoinStatement(JqlSchemaJoin joinKeys, String baseAlias, String alias) {
         boolean isInverseMapped = joinKeys.isInverseMapped();
         String joinedTable = joinKeys.getJoinedSchema().getTableName();
-        sw.write("\ninner join ").write(joinedTable).write(" as ").write(alias).write(" on\n\t");
+        sw.write("\nleft join ").write(joinedTable).write(" as ").write(alias).write(" on\n\t");
         for (JqlColumn fk : joinKeys.getForeignKeyColumns()) {
             JqlColumn anchor, linked;
             if (isInverseMapped) {
