@@ -58,4 +58,5 @@ public interface JQLRepository<ENTITY, ID> {
 //    void delete(Map<String, Object> filter) throws IOException;
 
     void clearEntityCache(ID id);
+
 }

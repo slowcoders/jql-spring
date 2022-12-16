@@ -129,7 +129,7 @@ public abstract class JdbcController {
         return idList;
     }
 
-    JQLRepository<KVEntity, Object> getRepository(String tableName) {
+    protected JQLRepository<KVEntity, Object> getRepository(String tableName) {
         String tablePath = service.makeTablePath(default_namespace, tableName);
         return service.makeRepository(tablePath);
     }

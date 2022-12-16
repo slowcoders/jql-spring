@@ -5,9 +5,11 @@
       :enable_table_select="false">
     <template v-slot:description>
       <H5> Comment 를 각각 한 줄씩 해제하면서 Join 쿼리 예제를 실행해 본다. </H5>
-      JQL 은 DB 의 metadata 를 분석하여 FK->PK Join 관계를 자동 분석하여 처리한다.<br>
-      또한 두 개의 FK 를 가진 Associative Table 을 통한 두 개의 Entity 연결도 가상 칼럼을 통해 처리할 수 있다.<br>
-      (가상 칼럼은 '+' 기호로 시작한다.)<p/>
+      <div class="details">
+        JQL 은 DB 의 metadata 를 분석하여 FK->PK Join 관계를 자동 분석하여 처리한다.<br>
+        또한 두 개의 FK 를 가진 Associative Table 을 통한 두 개의 Entity 연결도 가상 칼럼을 통해 처리할 수 있다.<br>
+        (가상 칼럼은 '+' 기호로 시작한다.)
+      </div>
     </template>
   </LessonView>
 </template>
@@ -34,7 +36,6 @@ const jql = {
   // "+episode": { "title": "JEDI" }
   // "+episode.title": "JEDI"
 }
-this.http_post(\`http://localhost:6090/api/jql/\${dbSchema}/\${dbTable}/find?sort=\${sort}&limit=\${limit}\`, jql);
 `
 
 export default {

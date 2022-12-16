@@ -1,8 +1,9 @@
 import { createWebHashHistory, createRouter } from "vue-router";
 import SimpleList from "../views/basic/SimpleList.vue"
-import CompareOp from "../views/basic/CompareOp.vue"
-import OrOp from "@/views/basic/OrOp";
-import AndOp from "@/views/basic/AndOp";
+import ValueCompare from "../views/basic/ValueCompare.vue"
+import MultiCompare from "../views/basic/MultiCompare.vue"
+import AndExpression from "@/views/basic/AndExpression";
+import OrExpression from "@/views/basic/OrExpression";
 import SimpleJoin from "../views/join/SimpleJoin.vue"
 import OrJoin from "@/views/join/OrJoin";
 import AdvancedJoin1 from "@/views/join/AdvancedJoin1";
@@ -18,19 +19,23 @@ const router = createRouter({
         },
         {
             path: '/basic/compare',
-            component: CompareOp,
+            component: ValueCompare,
+        },
+        {
+            path: '/basic/multi-compare',
+            component: MultiCompare,
+        },
+        {
+            path: '/basic/and',
+            component: AndExpression,
+        },
+        {
+            path: '/basic/or',
+            component: OrExpression,
         },
         {
             path: '/basic/join',
             component: SimpleJoin,
-        },
-        {
-            path: '/basic/or',
-            component: OrOp,
-        },
-        {
-            path: '/basic/notAnd',
-            component: AndOp,
         },
         {
             path: '/join/lesson-1',

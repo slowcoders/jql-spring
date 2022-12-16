@@ -4,7 +4,12 @@
       :js_code="code"
       :enable_table_select="false">
     <template v-slot:description>
-      <H5> Comment 를 각각 해제하면서 operator 사용법을 익혀본다. </H5>
+      <H5> 비교 연산자</H5>
+      <div class="details">
+      JQL 은 아래의 형태로 비교 연산식을 표현한다.<br>
+      - "propertyKey@연산자" : 비교값<p/>
+      "@연산자" 부분이 생략되면 equals 연산을 수행한다.<br>
+        아래 예제의 Comment 를 하나씩 해제하면서 검색 결과의 차이를 알아본다.</div>
     </template>
   </LessonView>
 </template>
@@ -15,9 +20,7 @@ import LessonView from "@/components/LessonView";
 const sample_code = `
 const jql = {
   // "id": 1001
-  // "id": [1001, 1002]
   // "id@not": 1001
-  // "id@not": [1001, 1002]
 
   // "id@le": 1001
   // "id@lt": 1001
@@ -30,10 +33,7 @@ const jql = {
 
   // "name@like": "Luke%"
   // "name@not like": "Luke%"
-  // "name@like": [ "Luke%", "Darth%" ]
-  // "name@not like": [ "Luke%", "Darth%" ]
 }
-this.http_post(\`http://localhost:6090/api/jql/\${dbSchema}/\${dbTable}/find?sort=\${sort}&limit=\${limit}\`, jql);
 `
 
 export default {

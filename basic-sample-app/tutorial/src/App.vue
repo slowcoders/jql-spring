@@ -27,20 +27,23 @@ export default {
         },
         {
           href: "/basic/compare",
-          title: "Operators",
+          title: "Compare operators",
           icon: "fa fa-file-alt",
-          child: [
-            {
-              href: "/basic/or",
-              title: "Or operation",
-              icon: "fa fa-file-alt"
-            },
-            {
-              href: "/basic/notAnd",
-              title: "Or -> Not + And",
-              icon: "fa fa-file-alt"
-            },
-          ]
+        },
+        {
+          href: "/basic/multi-compare",
+          title: "Multi Compare operators",
+          icon: "fa fa-file-alt",
+        },
+        {
+          href: "/basic/and",
+          title: "And expression",
+          icon: "fa fa-file-alt"
+        },
+        {
+          href: "/basic/or",
+          title: "Or expression",
+          icon: "fa fa-file-alt"
         },
         {
           href: "/basic/join",

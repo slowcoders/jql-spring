@@ -95,7 +95,9 @@ public class JqlParser {
                     this.parse(ps, (Map<String, Object>) value);
                 } else { // ValueNodeType.Entities
                     for (Map<String, Object> c : (Collection<Map<String, Object>>) value) {
-                        this.parse(ps, (Map) c);
+                        PredicateSet and_qs = new PredicateSet(Conjunction.AND, ps.getBaseFilter());
+                        this.parse(and_qs, (Map) c);
+                        ps.add(and_qs);
                     }
                 }
                 continue;

@@ -5,6 +5,8 @@
       :enable_table_select="false">
     <template v-slot:description>
       <H5> 특정 Episode 출연자의 친구의 친구 중 동일한 Episode 출연한 캐릭터 검색. </H5>
+      <div class="details">
+      </div>
     </template>
   </LessonView>
 </template>
@@ -32,7 +34,6 @@ const jql = {
     }
   },
 }
-this.http_post(\`http://localhost:6090/api/jql/\${dbSchema}/\${dbTable}/find?sort=\${sort}&limit=\${limit}\`, jql);
 `
 
 export default {

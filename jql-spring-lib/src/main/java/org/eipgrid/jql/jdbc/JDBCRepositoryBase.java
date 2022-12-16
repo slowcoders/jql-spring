@@ -25,6 +25,7 @@ public class JDBCRepositoryBase<ID> /*extends JDBCQueryBuilder*/ implements JQLR
     private final JQLJdbcService service;
     private final List<JqlColumn> pkColumns;
     private final JqlSchema jqlSchema;
+    private String lastGeneratedSql;
 
     public JDBCRepositoryBase(JQLJdbcService service, Class<?> entityType) {
         this(service, service.loadSchema(entityType)); //  JqlSchema.loadSchema(entityType));
@@ -125,6 +126,7 @@ public class JDBCRepositoryBase<ID> /*extends JDBCQueryBuilder*/ implements JQLR
     protected List<KVEntity> find_impl(Map<String, Object> jqlFilter, JqlSelect columns) {
         AstRoot query = this.buildQuery(jqlFilter);
         String sql = sqlGenerator.createSelectQuery(query, columns);
+        this.lastGeneratedSql = sql;
         List<KVEntity> res = (List)jdbc.query(sql, getColumnMapRowMapper(query));
         return res;
     }
@@ -272,6 +274,10 @@ public class JDBCRepositoryBase<ID> /*extends JDBCQueryBuilder*/ implements JQLR
         JqlParser parser = new JqlParser(this.getSchema(), this.service.getConversionService());
         AstRoot where = parser.parse(filterMap);
         return where;
+    }
+
+    public String getLastExecutedSql() {
+        return this.lastGeneratedSql;
     }
 
 }

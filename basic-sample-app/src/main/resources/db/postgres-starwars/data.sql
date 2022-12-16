@@ -3,18 +3,16 @@ INSERT INTO starwars.episode (title) values
 on conflict DO NOTHING;
 
 
-INSERT INTO starwars.character (species, id, name, home_planet, height, mass) values
-('Human', 1000, 'Luke Skywalker', 'Tatooine', 1.72, 77),
-('Human', 1001, 'Darth Vader', 'Tatooine', 2.02, 136),
-('Human', 1002, 'Han Solo', null, 1.8, 80),
-('Human', 1003, 'Leia Organa', 'Alderaan', 1.5, 49),
-('Human', 1004, 'Wilhuff Tarkin', null, 1.8, null)
-on conflict DO NOTHING;
-
-
-INSERT INTO starwars.character (species, id, name, primary_function) values
-('Droid', 2000, 'C-3PO', 'protocol'),
-('Droid', 2001, 'R2-D2', 'Astromech')
+INSERT INTO starwars.character (species, id, name, home_planet, height, mass, primary_function) values
+('Human', 1000, 'Luke Skywalker', 'Tatooine', 1.72, 77, null),
+('Human', 1001, 'Darth Vader', 'Tatooine', 2.02, 136, null),
+('Human', 1002, 'Han Solo', null, 1.8, 80, null),
+('Human', 1003, 'Leia Organa', 'Alderaan', 1.5, 49, null),
+('Human', 1004, 'Wilhuff Tarkin', null, 1.8, null, null),
+('Human', 1005, 'Extra-1', null, 1.19, 50, null),
+('Human', 1006, 'Extra-2', null, 1.8, 121, null),
+('Droid', 2000, 'C-3PO', null, 1.71, 75, 'protocol'),
+('Droid', 2001, 'R2-D2', null, 1.09, 32, 'Astromech')
 on conflict DO NOTHING;
 
 
