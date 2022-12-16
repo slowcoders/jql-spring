@@ -231,7 +231,7 @@ this.http_post(find_url+\`?select=\${select}&sort=\${sort}&limit=\${limit}\`, jq
       }).then(last_sql => {
         console.log(last_sql)
         vm.cntTest ++;
-        const header = vm.cntTest + ") result: " + find_result.data.length + "\n";
+        const header = "ex " + vm.cntTest + ") result: " + find_result.data.length + "\n\n";
         const results = JSON.stringify(find_result.data, null, 2);
         const sql = "\n\n---------------\nexecuted sql:\n" + last_sql.data;
         vm.resultView.setValue(header + results + sql);

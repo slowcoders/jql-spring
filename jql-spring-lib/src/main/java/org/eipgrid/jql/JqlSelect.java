@@ -3,6 +3,7 @@ package org.eipgrid.jql;
 import org.springframework.data.domain.Sort;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -38,7 +39,7 @@ public class JqlSelect {
     public static String[] splitColumnNames(String columns) {
         if (columns != null) {
             columns = columns.trim();
-            if (columns.length() > 0 && !columns.equals("*")) {
+            if (columns.length() > 0) {
                 return columns.split(",");
             }
         }
@@ -60,8 +61,20 @@ public class JqlSelect {
 
         ArrayList<JqlColumn> columns = new ArrayList<>();
         for (String name : this.columns) {
+            switch (name) {
+                case "*":
+                    return schema.getReadableColumns();
+                case "#":
+                    for (JqlColumn col : schema.getPKColumns()) {
+                        if (!columns.contains(col)) columns.add(col);
+                    }
+                    continue;
+                case "@":
+                    continue;
+
+            }
             JqlColumn column = schema.getColumn(name);
-            columns.add(column);
+            if (!columns.contains(column))  columns.add(column);
         }
         return columns;
     }

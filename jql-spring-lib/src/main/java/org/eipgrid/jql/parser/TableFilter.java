@@ -12,7 +12,6 @@ class TableFilter extends JqlNode implements JqlResultMapping {
     private final String mappingAlias;
 
     private String[] entityMappingPath;
-    private List<JqlColumn> outputColumns = Collections.EMPTY_LIST;
     private List<JqlColumn> selectedColumns = Collections.EMPTY_LIST;
     private boolean isLinear;
 
