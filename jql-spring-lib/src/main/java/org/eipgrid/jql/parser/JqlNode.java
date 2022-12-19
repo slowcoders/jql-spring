@@ -39,7 +39,7 @@ public abstract class JqlNode implements Expression {
 
     public JqlNode getParentNode() { return this.parent; }
 
-    public AstRoot getRootNode() {
+    public JqlQuery getRootNode() {
         return parent.getRootNode();
     }
 
@@ -49,7 +49,7 @@ public abstract class JqlNode implements Expression {
 
     TableFilter asTableFilter() { return null; }
 
-    void setSelectedColumns(JqlSelect select) {}
+    void selectProperties(String[] selectedKeys) {}
 
     final JqlNode getFilterNode(String key, ValueNodeType nodeType) {
         if (key == null) return this;
@@ -74,4 +74,6 @@ public abstract class JqlNode implements Expression {
     public Iterable<JqlNode> getChildNodes() {
         return subFilters.values();
     }
+
+    protected void addComparedAttribute(String key) {}
 }

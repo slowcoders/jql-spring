@@ -29,7 +29,7 @@ public interface JQLRepository<ENTITY, ID> {
     List<ENTITY> list(Collection<ID> idList);
 
     default Iterable<ENTITY> listAll() {
-        return find(null, JqlSelect.All);
+        return find(null, JqlSelect.Whole);
     }
 
 

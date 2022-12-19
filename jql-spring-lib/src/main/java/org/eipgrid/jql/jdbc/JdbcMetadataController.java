@@ -56,13 +56,17 @@ public abstract class JdbcMetadataController {
 
         JqlSchema schema = getSchema(db_schema, tableName);
         String source;
-        if (type == SchemaType.JS) {
+        if (type == SchemaType.Simple) {
+            source = JsonJql.getSimpleSchema(schema);
+        }
+        else if (type == SchemaType.Javascript) {
             source = JsonJql.createDDL(schema);
             String join = JsonJql.createJoinJQL(schema);
             StringBuilder sb = new StringBuilder();
             sb.append(source).append("\n\n").append(join);
             source = sb.toString();
-        } else {
+        }
+        else {
             if (schema instanceof JdbcSchema) {
                 source = ((JdbcSchema)schema).dumpJPAEntitySchema();
             }
@@ -78,7 +82,7 @@ public abstract class JdbcMetadataController {
         StringBuilder sb = new StringBuilder();
         for (String tableName : service.getTableNames(db_schema)) {
             JqlSchema schema = getSchema(db_schema, tableName);
-            if (type == SchemaType.JS) {
+            if (type == SchemaType.Javascript) {
                 String source = JsonJql.createDDL(schema);
                 String join = JsonJql.createJoinJQL(schema);
                 sb.append(source).append("\n\n").append(join);
@@ -116,7 +120,8 @@ public abstract class JdbcMetadataController {
     }
 
     enum SchemaType {
-        JS,
-        JPA
+        Simple,
+        Javascript,
+        SpringJPA
     }
 }

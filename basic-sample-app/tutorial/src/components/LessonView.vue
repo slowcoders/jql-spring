@@ -7,7 +7,7 @@
         </td><td class="input-column">
           <b-form-select v-model="selectedTable"
                          :options="tableNames"
-                         :disabled="!enable_table_selector"
+                         :disabled="!showSchemaInfo"
                          @input="onTableChanged()">
           </b-form-select>
         </td><td>
@@ -55,7 +55,7 @@
 
     <!------------>
     <div id="code-area">
-      <div style="position: relative">
+      <div class="code" style="position: relative">
         <CodeMirror ref="codeView"
                     v-model:value="sampleCode"
                     :options="editOptions"
@@ -67,7 +67,7 @@
           run
         </b-button>
       </div>
-      <div style="position: relative">
+      <div class="code">
         <CodeMirror ref="resultView"
             class="test-result-view col-sm-6"
             v-model:value="test_result"
@@ -101,7 +101,9 @@ function count_lines(code) {
 const sampleTables = [
   "character",
   "starship",
-  "episode"
+  "episode",
+  "character_episode_link",
+  "character_friend_link"
 ]
 
 export default {
@@ -113,8 +115,9 @@ export default {
   components: { CodeMirror },
   data() {
     return {
-      enable_table_selector: this.enable_table_select,
+      showSchemaInfo: this.enable_table_select,
       selectedTable: sampleTables[0],
+      schemaInfo: '',
       tableNames: sampleTables,
       selectableColumns: [],
       selectedColumns: ["*"],
@@ -142,9 +145,8 @@ export default {
         theme: "dracula", // Theme
         lineNumbers: false, // Show line number
         smartIndent: true, // Smart indent
-        indentUnit: 4, // The smart indent unit is 2 spaces in length
+        indentUnit: 2, // The smart indent unit is 2 spaces in length
         foldGutter: true, // Code folding
-        scrollable: true,
         lineWrapping: true,
         styleActiveLine: true, // Display the style of the selected row
       }
@@ -170,14 +172,6 @@ export default {
       }
     },
 
-    onTableChanged() {
-      console.log("onTableChanged")
-      const vm = this;
-      vm.sortColumn = null;
-      vm.codeView.setValue(vm.make_sample_code());
-      vm.resetColumns();
-    },
-
     make_sample_code() {
       const vm = this;
 
@@ -189,7 +183,8 @@ const sort = '${vm.first_sort}'
 const limit = ${vm.limit?vm.limit:0}
 ${vm.js_code}
 const find_url=\`http://localhost:6090/api/jql/\${dbSchema}/\${dbTable}/find\`
-this.http_post(find_url+\`?select=\${select}&sort=\${sort}&limit=\${limit}\`, jql);`
+this.http_post(find_url+\`?select=\${select}&sort=\${sort}&limit=\${limit}\`, jql);
+${vm.schemaInfo}`
     },
 
     resetColumns() {
@@ -200,8 +195,8 @@ this.http_post(find_url+\`?select=\${select}&sort=\${sort}&limit=\${limit}\`, jq
         const sortOptions = [];
         const selectableColumns = [
           { value: "*", text: "* all" },
-          { value: "#", text: "# primary keys" },
-          { value: "@", text: "@ compared properties" }
+          { value: "!", text: "! primary keys" },
+          // { value: "@", text: "@ compared properties" }
         ];
         for (const column of res.data) {
           sortOptions.push(" " + column);
@@ -219,7 +214,29 @@ this.http_post(find_url+\`?select=\${select}&sort=\${sort}&limit=\${limit}\`, jq
     },
 
     onSelectChanged() {
-      this.onTableChanged();
+      const vm = this;
+      vm.sortColumn = null;
+      vm.codeView.setValue(vm.make_sample_code());
+      vm.resultView.setValue("");
+      vm.resetColumns();
+    },
+
+    onTableChanged() {
+      const vm = this;
+      if (vm.showSchemaInfo) {
+        const url = `http://localhost:6090/api/jql/metadata/${dbSchema}/${vm.selectedTable}/Simple`
+        axios.get(url).then(res => {
+          vm.schemaInfo = `\n/*************** Schema<${vm.selectedTable}> ***********************\n${res.data}*/`;
+          vm.onSelectChanged()
+        }).catch(vm.show_http_error)
+      } else {
+        vm.onSelectChanged()
+      }
+    },
+
+    show_http_error(err) {
+      let msg = err.message + "\n" + JSON.stringify(err.response.data, null, 4);
+      this.show_error_in_result_view(msg);
     },
 
     http_post(url, jql) {
@@ -235,10 +252,7 @@ this.http_post(find_url+\`?select=\${select}&sort=\${sort}&limit=\${limit}\`, jq
         const results = JSON.stringify(find_result.data, null, 2);
         const sql = "\n\n---------------\nexecuted sql:\n" + last_sql.data;
         vm.resultView.setValue(header + results + sql);
-      }).catch(err => {
-        let msg = err.message + "\n" + JSON.stringify(err.response.data, null, 4);
-        vm.show_error_in_result_view(msg);
-      })
+      }).catch(vm.show_http_error)
     }
   }
 };
@@ -253,6 +267,7 @@ this.http_post(find_url+\`?select=\${select}&sort=\${sort}&limit=\${limit}\`, jq
     display: grid;
     grid-template-rows: auto 1fr;
     height: 100vh;
+    max-height: 100vh;
   }
 
   /*.test-result-view .CodeMirror {*/
@@ -277,6 +292,11 @@ this.http_post(find_url+\`?select=\${select}&sort=\${sort}&limit=\${limit}\`, jq
     display: grid;
     grid-template-columns: 1fr 1fr;
   }
+  div.code {
+    /*overflow: auto;*/
+    /*max-height: 100%;*/
+  }
+
   .CodeMirror * {
     font-family: Curier, monospace;
     font-size: small;

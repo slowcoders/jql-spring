@@ -1,11 +1,10 @@
 package org.eipgrid.jql.jdbc;
 
 import org.eipgrid.jql.JqlColumn;
-import org.eipgrid.jql.JqlSchemaJoin;
+import org.eipgrid.jql.JqlEntityJoin;
 import org.eipgrid.jql.JqlSchema;
 
 import java.util.List;
-import java.util.Set;
 
 public interface JqlResultMapping {
     JqlResultMapping getParentNode();
@@ -14,7 +13,7 @@ public interface JqlResultMapping {
 
     String getMappingAlias();
 
-    JqlSchemaJoin getSchemaJoin();
+    JqlEntityJoin getEntityJoin();
 
     List<JqlColumn> getSelectedColumns();
 

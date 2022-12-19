@@ -191,6 +191,8 @@ public class SqlConverter implements AstVisitor {
         sw.write("(");
         boolean first = true;
         for (Expression item : predicates) {
+            if (item.isEmpty()) continue;
+
             if (first) {
                 first = false;
             } else {

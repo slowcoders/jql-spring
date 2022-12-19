@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.eipgrid.jql.JqlColumn;
 import org.eipgrid.jql.JqlSchema;
-import org.eipgrid.jql.JqlSchemaJoin;
+import org.eipgrid.jql.JqlEntityJoin;
 import org.eipgrid.jql.util.ClassUtils;
 
 import java.sql.ResultSetMetaData;
@@ -98,7 +98,7 @@ public class JdbcColumn extends JqlColumn {
         StringBuilder sb = new StringBuilder();
         JqlColumn col = this;
         for (JqlColumn joinedPk; (joinedPk = col.getJoinedPrimaryColumn()) != null; col = joinedPk) {
-            String token = JqlSchemaJoin.initJsonKey(col);
+            String token = JqlEntityJoin.initJsonKey(col);
             sb.append(token).append('.');
         }
         CharSequence rawFieldName = (col != this) ? sb.append(col.getColumnName()) : this.getColumnName();

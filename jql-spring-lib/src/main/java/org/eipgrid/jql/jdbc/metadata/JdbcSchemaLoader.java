@@ -2,7 +2,7 @@ package org.eipgrid.jql.jdbc.metadata;
 
 import org.eipgrid.jql.JqlColumn;
 import org.eipgrid.jql.JqlSchema;
-import org.eipgrid.jql.JqlSchemaJoin;
+import org.eipgrid.jql.JqlEntityJoin;
 import org.eipgrid.jql.SchemaLoader;
 import org.eipgrid.jql.util.AttributeNameConverter;
 import org.springframework.dao.DataAccessException;
@@ -62,31 +62,31 @@ public class JdbcSchemaLoader extends SchemaLoader {
     }
 
     @Override
-    protected HashMap<String, JqlSchemaJoin> loadJoinMap(JqlSchema pkSchema) {
-        SchemaJoinHelper exportedJoins = jdbc.execute(new ConnectionCallback<SchemaJoinHelper>() {
+    protected HashMap<String, JqlEntityJoin> loadJoinMap(JqlSchema pkSchema) {
+        EntityJoinHelper exportedJoins = jdbc.execute(new ConnectionCallback<EntityJoinHelper>() {
             @Override
-            public SchemaJoinHelper doInConnection(Connection conn) throws SQLException, DataAccessException {
+            public EntityJoinHelper doInConnection(Connection conn) throws SQLException, DataAccessException {
                 return getChildJoins(conn, (JdbcSchema)pkSchema, pkSchema.getNamespace(), pkSchema.getSimpleTableName());
             }
         });
         return createJoinMap((JdbcSchema)pkSchema, exportedJoins);
     }
 
-    private HashMap<String, JqlSchemaJoin> createJoinMap(JdbcSchema schema, SchemaJoinHelper mappedJoins) {
-        HashMap<String, JqlSchemaJoin> joinMap = new HashMap<>();
-        for (JqlSchemaJoin join : schema.getForeignKeyConstraints().values()) {
+    private HashMap<String, JqlEntityJoin> createJoinMap(JdbcSchema schema, EntityJoinHelper mappedJoins) {
+        HashMap<String, JqlEntityJoin> joinMap = new HashMap<>();
+        for (JqlEntityJoin join : schema.getForeignKeyConstraints().values()) {
             joinMap.put(join.getJsonKey(), join);
         }
-        for (JqlSchemaJoin fkJoin : mappedJoins.values()) {
+        for (JqlEntityJoin fkJoin : mappedJoins.values()) {
             List<JqlColumn> fkColumns = fkJoin.getForeignKeyColumns();
-            JqlSchemaJoin childJoin = new JqlSchemaJoin(schema, fkColumns);
+            JqlEntityJoin childJoin = new JqlEntityJoin(schema, fkColumns);
             joinMap.put(childJoin.getJsonKey(), childJoin);
             JdbcSchema childSchema = (JdbcSchema) fkJoin.getBaseSchema();
-            Collection<JqlSchemaJoin> joins = childSchema.getForeignKeyConstraints().values();
-            for (JqlSchemaJoin j2 : joins) {
+            Collection<JqlEntityJoin> joins = childSchema.getForeignKeyConstraints().values();
+            for (JqlEntityJoin j2 : joins) {
                 assert(!j2.isInverseMapped());
                 if (j2 != fkJoin) {
-                    JqlSchemaJoin associative = new JqlSchemaJoin(schema, fkColumns, j2);
+                    JqlEntityJoin associative = new JqlEntityJoin(schema, fkColumns, j2);
                     joinMap.put(associative.getJsonKey(), associative);
                 }
             }
@@ -204,15 +204,16 @@ public class JdbcSchemaLoader extends SchemaLoader {
         }
     }
 
-    private SchemaJoinHelper getChildJoins(Connection conn, JdbcSchema pkSchema, String dbSchema, String tableName) throws SQLException {
+    private EntityJoinHelper getChildJoins(Connection conn, JdbcSchema pkSchema, String dbSchema, String tableName) throws SQLException {
         DatabaseMetaData md = conn.getMetaData();
         ResultSet rs = md.getExportedKeys(catalog, dbSchema, tableName);
 
-        SchemaJoinHelper joins = new SchemaJoinHelper(pkSchema);
+        EntityJoinHelper joins = new EntityJoinHelper(pkSchema);
         while (rs.next()) {
             JoinData join = new JoinData(rs, this);
             JdbcSchema fkSchema = (JdbcSchema) loadSchema(join.fkTableQName);
-            JqlSchemaJoin fkJoin = fkSchema.getForeignKeyConstraints().get(join.fk_name);
+            JqlEntityJoin fkJoin = fkSchema.getForeignKeyConstraints().get(join.fk_name);
+            assert(fkJoin != null);
             joins.put(fkSchema, fkJoin);
         }
         return joins;

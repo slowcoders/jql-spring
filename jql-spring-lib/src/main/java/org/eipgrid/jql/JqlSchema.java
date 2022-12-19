@@ -15,7 +15,7 @@ public abstract class JqlSchema {
     private List<JqlColumn> allColumns;
     private List<JqlColumn> writableColumns;
     private Map<String, JqlColumn> columnMap = new HashMap<>();
-    private HashMap<String, JqlSchemaJoin> entityJoinMap;
+    private HashMap<String, JqlEntityJoin> entityJoinMap;
 
     public JqlSchema(SchemaLoader schemaLoader, String tableName, String jpaClassName) {
         this.tableName = tableName;
@@ -48,8 +48,8 @@ public abstract class JqlSchema {
         return this.pkColumns;
     }
 
-    public JqlSchemaJoin getSchemaJoinBy(String jsonKey) {
-        return getSchemaJoinMap().get(jsonKey);
+    public JqlEntityJoin getEntityJoinBy(String jsonKey) {
+        return getEntityJoinMap().get(jsonKey);
     }
 
     public JqlColumn findColumn(String key) throws IllegalArgumentException {
@@ -132,7 +132,7 @@ public abstract class JqlSchema {
         return schemaLoader.createDDL(this);
     }
 
-    public HashMap<String, JqlSchemaJoin> getSchemaJoinMap() {
+    public HashMap<String, JqlEntityJoin> getEntityJoinMap() {
         if (this.entityJoinMap == null) {
             this.entityJoinMap = schemaLoader.loadJoinMap(this);
         }

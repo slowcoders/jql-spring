@@ -3,9 +3,7 @@ package org.eipgrid.jql;
 import org.springframework.data.domain.Sort;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 public class JqlSelect {
     private final String[] columns;
@@ -13,10 +11,13 @@ public class JqlSelect {
     private int offset;
     private int limit;
 
-    public static final JqlSelect All = new JqlSelect(null, null, 0, 0);
+    public static final String ALL_PROPERTIES = "*";
+    public static final String PRIMARY_KEYS = "!";
+
+    public static final JqlSelect Whole = new JqlSelect(null, null, 0, 0);
     public static final JqlSelect NotAtAll = new JqlSelect(new String[0], null, 0, 0);
 
-    private JqlSelect(String[] columns, Sort sort, int offset, int limit) {
+    protected JqlSelect(String[] columns, Sort sort, int offset, int limit) {
         this.columns = columns;
         this.sort = sort;
         this.offset = offset;
@@ -32,18 +33,23 @@ public class JqlSelect {
     }
 
     public static JqlSelect by(String columns, String sort, int offset, int limit) {
-        String[] _columns = splitColumnNames(columns);
+        String[] _columns = splitPropertyKeys(columns);
         return by(_columns, parseSort(sort), offset, limit);
     }
 
-    public static String[] splitColumnNames(String columns) {
+    public static String[] splitPropertyKeys(String columns) {
         if (columns != null) {
             columns = columns.trim();
             if (columns.length() > 0) {
                 return columns.split(",");
             }
+            return NotAtAll.columns;
         }
         return null;
+    }
+
+    public String[] getAttributeNames() {
+        return this.columns;
     }
 
     public int getOffset() {
@@ -52,31 +58,6 @@ public class JqlSelect {
 
     public int getLimit() {
         return limit;
-    }
-
-    public List<JqlColumn> resolveSelectedColumns(JqlSchema schema) {
-        if (this.columns == null) {
-            return schema.getReadableColumns();
-        }
-
-        ArrayList<JqlColumn> columns = new ArrayList<>();
-        for (String name : this.columns) {
-            switch (name) {
-                case "*":
-                    return schema.getReadableColumns();
-                case "#":
-                    for (JqlColumn col : schema.getPKColumns()) {
-                        if (!columns.contains(col)) columns.add(col);
-                    }
-                    continue;
-                case "@":
-                    continue;
-
-            }
-            JqlColumn column = schema.getColumn(name);
-            if (!columns.contains(column))  columns.add(column);
-        }
-        return columns;
     }
 
     public Sort getSort() {
@@ -91,7 +72,7 @@ public class JqlSelect {
     }
 
     public static Sort parseSort(String commaSeperatedProperties) {
-        String[] properties = splitColumnNames(commaSeperatedProperties);
+        String[] properties = splitPropertyKeys(commaSeperatedProperties);
         return buildSort(properties);
     }
 

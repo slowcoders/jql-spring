@@ -6,9 +6,9 @@
     <template v-slot:description>
       <H5> 비교 연산자</H5>
       <div class="details">
-      JQL 은 아래의 형태로 비교 연산식을 표현한다.<br>
-      - "propertyKey@연산자" : 비교값<p/>
-      "@연산자" 부분이 생략되면 equals 연산을 수행한다.<br>
+        JQL 은 아래의 형태로 비교 연산식을 표현한다.<br>
+        <b>"propertyKey@연산자" : 비교값</b><p/>
+        "@연산자" 부분이 생략되면 equals 연산을 수행한다.<br>
         아래 예제의 Comment 를 하나씩 해제하면서 검색 결과의 차이를 알아본다.</div>
     </template>
   </LessonView>

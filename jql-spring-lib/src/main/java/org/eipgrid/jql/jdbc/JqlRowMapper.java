@@ -1,6 +1,7 @@
 package org.eipgrid.jql.jdbc;
 
 import org.eipgrid.jql.JqlColumn;
+import org.eipgrid.jql.JqlSchema;
 import org.eipgrid.jql.util.KVEntity;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.ResultSetExtractor;
@@ -43,8 +44,8 @@ public class JqlRowMapper implements ResultSetExtractor<List<KVEntity>> {
                 List<JqlColumn> columns = mapping.getSelectedColumns();
                 if (columns.size() == 0) continue;
 
-                boolean isCached = mapping.isArrayNode();
-                if (!isCached) {
+                boolean doCache = mapping.isArrayNode();
+                if (!doCache) {
                     readColumns(rs, idxColumn, columns.size());
                     idxColumn += columns.size();
                     continue;
@@ -60,23 +61,27 @@ public class JqlRowMapper implements ResultSetExtractor<List<KVEntity>> {
                         continue read_mapping;
                     }
                 }
-                Object key = makeCacheKey(pkColumns, idxColumn);
-                CachedEntity cachedEntity = resultCache.get(key);
-                if (cachedEntity == null) {
-                    cachedEntity = readColumns(rs, idxColumn, columns.size());
-                    resultCache.put(key, cachedEntity);
+                Object key = makeCacheKey(mapping.getSchema(), idxColumn);
+                if (key == null) {
+                    readColumns(rs, idxColumn, columns.size());
                 }
-                else if (idxMapping > 0) {
-                    CachedEntity entity = makeBaseEntity(mapping);
-                    if (cachedEntity.addParent(entity)) {
-                        String[] entityPath = mapping.getEntityMappingPath();
-                        String key2 = entityPath[entityPath.length - 1];
-                        List data = (List) entity.get(key2);
-                        if (data == null) {
-                            data = new ArrayList();
-                            entity.put(key2, data);
+                else {
+                    CachedEntity cachedEntity = resultCache.get(key);
+                    if (cachedEntity == null) {
+                        cachedEntity = readColumns(rs, idxColumn, columns.size());
+                        resultCache.put(key, cachedEntity);
+                    } else if (idxMapping > 0) {
+                        CachedEntity entity = makeBaseEntity(mapping);
+                        if (cachedEntity.addParent(entity)) {
+                            String[] entityPath = mapping.getEntityMappingPath();
+                            String key2 = entityPath[entityPath.length - 1];
+                            List data = (List) entity.get(key2);
+                            if (data == null) {
+                                data = new ArrayList();
+                                entity.put(key2, data);
+                            }
+                            data.add(cachedEntity);
                         }
-                        data.add(cachedEntity);
                     }
                 }
                 idxColumn += columns.size();
@@ -85,11 +90,22 @@ public class JqlRowMapper implements ResultSetExtractor<List<KVEntity>> {
         return results;
     }
 
-    private Object makeCacheKey(List<JqlColumn> pkColumns, int idxColumn) {
-        if (pkColumns.size() == 1) {
+    private Object makeCacheKey(JqlSchema schema, int idxColumn) {
+        List<JqlColumn> pkColumns = schema.getPKColumns();
+        int cntPk = pkColumns.size();
+        if (cntPk == 0) {
+            pkColumns = schema.getReadableColumns();
+            cntPk = pkColumns.size();
+        }
+        if (cntPk == 1) {
             return mappedColumns[idxColumn].value;
         }
-        throw new RuntimeException("not implemented");
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < cntPk; i ++) {
+            sb.append(mappedColumns[idxColumn++].value);
+            sb.append("+");
+        }
+        return sb.toString();
     }
 
     private static void putValue(CachedEntity entity, MappedColumn mappedColumn, Object value) {

@@ -47,25 +47,23 @@ export default {
         },
         {
           href: "/basic/join",
-          title: "Join",
+          title: "Join query",
           icon: "fa fa-file-alt",
-          child: [
-            {
-              href: "/join/or",
-              title: "Joined Or query",
-              icon: "fa fa-download",
-            },
-            {
-              href: "/join/lesson-1",
-              title: "Joined query",
-              icon: "fa fa-file-alt"
-            },
-            {
-              href: "/join/recursive",
-              title: "Recursive Joined query",
-              icon: "fa fa-file-alt"
-            },
-          ]
+        },
+        {
+          href: "/join/or",
+          title: "Or Join query",
+          icon: "fa fa-download",
+        },
+        {
+          href: "/join/lesson-1",
+          title: "Joined property selection",
+          icon: "fa fa-file-alt"
+        },
+        {
+          href: "/join/recursive",
+          title: "Recursive Joined query",
+          icon: "fa fa-file-alt"
         },
 
         {

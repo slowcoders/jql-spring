@@ -2,8 +2,9 @@ package org.eipgrid.jql.jdbc;
 
 import org.eipgrid.jql.JqlColumn;
 import org.eipgrid.jql.JqlSchema;
-import org.eipgrid.jql.JqlSchemaJoin;
-import org.eipgrid.jql.parser.AstRoot;
+import org.eipgrid.jql.JqlEntityJoin;
+import org.eipgrid.jql.parser.Expression;
+import org.eipgrid.jql.parser.JqlQuery;
 import org.eipgrid.jql.parser.JqlNode;
 import org.eipgrid.jql.util.SourceWriter;
 import org.eipgrid.jql.JqlSelect;
@@ -27,30 +28,36 @@ public class SqlGenerator extends SqlConverter implements QueryBuilder {
 
     protected void writeFilter(JqlNode jql) {
         super.visitNode(jql);
-        jql.getPredicates().accept(this);
+        Expression ps = jql.getPredicates();
+        if (!ps.isEmpty()) {
+            ps.accept(this);
+            sw.write(" AND ");
+        }
         for (JqlNode child : jql.getChildNodes()) {
             if (!child.isEmpty()) {
-                sw.write(" AND ");
                 writeFilter(child);
             }
         }
     }
 
-    protected void writeWhere(AstRoot where) {
+    protected void writeWhere(JqlQuery where) {
         if (!where.isEmpty()) {
             sw.write("\nWHERE ");
             writeFilter(where);
+            if (sw.endsWith(" AND ")) {
+                sw.shrinkLength(5);
+            }
         }
     }
 
-    private void writeFrom(AstRoot where) {
+    private void writeFrom(JqlQuery where) {
         writeFrom(where, where.getTableName(), false);
     }
 
-    private void writeFrom(AstRoot where, String tableName, boolean ignoreEmptyFilter) {
+    private void writeFrom(JqlQuery where, String tableName, boolean ignoreEmptyFilter) {
         sw.write("FROM ").write(tableName).write(" as ").write(where.getMappingAlias());
-        for (JqlResultMapping fetch : where.getResultColumnMappings()) {
-            JqlSchemaJoin join = fetch.getSchemaJoin();
+        for (JqlResultMapping fetch : where.getResultMappings()) {
+            JqlEntityJoin join = fetch.getEntityJoin();
             if (join == null) continue;
 
             if (ignoreEmptyFilter && fetch.isEmpty()) continue;
@@ -58,7 +65,7 @@ public class SqlGenerator extends SqlConverter implements QueryBuilder {
             String parentAlias = fetch.getParentNode().getMappingAlias();
             String alias = fetch.getMappingAlias();
             if (true || join.isUniqueJoin()) {
-                JqlSchemaJoin associated = join.getAssociativeJoin();
+                JqlEntityJoin associated = join.getAssociativeJoin();
                 writeJoinStatement(join, parentAlias, associated == null ? alias : "p" + alias);
                 if (associated != null) {
                     writeJoinStatement(associated, "p" + alias, alias);
@@ -70,7 +77,7 @@ public class SqlGenerator extends SqlConverter implements QueryBuilder {
     }
 
 
-    private void writeJoinStatement(JqlSchemaJoin joinKeys, String baseAlias, String alias) {
+    private void writeJoinStatement(JqlEntityJoin joinKeys, String baseAlias, String alias) {
         boolean isInverseMapped = joinKeys.isInverseMapped();
         String joinedTable = joinKeys.getJoinedSchema().getTableName();
         sw.write("\nleft join ").write(joinedTable).write(" as ").write(alias).write(" on\n\t");
@@ -87,7 +94,7 @@ public class SqlGenerator extends SqlConverter implements QueryBuilder {
         sw.shrinkLength(6);
     }
 
-    public String createCountQuery(AstRoot where) {
+    public String createCountQuery(JqlQuery where) {
         sw.write("\nSELECT count(*) ");
         writeFrom(where);
         writeWhere(where);
@@ -95,11 +102,11 @@ public class SqlGenerator extends SqlConverter implements QueryBuilder {
         return sql;
     }
 
-    private boolean needDistinctPagination(AstRoot where) {
+    private boolean needDistinctPagination(JqlQuery where) {
         if (where.isLinearNode()) return false;
 
-        for (JqlResultMapping mapping : where.getResultColumnMappings()) {
-            JqlSchemaJoin join = mapping.getSchemaJoin();
+        for (JqlResultMapping mapping : where.getResultMappings()) {
+            JqlEntityJoin join = mapping.getEntityJoin();
             if (join == null) continue;
 
             if (mapping.getSelectedColumns().size() == 0) continue;
@@ -111,10 +118,10 @@ public class SqlGenerator extends SqlConverter implements QueryBuilder {
         return false;
     }
 
-    public String createSelectQuery(AstRoot where, JqlSelect columns) {
+    public String createSelectQuery(JqlQuery where, JqlSelect columns) {
         sw.reset();
         String tableName = where.getTableName();
-        where.setSelectedColumns(columns);
+        where.selectProperties(columns.getAttributeNames());
 
         boolean need_complex_pagination = (columns.getLimit() > 0 || columns.getOffset() > 0) && needDistinctPagination(where);
         if (need_complex_pagination) {
@@ -131,7 +138,7 @@ public class SqlGenerator extends SqlConverter implements QueryBuilder {
         }
 
         sw.write("\nSELECT\n");
-        for (JqlResultMapping mapping : where.getResultColumnMappings()) {
+        for (JqlResultMapping mapping : where.getResultMappings()) {
             sw.write('\t');
             String alias = mapping.getMappingAlias();
             for (JqlColumn col : mapping.getSelectedColumns()) {
@@ -150,7 +157,7 @@ public class SqlGenerator extends SqlConverter implements QueryBuilder {
         return sql;
     }
 
-    private void writeOrderBy(AstRoot where, Sort sort, boolean need_joined_result_set_ordering) {
+    private void writeOrderBy(JqlQuery where, Sort sort, boolean need_joined_result_set_ordering) {
         if (!need_joined_result_set_ordering) {
             if (sort == null || sort.isUnsorted()) return;
         }
@@ -168,7 +175,7 @@ public class SqlGenerator extends SqlConverter implements QueryBuilder {
             });
         }
         if (need_joined_result_set_ordering) {
-            for (JqlResultMapping mapping : where.getResultColumnMappings()) {
+            for (JqlResultMapping mapping : where.getResultMappings()) {
                 if (mapping.isLinearNode()) continue;
                 if (mapping != where && !mapping.isArrayNode()) continue;
                 String table = mapping.getMappingAlias();
@@ -190,7 +197,7 @@ public class SqlGenerator extends SqlConverter implements QueryBuilder {
         if (limit > 0) sw.write("\nLIMIT " + limit);
     }
 
-    public String createUpdateQuery(AstRoot where, Map<String, Object> updateSet) {
+    public String createUpdateQuery(JqlQuery where, Map<String, Object> updateSet) {
         sw.write("\nUPDATE ").write(where.getTableName()).write(" ").write(where.getMappingAlias()).writeln(" SET");
 
         for (Map.Entry<String, Object> entry : updateSet.entrySet()) {
@@ -207,7 +214,7 @@ public class SqlGenerator extends SqlConverter implements QueryBuilder {
 
     }
 
-    public String createDeleteQuery(AstRoot where) {
+    public String createDeleteQuery(JqlQuery where) {
         sw.write("\nDELETE ");
         this.writeFrom(where);
         this.writeWhere(where);

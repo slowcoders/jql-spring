@@ -2,18 +2,18 @@ package org.eipgrid.jql.jdbc;
 
 import org.eipgrid.jql.JqlSchema;
 import org.eipgrid.jql.JqlSelect;
-import org.eipgrid.jql.parser.AstRoot;
+import org.eipgrid.jql.parser.JqlQuery;
 
 import java.util.Map;
 
 public interface QueryBuilder {
-    String createSelectQuery(AstRoot where, JqlSelect columns);
+    String createSelectQuery(JqlQuery where, JqlSelect columns);
 
-    String createCountQuery(AstRoot where);
+    String createCountQuery(JqlQuery where);
 
-    String createUpdateQuery(AstRoot where, Map<String, Object> updateSet);
+    String createUpdateQuery(JqlQuery where, Map<String, Object> updateSet);
 
-    String createDeleteQuery(AstRoot where);
+    String createDeleteQuery(JqlQuery where);
 
     String prepareFindByIdStatement(JqlSchema schema);
 

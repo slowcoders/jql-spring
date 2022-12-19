@@ -3,7 +3,7 @@ package org.eipgrid.jql.jdbc.metadata;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import org.eipgrid.jql.JqlColumn;
 import org.eipgrid.jql.JqlSchema;
-import org.eipgrid.jql.JqlSchemaJoin;
+import org.eipgrid.jql.JqlEntityJoin;
 import org.eipgrid.jql.SchemaLoader;
 import org.eipgrid.jql.util.SourceWriter;
 import org.eipgrid.jql.util.AttributeNameConverter;
@@ -13,7 +13,7 @@ import java.util.*;
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
 public class JdbcSchema extends JqlSchema {
     private HashMap<String, List<String>> uniqueConstraints = new HashMap<>();
-    private final HashMap<String, JqlSchemaJoin> fkConstraints = new HashMap<>();
+    private final HashMap<String, JqlEntityJoin> fkConstraints = new HashMap<>();
 
     protected JdbcSchema(SchemaLoader schemaLoader, String tableName) {
         super(schemaLoader, tableName,
@@ -38,7 +38,7 @@ public class JdbcSchema extends JqlSchema {
             sb.writeln();
         }
 
-        for (Map.Entry<String, JqlSchemaJoin> entry : this.getSchemaJoinMap().entrySet()) {
+        for (Map.Entry<String, JqlEntityJoin> entry : this.getEntityJoinMap().entrySet()) {
             sb.write("  jql.externalJoin(\"").write(entry.getKey()).write("\", ");
             sb.write(entry.getValue().getJoinedSchema().getSimpleTableName()).write("Schema, \n");
             sb.write(entry.getValue().isUniqueJoin() ? "{}" : "[]").write("),\n");
@@ -107,17 +107,17 @@ public class JdbcSchema extends JqlSchema {
         return false;
     }
 
-    public HashMap<String, JqlSchemaJoin> getForeignKeyConstraints() {
+    public HashMap<String, JqlEntityJoin> getForeignKeyConstraints() {
         return this.fkConstraints;
     }
 
     protected void addForeignKeyConstraint(String fk_name, JdbcColumn fkColumn) {
-        JqlSchemaJoin fkJoin = fkConstraints.get(fk_name);
+        JqlEntityJoin fkJoin = fkConstraints.get(fk_name);
         List<JqlColumn> fkColumns;
         if (fkJoin == null) {
             fkColumns = new ArrayList<>();
             fkColumns.add(fkColumn);
-            JqlSchemaJoin join = new JqlSchemaJoin(this, fkColumns);
+            JqlEntityJoin join = new JqlEntityJoin(this, fkColumns);
             fkConstraints.put(fk_name, join);
         } else {
             fkColumns = fkJoin.getForeignKeyColumns();

@@ -55,7 +55,7 @@ public abstract class JdbcController {
     @ResponseBody
     @Operation(summary = "조건 검색")
     public Object find(@PathVariable("table") String table,
-                       @RequestParam(value = "page", required = false) int page,
+                       @RequestParam(value = "page", defaultValue = "-1") int page,
                        @Parameter(name = "limit", example = "10")
                        @RequestParam(value = "limit", defaultValue = "0") int limit,
                        @RequestParam(value = "select", required = false) String columns,

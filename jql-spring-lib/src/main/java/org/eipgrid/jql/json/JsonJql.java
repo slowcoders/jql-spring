@@ -2,7 +2,7 @@ package org.eipgrid.jql.json;
 
 import org.eipgrid.jql.JqlColumn;
 import org.eipgrid.jql.JqlSchema;
-import org.eipgrid.jql.JqlSchemaJoin;
+import org.eipgrid.jql.JqlEntityJoin;
 import org.eipgrid.jql.jdbc.metadata.JdbcColumn;
 import org.eipgrid.jql.util.ClassUtils;
 
@@ -20,9 +20,9 @@ public class JsonJql {
         }
         sb.append("];\n");
 
-        if (!schema.getSchemaJoinMap().isEmpty()) {
+        if (!schema.getEntityJoinMap().isEmpty()) {
             sb.append("\nconst " + schema.getSimpleTableName() + "Schema_external_entities = [\n");
-            for (Map.Entry<String, JqlSchemaJoin> entry : schema.getSchemaJoinMap().entrySet()) {
+            for (Map.Entry<String, JqlEntityJoin> entry : schema.getEntityJoinMap().entrySet()) {
                 sb.append("  jql.externalJoin(\"").append(entry.getKey()).append("\", ");
                 sb.append(entry.getValue().getJoinedSchema().getSimpleTableName()).append("Schema, \n");
                 sb.append(entry.getValue().isUniqueJoin() ? "{}" : "[]").append("),\n");
@@ -145,5 +145,59 @@ public class JsonJql {
             mdkTypes.put("inet", "Inet4"); // IP4 Address
             mdkTypes.put("macaddr", "Text"); // mac Address
         }
+    }
+
+    static String filler = "            ";
+    public static String getSimpleSchema(JqlSchema schema) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("Type").append(filler.substring("Type".length())).append("Key(physical_column_name)\n");
+        sb.append("--------------------------------------------------\n");
+        for (JqlColumn col : schema.getReadableColumns()) {
+            String columnType = getColumnType(col.getJavaType());
+            if (!col.isNullable()) {
+                columnType = columnType + '!';
+            }
+            sb.append(columnType).append(filler.substring(columnType.length()));
+            sb.append(col.getJsonKey()).append('(').append(col.getColumnName()).append(')');
+            JqlColumn joinedPK;
+            if (col.isPrimaryKey()) {
+                sb.append(" PK");
+            }
+            else if ((joinedPK = col.getJoinedPrimaryColumn()) != null) {
+                sb.append(" FK -> ");
+                sb.append(joinedPK.getSchema().getTableName());
+                sb.append(".").append(joinedPK.getJsonKey());
+            }
+            sb.append("\n");
+        }
+
+        if (!schema.getEntityJoinMap().isEmpty()) {
+            HashMap<String, JqlEntityJoin> associativeColumns = new HashMap<>();
+            sb.append("\n// external entities //\n");
+            for (Map.Entry<String, JqlEntityJoin> entry : schema.getEntityJoinMap().entrySet()) {
+                JqlEntityJoin join = entry.getValue();
+                if (join.getAssociativeJoin() != null) {
+                    associativeColumns.put(entry.getKey(), join);
+                    continue;
+                }
+                sb.append(entry.getKey());
+                if (!join.isUniqueJoin()) sb.append("[]");
+                sb.append(" -> ");
+                sb.append(join.getJoinedSchema().getSimpleTableName());
+                sb.append("\n");
+            }
+
+            sb.append("\n// associative entities //\n");
+            for (Map.Entry<String, JqlEntityJoin> entry : associativeColumns.entrySet()) {
+                JqlEntityJoin join = entry.getValue();
+                sb.append(entry.getKey());
+                if (!join.isUniqueJoin()) sb.append("[]");
+                sb.append(" -> ");
+                sb.append(join.getJoinedSchema().getSimpleTableName()).append(".");
+                sb.append(join.getAssociatedSchema().getSimpleTableName());
+                sb.append("\n");
+            }
+        }
+        return sb.toString();
     }
 }

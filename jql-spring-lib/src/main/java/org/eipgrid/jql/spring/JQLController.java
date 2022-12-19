@@ -40,7 +40,7 @@ public interface JQLController<ENTITY, ID> {
         @GetMapping(path = "/")
         @ResponseBody
         @Operation(summary = "전체 엔터티 리스트")
-        default Object list(@RequestParam(value = "page", required = false) int page,
+        default Object list(@RequestParam(value = "page", defaultValue = "-1") int page,
                             @Parameter(name = "limit", example = "10")
                             @RequestParam(value = "limit", defaultValue = "0") int limit,
                             @RequestParam(value = "select", required = false) String columns,

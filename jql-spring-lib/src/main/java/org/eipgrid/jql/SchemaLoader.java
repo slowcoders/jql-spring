@@ -81,5 +81,5 @@ public abstract class SchemaLoader {
         return alias;
     }
 
-    protected abstract HashMap<String, JqlSchemaJoin> loadJoinMap(JqlSchema jqlSchema);
+    protected abstract HashMap<String, JqlEntityJoin> loadJoinMap(JqlSchema jqlSchema);
 }

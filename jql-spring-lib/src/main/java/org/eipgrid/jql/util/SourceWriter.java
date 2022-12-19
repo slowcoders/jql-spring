@@ -139,4 +139,13 @@ public class SourceWriter<Self extends SourceWriter> {
         return (Self)this;
     }
 
+    public boolean endsWith(String token) {
+        int sb_len = sb.length();
+        int tk_len = token.length();
+        if (sb_len < tk_len) return false;
+        while (--tk_len >= 0) {
+            if (sb.charAt(--sb_len) != token.charAt(tk_len)) return false;
+        }
+        return true;
+    }
 }
