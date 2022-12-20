@@ -21,3 +21,7 @@ jql-spring-lib/.gradle
 jql-spring-lib/build
 basic-sample-app/db/postgres_data
 .vscode
+tutorial+sample-app/.gradle
+tutorial+sample-app/build
+tutorial+sample-app/db/postgres_data
+tutorial+sample-app/target

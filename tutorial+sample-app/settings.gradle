@@ -15,6 +15,6 @@ include 'api'
 include 'services:webservice'
 */
 
-rootProject.name = 'jql-sample'
-include ':jql-jdbc-lib'
-project(":jql-jdbc-lib").projectDir = file("../jql-jdbc-lib")
+rootProject.name = 'jql-sample-app'
+include ':jql-spring-lib'
+project(":jql-spring-lib").projectDir = file("../jql-spring-lib")
