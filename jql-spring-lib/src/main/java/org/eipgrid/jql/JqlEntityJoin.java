@@ -11,6 +11,7 @@ public class JqlEntityJoin {
     private final List<JqlColumn> fkColumns;
     private final JqlSchema baseSchema;
     private final JqlSchema joinedSchema;
+    private Type type;
 
     public JqlEntityJoin(JqlSchema baseSchema, List<JqlColumn> fkColumns) {
         this(baseSchema, fkColumns, null);
@@ -19,20 +20,17 @@ public class JqlEntityJoin {
     public JqlEntityJoin(JqlSchema baseSchema, List<JqlColumn> fkColumns, JqlEntityJoin associatedJoin) {
         this.fkColumns = fkColumns;
         this.baseSchema = baseSchema;
-        this.inverseMapped = baseSchema != fkColumns.get(0).getSchema();
+        JqlSchema fkSchema = fkColumns.get(0).getSchema();
+        this.inverseMapped = baseSchema != fkSchema;
+        boolean isUniqueJoin = fkSchema.isUniqueConstrainedColumnSet(fkColumns);
         if (inverseMapped) {
             assert(associatedJoin == null || !associatedJoin.inverseMapped);
-            this.joinedSchema = fkColumns.get(0).getSchema();
-            List<JqlColumn> pkColumns = fkColumns.stream()
-                    .map(col -> col.getJoinedPrimaryColumn())
-                    .collect(Collectors.toList());
-            this.isUnique = (associatedJoin == null || associatedJoin.isUnique)
-                            && baseSchema.isUniqueConstrainedColumnSet(pkColumns);
+            this.joinedSchema = fkSchema;
+            this.isUnique = isUniqueJoin && (associatedJoin == null || associatedJoin.isUnique);
         } else {
             assert(associatedJoin == null);
             this.joinedSchema = fkColumns.get(0).getJoinedPrimaryColumn().getSchema();
-            this.isUnique = baseSchema.isUniqueConstrainedColumnSet(fkColumns);
-                    // joinedSchema.isUniqueConstrainedColumnSet(pkColumns);
+            this.isUnique = isUniqueJoin;// ? Type.OneToOne : Type.ManyToOne;
         }
         this.associateJoin = associatedJoin;
         this.jsonKey = associatedJoin != null ? '+' + associatedJoin.getJsonKey() : initJsonKey();
@@ -111,5 +109,16 @@ public class JqlEntityJoin {
         } else {
             return this.getJoinedSchema();
         }
+    }
+
+    public Type getJoinType() {
+        return this.type;
+    }
+
+    public enum Type {
+        OneToOne,
+        OneToMany,
+        ManyToOne,
+        ManyToMany
     }
 }

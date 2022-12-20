@@ -4,6 +4,8 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Schema;
 import org.eipgrid.jql.JqlSelect;
+import org.eipgrid.jql.jdbc.JQLJdbcService;
+import org.eipgrid.jql.util.KVEntity;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
@@ -158,7 +160,19 @@ public interface JQLController<ENTITY, ID> {
         }
     }
 
-    abstract class SearchAndUpdate<ENTITY, ID> implements Search<ENTITY, ID>, Update<ENTITY, ID> {}
+    abstract class SearchAndUpdate<ENTITY, ID> implements Search<ENTITY, ID>, Update<ENTITY, ID> {
+        JQLRepository<ENTITY, ID> repository;
+
+        public SearchAndUpdate(JQLRepository<ENTITY, ID> repository) {
+            this.repository = repository;
+        }
+
+        @Override
+        public JQLRepository<ENTITY, ID> getRepository() {
+            return repository;
+        }
+
+    }
 }
 
 

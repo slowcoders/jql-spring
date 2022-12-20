@@ -33,7 +33,8 @@ public class JdbcSchemaLoader extends SchemaLoader {
     public String getDefaultDBSchema() { return this.defaultSchema; }
 
 
-    public JqlSchema loadSchema(String tablePath) {
+    public JqlSchema loadSchema(String tablePath0) {
+        final String tablePath = tablePath0.toLowerCase();
         JqlSchema schema = metadataMap.get(tablePath);
         if (schema == null) {
             schema = jdbc.execute(new ConnectionCallback<JqlSchema>() {
@@ -54,8 +55,15 @@ public class JdbcSchemaLoader extends SchemaLoader {
         String dbSchema = dot_p <= 0 ? defaultSchema : tablePath.substring(0, dot_p);
         String tableName = tablePath.substring(dot_p + 1);
         ArrayList<String> primaryKeys = getPrimaryKeys(conn, dbSchema, tableName);
+        HashMap<String, ArrayList<String>> uniqueConstraints = getUniqueConstraints(conn, dbSchema, tableName);
+        if (primaryKeys.size() == 0) {
+            for (ArrayList<String> keys : uniqueConstraints.values()) {
+                if (primaryKeys.size() == 0 || keys.size() < primaryKeys.size()) {
+                    primaryKeys = keys;
+                }
+            }
+        }
         ArrayList<JqlColumn> columns = getColumns(conn, dbSchema, tableName, schema, primaryKeys);
-        HashMap<String, List<String>> uniqueConstraints = getUniqueConstraints(conn, dbSchema, tableName);
         processForeignKeyConstraints(conn, schema, dbSchema, tableName, columns);
         schema.init(columns, uniqueConstraints);
         return schema;
@@ -151,8 +159,8 @@ public class JdbcSchemaLoader extends SchemaLoader {
         return names;
     }
 
-    private HashMap<String, List<String>> getUniqueConstraints(Connection conn, String dbSchema, String tableName) throws SQLException {
-        HashMap<String, List<String>> indexMap = new HashMap<>();
+    private HashMap<String, ArrayList<String>> getUniqueConstraints(Connection conn, String dbSchema, String tableName) throws SQLException {
+        HashMap<String, ArrayList<String>> indexMap = new HashMap<>();
 
         DatabaseMetaData md = conn.getMetaData();
         ResultSet rs = md.getIndexInfo(catalog, dbSchema, tableName, true, false);
@@ -174,7 +182,7 @@ public class JdbcSchemaLoader extends SchemaLoader {
             assert(table_cat == null);
             assert(is_unique);
 
-            List<String> indexes = indexMap.get(index_name);
+            ArrayList<String> indexes = indexMap.get(index_name);
             if (indexes == null) {
                 indexes = new ArrayList<>();
                 indexMap.put(index_name, indexes);

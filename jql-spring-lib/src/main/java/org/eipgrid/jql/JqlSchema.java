@@ -78,8 +78,9 @@ public abstract class JqlSchema {
 
     protected void init(ArrayList<? extends JqlColumn> columns) {
         ArrayList<JqlColumn> writableColumns = new ArrayList<>();
-        ArrayList<JqlColumn> pkColumns = new ArrayList<>();
         ArrayList<JqlColumn> allColumns = new ArrayList<>();
+        List<JqlColumn> pkColumns = new ArrayList<>();
+
         for (JqlColumn ci: columns) {
             if (ci.isPrimaryKey()) {
                 pkColumns.add(ci);
@@ -99,10 +100,17 @@ public abstract class JqlSchema {
             }
         }
 
-        this.pkColumns = Collections.unmodifiableList(pkColumns);
         this.allColumns = Collections.unmodifiableList(allColumns);
         this.writableColumns = Collections.unmodifiableList(writableColumns);
         this.initJsonKeys();
+        if (pkColumns.size() == 0) {
+            pkColumns = getAlternativeIdColumns();
+        }
+        this.pkColumns = Collections.unmodifiableList(pkColumns);
+    }
+
+    protected List<JqlColumn> getAlternativeIdColumns() {
+        return this.allColumns;
     }
 
     protected void initJsonKeys() {

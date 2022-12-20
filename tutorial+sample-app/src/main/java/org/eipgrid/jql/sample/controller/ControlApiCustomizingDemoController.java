@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import org.eipgrid.jql.jdbc.JQLJdbcService;
 import org.eipgrid.jql.jdbc.JdbcTableController;
 import org.eipgrid.jql.util.KVEntity;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 
@@ -13,6 +14,7 @@ import java.util.Date;
 
 @RestController
 @RequestMapping("/api/jql/starwars/character")
+@Profile("!jpa")
 public class ControlApiCustomizingDemoController extends JdbcTableController<Object> {
 
     public ControlApiCustomizingDemoController(JQLJdbcService service) {
