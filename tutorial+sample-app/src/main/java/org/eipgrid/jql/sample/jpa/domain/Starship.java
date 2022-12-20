@@ -1,10 +1,9 @@
 package org.eipgrid.jql.sample.jpa.domain;
 
-import lombok.*;
-import org.springframework.context.annotation.Profile;
+import lombok.Getter;
+import lombok.Setter;
 
 import javax.persistence.*;
-import javax.validation.constraints.*;
 import java.io.Serializable;
 
 @Entity

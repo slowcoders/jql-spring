@@ -28,7 +28,8 @@ public class JdbcSchema extends JqlSchema {
 
     public String dumpJPAEntitySchema() {
         SourceWriter sb = new SourceWriter('"');
-        sb.writeln("import lombok.*;");
+        sb.writeln("import lombok.Getter;");
+        sb.writeln("import lombok.Setter;");
         sb.writeln("import javax.persistence.*;");
         sb.writeln();
 
