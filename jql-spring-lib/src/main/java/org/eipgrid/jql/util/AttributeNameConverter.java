@@ -3,6 +3,7 @@ package org.eipgrid.jql.util;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 public interface AttributeNameConverter {
 
@@ -35,12 +36,12 @@ public interface AttributeNameConverter {
     static String toSnakeCase(String name) {
         StringBuilder builder = new StringBuilder(name.replace('.', '_'));
 
-        for (int i = 1; i < builder.length() - 1; ++i) {
-            if (CamelCaseConverter.isUnderscoreRequired(builder.charAt(i - 1), builder.charAt(i), builder.charAt(i + 1))) {
+        for (int i = 1; i < builder.length(); ++i) {
+            if (CamelCaseConverter.isUnderscoreRequired(builder.charAt(i - 1), builder.charAt(i))) {
                 builder.insert(i++, '_');
             }
         }
-        return builder.toString();
+        return builder.toString().toLowerCase();
     }
 
     static String toCamelCase(String str, final boolean capitalizeFirstLetter) {
@@ -114,8 +115,8 @@ public interface AttributeNameConverter {
             return name;
         }
 
-        static boolean isUnderscoreRequired(char before, char current, char after) {
-            return Character.isLowerCase(before) && Character.isUpperCase(current) && Character.isLowerCase(after);
+        static boolean isUnderscoreRequired(char before, char current) {
+            return Character.isLowerCase(before) && Character.isUpperCase(current);
         }
     }
 

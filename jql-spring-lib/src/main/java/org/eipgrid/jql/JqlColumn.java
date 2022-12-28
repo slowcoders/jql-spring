@@ -1,22 +1,24 @@
 package org.eipgrid.jql;
 
+import org.eipgrid.jql.util.ClassUtils;
+
+import java.lang.reflect.Field;
+
 public abstract class JqlColumn {
-    private final String columnName;
-    private final Class<?> javaType;
-    private final JsonNodeType valueFormat;
-
     private final JqlSchema schema;
-    private String javaFieldName;
+    private final String columnName;
+    private Class<?> javaType;
+    private JqlValueKind valueKind;
 
-    protected JqlColumn(JqlSchema schema, String columnName, Class<?> javaType, JsonNodeType valueFormat) {
+    protected JqlColumn(JqlSchema schema, String columnName, Class<?> javaType, JqlValueKind valueFormat) {
         this.schema = schema;
-        this.javaType = javaType;
         this.columnName = columnName;
-        this.valueFormat = valueFormat;
+        this.javaType = javaType;
+        this.valueKind = valueFormat;
     }
 
     protected JqlColumn(JqlSchema schema, String columnName, Class javaType) {
-        this(schema, columnName, javaType, JsonNodeType.getNodeType(javaType));
+        this(schema, columnName, javaType, JqlValueKind.of(javaType));
     }
 
     public final JqlSchema getSchema() {
@@ -29,24 +31,21 @@ public abstract class JqlColumn {
 
     public abstract String getJsonKey();
 
-    public final String getJavaFieldName() {
-        if (javaFieldName == null) {
-            String qName = getJsonKey();
-            int idx = qName.indexOf('.');
-            if (idx > 0) {
-                qName = qName.substring(0, idx);
-            }
-            javaFieldName = qName;
+    public String resolveJavaFieldName() {
+        String name = getJsonKey();
+        int idx = name.indexOf('.');
+        if (idx > 0) {
+            name = name.substring(0, idx);
         }
-        return javaFieldName;
+        return name;
     }
 
     public final String getColumnName() {
         return columnName;
     }
 
-    public final JsonNodeType getValueFormat() {
-        return valueFormat;
+    public final JqlValueKind getValueKind() {
+        return valueKind;
     }
 
     //===========================================================
@@ -82,5 +81,12 @@ public abstract class JqlColumn {
     @Override
     public int hashCode() {
         return columnName.hashCode();
+    }
+
+    public String toString() { return getSchema().getSimpleTableName() + "::" + this.getJsonKey()+ "<" + columnName + ">"; }
+
+    protected void setMappedField(Field f) {
+        this.valueKind = JqlValueKind.of(f);
+        this.javaType = ClassUtils.getElementType(f);
     }
 }

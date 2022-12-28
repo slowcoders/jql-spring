@@ -3,10 +3,12 @@ package org.eipgrid.jql.jdbc.metadata;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.eipgrid.jql.JqlColumn;
-import org.eipgrid.jql.JqlSchema;
 import org.eipgrid.jql.JqlEntityJoin;
+import org.eipgrid.jql.JqlSchema;
+import org.eipgrid.jql.JqlValueKind;
 import org.eipgrid.jql.util.ClassUtils;
 
+import java.lang.reflect.Field;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -91,7 +93,21 @@ public class JdbcColumn extends JqlColumn {
     }
 
     public JqlColumn getJoinedPrimaryColumn() {
-        return this.pkBinder == null ? null : pkBinder.getJoinedColumn();
+        if (this.pkBinder == null) return null;
+        JqlValueKind valueKind = this.getValueKind();
+        Class javaType = null;
+        if (!valueKind.isPrimitive()) {
+            javaType = getJavaType();
+            if (javaType == Object.class) {
+                javaType = null;
+            }
+        }
+        return pkBinder.getJoinedColumn(javaType);
+    }
+
+    protected void setMappedField(Field f) {
+        super.setMappedField(f);
+        this.fieldName = f.getName();
     }
 
     private String resolveFieldName() {
@@ -107,6 +123,7 @@ public class JdbcColumn extends JqlColumn {
         return name;
     }
 
+
     protected void bindPrimaryKey(ColumnBinder pkBinder) {
         this.pkBinder = pkBinder;
     }
@@ -114,14 +131,13 @@ public class JdbcColumn extends JqlColumn {
     private static Class resolveJavaType(ResultSetMetaData md, int col) throws SQLException {
         String colTypeName = md.getColumnTypeName(col);
         int colType = md.getColumnType(col);
-        String javaClassName = md.getColumnClassName(col);
         try {
             switch (colTypeName) {
                 case "json":
                 case "jsonb":
                     return Map.class;
                 default:
-//                    String javaClassName = md.getColumnClassName(col);
+                    String javaClassName = md.getColumnClassName(col);
                     return ClassUtils.getBoxedType(Class.forName(javaClassName));
             }
 

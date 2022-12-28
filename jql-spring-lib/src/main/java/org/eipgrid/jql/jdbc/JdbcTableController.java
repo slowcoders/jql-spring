@@ -14,14 +14,8 @@ import java.util.List;
 import java.util.Map;
 
 public abstract class JdbcTableController<ID> extends JQLController.SearchAndUpdate<KVEntity, ID> {
-    JQLRepository<KVEntity, ID> repository;
 
     public JdbcTableController(JQLJdbcService service, String tablePath) {
-        this.repository = service.makeRepository(tablePath);
-    }
-
-    @Override
-    public JQLRepository<KVEntity, ID> getRepository() {
-        return repository;
+        super(service.makeRepository(tablePath));
     }
 }

@@ -194,7 +194,7 @@ public class JDBCRepositoryBase<ID> /*extends JDBCQueryBuilder*/ implements JQLR
     public List<ID> insertAll(Collection<Map<String, Object>> entities) {
         if (entities.isEmpty()) return null;
 
-        BatchUpsert batch = sqlGenerator.prepareInsert(this.getSchema(), entities);
+        BatchUpsert batch = new BatchUpsert(this.getSchema(), entities, true);
         jdbc.batchUpdate(batch.getSql(), batch);
         return batch.getEntityIDs();
     }
@@ -280,4 +280,16 @@ public class JDBCRepositoryBase<ID> /*extends JDBCQueryBuilder*/ implements JQLR
         return this.lastGeneratedSql;
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        JDBCRepositoryBase<?> that = (JDBCRepositoryBase<?>) o;
+        return Objects.equals(jqlSchema, that.jqlSchema);
+    }
+
+    @Override
+    public int hashCode() {
+        return jqlSchema.hashCode();
+    }
 }

@@ -38,15 +38,15 @@ public class CommandProcessor implements CommandLineRunner {
             List<String> tableNames = mp.getTableNames(dbSchema);
             ArrayList<JqlSchema> jqlSchemas = new ArrayList<>();
             for (String tableName : tableNames) {
-                jqlSchemas.add(mp.loadSchema(dbSchema + '.' + tableName));
+                jqlSchemas.add(mp.loadSchema(dbSchema + '.' + tableName, null));
             }
 
             for (JqlSchema schema : jqlSchemas) {
                 ((JdbcSchema)schema).dumpJPAEntitySchema();
             }
             for (JqlSchema schema : jqlSchemas) {
-                String ddl = schema.generateDDL();
-                System.out.println(ddl);
+                String ddl = "";//schema.generateDDL();
+//                System.out.println(ddl);
             }
             for (JqlSchema schema : jqlSchemas) {
                 String ddl = JsonJql.createJoinJQL(schema);

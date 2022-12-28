@@ -42,15 +42,15 @@ public class JQLJdbcService extends JQLService {
     public JQLRepository makeRepository(String tableName) {
         JQLRepository repo = repositories.get(tableName);
         if (repo == null) {
-            JqlSchema jqlSchema = jdbcSchemaLoader.loadSchema(tableName);
+            JqlSchema jqlSchema = jdbcSchemaLoader.loadSchema(tableName, null);
             repo = new JDBCRepositoryBase(this, jqlSchema);
             repositories.put(tableName, repo);
         }
         return repo;
     }
 
-    public JqlSchema loadSchema(String tablePath) {
-        return jdbcSchemaLoader.loadSchema(tablePath);
+    public JqlSchema loadSchema(String tablePath, Class entityType) {
+        return jdbcSchemaLoader.loadSchema(tablePath, entityType);
     }
 
     public JqlSchema loadSchema(Class entityType) {

@@ -1,24 +1,26 @@
 package org.eipgrid.jql.csv;
 
+import org.eipgrid.jql.JqlValueKind;
 import org.eipgrid.jql.jpa.JpaColumn;
 import org.eipgrid.jql.util.ClassUtils;
 
 import java.lang.reflect.Field;
 
 public class CsvColumn {
-    private final ValueType valueType;
+    private final JqlValueKind valueType;
     private final Field field;
     private final Class<?> elementType;
     private boolean isNullable;
 
     public CsvColumn(Field f) {
         this.field = f;
-        this.valueType = ValueType.resolveValueFormat(f);
-        this.isNullable = JpaColumn.resolveNullable(f);
-        if (this.valueType == ValueType.Collection) {
+        this.valueType = JqlValueKind.of(f);
+        if (this.valueType == JqlValueKind.Array) {
             this.elementType = ClassUtils.getElementType(f);
+            this.isNullable = false;
         } else {
             this.elementType = f.getType();
+            this.isNullable = JpaColumn.resolveNullable(f);
         }
     }
 
@@ -34,7 +36,7 @@ public class CsvColumn {
         return this.isNullable;
     }
 
-    public ValueType getValueType() {
+    public JqlValueKind getValueType() {
         return this.valueType;
     }
 }

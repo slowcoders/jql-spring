@@ -1,5 +1,6 @@
 package org.eipgrid.jql.csv;
 
+import org.eipgrid.jql.JqlValueKind;
 import org.eipgrid.jql.util.ClassUtils;
 import org.eipgrid.jql.util.KVEntity;
 
@@ -42,8 +43,8 @@ public class CsvParser {
         for (CsvColumn column : columns) {
             try {
                 Object value;
-                ValueType format = column.getValueType();
-                if (format == ValueType.Embedded) {
+                JqlValueKind format = column.getValueType();
+                if (format == JqlValueKind.Object) {
                     value = readCsv(reader, column.getElementType());
                 }
                 else {
@@ -53,7 +54,7 @@ public class CsvParser {
                     }
 
                     switch (format) {
-                        case Int:
+                        case Integer:
                             value = Long.parseLong(text);
                             break;
                         case Float:
@@ -67,7 +68,7 @@ public class CsvParser {
                         case Timestamp:
                             value = text;
                             break;
-                        case Collection:
+                        case Array:
                             if (text != null) {
                                 throw new IllegalStateException("Collection must be delimited by empty column. but we got '" + text + "'");
                             }

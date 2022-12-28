@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.eipgrid.jql.JqlColumn;
 import org.eipgrid.jql.JqlSchema;
-import org.eipgrid.jql.JsonNodeType;
+import org.eipgrid.jql.JqlValueKind;
 import org.eipgrid.jql.SchemaLoader;
 import org.eipgrid.jql.util.AttributeNameConverter;
 import org.eipgrid.jql.util.ClassUtils;
@@ -31,7 +31,8 @@ public class JpaColumn extends JqlColumn {
     private Field field;
 
     public JpaColumn(Field f, JqlSchema schema) {
-        super(schema, resolveColumnName(schema, f), ClassUtils.getElementType(f), JsonNodeType.getNodeType(f));
+        super(schema, resolveColumnName(schema, f), ClassUtils.getElementType(f), JqlValueKind.of(f));
+        super.setMappedField(f);
         this.fk = resolveForeignKey(f);
 
         this.field = f;

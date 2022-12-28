@@ -107,15 +107,23 @@ public class ClassUtils {
         return findAnnotatedField(clazz.getSuperclass(), annotation);
     }
 
-    public static Field findPublicField(Class<?> returnType, String name) {
-        for (Field f : returnType.getFields()) {
+    public static Field findDeclaredField(Class<?> type, String name) {
+        for (Field f : type.getDeclaredFields()) {
+            if (f.getName().equals(name)) return f;
+        }
+        if (type == Object.class) return null;
+        return findDeclaredField(type.getSuperclass(), name);
+    }
+
+    public static Field findPublicField(Class<?> type, String name) {
+        for (Field f : type.getFields()) {
             if (f.getName().equals(name)) return f;
         }
         return null;
     }
 
-    public static Method findPublicMethod(Class<?> returnType, String name) {
-        for (Method m : returnType.getMethods()) {
+    public static Method findPublicMethod(Class<?> type, String name) {
+        for (Method m : type.getMethods()) {
             if (m.getName().equals(name)) return m;
         }
         return null;

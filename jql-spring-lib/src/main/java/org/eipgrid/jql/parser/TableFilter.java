@@ -79,7 +79,7 @@ class TableFilter extends JqlNode implements JqlResultMapping {
     }
 
     private List<JqlColumn> selectProperties_internal(String[] keys, boolean includePrimaryKeys) {
-        if (keys.length == 0) {
+        if (keys == null || keys.length == 0) {
             return Collections.EMPTY_LIST;
         }
 
@@ -128,7 +128,7 @@ class TableFilter extends JqlNode implements JqlResultMapping {
         JqlEntityJoin join = schema.getEntityJoinBy(key);
         if (join == null) {
             JqlColumn column = schema.getColumn(key);
-            if (column.getValueFormat() != JsonNodeType.Object) return this;
+            if (column.getValueKind() != JqlValueKind.Object) return this;
         }
 
         JqlNode subQuery = subFilters.get(key);

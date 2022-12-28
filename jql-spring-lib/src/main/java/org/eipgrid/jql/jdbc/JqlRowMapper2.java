@@ -16,6 +16,7 @@ import java.util.List;
 
 public class JqlRowMapper2 implements ResultSetExtractor<List<KVEntity>> {
     private final List<JqlResultMapping> resultMappings;
+    private MappedColumn[] mappedColumns;
 
     public JqlRowMapper2(List<JqlResultMapping> rowMappings) {
         this.resultMappings = rowMappings;
@@ -53,7 +54,7 @@ public class JqlRowMapper2 implements ResultSetExtractor<List<KVEntity>> {
     @Override
     public List<KVEntity> extractData(ResultSet rs) throws SQLException, DataAccessException {
 
-        MappedColumn[] mappedColumns = initMappedColumns(rs);
+        initMappedColumns(rs);
 
         ArrayList<KVEntity> results = new ArrayList<>();
         HashMap<CacheNode.Key, CacheNode> rootEntityCache = new HashMap<>();
@@ -107,12 +108,8 @@ public class JqlRowMapper2 implements ResultSetExtractor<List<KVEntity>> {
                     mapping = mappedColumn.mapping;
                     entity = makeSubEntity(baseEntity, mapping);
                 }
-                JqlColumn jqlColumn = mappedColumn.jqlColumn;
-                String fieldName = jqlColumn.getJavaFieldName();
-
-                Object value = getColumnValue(rs, ++idxColumn);
-                mappedColumn.value = value;
-                entity.putIfAbsent(fieldName, value);
+                mappedColumn.value = getColumnValue(rs, ++idxColumn);
+                entity.putIfAbsent(mappedColumn.fieldName, mappedColumn.value);
             }
         }
         return results;
@@ -133,9 +130,10 @@ public class JqlRowMapper2 implements ResultSetExtractor<List<KVEntity>> {
 
     private KVEntity readEntity(JqlResultMapping mapping, KVEntity baseEntity, ResultSet rs, int idxColumn) throws SQLException {
         KVEntity entity = makeSubEntity(baseEntity, mapping);
-        for (JqlColumn column : mapping.getSelectedColumns()) {
+        for (int i = mapping.getSelectedColumns().size(); --i >= 0; ) {
+            MappedColumn mc = mappedColumns[idxColumn];
             Object v = getColumnValue(rs, ++idxColumn);
-            entity.put(column.getJavaFieldName(), v);
+            entity.put(mc.fieldName, v);
         }
         return entity;
     }
@@ -178,7 +176,7 @@ public class JqlRowMapper2 implements ResultSetExtractor<List<KVEntity>> {
     }
 
 
-    private MappedColumn[] initMappedColumns(ResultSet rs) throws SQLException {
+    private void initMappedColumns(ResultSet rs) throws SQLException {
 
         ResultSetMetaData rsmd = rs.getMetaData();
         int columnCount = rsmd.getColumnCount();
@@ -197,7 +195,7 @@ public class JqlRowMapper2 implements ResultSetExtractor<List<KVEntity>> {
         if (idxColumn != columnCount) {
             throw new RuntimeException("Something wrong!");
         }
-        return mappedColumns;
+        this.mappedColumns = mappedColumns;
     }
 
 
@@ -241,12 +239,14 @@ public class JqlRowMapper2 implements ResultSetExtractor<List<KVEntity>> {
         final JqlColumn jqlColumn;
         final JqlResultMapping mapping;
         final String[] mappingPath;
-        private Object   value;
+        final String fieldName;
+        Object value;
 
         public MappedColumn(JqlResultMapping mapping, JqlColumn column, String[] path) {
             this.mapping = mapping;
             this.jqlColumn = column;
             this.mappingPath = path;
+            this.fieldName = column.resolveJavaFieldName();
         }
     }
 }

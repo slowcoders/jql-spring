@@ -27,7 +27,7 @@ public abstract class JdbcMetadataController {
         if (repo.getEntityType() != KVEntity.class) {
             return service.loadSchema(repo.getEntityType());
         }
-        return service.loadSchema(tablePath);
+        return service.loadSchema(tablePath, null);
     }
 
     @GetMapping("/{schema}/{table}")

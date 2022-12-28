@@ -1,6 +1,5 @@
 package org.eipgrid.jql;
 
-import org.eipgrid.jql.jpa.JpaSchema;
 import org.eipgrid.jql.json.JsonJql;
 import org.eipgrid.jql.util.AttributeNameConverter;
 
@@ -25,21 +24,15 @@ public abstract class SchemaLoader {
 
     public String getDefaultDBSchema() { return "public"; }
 
+    public abstract JqlSchema loadSchema(String tablePath, Class<?> ormType);
+
     public JqlSchema loadSchema(Class<?> entityType) {
         JqlSchema schema = classToSchemaMap.get(entityType);
         if (schema == null) {
             String tableName = resolveTableName(entityType);
-            if (tableName == null) {
-                throw new RuntimeException("@Table not found");
-            }
-            return loadSchema(entityType, tableName);
+            schema = loadSchema(tableName, entityType);
+            classToSchemaMap.put(entityType, schema);
         }
-        return schema;
-    }
-
-    public JqlSchema loadSchema(Class<?> entityType, String tableName) {
-        JqlSchema schema = new JpaSchema(this, tableName, entityType);
-        classToSchemaMap.put(entityType, schema);
         return schema;
     }
 
@@ -66,10 +59,6 @@ public abstract class SchemaLoader {
         name = schema + "." + name;
         return name;
     }
-
-    public abstract JqlSchema loadSchema(String tablePath);
-
-    public abstract String createDDL(JqlSchema schema);
 
     public String toColumnType(Class<?> javaType, Field f) {
         return JsonJql.getColumnType(javaType);

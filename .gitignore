@@ -25,3 +25,5 @@ tutorial+sample-app/.gradle
 tutorial+sample-app/build
 tutorial+sample-app/db/postgres_data
 tutorial+sample-app/target
+jql-spring-lib/bin
+tutorial+sample-app/bin

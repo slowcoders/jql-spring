@@ -1,6 +1,7 @@
 package org.eipgrid.jql.spring;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.eipgrid.jql.JqlSchema;
 import org.eipgrid.jql.jdbc.postgres.UpdateListener;
 import org.eipgrid.jql.jpa.JPARepositoryBase;
 import org.hibernate.boot.model.naming.Identifier;
@@ -21,7 +22,7 @@ import javax.sql.DataSource;
 import java.util.HashMap;
 
 @Service
-public class JQLService implements AttributeNameConverter {
+public abstract class JQLService implements AttributeNameConverter {
     private final JdbcTemplate jdbc;
     private final MappingJackson2HttpMessageConverter jsonConverter;
     private final EntityManager entityManager;
@@ -68,6 +69,12 @@ public class JQLService implements AttributeNameConverter {
     public ObjectMapper getObjectMapper() {
         return objectMapper;
     }
+
+    public abstract JQLRepository makeRepository(String tableName);
+
+    public abstract JqlSchema loadSchema(String tableName, Class ormType);
+
+    public abstract JqlSchema loadSchema(Class ormType);
 
     public String resolveTableName(Class<?> entityType) {
         String name = "";

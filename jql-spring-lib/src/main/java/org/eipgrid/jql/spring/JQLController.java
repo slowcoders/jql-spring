@@ -158,7 +158,19 @@ public interface JQLController<ENTITY, ID> {
         }
     }
 
-    abstract class SearchAndUpdate<ENTITY, ID> implements Search<ENTITY, ID>, Update<ENTITY, ID> {}
+    abstract class SearchAndUpdate<ENTITY, ID> implements Search<ENTITY, ID>, Update<ENTITY, ID> {
+        JQLRepository<ENTITY, ID> repository;
+
+        public SearchAndUpdate(JQLRepository<ENTITY, ID> repository) {
+            this.repository = repository;
+        }
+
+        @Override
+        public JQLRepository<ENTITY, ID> getRepository() {
+            return repository;
+        }
+
+    }
 }
 
 

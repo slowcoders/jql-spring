@@ -11,7 +11,7 @@ import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.Map;
 
-public enum JsonNodeType {
+public enum JqlValueKind {
     Boolean,
     Integer,
     Float,
@@ -26,57 +26,54 @@ public enum JsonNodeType {
         return this.ordinal() < Array.ordinal();
     }
 
-    public static JsonNodeType getNodeType(Field f) {
+    public static JqlValueKind of(Field f) {
         Class javaType = f.getType();
         if (javaType.isEnum()) {
             Enumerated e = f.getAnnotation(Enumerated.class);
             if (e != null && e.value() == EnumType.STRING) {
-                return JsonNodeType.Text;
+                return JqlValueKind.Text;
             }
             else {
-                return JsonNodeType.Integer;
+                return JqlValueKind.Integer;
             }
         }
-        return JsonNodeType.getNodeType(javaType);
+        return JqlValueKind.of(javaType);
     }
 
 
-    public static JsonNodeType getNodeType(Class javaType) {
+    public static JqlValueKind of(Class javaType) {
         if (javaType.getAnnotation(MappedSuperclass.class) != null
                 ||  javaType.getAnnotation(Embeddable.class) != null) {
-            if (true) {
-                throw new RuntimeException("Is it correct??");
-            }
-            return JsonNodeType.Object;
+            return JqlValueKind.Object;
         }
         if (javaType == Object.class ||
                 Map.class.isAssignableFrom(javaType)) {
-            return JsonNodeType.Object;
+            return JqlValueKind.Object;
         }
         if (java.util.Collection.class.isAssignableFrom(javaType)) {
-            return JsonNodeType.Array;
+            return JqlValueKind.Array;
         }
         if (javaType == java.sql.Timestamp.class) {
-            return JsonNodeType.Timestamp;
+            return JqlValueKind.Timestamp;
         }
         if (javaType == Instant.class || javaType == ZonedDateTime.class) {
-            return JsonNodeType.Timestamp;
+            return JqlValueKind.Timestamp;
         }
 
         if (javaType == java.sql.Time.class) {
-            return JsonNodeType.Time;
+            return JqlValueKind.Time;
         }
         if (javaType == java.sql.Date.class) {
-            return JsonNodeType.Date;
+            return JqlValueKind.Date;
         }
 
         javaType = ClassUtils.getBoxedType(javaType);
         if (javaType == Boolean.class || Number.class.isAssignableFrom(javaType)) {
             if (javaType == Float.class || javaType == Double.class) {
-                return JsonNodeType.Float;
+                return JqlValueKind.Float;
             }
-            return JsonNodeType.Integer;
+            return JqlValueKind.Integer;
         }
-        return JsonNodeType.Text;
+        return JqlValueKind.Text;
     }
 }
