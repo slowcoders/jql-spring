@@ -25,10 +25,6 @@ public class Episode implements Serializable {
     java.sql.Timestamp published;
 
     @Getter @Setter
-    @OneToMany(fetch = FetchType.LAZY, mappedBy = "episode")
-    List<CharacterEpisodeLink> characterEpisodeLink;
-
-    @Getter @Setter
     @OneToMany(fetch = FetchType.LAZY)
     @JoinTable(name = "character_episode_link", joinColumns = @JoinColumn(name="episode_id"), inverseJoinColumns = @JoinColumn(name="character_id"))
     List<Character> character;

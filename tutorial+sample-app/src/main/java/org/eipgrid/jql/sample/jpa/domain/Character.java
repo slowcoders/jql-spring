@@ -50,9 +50,6 @@ public class Character {
     @Column(name = "note")
     String note;
 
-    @OneToMany(fetch = FetchType.LAZY, mappedBy = "character")
-    List<CharacterEpisodeLink> characterEpisodeLink;
-
     @OneToMany(fetch = FetchType.LAZY, mappedBy = "pilot")
     List<Starship> starship;
 
@@ -65,9 +62,6 @@ public class Character {
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(name = "character_friend_link", joinColumns = @JoinColumn(name="character_id"), inverseJoinColumns = @JoinColumn(name="friend_id"))
     List<Character> friend;
-
-    @OneToMany(fetch = FetchType.LAZY, mappedBy = "character")
-    List<CharacterFriendLink> characterFriendLink;
 
     @Profile("jpa")
     public static class Repository extends JPARepositoryBase<Character, Long> {
