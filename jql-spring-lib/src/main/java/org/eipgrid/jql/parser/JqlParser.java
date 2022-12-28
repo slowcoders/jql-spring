@@ -108,7 +108,8 @@ public class JqlParser {
             }
 
             String columnName = targetNode.getColumnName(key);
-            targetNode.addComparedAttribute(key);
+            //String columnName = baseFilter.getColumnName(key);
+            targetNode.addComparedAttribute(columnName);
             if (value != null) {
                 JqlSchema schema = targetNode.getSchema();
                 if (schema != null) {

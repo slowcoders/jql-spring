@@ -30,7 +30,7 @@ const jql = {
    아래 5개의 검색 조건은 동등하나, 출력 결과에 차이가 있다.
   */
   // "characterEpisodeLink": { "episode": { "title": "JEDI" } }
-  // "characterEpisodeLink.episode": { { "title": "JEDI" } }
+  // "characterEpisodeLink.episode": { "title": "JEDI" }
   // "characterEpisodeLink.episode.title": "JEDI"
   // "+episode": { "title": "JEDI" }
   // "+episode.title": "JEDI"

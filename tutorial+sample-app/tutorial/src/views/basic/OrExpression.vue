@@ -36,9 +36,13 @@ const too_light_or_too_heavy = {
 }
 
 const too_small_or_too_heavy = {
-    "height@gt": 1.2,
-    "mass@lt": 120
+    "@not": {
+        "height@gt": 1.2,
+        "mass@lt": 120
+    }
 }
+
+
 
 const too_small_or_too_tall__AND__too_light_or_too_heavy = {
   "@not": [
