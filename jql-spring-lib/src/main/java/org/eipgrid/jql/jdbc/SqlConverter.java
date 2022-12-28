@@ -1,6 +1,6 @@
 package org.eipgrid.jql.jdbc;
 
-import org.eipgrid.jql.JsonNodeType;
+import org.eipgrid.jql.JqlValueKind;
 import org.eipgrid.jql.parser.*;
 import org.eipgrid.jql.util.SourceWriter;
 
@@ -43,7 +43,7 @@ public class SqlConverter implements AstVisitor {
     }
 
     private void writeTypeCast(Class valueType) {
-        JsonNodeType vf = JsonNodeType.getNodeType(valueType);
+        JqlValueKind vf = JqlValueKind.of(valueType);
         switch (vf) {
             case Integer:
             case Float:

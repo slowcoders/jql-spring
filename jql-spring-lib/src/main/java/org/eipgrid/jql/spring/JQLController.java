@@ -4,8 +4,6 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Schema;
 import org.eipgrid.jql.JqlSelect;
-import org.eipgrid.jql.jdbc.JQLJdbcService;
-import org.eipgrid.jql.util.KVEntity;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;

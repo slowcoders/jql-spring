@@ -1,6 +1,6 @@
 ## How to run tutorials
 
-### Build and run basic sample application
+### Build tutorial sample application
 ```
 sh build_and_run_totorial.sh
 ```

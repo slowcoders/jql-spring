@@ -9,6 +9,8 @@ import org.eipgrid.jql.util.SourceWriter;
 import org.eipgrid.jql.util.AttributeNameConverter;
 
 import javax.persistence.*;
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.util.*;
 
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
@@ -21,10 +23,59 @@ public class JdbcSchema extends JqlSchema {
                 AttributeNameConverter.camelCaseConverter.toLogicalAttributeName(tableName.substring(tableName.indexOf('.') + 1)));
     }
 
-    protected void init(ArrayList<? extends JqlColumn> columns, HashMap<String, ArrayList<String>> uniqueConstraints) {
+    protected void init(ArrayList<? extends JqlColumn> columns, HashMap<String, ArrayList<String>> uniqueConstraints, Class<?> ormType) {
         this.uniqueConstraints = uniqueConstraints;
-        super.init(columns);
+        super.init(columns, ormType);
     }
+
+    protected void initJsonKeys(Class<?> ormType) {
+        if (ormType != null) {
+            initFieldNames(ormType);
+        }
+        super.initJsonKeys(ormType);
+    }
+
+    private void initFieldNames(Class<?> ormType) {
+        Class<?> superClass = ormType.getSuperclass();
+        if (superClass != Object.class) {
+            initFieldNames(superClass);
+        }
+        for (Field f : ormType.getDeclaredFields()) {
+            if ((f.getModifiers() & Modifier.TRANSIENT) == 0 &&
+                    f.getAnnotation(Transient.class) == null) {
+                String colName = resolveColumnName(f);
+                JqlColumn column = this.getColumn(colName);
+                super.mapColumn(column, f);
+            }
+        }
+    }
+
+    private String resolveColumnName(Field f) {
+        if (true) {
+            Column c = f.getAnnotation(Column.class);
+            if (c != null) {
+                String colName = c.name();
+                if (colName != null && colName.length() > 0) {
+                    return colName;
+                }
+            }
+        }
+        if (true) {
+            JoinColumn c = f.getAnnotation(JoinColumn.class);
+            if (c != null) {
+                String colName = c.name();
+                if (colName != null && colName.length() > 0) {
+                    return colName;
+                }
+            }
+        }
+
+        AttributeNameConverter cvt = getSchemaLoader().getNameConverter();
+        String colName = cvt.toPhysicalColumnName(f.getName());
+        return colName;
+    }
+
+
 
     public String dumpJPAEntitySchema() {
         SourceWriter sb = new SourceWriter('"');
@@ -101,7 +152,7 @@ public class JdbcSchema extends JqlSchema {
 
             sb.write("(fetch = FetchType.LAZY");
             if (isInverseJoin && join.getAssociativeJoin() == null) {
-                String mappedField = firstFk.getJavaFieldName();
+                String mappedField = firstFk.resolveJavaFieldName();
                 sb.write(", mappedBy = ").writeQuoted(mappedField);
             }
             sb.write(")\n");
@@ -109,7 +160,7 @@ public class JdbcSchema extends JqlSchema {
             if (!isInverseJoin) {
                 JqlColumn fk = firstFk;
                 sb.write("@JoinColumn(name = ").writeQuoted(fk.getColumnName()).write(", ");
-                sb.write("referencedColumnName = ").writeQuoted(fk.getJoinedPrimaryColumn().getJavaFieldName()).write(")\n");
+                sb.write("referencedColumnName = ").writeQuoted(fk.getJoinedPrimaryColumn().resolveJavaFieldName()).write(")\n");
             }
             else if (join.getAssociativeJoin() != null) {
                 sb.write("@JoinTable(name = ").writeQuoted(join.getJoinedSchema().getSimpleTableName()).write(", ");
@@ -177,7 +228,7 @@ public class JdbcSchema extends JqlSchema {
 
         sb.replaceTrailingComma(")\n");
 
-        String fieldName = col.getJavaFieldName();
+        String fieldName = col.resolveJavaFieldName();
 
         sb.write(col.getJavaType().getName()).write(" ").write(fieldName).writeln(";");
     }

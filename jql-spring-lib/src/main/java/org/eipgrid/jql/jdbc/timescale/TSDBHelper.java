@@ -2,74 +2,49 @@ package org.eipgrid.jql.jdbc.timescale;
 
 import org.eipgrid.jql.JqlColumn;
 import org.eipgrid.jql.JqlSchema;
-import org.eipgrid.jql.JsonNodeType;
-import org.eipgrid.jql.jdbc.JDBCRepositoryBase;
-import org.eipgrid.jql.jdbc.JQLJdbcService;
+import org.eipgrid.jql.JqlValueKind;
+import org.eipgrid.jql.spring.JQLRepository;
+import org.eipgrid.jql.spring.JQLService;
 import org.eipgrid.jql.util.SourceWriter;
 import org.springframework.jdbc.core.JdbcTemplate;
 
-import java.lang.reflect.Field;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
-public class TimescaleRepository extends JDBCRepositoryBase {
+public abstract class TSDBHelper {
 
     private static final String SUFFIX_CONT_AGG = "_ts_agg";
     private static final String SUFFIX_HOURLY_VIEW = "_hourly";
     private static final String SUFFIX_DAILY_VIEW = "_daily";
 
-    private final JqlColumn timeKeyColumn;
-    private final HashMap<String, Aggregate.Type> aggTypeMap;
+    private final String tableName;
+    private final JQLService service;
+    private final JdbcTemplate jdbc;
 
-    public TimescaleRepository(JQLJdbcService service, Class<?> entity) {
-        super(service, entity);
+    private JqlColumn timeKeyColumn;
+    private HashMap<String, AggregateType> aggTypeMap;
+    private JqlSchema schema;
 
-        this.timeKeyColumn = resolveTimeKeyColumn();
-        this.aggTypeMap = this.initializeAggregationInfos();
-        this.initializeTSDB();
-    }
-
-    private HashMap<String, Aggregate.Type> initializeAggregationInfos() {
-        HashMap<String, Aggregate.Type> aggTypeMap = new HashMap<>();
-        try {
-            for (JqlColumn col : getSchema().getWritableColumns()) {
-                Aggregate.Type aggType = resolveAggregationType(col);
-                String col_name = col.getColumnName();
-                aggTypeMap.put(col_name, aggType);
-            }
-        }
-        catch (NoSuchFieldException e) {
-            throw new RuntimeException(e);
-        }
-        return aggTypeMap;
-    }
-
-    private Aggregate.Type resolveAggregationType(JqlColumn col) throws NoSuchFieldException {
-        Field f = super.getEntityType().getDeclaredField(col.getJsonKey());
-        Aggregate c = f.getAnnotation(Aggregate.class);
-        if (c != null) {
-            return c.value();
-        }
-        if (col.getValueFormat() == JsonNodeType.Float) {
-            return Aggregate.Type.Mean;
-        }
-        return Aggregate.Type.None;
+    public TSDBHelper(JQLService service, String tableName) {
+        this.jdbc = service.getJdbcTemplate();
+        this.service = service;
+        this.tableName = tableName;
     }
 
     private JqlColumn resolveTimeKeyColumn() {
-        for (JqlColumn column : this.getSchema().getPKColumns()) {
-            if (column.getValueFormat() == JsonNodeType.Timestamp) {
+        for (JqlColumn column : this.schema.getPKColumns()) {
+            if (column.getValueKind() == JqlValueKind.Timestamp) {
                 return column;
             }
         }
-        return null;
+        throw new RuntimeException("Column for the timeKey is not found");
     }
 
-    public Aggregate.Type getAggregationType(JqlColumn col) {
-        return aggTypeMap.get(col.getColumnName());
+    public AggregateType getAggregationType(JqlColumn col) {
+        AggregateType t = aggTypeMap.get(col.getColumnName());
+        if (t == null) t = AggregateType.None;
+        return t;
     }
 
 
@@ -77,34 +52,45 @@ public class TimescaleRepository extends JDBCRepositoryBase {
         return timeKeyColumn.getColumnName();
     }
 
-    private void initializeTSDB() {
-
-        JdbcTemplate jdbc = super.getJdbcTemplate();
-        String sql = build_init_timescale(2);
-        jdbc.execute(sql);
+    private boolean isTableExists(String tableName) {
         try {
-            sql = "SELECT 1 FROM " + super.getSchema().getTableName() + SUFFIX_DAILY_VIEW + " limit 1";
-            List<Map<String, Object>> res = jdbc.queryForList(sql);
-            if (res.size() > 0) return;
+            String sql = "SELECT 1 FROM " + tableName + " limit 1";
+            jdbc.queryForList(sql);
+            return true;
         }
         catch (Exception e) {
+            return false;
         }
+    }
+
+    protected void initializeTSDB(JqlSchema schema) {
+        if (isTableExists(this.tableName + SUFFIX_DAILY_VIEW)) return;
+
+        this.schema = schema;
+        this.timeKeyColumn = resolveTimeKeyColumn();
+        JdbcTemplate jdbc = this.jdbc;
+        String sql = build_init_timescale(2);
+        jdbc.execute(sql);
+
+        this.aggTypeMap = resolveAggregationTypeMap();
         remove_down_sampling_view();
         // 6주를 기본 저장 간격으로 설정한다.
         sql = build_auto_down_sampling_view(7 * 6);
         jdbc.execute(sql);
     }
 
+    protected abstract HashMap<String, AggregateType> resolveAggregationTypeMap();
+
     private void execute_silently(String sql) {
         try {
-            super.getJdbcTemplate().execute(sql);
+            this.jdbc.execute(sql);
         }
         catch (Exception e) {
             //e.printStackTrace();
         }
     }
     private void remove_down_sampling_view() {
-        JqlSchema jqlSchema = super.getSchema();
+        JqlSchema jqlSchema = schema;
         String tableName = jqlSchema.getTableName();
         String aggView = tableName + SUFFIX_CONT_AGG;
         execute_silently("SELECT remove_continuous_aggregate_policy('" + aggView + "');");
@@ -112,16 +98,16 @@ public class TimescaleRepository extends JDBCRepositoryBase {
     }
 
     private void refresh_aggregation(Timestamp start, Timestamp end) {
-        JqlSchema jqlSchema = super.getSchema();
+        JqlSchema jqlSchema = schema;
         String tableName = jqlSchema.getTableName();
         String aggView = tableName + SUFFIX_CONT_AGG;
 
         String sql = "CALL refresh_continuous_aggregate('" + aggView + "', NULL, DATE_TRUNC('hour', now()));";
-        super.getJdbcTemplate().execute(sql);
+        this.jdbc.execute(sql);
     }
 
     protected String build_init_timescale(int hours) {
-        JqlSchema jqlSchema = super.getSchema();
+        JqlSchema jqlSchema = schema;
         SourceWriter sb = new SourceWriter('\'');
         String ts_column = getTimeKeyColumnName();
         sb.writeF("SELECT create_hypertable('{0}', '{1}',", jqlSchema.getTableName(), ts_column)
@@ -131,7 +117,7 @@ public class TimescaleRepository extends JDBCRepositoryBase {
     }
 
     protected String build_auto_down_sampling_view(int retention_days) {
-        JqlSchema jqlSchema = super.getSchema();
+        JqlSchema jqlSchema = schema;
         SourceWriter sb = new SourceWriter('\'');
         String tableName = jqlSchema.getTableName();
         String aggView = tableName + SUFFIX_CONT_AGG;
@@ -263,4 +249,19 @@ public class TimescaleRepository extends JDBCRepositoryBase {
         sb.writeln("time_d;");
         return sb.toString();
     }
+
+    public JQLRepository getRepository() {
+        JdbcTemplate jdbc = this.jdbc;
+
+        if (!isTableExists(this.tableName)) {
+            String sql = generateDDL(this.tableName);
+            jdbc.execute(sql);
+        }
+
+        JqlSchema schema = service.loadSchema(tableName, null);
+        this.initializeTSDB(schema);
+        return service.makeRepository(this.tableName);
+    }
+
+    protected abstract String generateDDL(String tableName);
 }

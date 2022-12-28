@@ -11,7 +11,6 @@ public class JqlEntityJoin {
     private final List<JqlColumn> fkColumns;
     private final JqlSchema baseSchema;
     private final JqlSchema joinedSchema;
-    private Type type;
 
     public JqlEntityJoin(JqlSchema baseSchema, List<JqlColumn> fkColumns) {
         this(baseSchema, fkColumns, null);
@@ -109,16 +108,5 @@ public class JqlEntityJoin {
         } else {
             return this.getJoinedSchema();
         }
-    }
-
-    public Type getJoinType() {
-        return this.type;
-    }
-
-    public enum Type {
-        OneToOne,
-        OneToMany,
-        ManyToOne,
-        ManyToMany
     }
 }

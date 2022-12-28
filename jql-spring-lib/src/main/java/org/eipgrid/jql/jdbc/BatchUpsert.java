@@ -2,7 +2,7 @@ package org.eipgrid.jql.jdbc;
 
 import org.eipgrid.jql.JqlColumn;
 import org.eipgrid.jql.JqlSchema;
-import org.eipgrid.jql.JsonNodeType;
+import org.eipgrid.jql.JqlValueKind;
 
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
@@ -18,11 +18,11 @@ public class BatchUpsert<ID> implements BatchPreparedStatementSetterWithKeyHolde
     private final JqlSchema schema;
     private List<Map<String, Object>> generatedKeys;
 
-    BatchUpsert(Collection<Map<String, Object>> entities, JqlSchema schema, String sql) {
+    public BatchUpsert(JqlSchema schema, Collection<Map<String, Object>> entities, boolean ignoreConflict) {
+        this.sql = new SqlGenerator().prepareBatchInsertStatement(schema, ignoreConflict);
         this.schema = schema;
         this.columns = schema.getWritableColumns();
         this.entities = entities.toArray(new Map[entities.size()]);
-        this.sql = sql;
     }
 
     public String getSql() {
@@ -45,7 +45,7 @@ public class BatchUpsert<ID> implements BatchPreparedStatementSetterWithKeyHolde
         if (v == null) return null;
 
         if (v.getClass().isEnum()) {
-            if (col.getValueFormat() == JsonNodeType.Text) {
+            if (col.getValueKind() == JqlValueKind.Text) {
                 return v.toString();
             } else {
                 return ((Enum) v).ordinal();

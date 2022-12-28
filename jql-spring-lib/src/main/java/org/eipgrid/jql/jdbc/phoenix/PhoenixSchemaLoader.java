@@ -28,7 +28,7 @@ public class PhoenixSchemaLoader extends SchemaLoader {
 
 
     @Override
-    public JdbcSchema loadSchema(String tablePath) {
+    public JdbcSchema loadSchema(String tablePath, Class<?> ormType) {
         throw new RuntimeException("not implemented");
     }
 

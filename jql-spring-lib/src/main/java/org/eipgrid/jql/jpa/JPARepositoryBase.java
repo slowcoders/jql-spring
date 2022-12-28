@@ -1,6 +1,9 @@
 package org.eipgrid.jql.jpa;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.eipgrid.jql.JqlSchema;
+import org.eipgrid.jql.jdbc.BatchUpsert;
+import org.eipgrid.jql.jdbc.JQLJdbcService;
 import org.eipgrid.jql.spring.JQLRepository;
 import org.eipgrid.jql.spring.JQLService;
 import org.springframework.data.domain.Page;
@@ -31,6 +34,10 @@ public abstract class JPARepositoryBase<ENTITY, ID> extends JPAQueryBuilder<ENTI
         super(service);
         this.service = service;
         jsonConverter = service.getJsonConverter();
+    }
+
+    public JQLService getService() {
+        return service;
     }
 
     @PostConstruct
@@ -131,11 +138,11 @@ public abstract class JPARepositoryBase<ENTITY, ID> extends JPAQueryBuilder<ENTI
     }
 
     public List<ID> insertAll(Collection<Map<String, Object>> entities) {
-        throw new RuntimeException("not implemented");
-    }
-
-    public int insertAll(List<ENTITY> entities) {
-        throw new RuntimeException("not implemented");
+        if (entities.isEmpty()) return null;
+        JqlSchema schema = ((JQLJdbcService)service).loadSchema(this.getEntityType());
+        BatchUpsert batch = new BatchUpsert(schema, entities, true);
+        service.getJdbcTemplate().batchUpdate(batch.getSql(), batch);
+        return batch.getEntityIDs();
     }
 
     // Insert Or Update Entity

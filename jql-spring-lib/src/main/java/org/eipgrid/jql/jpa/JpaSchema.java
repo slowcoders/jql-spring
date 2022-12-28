@@ -9,20 +9,20 @@ import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 
 public class JpaSchema extends JqlSchema {
-    public JpaSchema(SchemaLoader schemaLoader, String tableName, Class<?> entityType) {
-        super(schemaLoader, tableName, entityType.getTypeName());
+    public JpaSchema(SchemaLoader schemaLoader, String tableName, Class<?> ormType) {
+        super(schemaLoader, tableName, ormType.getTypeName());
 
         ArrayList<JpaColumn> columns = new ArrayList<>();
-        this.createColumns(columns, entityType);
-        this.init(columns);
+        this.createColumns(columns, ormType);
+        this.init(columns, ormType);
     }
 
-    private void createColumns(ArrayList<JpaColumn> columns, Class<?> entityType) {
-        Class<?> superClass = entityType.getSuperclass();
+    private void createColumns(ArrayList<JpaColumn> columns, Class<?> ormType) {
+        Class<?> superClass = ormType.getSuperclass();
         if (superClass != Object.class) {
             createColumns(columns, superClass);
         }
-        for (Field f : entityType.getDeclaredFields()) {
+        for (Field f : ormType.getDeclaredFields()) {
             if ((f.getModifiers() & Modifier.TRANSIENT) == 0 &&
                     f.getAnnotation(Transient.class) != null) {
                 JpaColumn col = new JpaColumn(f, this);

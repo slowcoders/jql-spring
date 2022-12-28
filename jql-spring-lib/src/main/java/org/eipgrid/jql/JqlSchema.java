@@ -2,6 +2,7 @@ package org.eipgrid.jql;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 
+import java.lang.reflect.Field;
 import java.util.*;
 
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
@@ -76,7 +77,7 @@ public abstract class JqlSchema {
         return this.jpaClassName;
     }
 
-    protected void init(ArrayList<? extends JqlColumn> columns) {
+    protected void init(ArrayList<? extends JqlColumn> columns, Class<?> ormType) {
         ArrayList<JqlColumn> writableColumns = new ArrayList<>();
         ArrayList<JqlColumn> allColumns = new ArrayList<>();
         List<JqlColumn> pkColumns = new ArrayList<>();
@@ -95,26 +96,30 @@ public abstract class JqlSchema {
             if (!ci.isPrimaryKey()) {
                 allColumns.add(ci);
             }
-            if (!ci.isReadOnly() && ci.getValueFormat().isPrimitive()) {
+            if (!ci.isReadOnly() && ci.getValueKind().isPrimitive()) {
                 writableColumns.add(ci);
             }
         }
 
         this.allColumns = Collections.unmodifiableList(allColumns);
         this.writableColumns = Collections.unmodifiableList(writableColumns);
-        this.initJsonKeys();
+        this.initJsonKeys(ormType);
         if (pkColumns.size() == 0) {
             pkColumns = getAlternativeIdColumns();
         }
         this.pkColumns = Collections.unmodifiableList(pkColumns);
     }
 
+    protected void mapColumn(JqlColumn column, Field f) {
+        column.setMappedField(f);
+    }
+    
     protected List<JqlColumn> getAlternativeIdColumns() {
         return this.allColumns;
     }
 
-    protected void initJsonKeys() {
-        for (JqlColumn ci: allColumns) {
+    protected void initJsonKeys(Class<?> ormType) {
+        for (JqlColumn ci : allColumns) {
             String fieldName = ci.getJsonKey();
             columnMap.put(fieldName, ci);
         }
@@ -136,9 +141,9 @@ public abstract class JqlSchema {
     }
 
 
-    public String generateDDL() {
-        return schemaLoader.createDDL(this);
-    }
+//    public String generateDDL() {
+//        return schemaLoader.createDDL(this);
+//    }
 
     public HashMap<String, JqlEntityJoin> getEntityJoinMap() {
         if (this.entityJoinMap == null) {
@@ -188,5 +193,18 @@ public abstract class JqlSchema {
         String tableName = this.getTableName();
         int p = tableName.lastIndexOf('.');
         return p < 0 ? "" : tableName.substring(0, p);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        JqlSchema schema = (JqlSchema) o;
+        return tableName.equals(schema.tableName);
+    }
+
+    @Override
+    public int hashCode() {
+        return tableName.hashCode();
     }
 }
