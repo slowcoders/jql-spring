@@ -20,7 +20,7 @@ import LessonView from "@/components/LessonView";
 const sample_code = `
 const jql = {
   /*
-   Luke 위 친구의 친구 중 JEDI episode 에 출연한 캐릭터를 검색한다.
+   Luke 의 친구의 친구 중 JEDI episode 에 출연한 캐릭터를 검색한다.
   */
   "name@like": "Luke%",
   "+friend<name>": {
