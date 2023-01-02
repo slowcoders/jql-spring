@@ -1,10 +1,10 @@
 package org.eipgrid.jql.jdbc.timescale;
 
-import org.eipgrid.jql.JqlColumn;
-import org.eipgrid.jql.JqlSchema;
-import org.eipgrid.jql.JqlValueKind;
+import org.eipgrid.jql.JQColumn;
+import org.eipgrid.jql.JQSchema;
+import org.eipgrid.jql.JQType;
 import org.eipgrid.jql.jpa.JPARepositoryBase;
-import org.eipgrid.jql.spring.JQLService;
+import org.eipgrid.jql.spring.JQService;
 import org.eipgrid.jql.util.ClassUtils;
 
 import java.lang.reflect.Field;
@@ -14,11 +14,11 @@ public abstract class TSDBRepositoryBase<ENTITY, ID> extends JPARepositoryBase<E
 
     private final String timeKeyColumnName;
 
-    public TSDBRepositoryBase(JQLService service, String timeKeyColumnName) {
+    public TSDBRepositoryBase(JQService service, String timeKeyColumnName) {
         super(service);
         this.timeKeyColumnName = timeKeyColumnName;
 
-        JqlSchema schema = getService().loadSchema(getEntityType());
+        JQSchema schema = getService().loadSchema(getEntityType());
         new Initializer(schema).initializeTSDB(schema);
     }
 
@@ -28,16 +28,16 @@ public abstract class TSDBRepositoryBase<ENTITY, ID> extends JPARepositoryBase<E
 
 
     private class Initializer extends TSDBHelper {
-        private final JqlSchema schema;
+        private final JQSchema schema;
 
-        public Initializer(JqlSchema schema) {
+        public Initializer(JQSchema schema) {
             super(getService(), getTableName());
             this.schema = schema;
         }
 
         public HashMap<String, AggregateType> resolveAggregationTypeMap() {
             HashMap<String, AggregateType> aggTypeMap = new HashMap<>();
-            for (JqlColumn col : schema.getWritableColumns()) {
+            for (JQColumn col : schema.getWritableColumns()) {
                 AggregateType aggType = resolveAggregationType(col);
                 String col_name = col.getColumnName();
                 aggTypeMap.put(col_name, aggType);
@@ -45,7 +45,7 @@ public abstract class TSDBRepositoryBase<ENTITY, ID> extends JPARepositoryBase<E
             return aggTypeMap;
         }
 
-        private AggregateType resolveAggregationType(JqlColumn col) {
+        private AggregateType resolveAggregationType(JQColumn col) {
             Class entityType = getEntityType();
             Field f = ClassUtils.findDeclaredField(entityType, col.getJsonKey());
             if (f == null) {
@@ -55,7 +55,7 @@ public abstract class TSDBRepositoryBase<ENTITY, ID> extends JPARepositoryBase<E
             if (c != null) {
                 return c.value();
             }
-            if (col.getValueKind() == JqlValueKind.Float) {
+            if (col.getColumnType() == JQType.Float) {
                 return AggregateType.Mean;
             }
             return AggregateType.None;

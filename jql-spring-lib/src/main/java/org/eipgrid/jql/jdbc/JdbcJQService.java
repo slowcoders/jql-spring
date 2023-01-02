@@ -1,14 +1,13 @@
 package org.eipgrid.jql.jdbc;
 
-import org.eipgrid.jql.JqlSchema;
-import org.eipgrid.jql.SchemaLoader;
+import org.eipgrid.jql.JQSchema;
+import org.eipgrid.jql.JQSchemaLoader;
 import org.eipgrid.jql.jdbc.metadata.JdbcSchemaLoader;
-import org.eipgrid.jql.spring.JQLRepository;
-import org.eipgrid.jql.spring.JQLService;
+import org.eipgrid.jql.spring.JQRepository;
+import org.eipgrid.jql.spring.JQService;
 import org.eipgrid.jql.util.AttributeNameConverter;
 import org.springframework.core.convert.ConversionService;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
-import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
 
@@ -19,41 +18,40 @@ import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.List;
 
-@Service
-public class JQLJdbcService extends JQLService {
+public class JdbcJQService extends JQService {
     JdbcSchemaLoader jdbcSchemaLoader;
-    private HashMap<String, JQLRepository> repositories = new HashMap<>();
+    private HashMap<String, JQRepository> repositories = new HashMap<>();
 
-    public JQLJdbcService(DataSource dataSource, TransactionTemplate transactionTemplate,
-                          MappingJackson2HttpMessageConverter jsonConverter,
-                          ConversionService conversionService,
-                          RequestMappingHandlerMapping handlerMapping,
-                          EntityManager entityManager,
-                          EntityManagerFactory entityManagerFactory) throws Exception {
+    public JdbcJQService(DataSource dataSource, TransactionTemplate transactionTemplate,
+                         MappingJackson2HttpMessageConverter jsonConverter,
+                         ConversionService conversionService,
+                         RequestMappingHandlerMapping handlerMapping,
+                         EntityManager entityManager,
+                         EntityManagerFactory entityManagerFactory) throws Exception {
         super(dataSource, transactionTemplate, jsonConverter, conversionService,
                 handlerMapping, entityManager, entityManagerFactory);
         jdbcSchemaLoader = new JdbcSchemaLoader(dataSource, AttributeNameConverter.defaultConverter);
     }
 
-    public SchemaLoader getSchemaLoader() {
+    public JQSchemaLoader getSchemaLoader() {
         return jdbcSchemaLoader;
     }
 
-    public JQLRepository makeRepository(String tableName) {
-        JQLRepository repo = repositories.get(tableName);
+    public JQRepository makeRepository(String tableName) {
+        JQRepository repo = repositories.get(tableName);
         if (repo == null) {
-            JqlSchema jqlSchema = jdbcSchemaLoader.loadSchema(tableName, null);
-            repo = new JDBCRepositoryBase(this, jqlSchema);
+            JQSchema schema = jdbcSchemaLoader.loadSchema(tableName, null);
+            repo = new JDBCRepositoryBase(this, schema);
             repositories.put(tableName, repo);
         }
         return repo;
     }
 
-    public JqlSchema loadSchema(String tablePath, Class entityType) {
+    public JQSchema loadSchema(String tablePath, Class entityType) {
         return jdbcSchemaLoader.loadSchema(tablePath, entityType);
     }
 
-    public JqlSchema loadSchema(Class entityType) {
+    public JQSchema loadSchema(Class entityType) {
         return jdbcSchemaLoader.loadSchema(entityType);
     }
 

@@ -4,18 +4,18 @@ import java.util.ArrayList;
 
 class PredicateSet extends ArrayList<Expression> implements Predicate {
     private final Conjunction conjunction;
-    private final JqlNode baseFilter;
+    private final JqlFilter baseFilter;
 
     public PredicateSet(Conjunction conjunction) {
         this(conjunction, null);
     }
 
-    protected PredicateSet(Conjunction conjunction, JqlNode baseFilter) {
+    protected PredicateSet(Conjunction conjunction, JqlFilter baseFilter) {
         this.conjunction = conjunction;
         this.baseFilter = baseFilter;
     }
 
-    JqlNode getBaseFilter() { return baseFilter; }
+    JqlFilter getBaseFilter() { return baseFilter; }
 
     public boolean add(Expression predicate) {
         return super.add(predicate);

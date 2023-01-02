@@ -16,5 +16,5 @@ public interface AstVisitor {
 
     void visitAlwaysTrue();
 
-    void visitNode(JqlNode node);
+    void visitNode(JqlFilter node);
 }

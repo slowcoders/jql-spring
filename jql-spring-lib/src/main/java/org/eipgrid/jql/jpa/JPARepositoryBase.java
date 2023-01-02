@@ -1,15 +1,15 @@
 package org.eipgrid.jql.jpa;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.eipgrid.jql.JqlSchema;
+import org.eipgrid.jql.JQSchema;
 import org.eipgrid.jql.jdbc.BatchUpsert;
-import org.eipgrid.jql.jdbc.JQLJdbcService;
-import org.eipgrid.jql.spring.JQLRepository;
-import org.eipgrid.jql.spring.JQLService;
+import org.eipgrid.jql.jdbc.JdbcJQService;
+import org.eipgrid.jql.spring.JQRepository;
+import org.eipgrid.jql.spring.JQService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
-import org.eipgrid.jql.JqlSelect;
+import org.eipgrid.jql.JQSelect;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.repository.NoRepositoryBean;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
@@ -22,21 +22,21 @@ import java.io.IOException;
 import java.util.*;
 
 @NoRepositoryBean
-public abstract class JPARepositoryBase<ENTITY, ID> extends JPAQueryBuilder<ENTITY, ID> implements JQLRepository<ENTITY, ID> {
+public abstract class JPARepositoryBase<ENTITY, ID> extends JPAQueryBuilder<ENTITY, ID> implements JQRepository<ENTITY, ID> {
 
     private final static HashMap<Class<?>, JPARepositoryBase<?,?>>jqlServices = new HashMap<>();
-    private final JQLService service;
+    private final JQService service;
     private final HashMap<ID, Object> associatedCache = new HashMap<>();
 
     private final MappingJackson2HttpMessageConverter jsonConverter;
 
-    public JPARepositoryBase(JQLService service) {
+    public JPARepositoryBase(JQService service) {
         super(service);
         this.service = service;
         jsonConverter = service.getJsonConverter();
     }
 
-    public JQLService getService() {
+    public JQService getService() {
         return service;
     }
 
@@ -61,8 +61,8 @@ public abstract class JPARepositoryBase<ENTITY, ID> extends JPAQueryBuilder<ENTI
     }
 
 //    @Override
-//    public Page<ENTITY> find(Map<String, Object> jqlFilter, @NotNull Pageable pageReq) {
-//        return find(jqlFilter, pageReq, super.getEntityType());
+//    public Page<ENTITY> find(Map<String, Object> j_ql_filter, @NotNull Pageable pageReq) {
+//        return find(j_ql_filter, pageReq, super.getEntityType());
 //    }
 
     //@Override
@@ -77,18 +77,18 @@ public abstract class JPARepositoryBase<ENTITY, ID> extends JPAQueryBuilder<ENTI
     }
 
     @Override
-    public long count(Map<String, Object> jqlFilter) {
-        long count = (Long) super.buildCountQuery(jqlFilter).getSingleResult();
+    public long count(Map<String, Object> j_ql_filter) {
+        long count = (Long) super.buildCountQuery(j_ql_filter).getSingleResult();
         return count;
     }
 
     @Override
-    public List<ENTITY> find(Map<String, Object> jqlFilter, JqlSelect columns) {
-        return find(jqlFilter, columns, columns.getLimit(), super.getEntityType());
+    public List<ENTITY> find(Map<String, Object> j_ql_filter, JQSelect columns) {
+        return find(j_ql_filter, columns, columns.getLimit(), super.getEntityType());
     }
 
     //@Override
-    public <T> List<T> find(Map<String, Object> filterConditions, JqlSelect columns, int limit, Class<T> resultType) {
+    public <T> List<T> find(Map<String, Object> filterConditions, JQSelect columns, int limit, Class<T> resultType) {
         Query query = super.buildSearchQuery(filterConditions, columns.getSort(), resultType);
 
         /** Hibernate 버그: limit 값이 생략되면, join 된 row 수만큼 entity 가 생성된다.
@@ -114,8 +114,8 @@ public abstract class JPARepositoryBase<ENTITY, ID> extends JPAQueryBuilder<ENTI
     }
 
     @Override
-    public ENTITY findTop(Map<String, Object> jqlFilter, Sort sort) {
-        Query query = super.buildSearchQuery(jqlFilter, sort, this.getEntityType());
+    public ENTITY findTop(Map<String, Object> j_ql_filter, Sort sort) {
+        Query query = super.buildSearchQuery(j_ql_filter, sort, this.getEntityType());
         List<ENTITY> res = query.setMaxResults(1).getResultList();
         return res.size() > 0 ? res.get(0) : null;
     }
@@ -139,7 +139,7 @@ public abstract class JPARepositoryBase<ENTITY, ID> extends JPAQueryBuilder<ENTI
 
     public List<ID> insertAll(Collection<Map<String, Object>> entities) {
         if (entities.isEmpty()) return null;
-        JqlSchema schema = ((JQLJdbcService)service).loadSchema(this.getEntityType());
+        JQSchema schema = ((JdbcJQService)service).loadSchema(this.getEntityType());
         BatchUpsert batch = new BatchUpsert(schema, entities, true);
         service.getJdbcTemplate().batchUpdate(batch.getSql(), batch);
         return batch.getEntityIDs();

@@ -1,18 +1,18 @@
 package org.eipgrid.jql.jdbc.metadata;
 
-import org.eipgrid.jql.JqlSchema;
-import org.eipgrid.jql.JqlEntityJoin;
+import org.eipgrid.jql.JQSchema;
+import org.eipgrid.jql.JQJoin;
 
 import java.util.HashMap;
 
-class EntityJoinHelper extends HashMap<JqlSchema, JqlEntityJoin> {
+class EntityJoinHelper extends HashMap<JQSchema, JQJoin> {
     private String tableName;
-    public EntityJoinHelper(JqlSchema pkSchema) {
+    public EntityJoinHelper(JQSchema pkSchema) {
         this.tableName = pkSchema.getSimpleTableName();
     }
 
-    public JqlEntityJoin put(JqlSchema schema, JqlEntityJoin childJoin) {
-        JqlEntityJoin oldJoin = super.put(schema, childJoin);
+    public JQJoin put(JQSchema schema, JQJoin childJoin) {
+        JQJoin oldJoin = super.put(schema, childJoin);
         if (oldJoin != null && oldJoin != childJoin) {
             if (oldJoin.getJsonKey().equals(tableName)) {
                 super.put(schema, oldJoin);

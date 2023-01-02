@@ -1,17 +1,16 @@
 package org.eipgrid.jql.parser;
 
-import org.eipgrid.jql.JqlSchema;
-import org.eipgrid.jql.JqlSelect;
+import org.eipgrid.jql.JQSchema;
 
 import java.util.HashMap;
 
-public abstract class JqlNode implements Expression {
+public abstract class JqlFilter implements Expression {
 
-    private final JqlNode parent;
+    private final JqlFilter parent;
     private final PredicateSet predicates;
-    protected final HashMap<String, JqlNode> subFilters = new HashMap<>();
+    protected final HashMap<String, JqlFilter> subFilters = new HashMap<>();
 
-    protected JqlNode(JqlNode parentNode) {
+    protected JqlFilter(JqlFilter parentNode) {
         this.predicates = new PredicateSet(Conjunction.AND, this);
         this.parent = parentNode;
     }
@@ -21,7 +20,7 @@ public abstract class JqlNode implements Expression {
     public final boolean isJsonNode() { return getSchema() == null; }
 
     /** return null if schemaless node. cf) json node */
-    public JqlSchema getSchema() { return null; }
+    public JQSchema getSchema() { return null; }
 
     public void accept(AstVisitor visitor) {
         visitor.visitNode(this);
@@ -37,13 +36,13 @@ public abstract class JqlNode implements Expression {
         return predicates;
     }
 
-    public JqlNode getParentNode() { return this.parent; }
+    public JqlFilter getParentNode() { return this.parent; }
 
     public JqlQuery getRootNode() {
         return parent.getRootNode();
     }
 
-    protected abstract JqlNode makeSubNode(String key, ValueNodeType nodeType);
+    protected abstract JqlFilter makeSubNode(String key, JqlNodeType nodeType);
 
     protected abstract String getColumnName(String key);
 
@@ -51,12 +50,12 @@ public abstract class JqlNode implements Expression {
 
     void selectProperties(String[] selectedKeys) {}
 
-    final JqlNode getFilterNode(String key, ValueNodeType nodeType) {
+    final JqlFilter getFilterNode(String key, JqlNodeType nodeType) {
         if (key == null) return this;
 
-        JqlNode scope = this;
+        JqlFilter scope = this;
         for (int p; (p = key.indexOf('.')) > 0; ) {
-            JqlSchema schema = scope.getSchema();
+            JQSchema schema = scope.getSchema();
             if (schema != null && schema.hasColumn(key)) {
                 // TODO 고려 사항
                 //  1) '.' 으로 이어진 Composite Key 는 Leaf-Column(Not joined) 에만 사용 가능.
@@ -71,7 +70,7 @@ public abstract class JqlNode implements Expression {
         return scope;
     }
 
-    public Iterable<JqlNode> getChildNodes() {
+    public Iterable<JqlFilter> getChildNodes() {
         return subFilters.values();
     }
 

@@ -1,6 +1,6 @@
 package org.eipgrid.jql.parser;
 
-enum ValueNodeType {
+enum JqlNodeType {
     Leaf,
     Entity,
     Entities

@@ -3,7 +3,7 @@ package org.eipgrid.jql.spring;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Schema;
-import org.eipgrid.jql.JqlSelect;
+import org.eipgrid.jql.JQSelect;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
@@ -16,14 +16,14 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 
-public interface JQLController<ENTITY, ID> {
+public interface JQController<ENTITY, ID> {
 
-    JQLRepository<ENTITY,ID> getRepository();
+    JQRepository<ENTITY,ID> getRepository();
 
     /****************************************************************
      * Search API set
      */
-    interface Search<ENTITY, ID> extends JQLController<ENTITY, ID> {
+    interface Search<ENTITY, ID> extends JQController<ENTITY, ID> {
 
         @GetMapping(path = "/{id}")
         @ResponseBody
@@ -60,7 +60,7 @@ public interface JQLController<ENTITY, ID> {
                             @RequestBody() HashMap<String, Object> filter) {
             boolean need_pagination = page >= 0 && limit > 1;
             int offset = need_pagination ? page * limit : 0;
-            JqlSelect select = JqlSelect.by(columns, sort, offset, limit);
+            JQSelect select = JQSelect.by(columns, sort, offset, limit);
             List<ENTITY> res = getRepository().find(filter, select);
 
             if (need_pagination) {
@@ -79,7 +79,7 @@ public interface JQLController<ENTITY, ID> {
                            @RequestParam(value = "sort", required = false) String sort,
                            @Schema(implementation = Object.class)
                            @RequestBody HashMap<String, Object> filter) {
-            JqlSelect select = JqlSelect.by(columns, sort, 0, 1);
+            JQSelect select = JQSelect.by(columns, sort, 0, 1);
             List<ENTITY> res = getRepository().find(filter, select);
             return res.size() > 0 ? res.get(0) : null;
         }
@@ -96,7 +96,7 @@ public interface JQLController<ENTITY, ID> {
     /****************************************************************
      * Update API set
      */
-    interface Update<ENTITY, ID> extends JQLController<ENTITY, ID> {
+    interface Update<ENTITY, ID> extends JQController<ENTITY, ID> {
 
         @PostMapping(path = "/", consumes = { MediaType.APPLICATION_JSON_VALUE })
         @ResponseBody
@@ -134,7 +134,7 @@ public interface JQLController<ENTITY, ID> {
     /****************************************************************
      * Form Control API set
      */
-    interface Form<ENTITY, ID> extends JQLController<ENTITY, ID> {
+    interface Form<ENTITY, ID> extends JQController<ENTITY, ID> {
 
         @PostMapping(path = "/", consumes = { MediaType.MULTIPART_FORM_DATA_VALUE })
         @ResponseBody
@@ -159,14 +159,14 @@ public interface JQLController<ENTITY, ID> {
     }
 
     abstract class SearchAndUpdate<ENTITY, ID> implements Search<ENTITY, ID>, Update<ENTITY, ID> {
-        JQLRepository<ENTITY, ID> repository;
+        JQRepository<ENTITY, ID> repository;
 
-        public SearchAndUpdate(JQLRepository<ENTITY, ID> repository) {
+        public SearchAndUpdate(JQRepository<ENTITY, ID> repository) {
             this.repository = repository;
         }
 
         @Override
-        public JQLRepository<ENTITY, ID> getRepository() {
+        public JQRepository<ENTITY, ID> getRepository() {
             return repository;
         }
 

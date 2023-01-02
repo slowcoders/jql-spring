@@ -1,14 +1,14 @@
 package org.eipgrid.jql.jdbc;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.eipgrid.jql.JqlColumn;
-import org.eipgrid.jql.JqlSchema;
-import org.eipgrid.jql.spring.JQLRepository;
+import org.eipgrid.jql.JQColumn;
+import org.eipgrid.jql.JQSchema;
+import org.eipgrid.jql.spring.JQRepository;
 import org.eipgrid.jql.parser.JqlParser;
 import org.eipgrid.jql.parser.JqlQuery;
 import org.eipgrid.jql.util.KVEntity;
 import org.springframework.core.convert.ConversionService;
-import org.eipgrid.jql.JqlSelect;
+import org.eipgrid.jql.JQSelect;
 import org.springframework.data.domain.Sort;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.ResultSetExtractor;
@@ -16,36 +16,36 @@ import org.springframework.jdbc.core.ResultSetExtractor;
 import java.io.IOException;
 import java.util.*;
 
-public class JDBCRepositoryBase<ID> /*extends JDBCQueryBuilder*/ implements JQLRepository<KVEntity, ID> {
+public class JDBCRepositoryBase<ID> /*extends JDBCQueryBuilder*/ implements JQRepository<KVEntity, ID> {
 
-    private final static HashMap<Class<?>, JDBCRepositoryBase>jqlServices = new HashMap<>();
+    private final static HashMap<Class<?>, JDBCRepositoryBase> loadedServices = new HashMap<>();
     private final JdbcTemplate jdbc;
     private final ObjectMapper objectMapper;
     private final SqlGenerator sqlGenerator;
-    private final JQLJdbcService service;
-    private final List<JqlColumn> pkColumns;
-    private final JqlSchema jqlSchema;
+    private final JdbcJQService service;
+    private final List<JQColumn> pkColumns;
+    private final JQSchema schema;
     private String lastGeneratedSql;
 
-    public JDBCRepositoryBase(JQLJdbcService service, Class<?> entityType) {
+    public JDBCRepositoryBase(JdbcJQService service, Class<?> entityType) {
         this(service, service.loadSchema(entityType)); //  JqlSchema.loadSchema(entityType));
     }
 
-    public JDBCRepositoryBase(JQLJdbcService service, JqlSchema jqlSchema) {
+    public JDBCRepositoryBase(JdbcJQService service, JQSchema schema) {
         this.service = service;
         this.sqlGenerator = new SqlGenerator();
         this.jdbc = service.getJdbcTemplate();
         this.objectMapper = service.getJsonConverter().getObjectMapper();
-        this.jqlSchema = jqlSchema;
-        this.pkColumns = jqlSchema.getPKColumns();
+        this.schema = schema;
+        this.pkColumns = schema.getPKColumns();
     }
 
     public ObjectMapper getObjectMapper() {
         return objectMapper;
     }
 
-    public JqlSchema getSchema() {
-        return jqlSchema;
+    public JQSchema getSchema() {
+        return schema;
     }
 
     @Override
@@ -56,7 +56,7 @@ public class JDBCRepositoryBase<ID> /*extends JDBCQueryBuilder*/ implements JQLR
     @Override
     public ID convertId(Object v) {
         ConversionService cvtService = service.getConversionService();
-        List<JqlColumn> pkColumns = jqlSchema.getPKColumns();
+        List<JQColumn> pkColumns = schema.getPKColumns();
         if (pkColumns.size() == 1) {
             return (ID)service.getConversionService().convert(v, pkColumns.get(0).getJavaType());
         }
@@ -81,7 +81,7 @@ public class JDBCRepositoryBase<ID> /*extends JDBCQueryBuilder*/ implements JQLR
         ConversionService cvtService = service.getConversionService();
         KVEntity map = new KVEntity();
         for (int i = 0; i < raw_values.length; i++) {
-            JqlColumn pk = pkColumns.get(i);
+            JQColumn pk = pkColumns.get(i);
             Object raw_v = raw_values == single_pk_value ? id : raw_values[i];
             Object k_v = cvtService.convert(raw_v, pk.getJavaType());
             map.put(pk.getJsonKey(), k_v);
@@ -115,16 +115,16 @@ public class JDBCRepositoryBase<ID> /*extends JDBCQueryBuilder*/ implements JQLR
     @Override
     public KVEntity find(ID id) {
         Map<String, Object> filter = createJqlFilterWithId(id);
-        List<KVEntity> res = find_impl(filter, JqlSelect.Whole);
+        List<KVEntity> res = find_impl(filter, JQSelect.Whole);
         return res.size() > 0 ? res.get(0) : null;
     }
 
     protected ResultSetExtractor<List<KVEntity>> getColumnMapRowMapper(JqlQuery filter) {
-        return new JqlRowMapper(filter.getResultMappings());
+        return new JQRowMapper(filter.getResultMappings());
     }
 
-    protected List<KVEntity> find_impl(Map<String, Object> jqlFilter, JqlSelect columns) {
-        JqlQuery query = this.buildQuery(jqlFilter);
+    protected List<KVEntity> find_impl(Map<String, Object> j_ql_filter, JQSelect columns) {
+        JqlQuery query = this.buildQuery(j_ql_filter);
         String sql = sqlGenerator.createSelectQuery(query, columns);
         this.lastGeneratedSql = sql;
         List<KVEntity> res = (List)jdbc.query(sql, getColumnMapRowMapper(query));
@@ -132,36 +132,36 @@ public class JDBCRepositoryBase<ID> /*extends JDBCQueryBuilder*/ implements JQLR
     }
 
 //    @Override
-//    public Page<KVEntity> find(Map<String, Object> jqlFilter, @NotNull Pageable pageReq) {
+//    public Page<KVEntity> find(Map<String, Object> j_ql_filter, @NotNull Pageable pageReq) {
 //        int size = pageReq.getPageSize();
 //        int offset = (pageReq.getPageNumber()) * size;
-//        List<KVEntity> res = find_impl(jqlFilter, pageReq.getSort(), offset, size);
-//        long count = count(jqlFilter);
+//        List<KVEntity> res = find_impl(j_ql_filter, pageReq.getSort(), offset, size);
+//        long count = count(j_ql_filter);
 //        return new PageImpl(res, pageReq, count);
 //    }
 
     @Override
-    public long count(Map<String, Object> jqlFilter) {
-        JqlQuery query = this.buildQuery(jqlFilter);
+    public long count(Map<String, Object> j_ql_filter) {
+        JqlQuery query = this.buildQuery(j_ql_filter);
         String sqlCount = sqlGenerator.createCountQuery(query);
         long count = jdbc.queryForObject(sqlCount, Long.class);
         return count;
     }
 
     @Override
-    public List<KVEntity> find(Map<String, Object> jqlFilter, JqlSelect columns) {
-        return this.find_impl(jqlFilter, columns);
+    public List<KVEntity> find(Map<String, Object> j_ql_filter, JQSelect columns) {
+        return this.find_impl(j_ql_filter, columns);
     }
 
     @Override
     public List<KVEntity> list(Collection<ID> idList) {
         Map<String, Object> filter = createJqlFilterWithIdList( idList);
-        return find_impl(filter, JqlSelect.Whole);
+        return find_impl(filter, JQSelect.Whole);
     }
 
     @Override
-    public KVEntity findTop(Map<String, Object> jqlFilter, Sort sort) {
-        List<KVEntity> res = this.find_impl(jqlFilter, JqlSelect.by(null, sort, 0, 1));
+    public KVEntity findTop(Map<String, Object> j_ql_filter, Sort sort) {
+        List<KVEntity> res = this.find_impl(j_ql_filter, JQSelect.by(null, sort, 0, 1));
         return res.size() > 0 ? res.get(0) : null;
     }
 
@@ -238,7 +238,7 @@ public class JDBCRepositoryBase<ID> /*extends JDBCQueryBuilder*/ implements JQLR
 
     public static class Util {
         public static JDBCRepositoryBase findRepository(Class<?> entityType) {
-            return JDBCRepositoryBase.jqlServices.get(entityType);
+            return JDBCRepositoryBase.loadedServices.get(entityType);
         }
     }
 
@@ -285,11 +285,11 @@ public class JDBCRepositoryBase<ID> /*extends JDBCQueryBuilder*/ implements JQLR
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         JDBCRepositoryBase<?> that = (JDBCRepositoryBase<?>) o;
-        return Objects.equals(jqlSchema, that.jqlSchema);
+        return Objects.equals(schema, that.schema);
     }
 
     @Override
     public int hashCode() {
-        return jqlSchema.hashCode();
+        return schema.hashCode();
     }
 }

@@ -1,6 +1,6 @@
 package org.eipgrid.jql.csv;
 
-import org.eipgrid.jql.JqlValueKind;
+import org.eipgrid.jql.JQType;
 import org.eipgrid.jql.util.ClassUtils;
 import org.eipgrid.jql.util.KVEntity;
 
@@ -43,8 +43,8 @@ public class CsvParser {
         for (CsvColumn column : columns) {
             try {
                 Object value;
-                JqlValueKind format = column.getValueType();
-                if (format == JqlValueKind.Object) {
+                JQType format = column.getValueType();
+                if (format == JQType.Object) {
                     value = readCsv(reader, column.getElementType());
                 }
                 else {

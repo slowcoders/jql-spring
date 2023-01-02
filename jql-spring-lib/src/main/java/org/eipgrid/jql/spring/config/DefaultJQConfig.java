@@ -9,7 +9,6 @@ import lombok.SneakyThrows;
 import org.eipgrid.jql.jpa.JPAEntitySerializer;
 import org.springframework.boot.context.properties.ConfigurationPropertiesBinding;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
@@ -17,13 +16,13 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.persistence.Entity;
 import java.nio.charset.StandardCharsets;
 
-public class DefaultJQLConfig {
+public class DefaultJQConfig {
 
     /**
      * Serialize 시 무한 루프 방지를 위한 Jackson 모듈
      * 참고) @JsonBackReference 와 @JsonIdentityInfo 대체
      */
-    static class JQLModule extends Hibernate5Module {
+    static class JPAJacksonModule extends Hibernate5Module {
         @Override
         public void setupModule(SetupContext context) {
             super.setupModule(context);
@@ -79,7 +78,7 @@ public class DefaultJQLConfig {
 
     @Bean
     public Module datatypeHibernateModule() {
-        Hibernate5Module hm = new JQLModule();
+        Hibernate5Module hm = new JPAJacksonModule();
 
         hm.configure(Hibernate5Module.Feature.WRITE_MISSING_ENTITIES_AS_NULL, true);
         hm.configure(Hibernate5Module.Feature.SERIALIZE_IDENTIFIER_FOR_LAZY_NOT_LOADED_OBJECTS, true);

@@ -1,13 +1,13 @@
 package org.eipgrid.jql.jdbc;
 
-import org.eipgrid.jql.JqlColumn;
-import org.eipgrid.jql.JqlSchema;
-import org.eipgrid.jql.JqlEntityJoin;
+import org.eipgrid.jql.JQColumn;
+import org.eipgrid.jql.JQSchema;
+import org.eipgrid.jql.JQJoin;
 import org.eipgrid.jql.parser.Expression;
 import org.eipgrid.jql.parser.JqlQuery;
-import org.eipgrid.jql.parser.JqlNode;
+import org.eipgrid.jql.parser.JqlFilter;
 import org.eipgrid.jql.util.SourceWriter;
-import org.eipgrid.jql.JqlSelect;
+import org.eipgrid.jql.JQSelect;
 import org.springframework.data.domain.Sort;
 
 import java.util.*;
@@ -26,14 +26,14 @@ public class SqlGenerator extends SqlConverter implements QueryBuilder {
         return command.toString();
     }
 
-    protected void writeFilter(JqlNode jql) {
+    protected void writeFilter(JqlFilter jql) {
         super.visitNode(jql);
         Expression ps = jql.getPredicates();
         if (!ps.isEmpty()) {
             ps.accept(this);
             sw.write(" AND ");
         }
-        for (JqlNode child : jql.getChildNodes()) {
+        for (JqlFilter child : jql.getChildNodes()) {
             if (!child.isEmpty()) {
                 writeFilter(child);
             }
@@ -56,8 +56,8 @@ public class SqlGenerator extends SqlConverter implements QueryBuilder {
 
     private void writeFrom(JqlQuery where, String tableName, boolean ignoreEmptyFilter) {
         sw.write("FROM ").write(tableName).write(" as ").write(where.getMappingAlias());
-        for (JqlResultMapping fetch : where.getResultMappings()) {
-            JqlEntityJoin join = fetch.getEntityJoin();
+        for (JQResultMapping fetch : where.getResultMappings()) {
+            JQJoin join = fetch.getEntityJoin();
             if (join == null) continue;
 
             if (ignoreEmptyFilter && fetch.isEmpty()) continue;
@@ -65,7 +65,7 @@ public class SqlGenerator extends SqlConverter implements QueryBuilder {
             String parentAlias = fetch.getParentNode().getMappingAlias();
             String alias = fetch.getMappingAlias();
             if (true || join.isUniqueJoin()) {
-                JqlEntityJoin associated = join.getAssociativeJoin();
+                JQJoin associated = join.getAssociativeJoin();
                 writeJoinStatement(join, parentAlias, associated == null ? alias : "p" + alias);
                 if (associated != null) {
                     writeJoinStatement(associated, "p" + alias, alias);
@@ -77,12 +77,12 @@ public class SqlGenerator extends SqlConverter implements QueryBuilder {
     }
 
 
-    private void writeJoinStatement(JqlEntityJoin joinKeys, String baseAlias, String alias) {
+    private void writeJoinStatement(JQJoin joinKeys, String baseAlias, String alias) {
         boolean isInverseMapped = joinKeys.isInverseMapped();
         String joinedTable = joinKeys.getJoinedSchema().getTableName();
         sw.write("\nleft join ").write(joinedTable).write(" as ").write(alias).write(" on\n\t");
-        for (JqlColumn fk : joinKeys.getForeignKeyColumns()) {
-            JqlColumn anchor, linked;
+        for (JQColumn fk : joinKeys.getForeignKeyColumns()) {
+            JQColumn anchor, linked;
             if (isInverseMapped) {
                 linked = fk; anchor = fk.getJoinedPrimaryColumn();
             } else {
@@ -105,8 +105,8 @@ public class SqlGenerator extends SqlConverter implements QueryBuilder {
     private boolean needDistinctPagination(JqlQuery where) {
         if (where.isLinearNode()) return false;
 
-        for (JqlResultMapping mapping : where.getResultMappings()) {
-            JqlEntityJoin join = mapping.getEntityJoin();
+        for (JQResultMapping mapping : where.getResultMappings()) {
+            JQJoin join = mapping.getEntityJoin();
             if (join == null) continue;
 
             if (mapping.getSelectedColumns().size() == 0) continue;
@@ -118,7 +118,7 @@ public class SqlGenerator extends SqlConverter implements QueryBuilder {
         return false;
     }
 
-    public String createSelectQuery(JqlQuery where, JqlSelect columns) {
+    public String createSelectQuery(JqlQuery where, JQSelect columns) {
         sw.reset();
         String tableName = where.getTableName();
         where.selectProperties(columns.getAttributeNames());
@@ -138,10 +138,10 @@ public class SqlGenerator extends SqlConverter implements QueryBuilder {
         }
 
         sw.write("\nSELECT\n");
-        for (JqlResultMapping mapping : where.getResultMappings()) {
+        for (JQResultMapping mapping : where.getResultMappings()) {
             sw.write('\t');
             String alias = mapping.getMappingAlias();
-            for (JqlColumn col : mapping.getSelectedColumns()) {
+            for (JQColumn col : mapping.getSelectedColumns()) {
                 sw.write(alias).write('.').write(col.getColumnName()).write(", ");
             }
             sw.write('\n');
@@ -165,7 +165,7 @@ public class SqlGenerator extends SqlConverter implements QueryBuilder {
         sw.write("\nORDER BY ");
         final HashSet<String> explicitSortColumns = new HashSet<>();
         if (sort != null) {
-            JqlSchema schema = where.getSchema();
+            JQSchema schema = where.getSchema();
             sort.forEach(order -> {
                 String p = order.getProperty();
                 String qname = where.getMappingAlias() + '.' + schema.getColumn(p).getColumnName();
@@ -175,11 +175,11 @@ public class SqlGenerator extends SqlConverter implements QueryBuilder {
             });
         }
         if (need_joined_result_set_ordering) {
-            for (JqlResultMapping mapping : where.getResultMappings()) {
+            for (JQResultMapping mapping : where.getResultMappings()) {
                 if (mapping.isLinearNode()) continue;
                 if (mapping != where && !mapping.isArrayNode()) continue;
                 String table = mapping.getMappingAlias();
-                for (JqlColumn column : mapping.getSchema().getPKColumns()) {
+                for (JQColumn column : mapping.getSchema().getPKColumns()) {
                     String qname = table + '.' + column.getColumnName();
                     if (!explicitSortColumns.contains(qname)) {
                         sw.write(table).write('.').write(column.getColumnName()).write(", ");
@@ -190,7 +190,7 @@ public class SqlGenerator extends SqlConverter implements QueryBuilder {
         sw.replaceTrailingComma("");
     }
 
-    private void writePagination(JqlSelect pagination) {
+    private void writePagination(JQSelect pagination) {
         int offset = pagination.getOffset();
         int limit  = pagination.getLimit();
         if (offset > 0) sw.write("\nOFFSET " + offset);
@@ -222,9 +222,9 @@ public class SqlGenerator extends SqlConverter implements QueryBuilder {
         return sql;
     }
 
-    public String prepareFindByIdStatement(JqlSchema schema) {
+    public String prepareFindByIdStatement(JQSchema schema) {
         sw.write("\nSELECT * FROM ").write(schema.getTableName()).write("\nWHERE ");
-        List<JqlColumn> keys = schema.getPKColumns();
+        List<JQColumn> keys = schema.getPKColumns();
         for (int i = 0; i < keys.size(); ) {
             String key = keys.get(i).getColumnName();
             sw.write(key).write(" = ? ");
@@ -236,7 +236,7 @@ public class SqlGenerator extends SqlConverter implements QueryBuilder {
         return sql;
     }
 
-    public String createInsertStatement(JqlSchema schema, Map entity, boolean ignoreConflict) {
+    public String createInsertStatement(JQSchema schema, Map entity, boolean ignoreConflict) {
 
         Set<String> keys = ((Map<String, ?>)entity).keySet();
         sw.writeln();
@@ -261,10 +261,10 @@ public class SqlGenerator extends SqlConverter implements QueryBuilder {
         return sql;
     }
 
-    public String prepareBatchInsertStatement(JqlSchema schema, boolean ignoreConflict) {
+    public String prepareBatchInsertStatement(JQSchema schema, boolean ignoreConflict) {
         sw.writeln();
         sw.write(getCommand(SqlConverter.Command.Insert)).write(" INTO ").write(schema.getTableName()).writeln("(");
-        for (JqlColumn col : schema.getWritableColumns()) {
+        for (JQColumn col : schema.getWritableColumns()) {
             sw.write(col.getColumnName()).write(", ");
         }
         sw.replaceTrailingComma("\n) VALUES (");

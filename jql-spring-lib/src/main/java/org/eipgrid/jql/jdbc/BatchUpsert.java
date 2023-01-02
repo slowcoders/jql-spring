@@ -1,8 +1,8 @@
 package org.eipgrid.jql.jdbc;
 
-import org.eipgrid.jql.JqlColumn;
-import org.eipgrid.jql.JqlSchema;
-import org.eipgrid.jql.JqlValueKind;
+import org.eipgrid.jql.JQColumn;
+import org.eipgrid.jql.JQSchema;
+import org.eipgrid.jql.JQType;
 
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
@@ -13,12 +13,12 @@ import java.util.Map;
 
 public class BatchUpsert<ID> implements BatchPreparedStatementSetterWithKeyHolder {
     private final Map<String, Object>[] entities;
-    private final List<JqlColumn> columns;
+    private final List<JQColumn> columns;
     private final String sql;
-    private final JqlSchema schema;
+    private final JQSchema schema;
     private List<Map<String, Object>> generatedKeys;
 
-    public BatchUpsert(JqlSchema schema, Collection<Map<String, Object>> entities, boolean ignoreConflict) {
+    public BatchUpsert(JQSchema schema, Collection<Map<String, Object>> entities, boolean ignoreConflict) {
         this.sql = new SqlGenerator().prepareBatchInsertStatement(schema, ignoreConflict);
         this.schema = schema;
         this.columns = schema.getWritableColumns();
@@ -33,7 +33,7 @@ public class BatchUpsert<ID> implements BatchPreparedStatementSetterWithKeyHolde
     public void setValues(PreparedStatement ps, int i) throws SQLException {
         Map<String, Object> entity = entities[i];
         int idx = 0;
-        for (JqlColumn col : columns) {
+        for (JQColumn col : columns) {
             Object json_v = entity.get(col.getJsonKey());
             Object value = convertJsonValueToColumnValue(col, json_v);
             ps.setObject(++idx, value);
@@ -41,11 +41,11 @@ public class BatchUpsert<ID> implements BatchPreparedStatementSetterWithKeyHolde
         ps.getGeneratedKeys();
     }
 
-    private Object convertJsonValueToColumnValue(JqlColumn col, Object v) {
+    private Object convertJsonValueToColumnValue(JQColumn col, Object v) {
         if (v == null) return null;
 
         if (v.getClass().isEnum()) {
-            if (col.getValueKind() == JqlValueKind.Text) {
+            if (col.getColumnType() == JQType.Text) {
                 return v.toString();
             } else {
                 return ((Enum) v).ordinal();
@@ -67,7 +67,7 @@ public class BatchUpsert<ID> implements BatchPreparedStatementSetterWithKeyHolde
 
     public List<ID> getEntityIDs() {
         int cntKeys = generatedKeys == null ? 0 : generatedKeys.size();
-        List<JqlColumn> pkColumns = schema.getPKColumns();
+        List<JQColumn> pkColumns = schema.getPKColumns();
         ArrayList<ID> ids = new ArrayList<>();
         for (int i = 0; i < entities.length; i++) {
             ID id = (ID)extractEntityId(pkColumns, entities[i], i < cntKeys ? this.generatedKeys.get(i) : null);
@@ -76,11 +76,11 @@ public class BatchUpsert<ID> implements BatchPreparedStatementSetterWithKeyHolde
         return ids;
     }
 
-    private static Object extractEntityId(List<JqlColumn> pkColumns, Map<String, Object> entity, Map<String, Object> generatedKeys) {
+    private static Object extractEntityId(List<JQColumn> pkColumns, Map<String, Object> entity, Map<String, Object> generatedKeys) {
         if (pkColumns.size() > 1) {
             Object[] id = new Object[pkColumns.size()];
             int i = 0;
-            for (JqlColumn pk : pkColumns) {
+            for (JQColumn pk : pkColumns) {
                 Object v = getValue(pk.getJsonKey(), entity, generatedKeys);
                 id[i++] = v;
             }

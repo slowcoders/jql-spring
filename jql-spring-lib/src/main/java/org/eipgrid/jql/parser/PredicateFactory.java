@@ -30,7 +30,7 @@ abstract class PredicateFactory {
         return operators.get(function);
     }
 
-    public PredicateSet getPredicates(JqlNode node, ValueNodeType nodeType) {
+    public PredicateSet getPredicates(JqlFilter node, JqlNodeType nodeType) {
         PredicateSet basePredicates = node.getPredicateSet();
         switch (nodeType) {
             case Entities: {
@@ -105,7 +105,7 @@ abstract class PredicateFactory {
             super(operator, fetchData, propertyNameRequired);
         }
 
-        public PredicateSet getPredicates(JqlNode node, ValueNodeType nodeType) {
+        public PredicateSet getPredicates(JqlFilter node, JqlNodeType nodeType) {
             PredicateSet baseScope = node.getPredicateSet();
             switch (nodeType) {
                 case Entities: {

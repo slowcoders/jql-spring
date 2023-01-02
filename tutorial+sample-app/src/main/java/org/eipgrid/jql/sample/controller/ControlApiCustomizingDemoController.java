@@ -1,7 +1,7 @@
 package org.eipgrid.jql.sample.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
-import org.eipgrid.jql.jdbc.JQLJdbcService;
+import org.eipgrid.jql.jdbc.JdbcJQService;
 import org.eipgrid.jql.jdbc.JdbcTableController;
 import org.eipgrid.jql.util.KVEntity;
 import org.springframework.http.MediaType;
@@ -15,7 +15,7 @@ import java.util.Date;
 @RequestMapping("/api/jql/starwars/character")
 public class ControlApiCustomizingDemoController extends JdbcTableController<Object> {
 
-    public ControlApiCustomizingDemoController(JQLJdbcService service) {
+    public ControlApiCustomizingDemoController(JdbcJQService service) {
         super(service,"starwars.character");
     }
 

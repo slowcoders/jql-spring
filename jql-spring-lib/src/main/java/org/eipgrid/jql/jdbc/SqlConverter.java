@@ -1,6 +1,6 @@
 package org.eipgrid.jql.jdbc;
 
-import org.eipgrid.jql.JqlValueKind;
+import org.eipgrid.jql.JQType;
 import org.eipgrid.jql.parser.*;
 import org.eipgrid.jql.util.SourceWriter;
 
@@ -8,7 +8,7 @@ import java.util.*;
 
 public class SqlConverter implements AstVisitor {
     protected final SourceWriter sw;
-    private JqlNode currentNode;
+    private JqlFilter currentNode;
 
     public enum Command {
         Insert,
@@ -20,16 +20,16 @@ public class SqlConverter implements AstVisitor {
         this.sw = sw;
     }
 
-    public void visitNode(JqlNode node) {
-        JqlNode old = this.currentNode;
+    public void visitNode(JqlFilter node) {
+        JqlFilter old = this.currentNode;
         this.currentNode = node;
 //        node.getPredicates().accept(this);
 //        this.currentNode = old;
     }
 
-    private void writeJsonPath(JqlNode node) {
+    private void writeJsonPath(JqlFilter node) {
         if (node.isJsonNode()) {
-            JqlNode parent = node.getParentNode();
+            JqlFilter parent = node.getParentNode();
             writeJsonPath(parent);
             if (parent.isJsonNode()) {
                 sw.writeQuoted(node.getMappingAlias());
@@ -43,7 +43,7 @@ public class SqlConverter implements AstVisitor {
     }
 
     private void writeTypeCast(Class valueType) {
-        JqlValueKind vf = JqlValueKind.of(valueType);
+        JQType vf = JQType.of(valueType);
         switch (vf) {
             case Integer:
             case Float:

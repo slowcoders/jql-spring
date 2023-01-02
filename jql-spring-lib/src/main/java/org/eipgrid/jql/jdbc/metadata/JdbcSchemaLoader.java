@@ -1,9 +1,9 @@
 package org.eipgrid.jql.jdbc.metadata;
 
-import org.eipgrid.jql.JqlColumn;
-import org.eipgrid.jql.JqlSchema;
-import org.eipgrid.jql.JqlEntityJoin;
-import org.eipgrid.jql.SchemaLoader;
+import org.eipgrid.jql.JQColumn;
+import org.eipgrid.jql.JQSchema;
+import org.eipgrid.jql.JQJoin;
+import org.eipgrid.jql.JQSchemaLoader;
 import org.eipgrid.jql.jpa.JpaSchema;
 import org.eipgrid.jql.util.AttributeNameConverter;
 import org.springframework.dao.DataAccessException;
@@ -14,11 +14,11 @@ import javax.sql.DataSource;
 import java.sql.*;
 import java.util.*;
 
-public class JdbcSchemaLoader extends SchemaLoader {
+public class JdbcSchemaLoader extends JQSchemaLoader {
     private final JdbcTemplate jdbc;
     private final String defaultSchema;
     private String catalog;
-    private final HashMap<String, JqlSchema> metadataMap = new HashMap<>();
+    private final HashMap<String, JQSchema> metadataMap = new HashMap<>();
 
     public JdbcSchemaLoader(DataSource dataSource, AttributeNameConverter nameConverter) {
         super(nameConverter);
@@ -34,18 +34,18 @@ public class JdbcSchemaLoader extends SchemaLoader {
     public String getDefaultDBSchema() { return this.defaultSchema; }
 
 
-    public JqlSchema loadSchema(String tablePath0, Class<?> ormType) {
+    public JQSchema loadSchema(String tablePath0, Class<?> ormType) {
         if (tablePath0 == null) {
-            JqlSchema schema = new JpaSchema(this, tablePath0, ormType);
+            JQSchema schema = new JpaSchema(this, tablePath0, ormType);
             throw new RuntimeException("not impl");
         }
 
         final String tablePath = tablePath0.toLowerCase();
-        JqlSchema schema = metadataMap.get(tablePath);
+        JQSchema schema = metadataMap.get(tablePath);
         if (schema == null) {
-            schema = jdbc.execute(new ConnectionCallback<JqlSchema>() {
+            schema = jdbc.execute(new ConnectionCallback<JQSchema>() {
                 @Override
-                public JqlSchema doInConnection(Connection conn) throws SQLException, DataAccessException {
+                public JQSchema doInConnection(Connection conn) throws SQLException, DataAccessException {
                     return loadSchema(conn, tablePath, ormType);
                 }
             });
@@ -53,7 +53,7 @@ public class JdbcSchemaLoader extends SchemaLoader {
         return schema;
     }
 
-    private JqlSchema loadSchema(Connection conn, String tablePath, Class<?> ormType) throws SQLException {
+    private JQSchema loadSchema(Connection conn, String tablePath, Class<?> ormType) throws SQLException {
         JdbcSchema schema = new JdbcSchema(JdbcSchemaLoader.this, tablePath);
         metadataMap.put(tablePath, schema);
 
@@ -69,38 +69,38 @@ public class JdbcSchemaLoader extends SchemaLoader {
                 }
             }
         }
-        ArrayList<JqlColumn> columns = getColumns(conn, dbSchema, tableName, schema, primaryKeys);
+        ArrayList<JQColumn> columns = getColumns(conn, dbSchema, tableName, schema, primaryKeys);
         processForeignKeyConstraints(conn, schema, dbSchema, tableName, columns);
         schema.init(columns, uniqueConstraints, ormType);
         return schema;
     }
 
     @Override
-    protected HashMap<String, JqlEntityJoin> loadJoinMap(JqlSchema pkSchema) {
+    protected HashMap<String, JQJoin> loadJoinMap(JQSchema schema) {
         EntityJoinHelper exportedJoins = jdbc.execute(new ConnectionCallback<EntityJoinHelper>() {
             @Override
             public EntityJoinHelper doInConnection(Connection conn) throws SQLException, DataAccessException {
-                return getChildJoins(conn, (JdbcSchema)pkSchema, pkSchema.getNamespace(), pkSchema.getSimpleTableName());
+                return getChildJoins(conn, (JdbcSchema) schema, schema.getNamespace(), schema.getSimpleTableName());
             }
         });
-        return createJoinMap((JdbcSchema)pkSchema, exportedJoins);
+        return createJoinMap((JdbcSchema) schema, exportedJoins);
     }
 
-    private HashMap<String, JqlEntityJoin> createJoinMap(JdbcSchema schema, EntityJoinHelper mappedJoins) {
-        HashMap<String, JqlEntityJoin> joinMap = new HashMap<>();
-        for (JqlEntityJoin join : schema.getForeignKeyConstraints().values()) {
+    private HashMap<String, JQJoin> createJoinMap(JdbcSchema schema, EntityJoinHelper mappedJoins) {
+        HashMap<String, JQJoin> joinMap = new HashMap<>();
+        for (JQJoin join : schema.getForeignKeyConstraints().values()) {
             joinMap.put(join.getJsonKey(), join);
         }
-        for (JqlEntityJoin fkJoin : mappedJoins.values()) {
-            List<JqlColumn> fkColumns = fkJoin.getForeignKeyColumns();
-            JqlEntityJoin childJoin = new JqlEntityJoin(schema, fkColumns);
+        for (JQJoin fkJoin : mappedJoins.values()) {
+            List<JQColumn> fkColumns = fkJoin.getForeignKeyColumns();
+            JQJoin childJoin = new JQJoin(schema, fkColumns);
             joinMap.put(childJoin.getJsonKey(), childJoin);
             JdbcSchema childSchema = (JdbcSchema) fkJoin.getBaseSchema();
-            Collection<JqlEntityJoin> joins = childSchema.getForeignKeyConstraints().values();
-            for (JqlEntityJoin j2 : joins) {
+            Collection<JQJoin> joins = childSchema.getForeignKeyConstraints().values();
+            for (JQJoin j2 : joins) {
                 assert(!j2.isInverseMapped());
                 if (j2 != fkJoin) {
-                    JqlEntityJoin associative = new JqlEntityJoin(schema, fkColumns, j2);
+                    JQJoin associative = new JQJoin(schema, fkColumns, j2);
                     joinMap.put(associative.getJsonKey(), associative);
                 }
             }
@@ -198,8 +198,8 @@ public class JdbcSchemaLoader extends SchemaLoader {
         return indexMap;
     }
 
-    private JdbcColumn getColumn(ArrayList<JqlColumn> columns, String columnName) {
-        for (JqlColumn column : columns) {
+    private JdbcColumn getColumn(ArrayList<JQColumn> columns, String columnName) {
+        for (JQColumn column : columns) {
             if (columnName.equals(column.getColumnName())) {
                 return (JdbcColumn)column;
             }
@@ -207,7 +207,7 @@ public class JdbcSchemaLoader extends SchemaLoader {
         throw new RuntimeException("column not found: " + columnName);
     }
 
-    private void processForeignKeyConstraints(Connection conn, JdbcSchema fkSchema, String dbSchema, String tableName, ArrayList<JqlColumn> columns) throws SQLException {
+    private void processForeignKeyConstraints(Connection conn, JdbcSchema fkSchema, String dbSchema, String tableName, ArrayList<JQColumn> columns) throws SQLException {
         DatabaseMetaData md = conn.getMetaData();
         ResultSet rs = md.getImportedKeys(catalog, dbSchema, tableName);
         while (rs.next()) {
@@ -227,17 +227,17 @@ public class JdbcSchemaLoader extends SchemaLoader {
             JoinData join = new JoinData(rs, this);
             // @TODO loadSchema with ORM type
             JdbcSchema fkSchema = (JdbcSchema) loadSchema(join.fkTableQName, null);
-            JqlEntityJoin fkJoin = fkSchema.getForeignKeyConstraints().get(join.fk_name);
+            JQJoin fkJoin = fkSchema.getForeignKeyConstraints().get(join.fk_name);
             assert(fkJoin != null);
             joins.put(fkSchema, fkJoin);
         }
         return joins;
     }
 
-    private ArrayList<JqlColumn> getColumns(Connection conn, String dbSchema, String tableName, JqlSchema schema, ArrayList<String> primaryKeys) throws SQLException {
+    private ArrayList<JQColumn> getColumns(Connection conn, String dbSchema, String tableName, JQSchema schema, ArrayList<String> primaryKeys) throws SQLException {
         //HashMap<String, JqlIndex> indexes = getUniqueConstraints(conn, dbSchema, tableName);
         Map<String, String> comments = getColumnComments(conn, dbSchema, tableName);
-        ArrayList<JqlColumn> columns = new ArrayList<>();
+        ArrayList<JQColumn> columns = new ArrayList<>();
         String qname = dbSchema == null ? tableName : dbSchema + "." + tableName;
         ResultSet rs = conn.createStatement().executeQuery("select * from " + qname + " limit 1");
         ResultSetMetaData md = rs.getMetaData();
@@ -282,7 +282,7 @@ public class JdbcSchemaLoader extends SchemaLoader {
         }
     }
 
-    public String createDDL(JqlSchema schema) {
+    public String createDDL(JQSchema schema) {
 //        SQLWriter sb = new SQLWriter(schema);
 //        sb.write("const " + schema.getTableName() + "Schema = [\n");
 //        for (JqlColumn col : schema.getColumns()) {
@@ -315,7 +315,7 @@ public class JdbcSchemaLoader extends SchemaLoader {
         String pktable_cat;
         String fktable_cat;
 
-        JoinData(ResultSet rs, SchemaLoader loader) throws SQLException {
+        JoinData(ResultSet rs, JQSchemaLoader loader) throws SQLException {
             this.pk_name = rs.getString("pk_name");
             this.pktable_schem = rs.getString("pktable_schem");
             this.pktable_name  = rs.getString("pktable_name");

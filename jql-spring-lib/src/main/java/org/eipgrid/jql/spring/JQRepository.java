@@ -1,6 +1,6 @@
 package org.eipgrid.jql.spring;
 
-import org.eipgrid.jql.JqlSelect;
+import org.eipgrid.jql.JQSelect;
 import org.springframework.data.domain.Sort;
 
 import java.io.IOException;
@@ -8,15 +8,15 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-public interface JQLRepository<ENTITY, ID> {
+public interface JQRepository<ENTITY, ID> {
 
     Class<ENTITY> getEntityType();
 
     ID convertId(Object v);
 
-    List<ENTITY> find(Map<String, Object> jqlFilter, JqlSelect columns);
+    List<ENTITY> find(Map<String, Object> j_ql_filter, JQSelect columns);
 
-    ENTITY findTop(Map<String, Object> jqlFilter, Sort sort);
+    ENTITY findTop(Map<String, Object> j_ql_filter, Sort sort);
 
     ENTITY find(ID id);
 
@@ -29,12 +29,12 @@ public interface JQLRepository<ENTITY, ID> {
     List<ENTITY> list(Collection<ID> idList);
 
     default Iterable<ENTITY> listAll() {
-        return find(null, JqlSelect.Whole);
+        return find(null, JQSelect.Whole);
     }
 
 
 
-    long count(Map<String, Object> jqlFilter);
+    long count(Map<String, Object> j_ql_filter);
 
 
 

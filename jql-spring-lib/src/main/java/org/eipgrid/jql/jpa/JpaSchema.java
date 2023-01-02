@@ -1,15 +1,15 @@
 package org.eipgrid.jql.jpa;
 
-import org.eipgrid.jql.JqlSchema;
-import org.eipgrid.jql.SchemaLoader;
+import org.eipgrid.jql.JQSchema;
+import org.eipgrid.jql.JQSchemaLoader;
 
 import javax.persistence.Transient;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 
-public class JpaSchema extends JqlSchema {
-    public JpaSchema(SchemaLoader schemaLoader, String tableName, Class<?> ormType) {
+public class JpaSchema extends JQSchema {
+    public JpaSchema(JQSchemaLoader schemaLoader, String tableName, Class<?> ormType) {
         super(schemaLoader, tableName, ormType.getTypeName());
 
         ArrayList<JpaColumn> columns = new ArrayList<>();

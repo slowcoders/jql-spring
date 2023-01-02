@@ -1,17 +1,17 @@
 package org.eipgrid.jql.parser;
 
-import org.eipgrid.jql.JqlSchema;
-import org.eipgrid.jql.jdbc.JqlResultMapping;
+import org.eipgrid.jql.JQSchema;
+import org.eipgrid.jql.jdbc.JQResultMapping;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class JqlQuery extends TableFilter {
 
-    private final ArrayList<JqlResultMapping> columnGroupMappings = new ArrayList<>();
+    private final ArrayList<JQResultMapping> columnGroupMappings = new ArrayList<>();
     private int cntMappingAlias;
 
-    public JqlQuery(JqlSchema schema) {
+    public JqlQuery(JQSchema schema) {
         super(schema, "t_0");
     }
 
@@ -24,7 +24,7 @@ public class JqlQuery extends TableFilter {
         return true;
     }
 
-    public List<JqlResultMapping> getResultMappings() {
+    public List<JQResultMapping> getResultMappings() {
         if (columnGroupMappings.size() == 0) {
             gatherColumnMappings(columnGroupMappings);
         }

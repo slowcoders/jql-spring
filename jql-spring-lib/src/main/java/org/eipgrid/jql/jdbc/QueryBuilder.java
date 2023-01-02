@@ -1,13 +1,13 @@
 package org.eipgrid.jql.jdbc;
 
-import org.eipgrid.jql.JqlSchema;
-import org.eipgrid.jql.JqlSelect;
+import org.eipgrid.jql.JQSchema;
+import org.eipgrid.jql.JQSelect;
 import org.eipgrid.jql.parser.JqlQuery;
 
 import java.util.Map;
 
 public interface QueryBuilder {
-    String createSelectQuery(JqlQuery where, JqlSelect columns);
+    String createSelectQuery(JqlQuery where, JQSelect columns);
 
     String createCountQuery(JqlQuery where);
 
@@ -15,7 +15,7 @@ public interface QueryBuilder {
 
     String createDeleteQuery(JqlQuery where);
 
-    String prepareFindByIdStatement(JqlSchema schema);
+    String prepareFindByIdStatement(JQSchema schema);
 
-    String createInsertStatement(JqlSchema schema, Map entity, boolean ignoreConflict);
+    String createInsertStatement(JQSchema schema, Map entity, boolean ignoreConflict);
 }

@@ -2,24 +2,24 @@ package org.eipgrid.jql.parser;
 
 import org.apache.commons.lang3.ArrayUtils;
 import org.eipgrid.jql.*;
-import org.eipgrid.jql.jdbc.JqlResultMapping;
+import org.eipgrid.jql.jdbc.JQResultMapping;
 
 import java.util.*;
 
-class TableFilter extends JqlNode implements JqlResultMapping {
-    private final JqlSchema schema;
+class TableFilter extends JqlFilter implements JQResultMapping {
+    private final JQSchema schema;
 
-    private final JqlEntityJoin join;
+    private final JQJoin join;
     private final String mappingAlias;
 
     private String[] entityMappingPath;
-    private List<JqlColumn> selectedColumns = Collections.EMPTY_LIST;
+    private List<JQColumn> selectedColumns = Collections.EMPTY_LIST;
     private boolean doSelectComparedAttribute;
     private boolean isLinear;
 
     private static final String[] emptyPath = new String[0];
 
-    TableFilter(JqlSchema schema, String mappingAlias) {
+    TableFilter(JQSchema schema, String mappingAlias) {
         super(null);
         this.schema = schema;
         this.join = null;
@@ -27,14 +27,14 @@ class TableFilter extends JqlNode implements JqlResultMapping {
         this.mappingAlias = mappingAlias;
     }
 
-    TableFilter(TableFilter baseFilter, JqlEntityJoin join) {
+    TableFilter(TableFilter baseFilter, JQJoin join) {
         super(baseFilter);
         this.schema = join.getAssociatedSchema();
         this.join = join;
         this.mappingAlias = baseFilter.getRootNode().createUniqueMappingAlias();
     }
 
-    public JqlSchema getSchema() {
+    public JQSchema getSchema() {
         return schema;
     }
 
@@ -43,7 +43,7 @@ class TableFilter extends JqlNode implements JqlResultMapping {
     }
 
     public TableFilter getParentNode() {
-        JqlNode parent = super.getParentNode();
+        JqlFilter parent = super.getParentNode();
         return parent == null ? null : parent.asTableFilter();
     }
 
@@ -68,30 +68,30 @@ class TableFilter extends JqlNode implements JqlResultMapping {
     public String getTableName() { return schema.getTableName(); }
 
     @Override
-    public List<JqlColumn> getSelectedColumns() {
+    public List<JQColumn> getSelectedColumns() {
         return selectedColumns;
     }
 
 
     public void selectProperties(String[] keys) {
         this.selectedColumns = selectProperties_internal(keys,
-                this.isArrayNode() || ArrayUtils.contains(keys, JqlSelect.PRIMARY_KEYS));
+                this.isArrayNode() || ArrayUtils.contains(keys, JQSelect.PRIMARY_KEYS));
     }
 
-    private List<JqlColumn> selectProperties_internal(String[] keys, boolean includePrimaryKeys) {
+    private List<JQColumn> selectProperties_internal(String[] keys, boolean includePrimaryKeys) {
         if (keys == null || keys.length == 0) {
             return Collections.EMPTY_LIST;
         }
 
-        if (ArrayUtils.contains(keys, JqlSelect.ALL_PROPERTIES)) {
+        if (ArrayUtils.contains(keys, JQSelect.ALL_PROPERTIES)) {
             return schema.getReadableColumns();
         }
 
-        if (includePrimaryKeys && keys.length == 1 && JqlSelect.PRIMARY_KEYS.equals(keys[0])) {
+        if (includePrimaryKeys && keys.length == 1 && JQSelect.PRIMARY_KEYS.equals(keys[0])) {
             return schema.getPKColumns();
         }
 
-        ArrayList<JqlColumn> columns = new ArrayList<>(includePrimaryKeys ? schema.getPKColumns() : Collections.EMPTY_LIST);
+        ArrayList<JQColumn> columns = new ArrayList<>(includePrimaryKeys ? schema.getPKColumns() : Collections.EMPTY_LIST);
         for (String name : keys) {
             name = name.trim();
             switch (name) {
@@ -101,21 +101,21 @@ class TableFilter extends JqlNode implements JqlResultMapping {
                 case "!":
                     break;
                 default:
-                    JqlColumn column = schema.getColumn(name);
+                    JQColumn column = schema.getColumn(name);
                     if (!columns.contains(column))  columns.add(column);
             }
         }
         return columns;
     }
 
-    private Set<JqlColumn> getHiddenForeignKeys() {
-        Set<JqlColumn> hiddenColumns = (Set<JqlColumn>) Collections.EMPTY_SET;
-        for (JqlNode node : this.subFilters.values()) {
+    private Set<JQColumn> getHiddenForeignKeys() {
+        Set<JQColumn> hiddenColumns = (Set<JQColumn>) Collections.EMPTY_SET;
+        for (JqlFilter node : this.subFilters.values()) {
             TableFilter table = node.asTableFilter();
             if (table == null) continue;
             if (!table.join.isInverseMapped()) {
                 if (hiddenColumns == Collections.EMPTY_SET) hiddenColumns = new HashSet<>();
-                List<JqlColumn> fkColumns = table.join.getForeignKeyColumns();
+                List<JQColumn> fkColumns = table.join.getForeignKeyColumns();
                 assert(fkColumns.get(0).getSchema() == this.schema);
                 hiddenColumns.addAll(fkColumns);
             }
@@ -124,14 +124,14 @@ class TableFilter extends JqlNode implements JqlResultMapping {
     }
 
     @Override
-    protected JqlNode makeSubNode(String key, ValueNodeType nodeType) {
-        JqlEntityJoin join = schema.getEntityJoinBy(key);
+    protected JqlFilter makeSubNode(String key, JqlNodeType nodeType) {
+        JQJoin join = schema.getEntityJoinBy(key);
         if (join == null) {
-            JqlColumn column = schema.getColumn(key);
-            if (column.getValueKind() != JqlValueKind.Object) return this;
+            JQColumn column = schema.getColumn(key);
+            if (column.getColumnType() != JQType.Object) return this;
         }
 
-        JqlNode subQuery = subFilters.get(key);
+        JqlFilter subQuery = subFilters.get(key);
         if (subQuery == null) {
             if (join != null) {
                 subQuery = new TableFilter(this, join);
@@ -146,7 +146,7 @@ class TableFilter extends JqlNode implements JqlResultMapping {
 
     public boolean isEmpty() {
         if (!super.isEmpty()) return false;
-        for (JqlNode subNode: subFilters.values()) {
+        for (JqlFilter subNode: subFilters.values()) {
             if (!subNode.isEmpty()) return false;
         }
         return true;
@@ -165,7 +165,7 @@ class TableFilter extends JqlNode implements JqlResultMapping {
         return this.schema.getColumn(key).getColumnName();
     }
 
-    public JqlEntityJoin getEntityJoin() {
+    public JQJoin getEntityJoin() {
         return this.join;
     }
 
@@ -179,10 +179,10 @@ class TableFilter extends JqlNode implements JqlResultMapping {
         return this.isLinear;
     }
 
-    protected void gatherColumnMappings(List<JqlResultMapping> columnGroupMappings) {
+    protected void gatherColumnMappings(List<JQResultMapping> columnGroupMappings) {
         columnGroupMappings.add(this);
         this.isLinear = true;
-        for (JqlNode q : subFilters.values()) {
+        for (JqlFilter q : subFilters.values()) {
             TableFilter table = q.asTableFilter();
             if (table != null) {
                 table.gatherColumnMappings(columnGroupMappings);
@@ -190,10 +190,10 @@ class TableFilter extends JqlNode implements JqlResultMapping {
             }
         }
 
-        Set<JqlColumn> hiddenKeys = getHiddenForeignKeys();
+        Set<JQColumn> hiddenKeys = getHiddenForeignKeys();
         if (!hiddenKeys.isEmpty()) {
-            ArrayList<JqlColumn> columns = new ArrayList<>();
-            for (JqlColumn column : this.selectedColumns) {
+            ArrayList<JQColumn> columns = new ArrayList<>();
+            for (JQColumn column : this.selectedColumns) {
                 if (hiddenKeys.contains(column)) continue;
                 columns.add(column);
             }
@@ -205,7 +205,7 @@ class TableFilter extends JqlNode implements JqlResultMapping {
 
     protected void addComparedAttribute(String key) {
         if (doSelectComparedAttribute) {
-            JqlColumn column = schema.getColumn(key);
+            JQColumn column = schema.getColumn(key);
             if (!this.selectedColumns.contains(column)) {
                 this.selectedColumns.add(column);
             }

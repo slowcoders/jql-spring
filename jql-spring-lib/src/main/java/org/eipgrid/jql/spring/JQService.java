@@ -1,7 +1,7 @@
 package org.eipgrid.jql.spring;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.eipgrid.jql.JqlSchema;
+import org.eipgrid.jql.JQSchema;
 import org.eipgrid.jql.jdbc.postgres.UpdateListener;
 import org.eipgrid.jql.jpa.JPARepositoryBase;
 import org.hibernate.boot.model.naming.Identifier;
@@ -22,7 +22,7 @@ import javax.sql.DataSource;
 import java.util.HashMap;
 
 @Service
-public abstract class JQLService implements AttributeNameConverter {
+public abstract class JQService implements AttributeNameConverter {
     private final JdbcTemplate jdbc;
     private final MappingJackson2HttpMessageConverter jsonConverter;
     private final EntityManager entityManager;
@@ -32,14 +32,14 @@ public abstract class JQLService implements AttributeNameConverter {
     private final ConversionService conversionService;
 
     private final RequestMappingHandlerMapping handlerMapping;
-    private HashMap<String, JQLRepository> repositories = new HashMap<>();
+    private HashMap<String, JQRepository> repositories = new HashMap<>();
 
-    public JQLService(DataSource dataSource,
-                      TransactionTemplate transactionTemplate,
-                      MappingJackson2HttpMessageConverter jsonConverter,
-                      ConversionService conversionService,
-                      RequestMappingHandlerMapping handlerMapping,
-                      EntityManager entityManager, EntityManagerFactory entityManagerFactory) throws Exception {
+    public JQService(DataSource dataSource,
+                     TransactionTemplate transactionTemplate,
+                     MappingJackson2HttpMessageConverter jsonConverter,
+                     ConversionService conversionService,
+                     RequestMappingHandlerMapping handlerMapping,
+                     EntityManager entityManager, EntityManagerFactory entityManagerFactory) throws Exception {
         this.jdbc = new JdbcTemplate(dataSource);
         this.objectMapper = new ObjectMapper();
         this.transactionTemplate = transactionTemplate;
@@ -70,11 +70,11 @@ public abstract class JQLService implements AttributeNameConverter {
         return objectMapper;
     }
 
-    public abstract JQLRepository makeRepository(String tableName);
+    public abstract JQRepository makeRepository(String tableName);
 
-    public abstract JqlSchema loadSchema(String tableName, Class ormType);
+    public abstract JQSchema loadSchema(String tableName, Class ormType);
 
-    public abstract JqlSchema loadSchema(Class ormType);
+    public abstract JQSchema loadSchema(Class ormType);
 
     public String resolveTableName(Class<?> entityType) {
         String name = "";

@@ -1,8 +1,8 @@
 package org.eipgrid.jql.jdbc.metadata;
 
 import com.zaxxer.hikari.HikariDataSource;
-import org.eipgrid.jql.JqlSchema;
-import org.eipgrid.jql.json.JsonJql;
+import org.eipgrid.jql.JQSchema;
+import org.eipgrid.jql.js.JsUtil;
 import org.eipgrid.jql.util.AttributeNameConverter;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.jdbc.DataSourceBuilder;
@@ -36,20 +36,20 @@ public class CommandProcessor implements CommandLineRunner {
         JdbcSchemaLoader mp = new JdbcSchemaLoader(ds, AttributeNameConverter.defaultConverter);
         for (String dbSchema : mp.getDBSchemas()) {
             List<String> tableNames = mp.getTableNames(dbSchema);
-            ArrayList<JqlSchema> jqlSchemas = new ArrayList<>();
+            ArrayList<JQSchema> schemas = new ArrayList<>();
             for (String tableName : tableNames) {
-                jqlSchemas.add(mp.loadSchema(dbSchema + '.' + tableName, null));
+                schemas.add(mp.loadSchema(dbSchema + '.' + tableName, null));
             }
 
-            for (JqlSchema schema : jqlSchemas) {
+            for (JQSchema schema : schemas) {
                 ((JdbcSchema)schema).dumpJPAEntitySchema();
             }
-            for (JqlSchema schema : jqlSchemas) {
+            for (JQSchema schema : schemas) {
                 String ddl = "";//schema.generateDDL();
 //                System.out.println(ddl);
             }
-            for (JqlSchema schema : jqlSchemas) {
-                String ddl = JsonJql.createJoinJQL(schema);
+            for (JQSchema schema : schemas) {
+                String ddl = JsUtil.createJoinJQL(schema);
                 System.out.println(ddl);
             }
         }

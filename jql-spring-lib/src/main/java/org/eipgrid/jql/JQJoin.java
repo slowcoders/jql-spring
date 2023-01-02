@@ -1,25 +1,24 @@
 package org.eipgrid.jql;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
-public class JqlEntityJoin {
-    private final JqlEntityJoin associateJoin;
+public class JQJoin {
+    private final JQJoin associateJoin;
     private final String jsonKey;
     private final boolean isUnique;
     private final boolean inverseMapped;
-    private final List<JqlColumn> fkColumns;
-    private final JqlSchema baseSchema;
-    private final JqlSchema joinedSchema;
+    private final List<JQColumn> fkColumns;
+    private final JQSchema baseSchema;
+    private final JQSchema joinedSchema;
 
-    public JqlEntityJoin(JqlSchema baseSchema, List<JqlColumn> fkColumns) {
+    public JQJoin(JQSchema baseSchema, List<JQColumn> fkColumns) {
         this(baseSchema, fkColumns, null);
     }
 
-    public JqlEntityJoin(JqlSchema baseSchema, List<JqlColumn> fkColumns, JqlEntityJoin associatedJoin) {
+    public JQJoin(JQSchema baseSchema, List<JQColumn> fkColumns, JQJoin associatedJoin) {
         this.fkColumns = fkColumns;
         this.baseSchema = baseSchema;
-        JqlSchema fkSchema = fkColumns.get(0).getSchema();
+        JQSchema fkSchema = fkColumns.get(0).getSchema();
         this.inverseMapped = baseSchema != fkSchema;
         boolean isUniqueJoin = fkSchema.isUniqueConstrainedColumnSet(fkColumns);
         if (inverseMapped) {
@@ -35,11 +34,11 @@ public class JqlEntityJoin {
         this.jsonKey = associatedJoin != null ? '+' + associatedJoin.getJsonKey() : initJsonKey();
     }
 
-    public List<JqlColumn> getForeignKeyColumns() {
+    public List<JQColumn> getForeignKeyColumns() {
         return fkColumns;
     }
 
-    public JqlEntityJoin getAssociativeJoin() {
+    public JQJoin getAssociativeJoin() {
         return associateJoin;
     }
 
@@ -59,7 +58,7 @@ public class JqlEntityJoin {
         if (this.jsonKey != null) {
             throw new RuntimeException("already initialized");
         }
-        JqlColumn first = fkColumns.get(0);
+        JQColumn first = fkColumns.get(0);
         String name;
         if (inverseMapped) {
             // column 이 없으므로 타입을 이용하여 이름을 정한다.
@@ -75,9 +74,9 @@ public class JqlEntityJoin {
         return name;
     }
 
-    public static String initJsonKey(JqlColumn fk) {
+    public static String initJsonKey(JQColumn fk) {
         String fk_name = fk.getColumnName();
-        JqlColumn joinedPk = fk.getJoinedPrimaryColumn();
+        JQColumn joinedPk = fk.getJoinedPrimaryColumn();
         String pk_name = joinedPk.getColumnName();
         if (fk_name.endsWith("_" + pk_name)) {
             return fk_name.substring(0, fk_name.length() - pk_name.length() - 1);
@@ -86,15 +85,15 @@ public class JqlEntityJoin {
         }
     }
 
-    public JqlSchema getJoinedSchema() {
-        JqlColumn col = fkColumns.get(0);
+    public JQSchema getJoinedSchema() {
+        JQColumn col = fkColumns.get(0);
         if (!inverseMapped) {
             col = col.getJoinedPrimaryColumn();
         }
         return col.getSchema();
     }
 
-    public JqlSchema getBaseSchema() {
+    public JQSchema getBaseSchema() {
         return this.baseSchema;
     }
 
@@ -102,7 +101,7 @@ public class JqlEntityJoin {
         return fkColumns.size() == 1;
     }
 
-    public JqlSchema getAssociatedSchema() {
+    public JQSchema getAssociatedSchema() {
         if (associateJoin != null) {
             return associateJoin.getJoinedSchema();
         } else {

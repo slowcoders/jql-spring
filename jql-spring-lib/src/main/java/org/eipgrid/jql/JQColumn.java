@@ -4,24 +4,24 @@ import org.eipgrid.jql.util.ClassUtils;
 
 import java.lang.reflect.Field;
 
-public abstract class JqlColumn {
-    private final JqlSchema schema;
+public abstract class JQColumn {
+    private final JQSchema schema;
     private final String columnName;
+    private JQType columnType;
     private Class<?> javaType;
-    private JqlValueKind valueKind;
 
-    protected JqlColumn(JqlSchema schema, String columnName, Class<?> javaType, JqlValueKind valueFormat) {
+    protected JQColumn(JQSchema schema, String columnName, Class<?> javaType, JQType valueFormat) {
         this.schema = schema;
         this.columnName = columnName;
+        this.columnType = valueFormat;
         this.javaType = javaType;
-        this.valueKind = valueFormat;
     }
 
-    protected JqlColumn(JqlSchema schema, String columnName, Class javaType) {
-        this(schema, columnName, javaType, JqlValueKind.of(javaType));
+    protected JQColumn(JQSchema schema, String columnName, Class javaType) {
+        this(schema, columnName, javaType, JQType.of(javaType));
     }
 
-    public final JqlSchema getSchema() {
+    public final JQSchema getSchema() {
         return schema;
     }
 
@@ -44,8 +44,8 @@ public abstract class JqlColumn {
         return columnName;
     }
 
-    public final JqlValueKind getValueKind() {
-        return valueKind;
+    public final JQType getColumnType() {
+        return columnType;
     }
 
     //===========================================================
@@ -70,7 +70,7 @@ public abstract class JqlColumn {
         return null;
     }
 
-    public JqlColumn getJoinedPrimaryColumn() {
+    public JQColumn getJoinedPrimaryColumn() {
         return null;
     }
 
@@ -86,7 +86,7 @@ public abstract class JqlColumn {
     public String toString() { return getSchema().getSimpleTableName() + "::" + this.getJsonKey()+ "<" + columnName + ">"; }
 
     protected void setMappedField(Field f) {
-        this.valueKind = JqlValueKind.of(f);
+        this.columnType = JQType.of(f);
         this.javaType = ClassUtils.getElementType(f);
     }
 }

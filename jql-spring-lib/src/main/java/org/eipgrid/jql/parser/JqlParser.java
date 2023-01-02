@@ -1,8 +1,8 @@
 package org.eipgrid.jql.parser;
 
-import org.eipgrid.jql.JqlColumn;
-import org.eipgrid.jql.JqlSchema;
-import org.eipgrid.jql.JqlSelect;
+import org.eipgrid.jql.JQColumn;
+import org.eipgrid.jql.JQSchema;
+import org.eipgrid.jql.JQSelect;
 import org.springframework.core.convert.ConversionService;
 
 import javax.persistence.FetchType;
@@ -17,7 +17,7 @@ public class JqlParser {
     private final JqlQuery where;
     private static String[] emptyColumns = new String[0];
 
-    public JqlParser(JqlSchema schema, ConversionService conversionService) {
+    public JqlParser(JQSchema schema, ConversionService conversionService) {
         this.where = new JqlQuery(schema);
         this.conversionService = conversionService;
     }
@@ -29,12 +29,16 @@ public class JqlParser {
 
     private static String[] defaultSelect = new String[] { "@" };
     private static String[] pkSelect = new String[] { "!" };
+
+    private static String SELECT_MORE = "@select+";
+
     public void parse(PredicateSet predicates, Map<String, Object> filter) {
         // "joinColumn명" : { "id@?EQ" : "joinedColumn2.joinedColumn3.columnName" }; // Fetch 자동 수행.
         //   --> @?EQ 기능은 넣되, 숨겨진 고급기능으로..
         // "groupBy@" : ["attr1", "attr2/attr3" ]
 
-        JqlNode baseFilter = predicates.getBaseFilter();
+        JqlFilter baseFilter = predicates.getBaseFilter();
+        String select = (String)filter.get(SELECT_MORE);
         for (Map.Entry<String, Object> entry : filter.entrySet()) {
             String key = entry.getKey();
             Object value = entry.getValue();
@@ -53,7 +57,7 @@ public class JqlParser {
                 int select_start = key.indexOf('<');
                 if (select_start > 0 && select_start < select_end) {
                     String keys = key.substring(select_start+1, select_end);
-                    selectedKeys = JqlSelect.splitPropertyKeys(keys);
+                    selectedKeys = JQSelect.splitPropertyKeys(keys);
                     key = key.substring(0, select_start);
                 }
             }
@@ -79,17 +83,17 @@ public class JqlParser {
                 key = null;
             }
 
-            ValueNodeType valueCategory = this.getValueCategory(value);
-            JqlNode targetNode = baseFilter.getFilterNode(key, valueCategory);
+            JqlNodeType valueCategory = this.getValueCategory(value);
+            JqlFilter targetNode = baseFilter.getFilterNode(key, valueCategory);
             PredicateSet targetPredicates = predicates;
             if (targetNode != baseFilter) {
                 targetNode.selectProperties(selectedKeys);
                 targetPredicates = targetNode.getPredicateSet();
             }
 
-            if (valueCategory != ValueNodeType.Leaf) {
+            if (valueCategory != JqlNodeType.Leaf) {
                 PredicateSet ps = op.getPredicates(targetNode, valueCategory);
-                if (valueCategory == ValueNodeType.Entity) {
+                if (valueCategory == JqlNodeType.Entity) {
                     Map<String, Object> subFilter = (Map<String, Object>) value;
                     if (!subFilter.isEmpty()) {
                         this.parse(ps, (Map<String, Object>) value);
@@ -110,9 +114,9 @@ public class JqlParser {
             String columnName = targetNode.getColumnName(key);
             targetNode.addComparedAttribute(columnName);
             if (value != null) {
-                JqlSchema schema = targetNode.getSchema();
+                JQSchema schema = targetNode.getSchema();
                 if (schema != null) {
-                    JqlColumn column = schema.getColumn(columnName);
+                    JQColumn column = schema.getColumn(columnName);
                     Class<?> fieldType = column.getJavaType();
                     Class<?> accessType = op.getAccessType(value, fieldType);
                     value = conversionService.convert(value, accessType);
@@ -170,16 +174,16 @@ public class JqlParser {
         registerAutoFetchFields(fields, entityType.getSuperclass());
     }
 
-    private ValueNodeType getValueCategory(Object value) {
+    private JqlNodeType getValueCategory(Object value) {
         if (value instanceof Collection) {
             if (((Collection)value).iterator().next() instanceof Map) {
-                return ValueNodeType.Entities;
+                return JqlNodeType.Entities;
             }
         }
         if (value instanceof Map) {
-            return ValueNodeType.Entity;
+            return JqlNodeType.Entity;
         }
-        return ValueNodeType.Leaf;
+        return JqlNodeType.Leaf;
     }
 
 }

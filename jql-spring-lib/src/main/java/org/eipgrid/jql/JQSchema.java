@@ -6,26 +6,25 @@ import java.lang.reflect.Field;
 import java.util.*;
 
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
-public abstract class JqlSchema {
-    private final SchemaLoader schemaLoader;
+public abstract class JQSchema {
+    private final JQSchemaLoader schemaLoader;
     private final String tableName;
-    private final String alias;
+
     private String jpaClassName;
 
-    private List<JqlColumn> pkColumns;
-    private List<JqlColumn> allColumns;
-    private List<JqlColumn> writableColumns;
-    private Map<String, JqlColumn> columnMap = new HashMap<>();
-    private HashMap<String, JqlEntityJoin> entityJoinMap;
+    private List<JQColumn> pkColumns;
+    private List<JQColumn> allColumns;
+    private List<JQColumn> writableColumns;
+    private Map<String, JQColumn> columnMap = new HashMap<>();
+    private HashMap<String, JQJoin> entityJoinMap;
 
-    public JqlSchema(SchemaLoader schemaLoader, String tableName, String jpaClassName) {
+    public JQSchema(JQSchemaLoader schemaLoader, String tableName, String jpaClassName) {
         this.tableName = tableName;
         this.schemaLoader = schemaLoader;
         this.jpaClassName = jpaClassName;
-        this.alias = schemaLoader.generateUniqueAlias(this);
     }
 
-    public final SchemaLoader getSchemaLoader() {
+    public final JQSchemaLoader getSchemaLoader() {
         return schemaLoader;
     }
 
@@ -33,32 +32,28 @@ public abstract class JqlSchema {
         return this.tableName;
     }
 
-    public String getAlias() {
-        return this.alias;
-    }
-
-    public List<JqlColumn> getReadableColumns() {
+    public List<JQColumn> getReadableColumns() {
         return this.allColumns;
     }
 
-    public List<JqlColumn> getWritableColumns() {
+    public List<JQColumn> getWritableColumns() {
         return (List)writableColumns;
     }
 
-    public List<JqlColumn> getPKColumns() {
+    public List<JQColumn> getPKColumns() {
         return this.pkColumns;
     }
 
-    public JqlEntityJoin getEntityJoinBy(String jsonKey) {
+    public JQJoin getEntityJoinBy(String jsonKey) {
         return getEntityJoinMap().get(jsonKey);
     }
 
-    public JqlColumn findColumn(String key) throws IllegalArgumentException {
+    public JQColumn findColumn(String key) throws IllegalArgumentException {
         return columnMap.get(key);
     }
 
-    public JqlColumn getColumn(String key) throws IllegalArgumentException {
-        JqlColumn ci = findColumn(key);
+    public JQColumn getColumn(String key) throws IllegalArgumentException {
+        JQColumn ci = findColumn(key);
         if (ci == null) {
             throw new IllegalArgumentException("unknown column: " + this.tableName + "." + key);
         }
@@ -77,26 +72,26 @@ public abstract class JqlSchema {
         return this.jpaClassName;
     }
 
-    protected void init(ArrayList<? extends JqlColumn> columns, Class<?> ormType) {
-        ArrayList<JqlColumn> writableColumns = new ArrayList<>();
-        ArrayList<JqlColumn> allColumns = new ArrayList<>();
-        List<JqlColumn> pkColumns = new ArrayList<>();
+    protected void init(ArrayList<? extends JQColumn> columns, Class<?> ormType) {
+        ArrayList<JQColumn> writableColumns = new ArrayList<>();
+        ArrayList<JQColumn> allColumns = new ArrayList<>();
+        List<JQColumn> pkColumns = new ArrayList<>();
 
-        for (JqlColumn ci: columns) {
+        for (JQColumn ci: columns) {
             if (ci.isPrimaryKey()) {
                 pkColumns.add(ci);
                 allColumns.add(ci);
             }
         }
 
-        for (JqlColumn ci: columns) {
+        for (JQColumn ci: columns) {
             String colName = ci.getColumnName().toLowerCase();
             this.columnMap.put(colName, ci);
 
             if (!ci.isPrimaryKey()) {
                 allColumns.add(ci);
             }
-            if (!ci.isReadOnly() && ci.getValueKind().isPrimitive()) {
+            if (!ci.isReadOnly() && ci.getColumnType().isPrimitive()) {
                 writableColumns.add(ci);
             }
         }
@@ -110,16 +105,16 @@ public abstract class JqlSchema {
         this.pkColumns = Collections.unmodifiableList(pkColumns);
     }
 
-    protected void mapColumn(JqlColumn column, Field f) {
+    protected void mapColumn(JQColumn column, Field f) {
         column.setMappedField(f);
     }
     
-    protected List<JqlColumn> getAlternativeIdColumns() {
+    protected List<JQColumn> getAlternativeIdColumns() {
         return this.allColumns;
     }
 
     protected void initJsonKeys(Class<?> ormType) {
-        for (JqlColumn ci : allColumns) {
+        for (JQColumn ci : allColumns) {
             String fieldName = ci.getJsonKey();
             columnMap.put(fieldName, ci);
         }
@@ -145,7 +140,7 @@ public abstract class JqlSchema {
 //        return schemaLoader.createDDL(this);
 //    }
 
-    public HashMap<String, JqlEntityJoin> getEntityJoinMap() {
+    public HashMap<String, JQJoin> getEntityJoinMap() {
         if (this.entityJoinMap == null) {
             this.entityJoinMap = schemaLoader.loadJoinMap(this);
         }
@@ -181,7 +176,7 @@ public abstract class JqlSchema {
         return out;
     }
 
-    public boolean isUniqueConstrainedColumnSet(List<JqlColumn> fkColumns) {
+    public boolean isUniqueConstrainedColumnSet(List<JQColumn> fkColumns) {
         return false;
     }
 
@@ -199,7 +194,7 @@ public abstract class JqlSchema {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        JqlSchema schema = (JqlSchema) o;
+        JQSchema schema = (JQSchema) o;
         return tableName.equals(schema.tableName);
     }
 

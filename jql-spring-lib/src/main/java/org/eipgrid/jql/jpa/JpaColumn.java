@@ -2,10 +2,10 @@ package org.eipgrid.jql.jpa;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import org.eipgrid.jql.JqlColumn;
-import org.eipgrid.jql.JqlSchema;
-import org.eipgrid.jql.JqlValueKind;
-import org.eipgrid.jql.SchemaLoader;
+import org.eipgrid.jql.JQColumn;
+import org.eipgrid.jql.JQSchema;
+import org.eipgrid.jql.JQType;
+import org.eipgrid.jql.JQSchemaLoader;
 import org.eipgrid.jql.util.AttributeNameConverter;
 import org.eipgrid.jql.util.ClassUtils;
 
@@ -17,7 +17,7 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.NONE)
-public class JpaColumn extends JqlColumn {
+public class JpaColumn extends JQColumn {
 
     private boolean isReadOnly;
     private boolean isAutoIncrement;
@@ -30,8 +30,8 @@ public class JpaColumn extends JqlColumn {
     @JsonIgnore
     private Field field;
 
-    public JpaColumn(Field f, JqlSchema schema) {
-        super(schema, resolveColumnName(schema, f), ClassUtils.getElementType(f), JqlValueKind.of(f));
+    public JpaColumn(Field f, JQSchema schema) {
+        super(schema, resolveColumnName(schema, f), ClassUtils.getElementType(f), JQType.of(f));
         super.setMappedField(f);
         this.fk = resolveForeignKey(f);
 
@@ -87,7 +87,7 @@ public class JpaColumn extends JqlColumn {
     }
 
     @Override
-    public JqlColumn getJoinedPrimaryColumn() {
+    public JQColumn getJoinedPrimaryColumn() {
         return fk == null ? null : fk.getJoinedColumn();
     }
 
@@ -106,18 +106,18 @@ public class JpaColumn extends JqlColumn {
 
 
     private static class JoinedColumn {
-        private final SchemaLoader schemaLoader;
+        private final JQSchemaLoader schemaLoader;
         private final Class entityType;
         private final String columnName;
-        private JqlColumn pk;
+        private JQColumn pk;
 
-        JoinedColumn(SchemaLoader schemaLoader, Class entityType, String columnName) {
+        JoinedColumn(JQSchemaLoader schemaLoader, Class entityType, String columnName) {
             this.schemaLoader = schemaLoader;
             this.entityType = entityType;
             this.columnName = columnName;
         }
 
-        public JqlColumn getJoinedColumn() {
+        public JQColumn getJoinedColumn() {
             if (pk == null) {
                 pk = schemaLoader.loadSchema(entityType).getColumn(columnName);
                 assert (pk != null);
@@ -126,7 +126,7 @@ public class JpaColumn extends JqlColumn {
         }
     }
 
-    private static String resolveColumnName(JqlSchema schema, Field f) {
+    private static String resolveColumnName(JQSchema schema, Field f) {
         if (true) {
             Column c = f.getAnnotation(Column.class);
             if (c != null) {

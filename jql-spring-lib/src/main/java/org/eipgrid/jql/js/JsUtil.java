@@ -1,20 +1,20 @@
-package org.eipgrid.jql.json;
+package org.eipgrid.jql.js;
 
-import org.eipgrid.jql.JqlColumn;
-import org.eipgrid.jql.JqlSchema;
-import org.eipgrid.jql.JqlEntityJoin;
+import org.eipgrid.jql.JQColumn;
+import org.eipgrid.jql.JQSchema;
+import org.eipgrid.jql.JQJoin;
 import org.eipgrid.jql.jdbc.metadata.JdbcColumn;
 import org.eipgrid.jql.util.ClassUtils;
 
 import java.util.HashMap;
 import java.util.Map;
 
-public class JsonJql {
+public class JsUtil {
 
-    public static String createDDL(JqlSchema schema) {
+    public static String createDDL(JQSchema schema) {
         StringBuilder sb = new StringBuilder();
         sb.append("const " + schema.getSimpleTableName() + "Schema_columns = [\n");
-        for (JqlColumn col : schema.getReadableColumns()) {
+        for (JQColumn col : schema.getReadableColumns()) {
             dumpJSONSchema(sb, (JdbcColumn)col);
             sb.append(",\n");
         }
@@ -22,7 +22,7 @@ public class JsonJql {
 
         if (!schema.getEntityJoinMap().isEmpty()) {
             sb.append("\nconst " + schema.getSimpleTableName() + "Schema_external_entities = [\n");
-            for (Map.Entry<String, JqlEntityJoin> entry : schema.getEntityJoinMap().entrySet()) {
+            for (Map.Entry<String, JQJoin> entry : schema.getEntityJoinMap().entrySet()) {
                 sb.append("  jql.externalJoin(\"").append(entry.getKey()).append("\", ");
                 sb.append(entry.getValue().getJoinedSchema().getSimpleTableName()).append("Schema, \n");
                 sb.append(entry.getValue().isUniqueJoin() ? "{}" : "[]").append("),\n");
@@ -63,10 +63,10 @@ public class JsonJql {
 
 
 
-    public static String createJoinJQL(JqlSchema schema) {
+    public static String createJoinJQL(JQSchema schema) {
         StringBuilder sb = new StringBuilder();
-        for (JqlColumn jqlColumn : schema.getReadableColumns()) {
-            JqlColumn joined_pk = jqlColumn.getJoinedPrimaryColumn();
+        for (JQColumn jqlColumn : schema.getReadableColumns()) {
+            JQColumn joined_pk = jqlColumn.getJoinedPrimaryColumn();
             if (joined_pk == null) continue;
 
             sb.append(schema.getSimpleTableName()).append("Schema.join(\"");
@@ -148,18 +148,18 @@ public class JsonJql {
     }
 
     static String filler = "            ";
-    public static String getSimpleSchema(JqlSchema schema) {
+    public static String getSimpleSchema(JQSchema schema) {
         StringBuilder sb = new StringBuilder();
         sb.append("Type").append(filler.substring("Type".length())).append("Key(physical_column_name)\n");
         sb.append("--------------------------------------------------\n");
-        for (JqlColumn col : schema.getReadableColumns()) {
+        for (JQColumn col : schema.getReadableColumns()) {
             String columnType = getColumnType(col.getJavaType());
             if (!col.isNullable()) {
                 columnType = columnType + '!';
             }
             sb.append(columnType).append(filler.substring(columnType.length()));
             sb.append(col.getJsonKey()).append('(').append(col.getColumnName()).append(')');
-            JqlColumn joinedPK;
+            JQColumn joinedPK;
             if (col.isPrimaryKey()) {
                 sb.append(" PK");
             }
@@ -172,10 +172,10 @@ public class JsonJql {
         }
 
         if (!schema.getEntityJoinMap().isEmpty()) {
-            HashMap<String, JqlEntityJoin> associativeColumns = new HashMap<>();
+            HashMap<String, JQJoin> associativeColumns = new HashMap<>();
             sb.append("\n// external entities //\n");
-            for (Map.Entry<String, JqlEntityJoin> entry : schema.getEntityJoinMap().entrySet()) {
-                JqlEntityJoin join = entry.getValue();
+            for (Map.Entry<String, JQJoin> entry : schema.getEntityJoinMap().entrySet()) {
+                JQJoin join = entry.getValue();
                 if (join.getAssociativeJoin() != null) {
                     associativeColumns.put(entry.getKey(), join);
                     continue;
@@ -188,8 +188,8 @@ public class JsonJql {
             }
 
             sb.append("\n// associative entities //\n");
-            for (Map.Entry<String, JqlEntityJoin> entry : associativeColumns.entrySet()) {
-                JqlEntityJoin join = entry.getValue();
+            for (Map.Entry<String, JQJoin> entry : associativeColumns.entrySet()) {
+                JQJoin join = entry.getValue();
                 sb.append(entry.getKey());
                 if (!join.isUniqueJoin()) sb.append("[]");
                 sb.append(" -> ");

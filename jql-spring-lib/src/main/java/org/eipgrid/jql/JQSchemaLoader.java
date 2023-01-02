@@ -1,6 +1,6 @@
 package org.eipgrid.jql;
 
-import org.eipgrid.jql.json.JsonJql;
+import org.eipgrid.jql.js.JsUtil;
 import org.eipgrid.jql.util.AttributeNameConverter;
 
 import javax.persistence.Table;
@@ -8,13 +8,13 @@ import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public abstract class SchemaLoader {
+public abstract class JQSchemaLoader {
 
-    private final HashMap<Class<?>, JqlSchema> classToSchemaMap = new HashMap<>();
+    private final HashMap<Class<?>, JQSchema> classToSchemaMap = new HashMap<>();
     private final AttributeNameConverter nameConverter;
     private AtomicInteger cntSchema = new AtomicInteger();
 
-    protected SchemaLoader(AttributeNameConverter nameConverter) {
+    protected JQSchemaLoader(AttributeNameConverter nameConverter) {
         this.nameConverter = nameConverter;
     }
 
@@ -24,10 +24,10 @@ public abstract class SchemaLoader {
 
     public String getDefaultDBSchema() { return "public"; }
 
-    public abstract JqlSchema loadSchema(String tablePath, Class<?> ormType);
+    public abstract JQSchema loadSchema(String tablePath, Class<?> ormType);
 
-    public JqlSchema loadSchema(Class<?> entityType) {
-        JqlSchema schema = classToSchemaMap.get(entityType);
+    public JQSchema loadSchema(Class<?> entityType) {
+        JQSchema schema = classToSchemaMap.get(entityType);
         if (schema == null) {
             String tableName = resolveTableName(entityType);
             schema = loadSchema(tableName, entityType);
@@ -61,14 +61,14 @@ public abstract class SchemaLoader {
     }
 
     public String toColumnType(Class<?> javaType, Field f) {
-        return JsonJql.getColumnType(javaType);
+        return JsUtil.getColumnType(javaType);
     }
 
-    protected String generateUniqueAlias(JqlSchema schema) {
+    protected String generateUniqueAlias(JQSchema schema) {
         int id = cntSchema.getAndIncrement();
         String alias = (id < 10 ? "t_" : "t") + id;
         return alias;
     }
 
-    protected abstract HashMap<String, JqlEntityJoin> loadJoinMap(JqlSchema jqlSchema);
+    protected abstract HashMap<String, JQJoin> loadJoinMap(JQSchema schema);
 }
