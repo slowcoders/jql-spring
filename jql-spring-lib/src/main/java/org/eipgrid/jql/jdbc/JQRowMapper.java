@@ -112,7 +112,7 @@ public class JQRowMapper implements ResultSetExtractor<List<KVEntity>> {
         CachedEntity node = entity;
         JQColumn column = mappedColumn.column;
         String fieldName = column.getJsonKey(); /* .getJavaFieldName();
-        for (JqlColumn pk; (pk = column.getJoinedPrimaryColumn()) != null; ) {
+        for (JQColumn pk; (pk = column.getJoinedPrimaryColumn()) != null; ) {
             CachedEntity pkEntity = (CachedEntity) node.get(fieldName);
             if (pkEntity == null) {
                 pkEntity = new CachedEntity(node);

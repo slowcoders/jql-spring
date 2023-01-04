@@ -47,7 +47,7 @@ public abstract class JPARepositoryBase<ENTITY, ID> extends JPAQueryBuilder<ENTI
         jqlServices.put(this.getEntityType(), this);
     }
 
-//    public JqlSchema getSchema() {
+//    public JQSchema getSchema() {
 //        return this.jqlSchema;
 //    }
 

@@ -279,12 +279,12 @@ public class SqlGenerator extends SqlConverter implements QueryBuilder {
         return sql;
     }
 
-//    public BatchUpsert prepareInsert(JqlSchema schema, Collection<Map<String, Object>> entities) {
+//    public BatchUpsert prepareInsert(JQSchema schema, Collection<Map<String, Object>> entities) {
 //        return prepareInsert(schema, entities, schema.getTableName(), true);
 //    }
 //
 //
-//    public BatchUpsert prepareInsert(JqlSchema schema, Collection<Map<String, Object>> entities, String extendedTableName, boolean ignoreConflict) {
+//    public BatchUpsert prepareInsert(JQSchema schema, Collection<Map<String, Object>> entities, String extendedTableName, boolean ignoreConflict) {
 //        String sql = prepareBatchInsertStatement(schema, ignoreConflict);
 //        return new BatchUpsert(entities, schema, sql);
 //    }

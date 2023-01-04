@@ -6,9 +6,11 @@ import org.eipgrid.jql.JQType;
 import org.eipgrid.jql.spring.JQRepository;
 import org.eipgrid.jql.spring.JQService;
 import org.eipgrid.jql.util.SourceWriter;
+import org.springframework.dao.DataAccessException;
+import org.springframework.jdbc.core.ConnectionCallback;
 import org.springframework.jdbc.core.JdbcTemplate;
 
-import java.sql.Timestamp;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -17,6 +19,7 @@ public abstract class TSDBHelper {
     private static final String SUFFIX_CONT_AGG = "_ts_agg";
     private static final String SUFFIX_HOURLY_VIEW = "_hourly";
     private static final String SUFFIX_DAILY_VIEW = "_daily";
+    private static final boolean USE_CONN = true;
 
     private final String tableName;
     private final JQService service;
@@ -25,6 +28,7 @@ public abstract class TSDBHelper {
     private JQColumn timeKeyColumn;
     private HashMap<String, AggregateType> aggTypeMap;
     private JQSchema schema;
+    private Connection conn;
 
     public TSDBHelper(JQService service, String tableName) {
         this.jdbc = service.getJdbcTemplate();
@@ -54,8 +58,15 @@ public abstract class TSDBHelper {
 
     private boolean isTableExists(String tableName) {
         try {
-            String sql = "SELECT 1 FROM " + tableName + " limit 1";
-            jdbc.queryForList(sql);
+            if (true) {
+                String sql = "SELECT to_regclass('" + tableName + "');";
+                String res = jdbc.queryForObject(sql, String.class);
+                return res != null;
+            }
+            else {
+                String sql = "SELECT 1 FROM " + tableName + " limit 1";
+                queryForList(sql);
+            }
             return true;
         }
         catch (Exception e) {
@@ -63,45 +74,99 @@ public abstract class TSDBHelper {
         }
     }
 
-    protected void initializeTSDB(JQSchema schema) {
+    private void queryForList(String sql) throws SQLException {
+        if (USE_CONN) {
+            Statement stmt = conn.createStatement();
+            stmt.execute(sql);
+            stmt.close();
+        }
+        else {
+            jdbc.queryForList(sql);
+        }
+    }
+
+    private void execute(String sql) throws SQLException {
+        if (USE_CONN) {
+            Statement stmt = conn.createStatement();
+            stmt.execute(sql);
+            stmt.close();
+        }
+        else {
+            jdbc.execute(sql);
+        }
+    }
+
+    private void execute_silently(String sql) {
+        try {
+            if (USE_CONN) {
+                Statement stmt = conn.createStatement();
+                stmt.execute(sql);
+                stmt.close();
+            }
+            else {
+                jdbc.execute(sql);
+            }
+        } catch (Exception e) {
+            // ignore
+        }
+    }
+
+    protected void initializeTSDB(JQSchema schema) throws SQLException {
+        if (conn != null) {
+            initializeTSDB_internal(schema);
+        }
+        else {
+            jdbc.execute(new ConnectionCallback<Void>() {
+                @Override
+                public Void doInConnection(Connection con) throws SQLException, DataAccessException {
+                    /**
+                     * transaction 내부에서 DB 생성이 불가능한 문제 처리를 위해 별도 Connection 을 생성.
+                     */
+                    conn = con;
+                    boolean autoCommitOld = con.getAutoCommit();
+                    try {
+                        con.setAutoCommit(true);
+                        initializeTSDB_internal(schema);
+                    } finally {
+                        con.setAutoCommit(autoCommitOld);
+                    }
+                    return null;
+                }
+            });
+        }
+    }
+
+    protected void initializeTSDB_internal(JQSchema schema) throws SQLException {
         if (isTableExists(this.tableName + SUFFIX_DAILY_VIEW)) return;
 
         this.schema = schema;
         this.timeKeyColumn = resolveTimeKeyColumn();
-        JdbcTemplate jdbc = this.jdbc;
         String sql = build_init_timescale(2);
-        jdbc.execute(sql);
+        execute(sql);
 
         this.aggTypeMap = resolveAggregationTypeMap();
         remove_down_sampling_view();
         // 6주를 기본 저장 간격으로 설정한다.
         sql = build_auto_down_sampling_view(7 * 6);
-        jdbc.execute(sql);
+        execute(sql);
     }
+
 
     protected abstract HashMap<String, AggregateType> resolveAggregationTypeMap();
 
-    private void execute_silently(String sql) {
-        try {
-            this.jdbc.execute(sql);
-        }
-        catch (Exception e) {
-            //e.printStackTrace();
-        }
-    }
-    private void remove_down_sampling_view() {
+    private void remove_down_sampling_view() throws SQLException {
         String tableName = schema.getTableName();
         String aggView = tableName + SUFFIX_CONT_AGG;
         execute_silently("SELECT remove_continuous_aggregate_policy('" + aggView + "');");
-        execute_silently("DROP MATERIALIZED VIEW " + aggView + " cascade");
+        execute("DROP MATERIALIZED VIEW IF EXISTS " + aggView + " cascade");
     }
 
-    private void refresh_aggregation(Timestamp start, Timestamp end) {
+    private void refresh_aggregation(Timestamp start, Timestamp end) throws SQLException {
         String tableName = schema.getTableName();
         String aggView = tableName + SUFFIX_CONT_AGG;
 
         String sql = "CALL refresh_continuous_aggregate('" + aggView + "', NULL, DATE_TRUNC('hour', now()));";
-        this.jdbc.execute(sql);
+        execute(sql);
     }
 
     protected String build_init_timescale(int hours) {
@@ -246,17 +311,31 @@ public abstract class TSDBHelper {
         return sb.toString();
     }
 
-    public JQRepository getRepository() {
-        JdbcTemplate jdbc = this.jdbc;
+    public JQRepository getRepository() throws SQLException {
+        Connection con = service.getDataSource().getConnection();
+//        return jdbc.execute(new ConnectionCallback<JQRepository>() {
+//            @Override
+//            public JQRepository doInConnection(Connection con) throws SQLException, DataAccessException {
+                conn = con;
 
-        if (!isTableExists(this.tableName)) {
-            String sql = generateDDL(this.tableName);
-            jdbc.execute(sql);
-        }
+                boolean autoCommitOld = con.getAutoCommit();
+                try {
+                    con.setAutoCommit(true);
+                    if (!isTableExists(tableName)) {
+                        String sql = generateDDL(tableName);
+                        execute(sql);
+                    }
 
-        JQSchema schema = service.loadSchema(tableName, null);
-        this.initializeTSDB(schema);
-        return service.makeRepository(this.tableName);
+                    JQSchema schema = service.loadSchema(tableName, null);
+                    initializeTSDB(schema);
+                    return service.makeRepository(tableName);
+                }
+                finally {
+                    con.setAutoCommit(autoCommitOld);
+                    con.close();
+                }
+//            }
+//        });
     }
 
     protected abstract String generateDDL(String tableName);

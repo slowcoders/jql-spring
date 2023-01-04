@@ -285,7 +285,7 @@ public class JdbcSchemaLoader extends JQSchemaLoader {
     public String createDDL(JQSchema schema) {
 //        SQLWriter sb = new SQLWriter(schema);
 //        sb.write("const " + schema.getTableName() + "Schema = [\n");
-//        for (JqlColumn col : schema.getColumns()) {
+//        for (JQColumn col : schema.getColumns()) {
 //            sb.write(col.dumpJSONSchema()).write(",\n");
 //        }
 //        sb.write("]\n");

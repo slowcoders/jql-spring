@@ -31,15 +31,15 @@ public class JpaSchema extends JQSchema {
         }
     }
 
-//    public HashMap<String, JqlEntityJoin> getTableJoinMap(ArrayList<JpaColumn> columns) {
-//        HashMap<String, JqlEntityJoin> tableJoinMap = new HashMap<>();
+//    public HashMap<String, JQJoin> getTableJoinMap(ArrayList<JpaColumn> columns) {
+//        HashMap<String, JQJoin> tableJoinMap = new HashMap<>();
 //        for (JpaColumn ci: columns) {
 //            JqlColumnJoin join = ci.getJoinedForeignKey();
 //            if (join != null) {
 //                String joinFieldName = join.getJoinedFieldName();
-//                JqlEntityJoin foreignKeys = tableJoinMap.get(joinFieldName);
+//                JQJoin foreignKeys = tableJoinMap.get(joinFieldName);
 //                if (foreignKeys == null) {
-//                    foreignKeys = new JqlEntityJoin(this.getSchemaLoader());
+//                    foreignKeys = new JQJoin(this.getSchemaLoader());
 //                    tableJoinMap.put(joinFieldName, foreignKeys);
 //                }
 //                foreignKeys.add(join);

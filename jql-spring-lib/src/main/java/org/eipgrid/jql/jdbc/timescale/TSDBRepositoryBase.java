@@ -8,6 +8,7 @@ import org.eipgrid.jql.spring.JQService;
 import org.eipgrid.jql.util.ClassUtils;
 
 import java.lang.reflect.Field;
+import java.sql.SQLException;
 import java.util.HashMap;
 
 public abstract class TSDBRepositoryBase<ENTITY, ID> extends JPARepositoryBase<ENTITY, ID> {
@@ -19,7 +20,11 @@ public abstract class TSDBRepositoryBase<ENTITY, ID> extends JPARepositoryBase<E
         this.timeKeyColumnName = timeKeyColumnName;
 
         JQSchema schema = getService().loadSchema(getEntityType());
-        new Initializer(schema).initializeTSDB(schema);
+        try {
+            new Initializer(schema).initializeTSDB(schema);
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public String getTimeKeyColumnName() {

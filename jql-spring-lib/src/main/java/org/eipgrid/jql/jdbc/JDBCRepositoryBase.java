@@ -28,7 +28,7 @@ public class JDBCRepositoryBase<ID> /*extends JDBCQueryBuilder*/ implements JQRe
     private String lastGeneratedSql;
 
     public JDBCRepositoryBase(JdbcJQService service, Class<?> entityType) {
-        this(service, service.loadSchema(entityType)); //  JqlSchema.loadSchema(entityType));
+        this(service, service.loadSchema(entityType)); //  JQSchema.loadSchema(entityType));
     }
 
     public JDBCRepositoryBase(JdbcJQService service, JQSchema schema) {

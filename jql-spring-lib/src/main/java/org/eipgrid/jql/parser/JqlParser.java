@@ -30,7 +30,7 @@ public class JqlParser {
     private static String[] defaultSelect = new String[] { "@" };
     private static String[] pkSelect = new String[] { "!" };
 
-    private static String SELECT_MORE = "@select+";
+    private static String SELECT = "@select";
 
     public void parse(PredicateSet predicates, Map<String, Object> filter) {
         // "joinColumn명" : { "id@?EQ" : "joinedColumn2.joinedColumn3.columnName" }; // Fetch 자동 수행.
@@ -38,7 +38,7 @@ public class JqlParser {
         // "groupBy@" : ["attr1", "attr2/attr3" ]
 
         JqlFilter baseFilter = predicates.getBaseFilter();
-        String select = (String)filter.get(SELECT_MORE);
+
         for (Map.Entry<String, Object> entry : filter.entrySet()) {
             String key = entry.getKey();
             Object value = entry.getValue();
@@ -101,7 +101,9 @@ public class JqlParser {
                     else if (selectedKeys == defaultSelect) {
                         targetNode.selectProperties(pkSelect);
                     }
-                } else { // ValueNodeType.Entities
+                }
+                else {
+                    // ValueNodeType.Entities
                     for (Map<String, Object> c : (Collection<Map<String, Object>>) value) {
                         PredicateSet and_qs = new PredicateSet(Conjunction.AND, ps.getBaseFilter());
                         this.parse(and_qs, (Map) c);

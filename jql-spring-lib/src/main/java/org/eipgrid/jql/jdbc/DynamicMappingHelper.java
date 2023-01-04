@@ -5,8 +5,8 @@
 //import net.bytebuddy.description.annotation.AnnotationDescription;
 //import net.bytebuddy.dynamic.scaffold.subclass.ConstructorStrategy;
 //import net.bytebuddy.implementation.FixedValue;
-//import org.eipgrid.jql.spring.JQLController;
-//import org.eipgrid.jql.spring.JQLRepository;
+//import org.eipgrid.jql.spring.JQController;
+//import org.eipgrid.jql.spring.JQRepository;
 //import org.eipgrid.jql.util.AttributeNameConverter;
 //import org.eipgrid.jql.util.KVEntity;
 //import org.springframework.aop.support.AopUtils;
@@ -62,16 +62,16 @@
 //
 //    }
 //
-//    public abstract static class DynamicController extends JQLController.SearchAndUpdate<KVEntity, Object> {
+//    public abstract static class DynamicController extends JQController.SearchAndUpdate<KVEntity, Object> {
 //
-//        private final JQLRepository<KVEntity, Object> repository;
+//        private final JQRepository<KVEntity, Object> repository;
 //
-//        public DynamicController(JQLJdbcService service) {
+//        public DynamicController(JdbcJQService service) {
 //            this.repository = service.makeRepository(getTableName());
 //        }
 //
 //        @Override
-//        public JQLRepository<KVEntity, Object> getRepository() {
+//        public JQRepository<KVEntity, Object> getRepository() {
 //            return repository;
 //        }
 //
