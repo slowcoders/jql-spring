@@ -15,22 +15,46 @@ public class JqlParser {
 
     private final ConversionService conversionService;
     private final JqlQuery where;
-    private static String[] emptyColumns = new String[0];
 
-    public JqlParser(JQSchema schema, ConversionService conversionService) {
-        this.where = new JqlQuery(schema);
+    private static final Map _emptyMap = new HashMap();
+    private JqlParser(JqlQuery where, ConversionService conversionService) {
+        this.where = where;
         this.conversionService = conversionService;
     }
 
-    public JqlQuery parse(Map<String, Object> filter) {
-        this.parse(where.getPredicateSet(), filter);
+    public static JqlQuery parse(JQSchema schema, Map<String, Object> filter, ConversionService conversionService) {
+        Map filterMap;
+        if (filter instanceof Map) {
+            filterMap = (Map) filter;
+        }
+        else if (filter != null) {
+            filterMap = new HashMap();
+            throw new RuntimeException("Not implemented");
+            //filterMap.put(this.pkColName + "@eq", filter);
+            /** 참고 ID 검색 함수를 아래와 같이 처리할 수도 있다. (단, FetchType.EAGER 로 인한 다중 query 발생)
+             Expression<?> column = root.get(this.pkColName).as(this.idType);
+             return JQLOperator.EQ.createPredicate(cb, column, filter);
+             */
+        }
+//        else if (!fetchData) {
+//            return new JqlQuery(this.jqlSchema);
+//        }
+        else {
+            /**
+             * 참고) 왜 불필요하게 JQLParser 를 수행하는가?
+             * CriteriaQuery 는 FetchType.EAGER 가 지정된 Column 에 대해
+             * 자동으로 fetch 하는 기능이 없다. (2022.02.18 현재) 이에 대량 쿼리 발생시
+             * 그 개수만큼 Join 된 칼럼을 읽어오는 추가적인 쿼리가 발생한다.
+             * Parser 는 내부에서 이를 별도 검사하여 처리한다.
+             */
+            filterMap = _emptyMap;
+        }
+
+        JqlQuery where = new JqlQuery(schema);
+        JqlParser parser = new JqlParser(where, conversionService);
+        parser.parse(where.getPredicateSet(), filter);
         return where;
     }
-
-    private static String[] defaultSelect = new String[] { "@" };
-    private static String[] pkSelect = new String[] { "!" };
-
-    private static String SELECT = "@select";
 
     public void parse(PredicateSet predicates, Map<String, Object> filter) {
         // "joinColumn명" : { "id@?EQ" : "joinedColumn2.joinedColumn3.columnName" }; // Fetch 자동 수행.
@@ -52,7 +76,7 @@ public class JqlParser {
 
             PredicateFactory op = PredicateFactory.getFactory(function);
             boolean fetchData = op.needFetchData();
-            String[] selectedKeys = defaultSelect;
+            String[] selectedKeys = null;
             if (select_end > 0) {
                 int select_start = key.indexOf('<');
                 if (select_start > 0 && select_start < select_end) {
@@ -84,39 +108,38 @@ public class JqlParser {
             }
 
             JqlNodeType valueCategory = this.getValueCategory(value);
-            JqlFilter targetNode = baseFilter.getFilterNode(key, valueCategory);
+            JqlFilter subFilter = baseFilter.getFilterNode(key, valueCategory);
             PredicateSet targetPredicates = predicates;
-            if (targetNode != baseFilter) {
-                targetNode.selectProperties(selectedKeys);
-                targetPredicates = targetNode.getPredicateSet();
+            if (subFilter != baseFilter) {
+                if (selectedKeys != null) {
+                    subFilter.setSelectedProperties(selectedKeys);
+                }
+                targetPredicates = subFilter.getPredicateSet();
             }
 
             if (valueCategory != JqlNodeType.Leaf) {
-                PredicateSet ps = op.getPredicates(targetNode, valueCategory);
+                PredicateSet ps = op.getPredicates(subFilter, valueCategory);
                 if (valueCategory == JqlNodeType.Entity) {
-                    Map<String, Object> subFilter = (Map<String, Object>) value;
-                    if (!subFilter.isEmpty()) {
-                        this.parse(ps, (Map<String, Object>) value);
-                    }
-                    else if (selectedKeys == defaultSelect) {
-                        targetNode.selectProperties(pkSelect);
+                    Map<String, Object> subJql = (Map<String, Object>) value;
+                    if (!subJql.isEmpty()) {
+                        this.parse(ps, subJql);
                     }
                 }
                 else {
                     // ValueNodeType.Entities
-                    for (Map<String, Object> c : (Collection<Map<String, Object>>) value) {
+                    for (Map<String, Object> map : (Collection<Map<String, Object>>) value) {
                         PredicateSet and_qs = new PredicateSet(Conjunction.AND, ps.getBaseFilter());
-                        this.parse(and_qs, (Map) c);
+                        this.parse(and_qs, map);
                         ps.add(and_qs);
                     }
                 }
                 continue;
             }
 
-            String columnName = targetNode.getColumnName(key);
-            targetNode.addComparedAttribute(columnName);
+            String columnName = subFilter.getColumnName(key);
+            subFilter.addComparedAttribute(columnName);
             if (value != null) {
-                JQSchema schema = targetNode.getSchema();
+                JQSchema schema = subFilter.getSchema();
                 if (schema != null) {
                     JQColumn column = schema.getColumn(columnName);
                     Class<?> fieldType = column.getJavaType();

@@ -14,9 +14,9 @@ public interface JQRepository<ENTITY, ID> {
 
     ID convertId(Object v);
 
-    List<ENTITY> find(Map<String, Object> j_ql_filter, JQSelect columns);
+    List<ENTITY> find(Map<String, Object> jsQuery, JQSelect columns);
 
-    ENTITY findTop(Map<String, Object> j_ql_filter, Sort sort);
+    ENTITY findTop(Map<String, Object> jsQuery, Sort sort);
 
     ENTITY find(ID id);
 
@@ -34,7 +34,7 @@ public interface JQRepository<ENTITY, ID> {
 
 
 
-    long count(Map<String, Object> j_ql_filter);
+    long count(Map<String, Object> jsQuery);
 
 
 

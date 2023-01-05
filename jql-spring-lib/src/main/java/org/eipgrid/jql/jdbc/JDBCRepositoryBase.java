@@ -123,8 +123,8 @@ public class JDBCRepositoryBase<ID> /*extends JDBCQueryBuilder*/ implements JQRe
         return new JQRowMapper(filter.getResultMappings());
     }
 
-    protected List<KVEntity> find_impl(Map<String, Object> j_ql_filter, JQSelect columns) {
-        JqlQuery query = this.buildQuery(j_ql_filter);
+    protected List<KVEntity> find_impl(Map<String, Object> jsQuery, JQSelect columns) {
+        JqlQuery query = buildQuery(jsQuery);
         String sql = sqlGenerator.createSelectQuery(query, columns);
         this.lastGeneratedSql = sql;
         List<KVEntity> res = (List)jdbc.query(sql, getColumnMapRowMapper(query));
@@ -132,25 +132,25 @@ public class JDBCRepositoryBase<ID> /*extends JDBCQueryBuilder*/ implements JQRe
     }
 
 //    @Override
-//    public Page<KVEntity> find(Map<String, Object> j_ql_filter, @NotNull Pageable pageReq) {
+//    public Page<KVEntity> find(Map<String, Object> jsQuery, @NotNull Pageable pageReq) {
 //        int size = pageReq.getPageSize();
 //        int offset = (pageReq.getPageNumber()) * size;
-//        List<KVEntity> res = find_impl(j_ql_filter, pageReq.getSort(), offset, size);
-//        long count = count(j_ql_filter);
+//        List<KVEntity> res = find_impl(jsQuery, pageReq.getSort(), offset, size);
+//        long count = count(jsQuery);
 //        return new PageImpl(res, pageReq, count);
 //    }
 
     @Override
-    public long count(Map<String, Object> j_ql_filter) {
-        JqlQuery query = this.buildQuery(j_ql_filter);
+    public long count(Map<String, Object> jsQuery) {
+        JqlQuery query = this.buildQuery(jsQuery);
         String sqlCount = sqlGenerator.createCountQuery(query);
         long count = jdbc.queryForObject(sqlCount, Long.class);
         return count;
     }
 
     @Override
-    public List<KVEntity> find(Map<String, Object> j_ql_filter, JQSelect columns) {
-        return this.find_impl(j_ql_filter, columns);
+    public List<KVEntity> find(Map<String, Object> jsQuery, JQSelect columns) {
+        return this.find_impl(jsQuery, columns);
     }
 
     @Override
@@ -160,8 +160,8 @@ public class JDBCRepositoryBase<ID> /*extends JDBCQueryBuilder*/ implements JQRe
     }
 
     @Override
-    public KVEntity findTop(Map<String, Object> j_ql_filter, Sort sort) {
-        List<KVEntity> res = this.find_impl(j_ql_filter, JQSelect.by(null, sort, 0, 1));
+    public KVEntity findTop(Map<String, Object> jsQuery, Sort sort) {
+        List<KVEntity> res = this.find_impl(jsQuery, JQSelect.by(null, sort, 0, 1));
         return res.size() > 0 ? res.get(0) : null;
     }
 
@@ -226,6 +226,10 @@ public class JDBCRepositoryBase<ID> /*extends JDBCQueryBuilder*/ implements JQRe
         return jdbc.update(sql);
     }
 
+    private JqlQuery buildQuery(Map<String, Object> jsQuery) {
+        return JqlParser.parse(this.schema, jsQuery, service.getConversionService());
+    }
+
     @Override
     public void clearEntityCache(ID id) {
         // do nothing.
@@ -242,39 +246,7 @@ public class JDBCRepositoryBase<ID> /*extends JDBCQueryBuilder*/ implements JQRe
         }
     }
 
-    private static final Map _emptyMap = new HashMap();
-    public JqlQuery buildQuery(Map<String, Object> filter) {
-        Map filterMap;
-        if (filter instanceof Map) {
-            filterMap = (Map) filter;
-        }
-        else if (filter != null) {
-            filterMap = new HashMap();
-            throw new RuntimeException("Not implemented");
-            //filterMap.put(this.pkColName + "@eq", filter);
-            /** 참고 ID 검색 함수를 아래와 같이 처리할 수도 있다. (단, FetchType.EAGER 로 인한 다중 query 발생)
-             Expression<?> column = root.get(this.pkColName).as(this.idType);
-             return JQLOperator.EQ.createPredicate(cb, column, filter);
-             */
-        }
-//        else if (!fetchData) {
-//            return new JqlQuery(this.jqlSchema);
-//        }
-        else {
-            /**
-             * 참고) 왜 불필요하게 JQLParser 를 수행하는가?
-             * CriteriaQuery 는 FetchType.EAGER 가 지정된 Column 에 대해
-             * 자동으로 fetch 하는 기능이 없다. (2022.02.18 현재) 이에 대량 쿼리 발생시
-             * 그 개수만큼 Join 된 칼럼을 읽어오는 추가적인 쿼리가 발생한다.
-             * Parser 는 내부에서 이를 별도 검사하여 처리한다.
-             */
-            filterMap = _emptyMap;
-        }
 
-        JqlParser parser = new JqlParser(this.getSchema(), this.service.getConversionService());
-        JqlQuery where = parser.parse(filterMap);
-        return where;
-    }
 
     public String getLastExecutedSql() {
         return this.lastGeneratedSql;

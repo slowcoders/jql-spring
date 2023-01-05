@@ -48,7 +48,12 @@ public abstract class JqlFilter implements Expression {
 
     TableFilter asTableFilter() { return null; }
 
-    void selectProperties(String[] selectedKeys) {}
+    void setSelectedProperties(String[] selectedKeys) {
+    }
+
+    KeySet getDefaultJoinedPropertySelection() {
+        return KeySet.All;
+    }
 
     final JqlFilter getFilterNode(String key, JqlNodeType nodeType) {
         if (key == null) return this;

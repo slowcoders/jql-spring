@@ -120,8 +120,8 @@ public class SqlGenerator extends SqlConverter implements QueryBuilder {
 
     public String createSelectQuery(JqlQuery where, JQSelect columns) {
         sw.reset();
+        where.setSelectedProperties(columns.getPropertyKeys());
         String tableName = where.getTableName();
-        where.selectProperties(columns.getAttributeNames());
 
         boolean need_complex_pagination = (columns.getLimit() > 0 || columns.getOffset() > 0) && needDistinctPagination(where);
         if (need_complex_pagination) {

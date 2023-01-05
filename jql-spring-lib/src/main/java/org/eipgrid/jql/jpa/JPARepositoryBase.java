@@ -61,8 +61,8 @@ public abstract class JPARepositoryBase<ENTITY, ID> extends JPAQueryBuilder<ENTI
     }
 
 //    @Override
-//    public Page<ENTITY> find(Map<String, Object> j_ql_filter, @NotNull Pageable pageReq) {
-//        return find(j_ql_filter, pageReq, super.getEntityType());
+//    public Page<ENTITY> find(Map<String, Object> jsQuery, @NotNull Pageable pageReq) {
+//        return find(jsQuery, pageReq, super.getEntityType());
 //    }
 
     //@Override
@@ -77,14 +77,14 @@ public abstract class JPARepositoryBase<ENTITY, ID> extends JPAQueryBuilder<ENTI
     }
 
     @Override
-    public long count(Map<String, Object> j_ql_filter) {
-        long count = (Long) super.buildCountQuery(j_ql_filter).getSingleResult();
+    public long count(Map<String, Object> jsQuery) {
+        long count = (Long) super.buildCountQuery(jsQuery).getSingleResult();
         return count;
     }
 
     @Override
-    public List<ENTITY> find(Map<String, Object> j_ql_filter, JQSelect columns) {
-        return find(j_ql_filter, columns, columns.getLimit(), super.getEntityType());
+    public List<ENTITY> find(Map<String, Object> jsQuery, JQSelect columns) {
+        return find(jsQuery, columns, columns.getLimit(), super.getEntityType());
     }
 
     //@Override
@@ -114,8 +114,8 @@ public abstract class JPARepositoryBase<ENTITY, ID> extends JPAQueryBuilder<ENTI
     }
 
     @Override
-    public ENTITY findTop(Map<String, Object> j_ql_filter, Sort sort) {
-        Query query = super.buildSearchQuery(j_ql_filter, sort, this.getEntityType());
+    public ENTITY findTop(Map<String, Object> jsQuery, Sort sort) {
+        Query query = super.buildSearchQuery(jsQuery, sort, this.getEntityType());
         List<ENTITY> res = query.setMaxResults(1).getResultList();
         return res.size() > 0 ? res.get(0) : null;
     }

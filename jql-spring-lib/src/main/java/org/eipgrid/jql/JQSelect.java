@@ -5,51 +5,55 @@ import org.springframework.data.domain.Sort;
 import java.util.ArrayList;
 
 public class JQSelect {
-    private final String[] columns;
+
+    private final String[] keys;
     private Sort sort;
     private int offset;
     private int limit;
 
-    public static final String ALL_PROPERTIES = "*";
-    public static final String PRIMARY_KEYS = "!";
+    public static final char ALL_PROPERTIES = '*';
+    public static final char PRIMARY_KEYS = '0';
+
+    public static final char COMPARED_PROPERTIES = '@';
+
+    public static final char NOTHING = '_';
 
     public static final JQSelect Whole = new JQSelect(null, null, 0, 0);
     public static final JQSelect NotAtAll = new JQSelect(new String[0], null, 0, 0);
 
-    protected JQSelect(String[] columns, Sort sort, int offset, int limit) {
-        this.columns = columns;
+    protected JQSelect(String[] keys, Sort sort, int offset, int limit) {
+        this.keys = keys;
         this.sort = sort;
         this.offset = offset;
         this.limit = limit;
     }
 
-    public static JQSelect by(String[] attributes, Sort sort, int offset, int limit) {
-        return new JQSelect(attributes, sort, offset, limit);
+    public static JQSelect by(String[] keys, Sort sort, int offset, int limit) {
+        return new JQSelect(keys, sort, offset, limit);
     }
 
-    public static JQSelect by(String[] attributes, String[] sort, int offset, int limit) {
-        return by(attributes, buildSort(sort), offset, limit);
+    public static JQSelect by(String[] keys, String[] sort, int offset, int limit) {
+        return by(keys, buildSort(sort), offset, limit);
     }
 
-    public static JQSelect by(String attributes, String sort, int offset, int limit) {
-        String[] _columns = splitPropertyKeys(attributes);
+    public static JQSelect by(String keys, String sort, int offset, int limit) {
+        String[] _columns = splitPropertyKeys(keys);
         return by(_columns, parseSort(sort), offset, limit);
     }
 
-    public static String[] splitPropertyKeys(String attributes) {
-        if (attributes != null) {
-            attributes = attributes.trim();
-            if (attributes.length() > 0) {
-                String[] cols = attributes.split("\\s*,\\s*");
-                return cols;
+    public static String[] splitPropertyKeys(String keys) {
+        if (keys != null) {
+            keys = keys.trim();
+            if (keys.length() > 0) {
+                return keys.split("\\s*,\\s*");
             }
-            return NotAtAll.columns;
+            return NotAtAll.keys;
         }
         return null;
     }
 
-    public String[] getAttributeNames() {
-        return this.columns;
+    public String[] getPropertyKeys() {
+        return this.keys;
     }
 
     public int getOffset() {

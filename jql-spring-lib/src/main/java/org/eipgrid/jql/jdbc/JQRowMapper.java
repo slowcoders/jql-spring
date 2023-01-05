@@ -133,11 +133,10 @@ public class JQRowMapper implements ResultSetExtractor<List<KVEntity>> {
         int columnCount = idxColumn + count;
         CachedEntity currEntity;
         if (idxColumn == 0) {
-            currEntity = baseEntity = new CachedEntity(null);
+            baseEntity = new CachedEntity(null);
             results.add(baseEntity);
-        } else {
-            currEntity = makeSubEntity(mappedColumns[idxColumn].mapping);
         }
+        currEntity = makeSubEntity(mappedColumns[idxColumn].mapping);
 
         for (; idxColumn < columnCount; ) {
             MappedColumn mappedColumn = mappedColumns[idxColumn];
