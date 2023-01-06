@@ -70,7 +70,8 @@ public class JQRowMapper2 implements ResultSetExtractor<List<KVEntity>> {
             check_duplicated_columns:
             for (int i = 0; i < lastMappingIndex; i++) {
                 JQResultMapping mapping = resultMappings.get(i);
-                if (mapping.isLinearNode()) break;
+                if (!mapping.hasArrayDescendantNode()) break;
+
                 Object[] pk = readPrimaryKeys(mapping, rs, idxColumn);
                 if (pk == null) {
                     columnCount = idxColumn;

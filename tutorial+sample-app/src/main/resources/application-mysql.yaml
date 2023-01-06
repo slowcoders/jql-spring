@@ -1,8 +1,0 @@
-# database init, supports mysql too
-database: mysql
-spring:
-  sql.init.mode: always
-  datasource:
-    url: ${MYSQL_URL:jdbc:mysql://localhost/petclinic}
-    username: ${MYSQL_USER:petclinic}
-    password: ${MYSQL_PASS:petclinic}

@@ -22,7 +22,7 @@ public interface JQResultMapping {
     boolean isArrayNode();
 
     // It has not any array node in descendants.
-    boolean isLinearNode();
+    boolean hasArrayDescendantNode();
 
     boolean isEmpty();
 }

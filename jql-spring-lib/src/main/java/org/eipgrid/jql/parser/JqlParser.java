@@ -111,10 +111,10 @@ public class JqlParser {
             JqlFilter subFilter = baseFilter.getFilterNode(key, valueCategory);
             PredicateSet targetPredicates = predicates;
             if (subFilter != baseFilter) {
+                targetPredicates = subFilter.getPredicateSet();
                 if (selectedKeys != null) {
                     subFilter.setSelectedProperties(selectedKeys);
                 }
-                targetPredicates = subFilter.getPredicateSet();
             }
 
             if (valueCategory != JqlNodeType.Leaf) {
@@ -123,6 +123,9 @@ public class JqlParser {
                     Map<String, Object> subJql = (Map<String, Object>) value;
                     if (!subJql.isEmpty()) {
                         this.parse(ps, subJql);
+                    }
+                    else {
+                        subFilter.setSelectedProperties_withEmptyFilter();
                     }
                 }
                 else {
@@ -137,7 +140,7 @@ public class JqlParser {
             }
 
             String columnName = subFilter.getColumnName(key);
-            subFilter.addComparedAttribute(columnName);
+            subFilter.addComparedPropertyToSelection(columnName);
             if (value != null) {
                 JQSchema schema = subFilter.getSchema();
                 if (schema != null) {

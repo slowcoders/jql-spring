@@ -103,7 +103,7 @@ public class SqlGenerator extends SqlConverter implements QueryBuilder {
     }
 
     private boolean needDistinctPagination(JqlQuery where) {
-        if (where.isLinearNode()) return false;
+        if (!where.hasArrayDescendantNode()) return false;
 
         for (JQResultMapping mapping : where.getResultMappings()) {
             JQJoin join = mapping.getEntityJoin();
@@ -149,7 +149,7 @@ public class SqlGenerator extends SqlConverter implements QueryBuilder {
         sw.replaceTrailingComma("\n");
         writeFrom(where, tableName, false);
         writeWhere(where);
-        writeOrderBy(where, columns.getSort(), !where.isLinearNode());
+        writeOrderBy(where, columns.getSort(), where.hasArrayDescendantNode());
         if (!need_complex_pagination) {
             writePagination(columns);
         }
@@ -176,7 +176,7 @@ public class SqlGenerator extends SqlConverter implements QueryBuilder {
         }
         if (need_joined_result_set_ordering) {
             for (JQResultMapping mapping : where.getResultMappings()) {
-                if (mapping.isLinearNode()) continue;
+                if (!mapping.hasArrayDescendantNode()) continue;
                 if (mapping != where && !mapping.isArrayNode()) continue;
                 String table = mapping.getMappingAlias();
                 for (JQColumn column : mapping.getSchema().getPKColumns()) {

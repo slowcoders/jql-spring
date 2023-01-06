@@ -79,5 +79,8 @@ public abstract class JqlFilter implements Expression {
         return subFilters.values();
     }
 
-    protected void addComparedAttribute(String key) {}
+    protected void addComparedPropertyToSelection(String key) {}
+
+    protected void setSelectedProperties_withEmptyFilter() {
+    }
 }

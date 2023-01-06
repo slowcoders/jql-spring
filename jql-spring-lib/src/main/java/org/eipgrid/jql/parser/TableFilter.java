@@ -14,7 +14,7 @@ class TableFilter extends JqlFilter implements JQResultMapping {
     private String[] entityMappingPath;
     private List<JQColumn> selectedColumns;
     private boolean doSelectComparedAttribute;
-    private boolean isLinear;
+    private boolean hasArrayDescendant;
 
     private KeySet joinedPropertyDefaultSelection;
     private static final String[] emptyPath = new String[0];
@@ -77,11 +77,12 @@ class TableFilter extends JqlFilter implements JQResultMapping {
     }
 
     KeySet getDefaultJoinedPropertySelection() {
-        KeySet columns = joinedPropertyDefaultSelection;
-        if (columns == null) {
-            columns = KeySet.Auto;
+        KeySet keySet = joinedPropertyDefaultSelection;
+        if (keySet == null) {
+            TableFilter parent = this.getParentNode();
+            keySet = parent == null ? KeySet.Auto : parent.getDefaultJoinedPropertySelection();
         }
-        return columns;
+        return keySet;
     }
 
 
@@ -89,10 +90,16 @@ class TableFilter extends JqlFilter implements JQResultMapping {
         this.selectedColumns = selectProperties_internal(keys);
     }
 
-    private List<JQColumn> selectProperties_internal(String[] keys) {
-        if (keys == null || keys.length == 0) {
-            return schema.getReadableColumns();
+    protected void setSelectedProperties_withEmptyFilter() {
+        if (this.selectedColumns == null || selectedColumns.size() == 0) {
+            this.selectedColumns = schema.getPKColumns();
         }
+    }
+
+    private List<JQColumn> selectProperties_internal(String[] keys) {
+        if (keys == null) return null;
+
+        if (keys.length == 0) return Collections.EMPTY_LIST;
 
         boolean hasAdditionalKey = false;
         int keyBits = 0;
@@ -116,19 +123,18 @@ class TableFilter extends JqlFilter implements JQResultMapping {
             return schema.getReadableColumns();
         }
 
-        boolean includePKs = (keyBits & KeySet.PrimaryKeys.bit()) != 0;
+        boolean explicitPKs = (keyBits & KeySet.PrimaryKeys.bit()) != 0;
         this.doSelectComparedAttribute = (keyBits & KeySet.Auto.bit()) != 0;
-        if (doSelectComparedAttribute) {
-            includePKs |= this.isArrayNode();
-            hasAdditionalKey = true;
-        }
 
+        boolean includePKs = explicitPKs || (doSelectComparedAttribute && this.isArrayNode() && this.hasArrayDescendantNode());
         List<JQColumn> baseColumns = includePKs ? schema.getPKColumns() : Collections.EMPTY_LIST;
-        if (!hasAdditionalKey) {
+
+        if (!doSelectComparedAttribute && !hasAdditionalKey) {
             return baseColumns;
         }
 
-        ArrayList<JQColumn> columns = new ArrayList<>(baseColumns);
+        List<JQColumn> columns = new ArrayList<>(baseColumns);
+
         for (String k : keys) {
             KeySet keySet = KeySet.toAlias(k.charAt(0));
             if (keySet == null) {
@@ -206,25 +212,25 @@ class TableFilter extends JqlFilter implements JQResultMapping {
     }
 
     @Override
-    public boolean isLinearNode() {
-        return this.isLinear;
+    public boolean hasArrayDescendantNode() {
+        return this.hasArrayDescendant;
     }
 
     protected void gatherColumnMappings(List<JQResultMapping> columnGroupMappings) {
         columnGroupMappings.add(this);
-        this.isLinear = true;
+        this.hasArrayDescendant = false;
         for (JqlFilter q : subFilters.values()) {
             TableFilter table = q.asTableFilter();
             if (table != null) {
                 table.gatherColumnMappings(columnGroupMappings);
-                this.isLinear &= table.isLinear && !table.isArrayNode();
+                this.hasArrayDescendant |= table.hasArrayDescendant && !table.isArrayNode();
             }
         }
 
         Set<JQColumn> hiddenKeys = getHiddenForeignKeys();
         if (!hiddenKeys.isEmpty()) {
             ArrayList<JQColumn> columns = new ArrayList<>();
-            for (JQColumn column : this.selectedColumns) {
+            for (JQColumn column : this.getSelectedColumns()) {
                 if (hiddenKeys.contains(column)) continue;
                 columns.add(column);
             }
@@ -232,9 +238,7 @@ class TableFilter extends JqlFilter implements JQResultMapping {
         }
     }
 
-
-
-    protected void addComparedAttribute(String key) {
+    protected void addComparedPropertyToSelection(String key) {
         if (doSelectComparedAttribute) {
             JQColumn column = schema.getColumn(key);
             if (!this.selectedColumns.contains(column)) {

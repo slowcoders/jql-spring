@@ -1,6 +1,7 @@
 package org.eipgrid.jql;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class JQJoin {
     private final JQJoin associateJoin;
@@ -20,15 +21,18 @@ public class JQJoin {
         this.baseSchema = baseSchema;
         JQSchema fkSchema = fkColumns.get(0).getSchema();
         this.inverseMapped = baseSchema != fkSchema;
-        boolean isUniqueJoin = fkSchema.isUniqueConstrainedColumnSet(fkColumns);
         if (inverseMapped) {
             assert(associatedJoin == null || !associatedJoin.inverseMapped);
             this.joinedSchema = fkSchema;
-            this.isUnique = isUniqueJoin && (associatedJoin == null || associatedJoin.isUnique);
+            this.isUnique = (associatedJoin == null || associatedJoin.isUnique) &&
+                            fkSchema.isUniqueConstrainedColumnSet(fkColumns);
         } else {
             assert(associatedJoin == null);
             this.joinedSchema = fkColumns.get(0).getJoinedPrimaryColumn().getSchema();
-            this.isUnique = isUniqueJoin;// ? Type.OneToOne : Type.ManyToOne;
+            List<JQColumn> pkColumns = fkColumns.stream()
+                    .map(col -> col.getJoinedPrimaryColumn())
+                    .collect(Collectors.toList());
+            this.isUnique = joinedSchema.isUniqueConstrainedColumnSet(pkColumns);
         }
         this.associateJoin = associatedJoin;
         this.jsonKey = associatedJoin != null ? '+' + associatedJoin.getJsonKey() : initJsonKey();
