@@ -1,4 +1,4 @@
-package net.ion.eip.edge.config;
+package org.eipgrid.jql.sample.config;
 
 import org.ehcache.config.builders.CacheConfigurationBuilder;
 import org.ehcache.config.builders.ResourcePoolsBuilder;
