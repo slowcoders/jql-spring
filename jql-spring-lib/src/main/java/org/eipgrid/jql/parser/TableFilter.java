@@ -12,11 +12,11 @@ class TableFilter extends JqlFilter implements JQResultMapping {
     private final String mappingAlias;
 
     private String[] entityMappingPath;
-    private List<JQColumn> selectedColumns;
+    private List<JQColumn> selectedColumns = null;
     private boolean doSelectComparedAttribute;
     private boolean hasArrayDescendant;
 
-    private KeySet joinedPropertyDefaultSelection;
+//    private KeySet joinedPropertyDefaultSelection;
     private static final String[] emptyPath = new String[0];
 
     TableFilter(JQSchema schema, String mappingAlias) {
@@ -69,24 +69,31 @@ class TableFilter extends JqlFilter implements JQResultMapping {
 
     @Override
     public List<JQColumn> getSelectedColumns() {
-        if (selectedColumns == null && getParentNode() != null) {
-            String[] keys = getParentNode().getDefaultJoinedPropertySelection().asKeyArray();
-            selectedColumns = selectProperties_internal(keys);
-        }
-        return selectedColumns;
+//        if (selectedColumns == null && getParentNode() != null) {
+//            String[] keys = getParentNode().getDefaultJoinedPropertySelection().asKeyArray();
+//            selectedColumns = selectProperties_internal(keys);
+//        }
+        return selectedColumns == null ? Collections.EMPTY_LIST : selectedColumns;
     }
 
-    KeySet getDefaultJoinedPropertySelection() {
-        KeySet keySet = joinedPropertyDefaultSelection;
-        if (keySet == null) {
-            TableFilter parent = this.getParentNode();
-            keySet = parent == null ? KeySet.Auto : parent.getDefaultJoinedPropertySelection();
-        }
-        return keySet;
-    }
+//    private KeySet getDefaultJoinedPropertySelection() {
+//        KeySet keySet = joinedPropertyDefaultSelection;
+//        if (keySet == null) {
+//            TableFilter parent = this.getParentNode();
+//            keySet = parent == null ? KeySet.Auto : parent.getDefaultJoinedPropertySelection();
+//        }
+//        return keySet;
+//    }
 
 
     public void setSelectedProperties(String[] keys) {
+        if (keys == null) {
+            TableFilter parent = getParentNode();
+            this.doSelectComparedAttribute = parent == null || parent.selectedColumns != Collections.EMPTY_LIST;
+            this.selectedColumns = doSelectComparedAttribute ? new ArrayList<>() : Collections.EMPTY_LIST;
+            return;
+        }
+
         this.selectedColumns = selectProperties_internal(keys);
     }
 
@@ -97,8 +104,6 @@ class TableFilter extends JqlFilter implements JQResultMapping {
     }
 
     private List<JQColumn> selectProperties_internal(String[] keys) {
-        if (keys == null) return null;
-
         if (keys.length == 0) return Collections.EMPTY_LIST;
 
         boolean hasAdditionalKey = false;
@@ -110,13 +115,13 @@ class TableFilter extends JqlFilter implements JQResultMapping {
                 continue;
             }
             keyBits |= 1 << keySet.ordinal();
-            if (k.length() == 1) continue;
-            if (k.length() == 3 && k.charAt(1) == '.' && joinedPropertyDefaultSelection == null) {
-                joinedPropertyDefaultSelection = KeySet.toAlias(k.charAt(2));
-            }
-            else {
-                throw new RuntimeException("Joined entity selections are conflicted");
-            }
+//            if (k.length() == 1) continue;
+//            if (k.length() == 3 && k.charAt(1) == '.' && joinedPropertyDefaultSelection == null) {
+//                joinedPropertyDefaultSelection = KeySet.toAlias(k.charAt(2));
+//            }
+//            else {
+//                throw new RuntimeException("Joined entity selections are conflicted");
+//            }
         }
 
         if ((keyBits & KeySet.All.bit()) != 0) {
@@ -223,9 +228,11 @@ class TableFilter extends JqlFilter implements JQResultMapping {
             TableFilter table = q.asTableFilter();
             if (table != null) {
                 table.gatherColumnMappings(columnGroupMappings);
-                this.hasArrayDescendant |= table.hasArrayDescendant && !table.isArrayNode();
+                this.hasArrayDescendant |= table.isArrayNode() || table.hasArrayDescendant;
             }
         }
+
+        if (this.selectedColumns == null || selectedColumns.size() == 0) return;
 
         Set<JQColumn> hiddenKeys = getHiddenForeignKeys();
         if (!hiddenKeys.isEmpty()) {

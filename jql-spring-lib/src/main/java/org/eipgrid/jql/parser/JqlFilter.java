@@ -51,9 +51,6 @@ public abstract class JqlFilter implements Expression {
     void setSelectedProperties(String[] selectedKeys) {
     }
 
-    KeySet getDefaultJoinedPropertySelection() {
-        return KeySet.All;
-    }
 
     final JqlFilter getFilterNode(String key, JqlNodeType nodeType) {
         if (key == null) return this;

@@ -14,45 +14,16 @@ import java.util.*;
 public class JqlParser {
 
     private final ConversionService conversionService;
-    private final JqlQuery where;
 
-    private static final Map _emptyMap = new HashMap();
-    private JqlParser(JqlQuery where, ConversionService conversionService) {
-        this.where = where;
+    public JqlParser(ConversionService conversionService) {
         this.conversionService = conversionService;
     }
 
-    public static JqlQuery parse(JQSchema schema, Map<String, Object> filter, ConversionService conversionService) {
-        Map filterMap;
-        if (filter instanceof Map) {
-            filterMap = (Map) filter;
-        }
-        else if (filter != null) {
-            filterMap = new HashMap();
-            throw new RuntimeException("Not implemented");
-            //filterMap.put(this.pkColName + "@eq", filter);
-            /** 참고 ID 검색 함수를 아래와 같이 처리할 수도 있다. (단, FetchType.EAGER 로 인한 다중 query 발생)
-             Expression<?> column = root.get(this.pkColName).as(this.idType);
-             return JQLOperator.EQ.createPredicate(cb, column, filter);
-             */
-        }
-//        else if (!fetchData) {
-//            return new JqlQuery(this.jqlSchema);
-//        }
-        else {
-            /**
-             * 참고) 왜 불필요하게 JQLParser 를 수행하는가?
-             * CriteriaQuery 는 FetchType.EAGER 가 지정된 Column 에 대해
-             * 자동으로 fetch 하는 기능이 없다. (2022.02.18 현재) 이에 대량 쿼리 발생시
-             * 그 개수만큼 Join 된 칼럼을 읽어오는 추가적인 쿼리가 발생한다.
-             * Parser 는 내부에서 이를 별도 검사하여 처리한다.
-             */
-            filterMap = _emptyMap;
-        }
-
+    public JqlQuery parse(JQSchema schema, Map<String, Object> jsQuery) {
         JqlQuery where = new JqlQuery(schema);
-        JqlParser parser = new JqlParser(where, conversionService);
-        parser.parse(where.getPredicateSet(), filter);
+        if (jsQuery != null) {
+            this.parse(where.getPredicateSet(), jsQuery);
+        }
         return where;
     }
 
@@ -112,9 +83,7 @@ public class JqlParser {
             PredicateSet targetPredicates = predicates;
             if (subFilter != baseFilter) {
                 targetPredicates = subFilter.getPredicateSet();
-                if (selectedKeys != null) {
-                    subFilter.setSelectedProperties(selectedKeys);
-                }
+                subFilter.setSelectedProperties(selectedKeys);
             }
 
             if (valueCategory != JqlNodeType.Leaf) {
@@ -124,7 +93,7 @@ public class JqlParser {
                     if (!subJql.isEmpty()) {
                         this.parse(ps, subJql);
                     }
-                    else {
+                    else if (selectedKeys == null) {
                         subFilter.setSelectedProperties_withEmptyFilter();
                     }
                 }
@@ -140,7 +109,9 @@ public class JqlParser {
             }
 
             String columnName = subFilter.getColumnName(key);
-            subFilter.addComparedPropertyToSelection(columnName);
+            if (op_start > 0) {
+                subFilter.addComparedPropertyToSelection(columnName);
+            }
             if (value != null) {
                 JQSchema schema = subFilter.getSchema();
                 if (schema != null) {

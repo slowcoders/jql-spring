@@ -25,6 +25,7 @@ public class JDBCRepositoryBase<ID> /*extends JDBCQueryBuilder*/ implements JQRe
     private final JdbcJQService service;
     private final List<JQColumn> pkColumns;
     private final JQSchema schema;
+    private final JqlParser jqlParser;
     private String lastGeneratedSql;
 
     public JDBCRepositoryBase(JdbcJQService service, Class<?> entityType) {
@@ -38,6 +39,7 @@ public class JDBCRepositoryBase<ID> /*extends JDBCQueryBuilder*/ implements JQRe
         this.objectMapper = service.getJsonConverter().getObjectMapper();
         this.schema = schema;
         this.pkColumns = schema.getPKColumns();
+        this.jqlParser = new JqlParser(service.getConversionService());
     }
 
     public ObjectMapper getObjectMapper() {
@@ -227,7 +229,7 @@ public class JDBCRepositoryBase<ID> /*extends JDBCQueryBuilder*/ implements JQRe
     }
 
     private JqlQuery buildQuery(Map<String, Object> jsQuery) {
-        return JqlParser.parse(this.schema, jsQuery, service.getConversionService());
+        return jqlParser.parse(this.schema, jsQuery);
     }
 
     @Override

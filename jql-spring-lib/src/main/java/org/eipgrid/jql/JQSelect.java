@@ -18,11 +18,11 @@ public class JQSelect {
 
     public static final char NOTHING = '_';
 
-    public static final JQSelect Whole = new JQSelect(null, null, 0, 0);
+    public static final JQSelect Whole = new JQSelect(new String[] { "*" }, null, 0, 0);
     public static final JQSelect NotAtAll = new JQSelect(new String[0], null, 0, 0);
 
     protected JQSelect(String[] keys, Sort sort, int offset, int limit) {
-        this.keys = keys;
+        this.keys = keys == null ? Whole.keys : keys;
         this.sort = sort;
         this.offset = offset;
         this.limit = limit;
