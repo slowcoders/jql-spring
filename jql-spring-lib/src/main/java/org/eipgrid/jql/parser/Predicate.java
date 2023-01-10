@@ -16,7 +16,7 @@ interface Predicate extends Expression {
         }
 
         @Override
-        public void accept(AstVisitor sb) {
+        public void accept(PredicateVisitor sb) {
             sb.visitMatchAny(column, operator, values);
         }
     }
@@ -34,7 +34,7 @@ interface Predicate extends Expression {
         }
 
         @Override
-        public void accept(AstVisitor sb) {
+        public void accept(PredicateVisitor sb) {
             if (value == null) {
                 sb.visitCompareNull(column, operator);
             } else {
@@ -52,7 +52,7 @@ interface Predicate extends Expression {
         }
 
         @Override
-        public void accept(AstVisitor sb) {
+        public void accept(PredicateVisitor sb) {
             sb.visitNot(statement);
         }
     }

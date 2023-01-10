@@ -45,7 +45,7 @@ public class BatchUpsert<ID> implements BatchPreparedStatementSetterWithKeyHolde
         if (v == null) return null;
 
         if (v.getClass().isEnum()) {
-            if (col.getColumnType() == JQType.Text) {
+            if (col.getType() == JQType.Text) {
                 return v.toString();
             } else {
                 return ((Enum) v).ordinal();

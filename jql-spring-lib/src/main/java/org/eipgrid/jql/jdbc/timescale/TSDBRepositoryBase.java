@@ -44,7 +44,7 @@ public abstract class TSDBRepositoryBase<ENTITY, ID> extends JPARepositoryBase<E
             HashMap<String, AggregateType> aggTypeMap = new HashMap<>();
             for (JQColumn col : schema.getWritableColumns()) {
                 AggregateType aggType = resolveAggregationType(col);
-                String col_name = col.getColumnName();
+                String col_name = col.getPhysicalName();
                 aggTypeMap.put(col_name, aggType);
             }
             return aggTypeMap;
@@ -60,7 +60,7 @@ public abstract class TSDBRepositoryBase<ENTITY, ID> extends JPARepositoryBase<E
             if (c != null) {
                 return c.value();
             }
-            if (col.getColumnType() == JQType.Float) {
+            if (col.getType() == JQType.Float) {
                 return AggregateType.Mean;
             }
             return AggregateType.None;

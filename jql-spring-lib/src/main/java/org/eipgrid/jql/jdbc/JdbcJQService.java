@@ -2,7 +2,9 @@ package org.eipgrid.jql.jdbc;
 
 import org.eipgrid.jql.JQSchema;
 import org.eipgrid.jql.JQSchemaLoader;
+import org.eipgrid.jql.JQSelect;
 import org.eipgrid.jql.jdbc.metadata.JdbcSchemaLoader;
+import org.eipgrid.jql.parser.JqlQuery;
 import org.eipgrid.jql.spring.JQRepository;
 import org.eipgrid.jql.spring.JQService;
 import org.eipgrid.jql.util.AttributeNameConverter;
@@ -17,8 +19,9 @@ import javax.sql.DataSource;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
-public class JdbcJQService extends JQService {
+public class JdbcJQService extends JQService implements QueryBuilder {
     JdbcSchemaLoader jdbcSchemaLoader;
     private HashMap<String, JQRepository> repositories = new HashMap<>();
 
@@ -61,5 +64,35 @@ public class JdbcJQService extends JQService {
 
     public List<String> getDBSchemas() {
         return jdbcSchemaLoader.getDBSchemas();
+    }
+
+    @Override
+    public String createSelectQuery(JqlQuery where, JQSelect columns) {
+        return new SqlGenerator().createSelectQuery(where, columns);
+    }
+
+    @Override
+    public String createCountQuery(JqlQuery where) {
+        return new SqlGenerator().createCountQuery(where);
+    }
+
+    @Override
+    public String createUpdateQuery(JqlQuery where, Map<String, Object> updateSet) {
+        return new SqlGenerator().createUpdateQuery(where, updateSet);
+    }
+
+    @Override
+    public String createDeleteQuery(JqlQuery where) {
+        return new SqlGenerator().createDeleteQuery(where);
+    }
+
+    @Override
+    public String prepareFindByIdStatement(JQSchema schema) {
+        return new SqlGenerator().prepareFindByIdStatement(schema);
+    }
+
+    @Override
+    public String createInsertStatement(JQSchema schema, Map entity, boolean ignoreConflict) {
+        return new SqlGenerator().createInsertStatement(schema, entity, ignoreConflict);
     }
 }

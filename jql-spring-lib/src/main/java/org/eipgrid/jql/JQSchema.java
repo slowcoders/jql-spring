@@ -85,13 +85,13 @@ public abstract class JQSchema {
         }
 
         for (JQColumn ci: columns) {
-            String colName = ci.getColumnName().toLowerCase();
+            String colName = ci.getPhysicalName().toLowerCase();
             this.columnMap.put(colName, ci);
 
             if (!ci.isPrimaryKey()) {
                 allColumns.add(ci);
             }
-            if (!ci.isReadOnly() && ci.getColumnType().isPrimitive()) {
+            if (!ci.isReadOnly() && ci.getType().isPrimitive()) {
                 writableColumns.add(ci);
             }
         }
@@ -151,7 +151,7 @@ public abstract class JQSchema {
     //--------------------------------------------------------------------------
 
     public String getPhysicalColumnName(String fieldName) {
-        return this.columnMap.get(fieldName).getColumnName();
+        return this.columnMap.get(fieldName).getPhysicalName();
     }
 
     public String getLogicalAttributeName(String columnName) {

@@ -6,27 +6,35 @@ import java.lang.reflect.Field;
 
 public abstract class JQColumn {
     private final JQSchema schema;
-    private final String columnName;
+    private final String physicalName;
     private JQType columnType;
     private Class<?> javaType;
 
-    protected JQColumn(JQSchema schema, String columnName, Class<?> javaType, JQType valueFormat) {
+    protected JQColumn(JQSchema schema, String physicalName, Class<?> javaType, JQType type) {
         this.schema = schema;
-        this.columnName = columnName;
-        this.columnType = valueFormat;
+        this.physicalName = physicalName;
+        this.columnType = type;
         this.javaType = javaType;
     }
 
-    protected JQColumn(JQSchema schema, String columnName, Class javaType) {
-        this(schema, columnName, javaType, JQType.of(javaType));
+    protected JQColumn(JQSchema schema, String physicalName, Class javaType) {
+        this(schema, physicalName, javaType, JQType.of(javaType));
     }
 
     public final JQSchema getSchema() {
         return schema;
     }
 
+    public final JQType getType() {
+        return columnType;
+    }
+
     public final Class<?> getJavaType() {
         return javaType;
+    }
+
+    public final String getPhysicalName() {
+        return physicalName;
     }
 
     public abstract String getJsonKey();
@@ -38,14 +46,6 @@ public abstract class JQColumn {
             name = name.substring(0, idx);
         }
         return name;
-    }
-
-    public final String getColumnName() {
-        return columnName;
-    }
-
-    public final JQType getColumnType() {
-        return columnType;
     }
 
     //===========================================================
@@ -74,16 +74,12 @@ public abstract class JQColumn {
         return null;
     }
 
-    public String getDBColumnType() {
-        return null;
-    }
-
     @Override
     public int hashCode() {
-        return columnName.hashCode();
+        return physicalName.hashCode();
     }
 
-    public String toString() { return getSchema().getSimpleTableName() + "::" + this.getJsonKey()+ "<" + columnName + ">"; }
+    public String toString() { return getSchema().getSimpleTableName() + "::" + this.getJsonKey()+ "<" + physicalName + ">"; }
 
     protected void setMappedField(Field f) {
         this.columnType = JQType.of(f);

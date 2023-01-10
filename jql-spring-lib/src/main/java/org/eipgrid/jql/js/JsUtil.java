@@ -36,7 +36,7 @@ public class JsUtil {
     public static String dumpJSONSchema(StringBuilder sb, JdbcColumn col) {
         String jsonType = getColumnType(col.getJavaType());
         if (jsonType == null) {
-            throw new RuntimeException("JsonType not registered: " + col.getJavaType() + " " + col.getColumnName());
+            throw new RuntimeException("JsonType not registered: " + col.getJavaType() + " " + col.getPhysicalName());
         }
 
 ////        String max = getPrecision(col, jsonType);
@@ -158,7 +158,7 @@ public class JsUtil {
                 columnType = columnType + '!';
             }
             sb.append(columnType).append(filler.substring(columnType.length()));
-            sb.append(col.getJsonKey()).append('(').append(col.getColumnName()).append(')');
+            sb.append(col.getJsonKey()).append('(').append(col.getPhysicalName()).append(')');
             JQColumn joinedPK;
             if (col.isPrimaryKey()) {
                 sb.append(" PK");

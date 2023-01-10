@@ -38,7 +38,7 @@ public abstract class TSDBHelper {
 
     private JQColumn resolveTimeKeyColumn() {
         for (JQColumn column : this.schema.getPKColumns()) {
-            if (column.getColumnType() == JQType.Timestamp) {
+            if (column.getType() == JQType.Timestamp) {
                 return column;
             }
         }
@@ -46,14 +46,14 @@ public abstract class TSDBHelper {
     }
 
     public AggregateType getAggregationType(JQColumn col) {
-        AggregateType t = aggTypeMap.get(col.getColumnName());
+        AggregateType t = aggTypeMap.get(col.getPhysicalName());
         if (t == null) t = AggregateType.None;
         return t;
     }
 
 
     public String getTimeKeyColumnName() {
-        return timeKeyColumn.getColumnName();
+        return timeKeyColumn.getPhysicalName();
     }
 
     private boolean isTableExists(String tableName) {
@@ -191,13 +191,13 @@ public abstract class TSDBHelper {
 
         for (JQColumn col : schema.getPKColumns()) {
             if (col != ts_key) {
-                sb.write(col.getColumnName()).writeln(",");
+                sb.write(col.getPhysicalName()).writeln(",");
             }
         }
 
         ArrayList<JQColumn> accColumns = new ArrayList<>();
         for (JQColumn col : schema.getWritableColumns()) {
-            String col_name = col.getColumnName();
+            String col_name = col.getPhysicalName();
             switch (getAggregationType(col)) {
                 case Sum: {
                     String ss = "min({0}) as {0}_min,\n" +
@@ -225,7 +225,7 @@ public abstract class TSDBHelper {
                 sb.write("time_h, ");
             }
             else {
-                sb.write(col.getColumnName()).write(", ");
+                sb.write(col.getPhysicalName()).write(", ");
             }
         }
         sb.replaceTrailingComma(";\n\n");
@@ -254,7 +254,7 @@ public abstract class TSDBHelper {
                     sb.write("time_h, ");
                 }
                 else {
-                    sb.write(col.getColumnName()).writeln(",");
+                    sb.write(col.getPhysicalName()).writeln(",");
                 }
             }
             for (JQColumn col : schema.getWritableColumns()) {
@@ -265,11 +265,11 @@ public abstract class TSDBHelper {
                                 "           {0}_max - least({0}_min, lag({0}_last) over _w)\n" +
                                 "      else {0}_max - least({0}_first, lag({0}_last) over _w) + ({0}_last - {0}_min)\n" +
                                 " end) as {0},\n";
-                        sb.writeF(fmt, col.getColumnName());
+                        sb.writeF(fmt, col.getPhysicalName());
                         break;
                     }
                     case Mean: {
-                        sb.write(col.getColumnName()).writeln(",");
+                        sb.write(col.getPhysicalName()).writeln(",");
                         break;
                     }
                 }
@@ -278,7 +278,7 @@ public abstract class TSDBHelper {
             sb.replaceTrailingComma("\nFROM ").writeln(aggView);
             sb.write("WINDOW _w AS(partition by ");
             for (JQColumn col : schema.getPKColumns()) {
-                if (col != ts_key) sb.write(col.getColumnName()).write(", ");
+                if (col != ts_key) sb.write(col.getPhysicalName()).write(", ");
             }
             sb.replaceTrailingComma(" ORDER BY time_h);");
             sb.writeln();
@@ -288,16 +288,16 @@ public abstract class TSDBHelper {
         sb.writeF("CREATE OR REPLACE VIEW {0} AS\nSELECT\n", tableName + SUFFIX_DAILY_VIEW).incTab();
         sb.writeln("time_bucket('1 day', time_h) AS time_d,");
         for (JQColumn col : schema.getPKColumns()) {
-            if (col != ts_key) sb.write(col.getColumnName()).writeln(",");
+            if (col != ts_key) sb.write(col.getPhysicalName()).writeln(",");
         }
         for (JQColumn col : schema.getWritableColumns()) {
             switch (getAggregationType(col)) {
                 case Sum: {
-                    sb.writeF("sum({0}) as {0},\n", col.getColumnName());
+                    sb.writeF("sum({0}) as {0},\n", col.getPhysicalName());
                     break;
                 }
                 case Mean: {
-                    sb.writeF("avg({0}) as {0},\n", col.getColumnName());
+                    sb.writeF("avg({0}) as {0},\n", col.getPhysicalName());
                     break;
                 }
             }
@@ -305,7 +305,7 @@ public abstract class TSDBHelper {
         sb.decTab().replaceTrailingComma("\n");
         sb.writeF("FROM {0}\nGROUP BY ", tableName + SUFFIX_HOURLY_VIEW);
         for (JQColumn col : schema.getPKColumns()) {
-            if (col != ts_key) sb.write(col.getColumnName()).write(", ");
+            if (col != ts_key) sb.write(col.getPhysicalName()).write(", ");
         }
         sb.writeln("time_d;");
         return sb.toString();

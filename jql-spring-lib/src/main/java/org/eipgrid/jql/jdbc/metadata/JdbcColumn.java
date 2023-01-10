@@ -42,7 +42,7 @@ public class JdbcColumn extends JQColumn {
         this.isAutoIncrement = md.isAutoIncrement(col);
         this.isReadOnly = md.isReadOnly(col) | this.isAutoIncrement;
         this.isNullable = md.isNullable(col) != ResultSetMetaData.columnNoNulls;
-        this.isPk = primaryKeys.contains(this.getColumnName());
+        this.isPk = primaryKeys.contains(this.getPhysicalName());
 
         this.pkBinder = pkBinder;
         boolean isWritable = md.isWritable(col);
@@ -87,14 +87,13 @@ public class JdbcColumn extends JQColumn {
         return this.label;
     }
 
-    @Override
     public String getDBColumnType() {
         return colTypeName;
     }
 
     public JQColumn getJoinedPrimaryColumn() {
         if (this.pkBinder == null) return null;
-        JQType valueKind = this.getColumnType();
+        JQType valueKind = this.getType();
         Class javaType = null;
         if (!valueKind.isPrimitive()) {
             javaType = getJavaType();
@@ -117,7 +116,7 @@ public class JdbcColumn extends JQColumn {
             String token = JQJoin.initJsonKey(col);
             sb.append(token).append('.');
         }
-        CharSequence rawFieldName = (col != this) ? sb.append(col.getColumnName()) : this.getColumnName();
+        CharSequence rawFieldName = (col != this) ? sb.append(col.getPhysicalName()) : this.getPhysicalName();
 
         String name = getSchema().getSchemaLoader().getNameConverter().toLogicalAttributeName(rawFieldName.toString());
         return name;

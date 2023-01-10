@@ -5,7 +5,7 @@ import org.eipgrid.jql.JQSchema;
 import org.eipgrid.jql.JQJoin;
 import org.eipgrid.jql.parser.Expression;
 import org.eipgrid.jql.parser.JqlQuery;
-import org.eipgrid.jql.parser.JqlFilter;
+import org.eipgrid.jql.parser.EntityFilter;
 import org.eipgrid.jql.util.SourceWriter;
 import org.eipgrid.jql.JQSelect;
 import org.springframework.data.domain.Sort;
@@ -26,14 +26,14 @@ public class SqlGenerator extends SqlConverter implements QueryBuilder {
         return command.toString();
     }
 
-    protected void writeFilter(JqlFilter jql) {
+    protected void writeFilter(EntityFilter jql) {
         super.visitNode(jql);
         Expression ps = jql.getPredicates();
         if (!ps.isEmpty()) {
             ps.accept(this);
             sw.write(" AND ");
         }
-        for (JqlFilter child : jql.getChildNodes()) {
+        for (EntityFilter child : jql.getChildNodes()) {
             if (!child.isEmpty()) {
                 writeFilter(child);
             }
@@ -88,8 +88,8 @@ public class SqlGenerator extends SqlConverter implements QueryBuilder {
             } else {
                 anchor = fk; linked = fk.getJoinedPrimaryColumn();
             }
-            sw.write(baseAlias).write(".").write(anchor.getColumnName());
-            sw.write(" = ").write(alias).write(".").write(linked.getColumnName()).write(" and\n\t");
+            sw.write(baseAlias).write(".").write(anchor.getPhysicalName());
+            sw.write(" = ").write(alias).write(".").write(linked.getPhysicalName()).write(" and\n\t");
         }
         sw.shrinkLength(6);
     }
@@ -142,7 +142,7 @@ public class SqlGenerator extends SqlConverter implements QueryBuilder {
             sw.write('\t');
             String alias = mapping.getMappingAlias();
             for (JQColumn col : mapping.getSelectedColumns()) {
-                sw.write(alias).write('.').write(col.getColumnName()).write(", ");
+                sw.write(alias).write('.').write(col.getPhysicalName()).write(", ");
             }
             sw.write('\n');
         }
@@ -168,7 +168,7 @@ public class SqlGenerator extends SqlConverter implements QueryBuilder {
             JQSchema schema = where.getSchema();
             sort.forEach(order -> {
                 String p = order.getProperty();
-                String qname = where.getMappingAlias() + '.' + schema.getColumn(p).getColumnName();
+                String qname = where.getMappingAlias() + '.' + schema.getColumn(p).getPhysicalName();
                 explicitSortColumns.add(qname);
                 sw.write(qname);
                 sw.write(order.isAscending() ? " asc" : " desc").write(", ");
@@ -180,9 +180,9 @@ public class SqlGenerator extends SqlConverter implements QueryBuilder {
                 if (mapping != where && !mapping.isArrayNode()) continue;
                 String table = mapping.getMappingAlias();
                 for (JQColumn column : mapping.getSchema().getPKColumns()) {
-                    String qname = table + '.' + column.getColumnName();
+                    String qname = table + '.' + column.getPhysicalName();
                     if (!explicitSortColumns.contains(qname)) {
-                        sw.write(table).write('.').write(column.getColumnName()).write(", ");
+                        sw.write(table).write('.').write(column.getPhysicalName()).write(", ");
                     }
                 }
             }
@@ -226,7 +226,7 @@ public class SqlGenerator extends SqlConverter implements QueryBuilder {
         sw.write("\nSELECT * FROM ").write(schema.getTableName()).write("\nWHERE ");
         List<JQColumn> keys = schema.getPKColumns();
         for (int i = 0; i < keys.size(); ) {
-            String key = keys.get(i).getColumnName();
+            String key = keys.get(i).getPhysicalName();
             sw.write(key).write(" = ? ");
             if (++ i < keys.size()) {
                 sw.write(" AND ");
@@ -265,7 +265,7 @@ public class SqlGenerator extends SqlConverter implements QueryBuilder {
         sw.writeln();
         sw.write(getCommand(SqlConverter.Command.Insert)).write(" INTO ").write(schema.getTableName()).writeln("(");
         for (JQColumn col : schema.getWritableColumns()) {
-            sw.write(col.getColumnName()).write(", ");
+            sw.write(col.getPhysicalName()).write(", ");
         }
         sw.replaceTrailingComma("\n) VALUES (");
         for (int i = schema.getWritableColumns().size(); --i >= 0; ) {
@@ -278,16 +278,4 @@ public class SqlGenerator extends SqlConverter implements QueryBuilder {
         String sql = sw.reset();
         return sql;
     }
-
-//    public BatchUpsert prepareInsert(JQSchema schema, Collection<Map<String, Object>> entities) {
-//        return prepareInsert(schema, entities, schema.getTableName(), true);
-//    }
-//
-//
-//    public BatchUpsert prepareInsert(JQSchema schema, Collection<Map<String, Object>> entities, String extendedTableName, boolean ignoreConflict) {
-//        String sql = prepareBatchInsertStatement(schema, ignoreConflict);
-//        return new BatchUpsert(entities, schema, sql);
-//    }
-
-
 }

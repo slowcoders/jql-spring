@@ -4,13 +4,13 @@ import org.eipgrid.jql.JQSchema;
 
 import java.util.HashMap;
 
-public abstract class JqlFilter implements Expression {
+public abstract class EntityFilter {
 
-    private final JqlFilter parent;
+    private final EntityFilter parent;
     private final PredicateSet predicates;
-    protected final HashMap<String, JqlFilter> subFilters = new HashMap<>();
+    protected final HashMap<String, EntityFilter> subFilters = new HashMap<>();
 
-    protected JqlFilter(JqlFilter parentNode) {
+    protected EntityFilter(EntityFilter parentNode) {
         this.predicates = new PredicateSet(Conjunction.AND, this);
         this.parent = parentNode;
     }
@@ -22,10 +22,6 @@ public abstract class JqlFilter implements Expression {
     /** return null if schemaless node. cf) json node */
     public JQSchema getSchema() { return null; }
 
-    public void accept(AstVisitor visitor) {
-        visitor.visitNode(this);
-    }
-
     public boolean isEmpty() { return predicates.isEmpty(); }
 
     public Expression getPredicates() {
@@ -36,13 +32,13 @@ public abstract class JqlFilter implements Expression {
         return predicates;
     }
 
-    public JqlFilter getParentNode() { return this.parent; }
+    public EntityFilter getParentNode() { return this.parent; }
 
     public JqlQuery getRootNode() {
         return parent.getRootNode();
     }
 
-    protected abstract JqlFilter makeSubNode(String key, JqlNodeType nodeType);
+    protected abstract EntityFilter makeSubNode(String key, JqlParser.NodeType nodeType);
 
     protected abstract String getColumnName(String key);
 
@@ -52,10 +48,10 @@ public abstract class JqlFilter implements Expression {
     }
 
 
-    final JqlFilter getFilterNode(String key, JqlNodeType nodeType) {
+    final EntityFilter getFilterNode(String key, JqlParser.NodeType nodeType) {
         if (key == null) return this;
 
-        JqlFilter scope = this;
+        EntityFilter scope = this;
         for (int p; (p = key.indexOf('.')) > 0; ) {
             JQSchema schema = scope.getSchema();
             if (schema != null && schema.hasColumn(key)) {
@@ -72,7 +68,7 @@ public abstract class JqlFilter implements Expression {
         return scope;
     }
 
-    public Iterable<JqlFilter> getChildNodes() {
+    public Iterable<EntityFilter> getChildNodes() {
         return subFilters.values();
     }
 

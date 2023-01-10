@@ -91,11 +91,6 @@ public class JpaColumn extends JQColumn {
         return fk == null ? null : fk.getJoinedColumn();
     }
 
-    @Override
-    public String getDBColumnType() {
-        return getSchema().getSchemaLoader().toColumnType(getJavaType(), field);
-    }
-
 
 
     private JoinedColumn resolveForeignKey(Field f) {

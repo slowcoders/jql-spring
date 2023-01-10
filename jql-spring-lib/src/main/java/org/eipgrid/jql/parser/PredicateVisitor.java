@@ -2,7 +2,7 @@ package org.eipgrid.jql.parser;
 
 import java.util.Collection;
 
-public interface AstVisitor {
+public interface PredicateVisitor {
 
     void visitPredicate(String column, JqlOp operator, Object value);
 
@@ -15,6 +15,4 @@ public interface AstVisitor {
     void visitPredicates(Collection<Expression> predicates, Conjunction conjunction);
 
     void visitAlwaysTrue();
-
-    void visitNode(JqlFilter node);
 }

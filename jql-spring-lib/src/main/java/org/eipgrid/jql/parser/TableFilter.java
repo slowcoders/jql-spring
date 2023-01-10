@@ -5,7 +5,7 @@ import org.eipgrid.jql.jdbc.JQResultMapping;
 
 import java.util.*;
 
-class TableFilter extends JqlFilter implements JQResultMapping {
+class TableFilter extends EntityFilter implements JQResultMapping {
     private final JQSchema schema;
 
     private final JQJoin join;
@@ -43,7 +43,7 @@ class TableFilter extends JqlFilter implements JQResultMapping {
     }
 
     public TableFilter getParentNode() {
-        JqlFilter parent = super.getParentNode();
+        EntityFilter parent = super.getParentNode();
         return parent == null ? null : parent.asTableFilter();
     }
 
@@ -152,7 +152,7 @@ class TableFilter extends JqlFilter implements JQResultMapping {
 
     private Set<JQColumn> getHiddenForeignKeys() {
         Set<JQColumn> hiddenColumns = (Set<JQColumn>) Collections.EMPTY_SET;
-        for (JqlFilter node : this.subFilters.values()) {
+        for (EntityFilter node : this.subFilters.values()) {
             TableFilter table = node.asTableFilter();
             if (table == null) continue;
             if (!table.join.isInverseMapped()) {
@@ -166,14 +166,14 @@ class TableFilter extends JqlFilter implements JQResultMapping {
     }
 
     @Override
-    protected JqlFilter makeSubNode(String key, JqlNodeType nodeType) {
+    protected EntityFilter makeSubNode(String key, JqlParser.NodeType nodeType) {
         JQJoin join = schema.getEntityJoinBy(key);
         if (join == null) {
             JQColumn column = schema.getColumn(key);
-            if (column.getColumnType() != JQType.Object) return this;
+            if (column.getType() != JQType.Object) return this;
         }
 
-        JqlFilter subQuery = subFilters.get(key);
+        EntityFilter subQuery = subFilters.get(key);
         if (subQuery == null) {
             if (join != null) {
                 subQuery = new TableFilter(this, join);
@@ -188,7 +188,7 @@ class TableFilter extends JqlFilter implements JQResultMapping {
 
     public boolean isEmpty() {
         if (!super.isEmpty()) return false;
-        for (JqlFilter subNode: subFilters.values()) {
+        for (EntityFilter subNode: subFilters.values()) {
             if (!subNode.isEmpty()) return false;
         }
         return true;
@@ -204,7 +204,7 @@ class TableFilter extends JqlFilter implements JQResultMapping {
             }
             key = key.substring(p + 1);
         }
-        return this.schema.getColumn(key).getColumnName();
+        return this.schema.getColumn(key).getPhysicalName();
     }
 
     public JQJoin getEntityJoin() {
@@ -224,7 +224,7 @@ class TableFilter extends JqlFilter implements JQResultMapping {
     protected void gatherColumnMappings(List<JQResultMapping> columnGroupMappings) {
         columnGroupMappings.add(this);
         this.hasArrayDescendant = false;
-        for (JqlFilter q : subFilters.values()) {
+        for (EntityFilter q : subFilters.values()) {
             TableFilter table = q.asTableFilter();
             if (table != null) {
                 table.gatherColumnMappings(columnGroupMappings);

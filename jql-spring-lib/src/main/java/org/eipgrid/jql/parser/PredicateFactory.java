@@ -7,21 +7,14 @@ import java.util.HashMap;
 
 abstract class PredicateFactory {
 
-    private final boolean fetchData;
-    private final boolean propertyNameRequired;
 
-    static PredicateFactory defaultParser = new MatchAny(JqlOp.EQ, true, false);
-
-    protected PredicateFactory(boolean fetchData, boolean propertyNameRequired) {
-        this.fetchData = fetchData;
-        this.propertyNameRequired = propertyNameRequired;
-    }
+    static PredicateFactory defaultParser = new MatchAny(JqlOp.EQ);
 
     public Class<?> getAccessType(Object value, Class<?> fieldType) {
         return fieldType;
     }
 
-    public boolean isAttributeNameRequired() { return propertyNameRequired; }
+    public boolean isAttributeNameRequired() { return true; }
 
     public abstract Predicate createPredicate(String column, Object value);
 
@@ -30,7 +23,7 @@ abstract class PredicateFactory {
         return operators.get(function);
     }
 
-    public PredicateSet getPredicates(JqlFilter node, JqlNodeType nodeType) {
+    public PredicateSet getPredicates(EntityFilter node, JqlParser.NodeType nodeType) {
         PredicateSet basePredicates = node.getPredicateSet();
         switch (nodeType) {
             case Entities: {
@@ -43,8 +36,6 @@ abstract class PredicateFactory {
         }
     }
 
-    public boolean needFetchData() { return fetchData; }
-
     private static final HashMap<String, PredicateFactory> operators = new HashMap<>();
 
     //=======================================================//
@@ -55,7 +46,7 @@ abstract class PredicateFactory {
         final JqlOp operator;
 
         Compare(JqlOp operator) {
-            super(false, true);
+            super();
             this.operator = operator;
         }
 
@@ -66,25 +57,19 @@ abstract class PredicateFactory {
 
     private static class MatchAny extends PredicateFactory {
         final JqlOp operator;
-        final boolean fetchData;
 
-        MatchAny(JqlOp operator, boolean fetchData, boolean propertyNameRequired) {
-            super(fetchData, propertyNameRequired);
+        MatchAny(JqlOp operator) {
+            super();
             this.operator = operator;
-            this.fetchData = fetchData;
         }
 
         public Class<?> getAccessType(Object value, Class<?> fieldType) {
-            /**
-             * IN operator(!fetchData) 는 항상 Array 를 받는다.
-             */
-            if (!fetchData || (value.getClass().isArray() || value instanceof Collection)) {
+            if (value.getClass().isArray() || value instanceof Collection) {
                 fieldType = ClassUtils.getArrayType(fieldType);
             }
             return fieldType;
         }
 
-        public boolean needFetchData() { return fetchData; }
 
         public Predicate createPredicate(String column, Object value) {
             Predicate cond;
@@ -101,11 +86,13 @@ abstract class PredicateFactory {
 
     static class NotMatch extends MatchAny {
 
-        NotMatch(JqlOp operator, boolean fetchData, boolean propertyNameRequired) {
-            super(operator, fetchData, propertyNameRequired);
+        NotMatch(JqlOp operator) {
+            super(operator);
         }
 
-        public PredicateSet getPredicates(JqlFilter node, JqlNodeType nodeType) {
+        public boolean isAttributeNameRequired() { return false; }
+
+        public PredicateSet getPredicates(EntityFilter node, JqlParser.NodeType nodeType) {
             PredicateSet baseScope = node.getPredicateSet();
             switch (nodeType) {
                 case Entities: {
@@ -129,7 +116,7 @@ abstract class PredicateFactory {
         private final Conjunction conjunction;
 
         PairedPredicate(PredicateFactory operator1, PredicateFactory operator2, Conjunction conjunction) {
-            super(false, true);
+            super();
             this.operator1 = operator1;
             this.operator2 = operator2;
             this.conjunction = conjunction;
@@ -149,13 +136,11 @@ abstract class PredicateFactory {
     }
 
     static {
-        operators.put("is", new MatchAny(JqlOp.EQ, true, false));
-        operators.put("in", new MatchAny(JqlOp.EQ, false, false));
-        operators.put("not", new NotMatch(JqlOp.NE, true, false));
-        operators.put("not in", new NotMatch(JqlOp.NE, false, false));
+        operators.put("is", new MatchAny(JqlOp.EQ));
+        operators.put("not", new NotMatch(JqlOp.NE));
 
-        operators.put("like", new MatchAny(JqlOp.LIKE, true, true));
-        operators.put("not like", new NotMatch(JqlOp.NOT_LIKE, true, true));
+        operators.put("like", new MatchAny(JqlOp.LIKE));
+        operators.put("not like", new NotMatch(JqlOp.NOT_LIKE));
 
         Compare GT = new Compare(JqlOp.GT);
         Compare LT = new Compare(JqlOp.LT);

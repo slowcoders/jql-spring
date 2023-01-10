@@ -79,9 +79,9 @@ public class JQJoin {
     }
 
     public static String initJsonKey(JQColumn fk) {
-        String fk_name = fk.getColumnName();
+        String fk_name = fk.getPhysicalName();
         JQColumn joinedPk = fk.getJoinedPrimaryColumn();
-        String pk_name = joinedPk.getColumnName();
+        String pk_name = joinedPk.getPhysicalName();
         if (fk_name.endsWith("_" + pk_name)) {
             return fk_name.substring(0, fk_name.length() - pk_name.length() - 1);
         } else {

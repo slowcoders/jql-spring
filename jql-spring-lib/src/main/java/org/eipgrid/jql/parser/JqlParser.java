@@ -32,7 +32,7 @@ public class JqlParser {
         //   --> @?EQ 기능은 넣되, 숨겨진 고급기능으로..
         // "groupBy@" : ["attr1", "attr2/attr3" ]
 
-        JqlFilter baseFilter = predicates.getBaseFilter();
+        EntityFilter baseFilter = predicates.getBaseFilter();
 
         for (Map.Entry<String, Object> entry : filter.entrySet()) {
             String key = entry.getKey();
@@ -46,7 +46,6 @@ public class JqlParser {
             }
 
             PredicateFactory op = PredicateFactory.getFactory(function);
-            boolean fetchData = op.needFetchData();
             String[] selectedKeys = null;
             if (select_end > 0) {
                 int select_start = key.indexOf('<');
@@ -78,17 +77,17 @@ public class JqlParser {
                 key = null;
             }
 
-            JqlNodeType valueCategory = this.getValueCategory(value);
-            JqlFilter subFilter = baseFilter.getFilterNode(key, valueCategory);
+            NodeType valueNodeType = this.getNodeType(value);
+            EntityFilter subFilter = baseFilter.getFilterNode(key, valueNodeType);
             PredicateSet targetPredicates = predicates;
             if (subFilter != baseFilter) {
                 targetPredicates = subFilter.getPredicateSet();
                 subFilter.setSelectedProperties(selectedKeys);
             }
 
-            if (valueCategory != JqlNodeType.Leaf) {
-                PredicateSet ps = op.getPredicates(subFilter, valueCategory);
-                if (valueCategory == JqlNodeType.Entity) {
+            if (valueNodeType != NodeType.Leaf) {
+                PredicateSet ps = op.getPredicates(subFilter, valueNodeType);
+                if (valueNodeType == NodeType.Entity) {
                     Map<String, Object> subJql = (Map<String, Object>) value;
                     if (!subJql.isEmpty()) {
                         this.parse(ps, subJql);
@@ -173,17 +172,22 @@ public class JqlParser {
         registerAutoFetchFields(fields, entityType.getSuperclass());
     }
 
-    private JqlNodeType getValueCategory(Object value) {
+    private NodeType getNodeType(Object value) {
         if (value instanceof Collection) {
             if (((Collection)value).iterator().next() instanceof Map) {
-                return JqlNodeType.Entities;
+                return NodeType.Entities;
             }
         }
         if (value instanceof Map) {
-            return JqlNodeType.Entity;
+            return NodeType.Entity;
         }
-        return JqlNodeType.Leaf;
+        return NodeType.Leaf;
     }
 
+    enum NodeType {
+        Leaf,
+        Entity,
+        Entities
+    }
 }
 

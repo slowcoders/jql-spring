@@ -159,13 +159,13 @@ public class JdbcSchema extends JQSchema {
 
             if (!isInverseJoin) {
                 JQColumn fk = firstFk;
-                sb.write("@JoinColumn(name = ").writeQuoted(fk.getColumnName()).write(", ");
+                sb.write("@JoinColumn(name = ").writeQuoted(fk.getPhysicalName()).write(", ");
                 sb.write("referencedColumnName = ").writeQuoted(fk.getJoinedPrimaryColumn().resolveJavaFieldName()).write(")\n");
             }
             else if (join.getAssociativeJoin() != null) {
                 sb.write("@JoinTable(name = ").writeQuoted(join.getJoinedSchema().getSimpleTableName()).write(", ");
-                sb.write("joinColumns = @JoinColumn(name=").writeQuoted(firstFk.getColumnName()).write("), ");
-                sb.write("inverseJoinColumns = @JoinColumn(name=").writeQuoted(join.getAssociativeJoin().getForeignKeyColumns().get(0).getColumnName()).write("))\n");
+                sb.write("joinColumns = @JoinColumn(name=").writeQuoted(firstFk.getPhysicalName()).write("), ");
+                sb.write("inverseJoinColumns = @JoinColumn(name=").writeQuoted(join.getAssociativeJoin().getForeignKeyColumns().get(0).getPhysicalName()).write("))\n");
             }
 
             String mappedType = toJavaTypeName(mappedSchema.getSimpleTableName());
@@ -218,9 +218,9 @@ public class JdbcSchema extends JQSchema {
             boolean isUnique = this.isUniqueConstrainedColumnSet(Collections.singletonList(col));
             sb.write(isUnique ? "@One" : "@Many").writeln("ToOne(fetch = FetchType.LAZY)");
         }
-        sb.write(pk != null ? "@Join" : "@").write("Column(name = ").writeQuoted(col.getColumnName()).write(", ");
+        sb.write(pk != null ? "@Join" : "@").write("Column(name = ").writeQuoted(col.getPhysicalName()).write(", ");
         if (pk != null) {
-            sb.write("referencedColumnName = ").writeQuoted(pk.getColumnName()).write(", ");
+            sb.write("referencedColumnName = ").writeQuoted(pk.getPhysicalName()).write(", ");
         }
         if (!col.isNullable()) {
             sb.writeln("nullable = false");
@@ -240,7 +240,7 @@ public class JdbcSchema extends JQSchema {
         for (List<String> uc : this.uniqueConstraints.values()) {
             if (uc.size() != cntColumn) continue;
             for (JQColumn col : fkColumns) {
-                String col_name = col.getColumnName();
+                String col_name = col.getPhysicalName();
                 if (!uc.contains(col_name)) {
                     continue compare_constraint;
                 }

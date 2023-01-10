@@ -6,9 +6,9 @@ import org.eipgrid.jql.util.SourceWriter;
 
 import java.util.*;
 
-public class SqlConverter implements AstVisitor {
+public class SqlConverter implements PredicateVisitor {
     protected final SourceWriter sw;
-    private JqlFilter currentNode;
+    private EntityFilter currentNode;
 
     public enum Command {
         Insert,
@@ -20,16 +20,16 @@ public class SqlConverter implements AstVisitor {
         this.sw = sw;
     }
 
-    public void visitNode(JqlFilter node) {
-        JqlFilter old = this.currentNode;
+    public void visitNode(EntityFilter node) {
+        EntityFilter old = this.currentNode;
         this.currentNode = node;
 //        node.getPredicates().accept(this);
 //        this.currentNode = old;
     }
 
-    private void writeJsonPath(JqlFilter node) {
+    private void writeJsonPath(EntityFilter node) {
         if (node.isJsonNode()) {
-            JqlFilter parent = node.getParentNode();
+            EntityFilter parent = node.getParentNode();
             writeJsonPath(parent);
             if (parent.isJsonNode()) {
                 sw.writeQuoted(node.getMappingAlias());

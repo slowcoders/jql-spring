@@ -1,9 +1,9 @@
 package org.eipgrid.jql.parser;
 
-class JsonFilter extends JqlFilter {
+class JsonFilter extends EntityFilter {
     private final String key;
 
-    JsonFilter(JqlFilter parentQuery, String key) {
+    JsonFilter(EntityFilter parentQuery, String key) {
         super(parentQuery);
         this.key = key;
     }
@@ -14,11 +14,11 @@ class JsonFilter extends JqlFilter {
     }
 
     @Override
-    public JqlFilter makeSubNode(String key, JqlNodeType nodeType) {
-        if (nodeType == JqlNodeType.Leaf) {
+    public EntityFilter makeSubNode(String key, JqlParser.NodeType nodeType) {
+        if (nodeType == JqlParser.NodeType.Leaf) {
             return this;
         }
-        JqlFilter entity = subFilters.get(key);
+        EntityFilter entity = subFilters.get(key);
         if (entity == null) {
             entity = new JsonFilter(this, key);
             subFilters.put(key, entity);

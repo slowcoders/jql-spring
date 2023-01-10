@@ -2,7 +2,7 @@ package org.eipgrid.jql.parser;
 
 public interface Expression {
 
-    void accept(AstVisitor visitor);
+    void accept(PredicateVisitor visitor);
 
     default boolean isEmpty() { return false; }
 
