@@ -1,6 +1,6 @@
 package org.eipgrid.jql.jpa;
 
-import org.eipgrid.jql.spring.JQService;
+import org.eipgrid.jql.JqlService;
 import org.eipgrid.jql.util.ClassUtils;
 import org.springframework.core.convert.ConversionService;
 import org.springframework.data.domain.Sort;
@@ -29,7 +29,7 @@ public abstract class JPAQueryBuilder<ENTITY, ID> {
     private boolean hasGeneratedId;
     private String[] pkNames;
 
-    public JPAQueryBuilder(JQService service) {
+    public JPAQueryBuilder(JqlService service) {
         this.conversionService = service.getConversionService();
         this.entityManager = service.getEntityManager();
         initTypeInfo();

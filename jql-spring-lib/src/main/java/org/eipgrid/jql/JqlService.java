@@ -1,7 +1,7 @@
-package org.eipgrid.jql.spring;
+package org.eipgrid.jql;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.eipgrid.jql.JQSchema;
+import org.eipgrid.jql.schema.JQSchema;
 import org.eipgrid.jql.jdbc.postgres.UpdateListener;
 import org.eipgrid.jql.jpa.JPARepositoryBase;
 import org.hibernate.boot.model.naming.Identifier;
@@ -22,7 +22,7 @@ import javax.sql.DataSource;
 import java.util.HashMap;
 
 @Service
-public abstract class JQService implements AttributeNameConverter {
+public abstract class JqlService implements AttributeNameConverter {
     private final JdbcTemplate jdbc;
     private final MappingJackson2HttpMessageConverter jsonConverter;
     private final EntityManager entityManager;
@@ -32,14 +32,14 @@ public abstract class JQService implements AttributeNameConverter {
     private final ConversionService conversionService;
 
     private final RequestMappingHandlerMapping handlerMapping;
-    private HashMap<String, JQRepository> repositories = new HashMap<>();
+    private HashMap<String, JqlRepository> repositories = new HashMap<>();
 
-    public JQService(DataSource dataSource,
-                     TransactionTemplate transactionTemplate,
-                     MappingJackson2HttpMessageConverter jsonConverter,
-                     ConversionService conversionService,
-                     RequestMappingHandlerMapping handlerMapping,
-                     EntityManager entityManager, EntityManagerFactory entityManagerFactory) throws Exception {
+    public JqlService(DataSource dataSource,
+                      TransactionTemplate transactionTemplate,
+                      MappingJackson2HttpMessageConverter jsonConverter,
+                      ConversionService conversionService,
+                      RequestMappingHandlerMapping handlerMapping,
+                      EntityManager entityManager, EntityManagerFactory entityManagerFactory) throws Exception {
         this.jdbc = new JdbcTemplate(dataSource);
         this.objectMapper = new ObjectMapper();
         this.transactionTemplate = transactionTemplate;
@@ -70,7 +70,7 @@ public abstract class JQService implements AttributeNameConverter {
         return objectMapper;
     }
 
-    public abstract JQRepository makeRepository(String tableName);
+    public abstract JqlRepository makeRepository(String tableName);
 
     public abstract JQSchema loadSchema(String tableName, Class ormType);
 

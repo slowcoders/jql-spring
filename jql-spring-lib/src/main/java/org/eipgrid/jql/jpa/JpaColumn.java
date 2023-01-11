@@ -2,10 +2,10 @@ package org.eipgrid.jql.jpa;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import org.eipgrid.jql.JQColumn;
-import org.eipgrid.jql.JQSchema;
-import org.eipgrid.jql.JQType;
-import org.eipgrid.jql.JQSchemaLoader;
+import org.eipgrid.jql.schema.JQColumn;
+import org.eipgrid.jql.schema.JQSchema;
+import org.eipgrid.jql.schema.JQType;
+import org.eipgrid.jql.schema.JQSchemaLoader;
 import org.eipgrid.jql.util.AttributeNameConverter;
 import org.eipgrid.jql.util.ClassUtils;
 

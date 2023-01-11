@@ -2,9 +2,9 @@ package org.eipgrid.jql.jdbc.postgres;
 
 import lombok.SneakyThrows;
 import org.postgresql.jdbc.PgConnection;
-import org.eipgrid.jql.AutoClearEntityCache;
-import org.eipgrid.jql.AutoUpdateModifyTimestamp;
-import org.eipgrid.jql.spring.JQService;
+import org.eipgrid.jql.schema.AutoClearEntityCache;
+import org.eipgrid.jql.schema.AutoUpdateModifyTimestamp;
+import org.eipgrid.jql.JqlService;
 import org.eipgrid.jql.jpa.JPARepositoryBase;
 import org.springframework.jdbc.datasource.ConnectionHolder;
 import org.springframework.transaction.TransactionStatus;
@@ -15,12 +15,12 @@ import java.sql.SQLException;
 import java.sql.Statement;
 
 public class UpdateListener extends Thread {
-    private final JQService service;
+    private final JqlService service;
     private final JPARepositoryBase repository;
     private final PgConnection conn;
     private final ConnectionHolder connHolder;
 
-    public UpdateListener(JQService service, String event, JPARepositoryBase repository) throws SQLException {
+    public UpdateListener(JqlService service, String event, JPARepositoryBase repository) throws SQLException {
         this.service = service;
         this.conn = service.getDataSource().getConnection().unwrap(PgConnection.class);
         this.connHolder = new ConnectionHolder(this.conn);
@@ -31,7 +31,7 @@ public class UpdateListener extends Thread {
         stmt.close();
     }
 
-    public static <ID, ENTITY> void initAutoUpdateTrigger(JQService service, String tablePath, JPARepositoryBase<ENTITY,ID> repository) {
+    public static <ID, ENTITY> void initAutoUpdateTrigger(JqlService service, String tablePath, JPARepositoryBase<ENTITY,ID> repository) {
         Class<?> entityType = repository.getEntityType();
         AutoUpdateModifyTimestamp autoUpdate = entityType.getAnnotation(AutoUpdateModifyTimestamp.class);
         AutoClearEntityCache autoClearCache = entityType.getAnnotation(AutoClearEntityCache.class);

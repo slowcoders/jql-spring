@@ -1,6 +1,6 @@
 package org.eipgrid.jql.jdbc;
 
-import org.eipgrid.jql.JQType;
+import org.eipgrid.jql.schema.JQType;
 import org.eipgrid.jql.parser.*;
 import org.eipgrid.jql.util.SourceWriter;
 

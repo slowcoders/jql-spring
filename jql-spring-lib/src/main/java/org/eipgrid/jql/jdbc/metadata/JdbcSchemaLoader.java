@@ -1,10 +1,14 @@
 package org.eipgrid.jql.jdbc.metadata;
 
-import org.eipgrid.jql.JQColumn;
-import org.eipgrid.jql.JQSchema;
-import org.eipgrid.jql.JQJoin;
-import org.eipgrid.jql.JQSchemaLoader;
+import org.eipgrid.jql.*;
+import org.eipgrid.jql.jdbc.QueryGenerator;
+import org.eipgrid.jql.jdbc.SqlGenerator;
 import org.eipgrid.jql.jpa.JpaSchema;
+import org.eipgrid.jql.parser.JqlQuery;
+import org.eipgrid.jql.schema.JQColumn;
+import org.eipgrid.jql.schema.JQJoin;
+import org.eipgrid.jql.schema.JQSchema;
+import org.eipgrid.jql.schema.JQSchemaLoader;
 import org.eipgrid.jql.util.AttributeNameConverter;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.ConnectionCallback;
@@ -14,7 +18,7 @@ import javax.sql.DataSource;
 import java.sql.*;
 import java.util.*;
 
-public class JdbcSchemaLoader extends JQSchemaLoader {
+public class JdbcSchemaLoader extends JQSchemaLoader implements QueryGenerator {
     private final JdbcTemplate jdbc;
     private final String defaultSchema;
     private String catalog;
@@ -200,7 +204,7 @@ public class JdbcSchemaLoader extends JQSchemaLoader {
 
     private JdbcColumn getColumn(ArrayList<JQColumn> columns, String columnName) {
         for (JQColumn column : columns) {
-            if (columnName.equals(column.getColumnName())) {
+            if (columnName.equals(column.getPhysicalName())) {
                 return (JdbcColumn)column;
             }
         }
@@ -338,5 +342,39 @@ public class JdbcSchemaLoader extends JQSchemaLoader {
             this.fktable_cat = rs.getString("fktable_cat");
             assert (pktable_cat == null && fktable_cat == null);
         }
+    }
+
+    @Override
+    public String createSelectQuery(JqlQuery where, JqlSelect columns) {
+        return createSqlGenerator().createSelectQuery(where, columns);
+    }
+
+    @Override
+    public String createCountQuery(JqlQuery where) {
+        return createSqlGenerator().createCountQuery(where);
+    }
+
+    @Override
+    public String createUpdateQuery(JqlQuery where, Map<String, Object> updateSet) {
+        return createSqlGenerator().createUpdateQuery(where, updateSet);
+    }
+
+    @Override
+    public String createDeleteQuery(JqlQuery where) {
+        return createSqlGenerator().createDeleteQuery(where);
+    }
+
+    @Override
+    public String prepareFindByIdStatement(JQSchema schema) {
+        return createSqlGenerator().prepareFindByIdStatement(schema);
+    }
+
+    @Override
+    public String createInsertStatement(JQSchema schema, Map entity, boolean ignoreConflict) {
+        return createSqlGenerator().createInsertStatement(schema, entity, ignoreConflict);
+    }
+
+    protected SqlGenerator createSqlGenerator() {
+        return new SqlGenerator();
     }
 }

@@ -1,7 +1,7 @@
 package org.eipgrid.jql.jdbc.metadata;
 
 import com.zaxxer.hikari.HikariDataSource;
-import org.eipgrid.jql.JQSchema;
+import org.eipgrid.jql.schema.JQSchema;
 import org.eipgrid.jql.js.JsUtil;
 import org.eipgrid.jql.util.AttributeNameConverter;
 import org.springframework.boot.CommandLineRunner;

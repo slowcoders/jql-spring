@@ -1,4 +1,4 @@
-package org.eipgrid.jql.spring.config;
+package org.eipgrid.jql.config;
 
 import com.fasterxml.jackson.databind.Module;
 import com.fasterxml.jackson.databind.*;

@@ -1,12 +1,10 @@
 package org.eipgrid.jql.jdbc;
 
-import org.eipgrid.jql.JQSchema;
-import org.eipgrid.jql.JQSchemaLoader;
-import org.eipgrid.jql.JQSelect;
+import org.eipgrid.jql.schema.JQSchema;
+import org.eipgrid.jql.schema.JQSchemaLoader;
 import org.eipgrid.jql.jdbc.metadata.JdbcSchemaLoader;
-import org.eipgrid.jql.parser.JqlQuery;
-import org.eipgrid.jql.spring.JQRepository;
-import org.eipgrid.jql.spring.JQService;
+import org.eipgrid.jql.JqlRepository;
+import org.eipgrid.jql.JqlService;
 import org.eipgrid.jql.util.AttributeNameConverter;
 import org.springframework.core.convert.ConversionService;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
@@ -19,13 +17,13 @@ import javax.sql.DataSource;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
-public class JdbcJQService extends JQService implements QueryBuilder {
+public class JdbcJQService extends JqlService {
     JdbcSchemaLoader jdbcSchemaLoader;
-    private HashMap<String, JQRepository> repositories = new HashMap<>();
+    private HashMap<String, JqlRepository> repositories = new HashMap<>();
 
-    public JdbcJQService(DataSource dataSource, TransactionTemplate transactionTemplate,
+    public JdbcJQService(DataSource dataSource,
+                         TransactionTemplate transactionTemplate,
                          MappingJackson2HttpMessageConverter jsonConverter,
                          ConversionService conversionService,
                          RequestMappingHandlerMapping handlerMapping,
@@ -40,8 +38,8 @@ public class JdbcJQService extends JQService implements QueryBuilder {
         return jdbcSchemaLoader;
     }
 
-    public JQRepository makeRepository(String tableName) {
-        JQRepository repo = repositories.get(tableName);
+    public JqlRepository makeRepository(String tableName) {
+        JqlRepository repo = repositories.get(tableName);
         if (repo == null) {
             JQSchema schema = jdbcSchemaLoader.loadSchema(tableName, null);
             repo = new JDBCRepositoryBase(this, schema);
@@ -66,33 +64,7 @@ public class JdbcJQService extends JQService implements QueryBuilder {
         return jdbcSchemaLoader.getDBSchemas();
     }
 
-    @Override
-    public String createSelectQuery(JqlQuery where, JQSelect columns) {
-        return new SqlGenerator().createSelectQuery(where, columns);
-    }
-
-    @Override
-    public String createCountQuery(JqlQuery where) {
-        return new SqlGenerator().createCountQuery(where);
-    }
-
-    @Override
-    public String createUpdateQuery(JqlQuery where, Map<String, Object> updateSet) {
-        return new SqlGenerator().createUpdateQuery(where, updateSet);
-    }
-
-    @Override
-    public String createDeleteQuery(JqlQuery where) {
-        return new SqlGenerator().createDeleteQuery(where);
-    }
-
-    @Override
-    public String prepareFindByIdStatement(JQSchema schema) {
-        return new SqlGenerator().prepareFindByIdStatement(schema);
-    }
-
-    @Override
-    public String createInsertStatement(JQSchema schema, Map entity, boolean ignoreConflict) {
-        return new SqlGenerator().createInsertStatement(schema, entity, ignoreConflict);
+    public QueryGenerator getQueryGenerator() {
+        return jdbcSchemaLoader;
     }
 }

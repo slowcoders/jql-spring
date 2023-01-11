@@ -1,4 +1,4 @@
-package org.eipgrid.jql;
+package org.eipgrid.jql.schema;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.Retention;
@@ -10,5 +10,6 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 @Documented
 @Target(TYPE)
 @Retention(RUNTIME)
-public @interface AutoClearEntityCache {
+public @interface AutoUpdateModifyTimestamp {
+    String column();
 }

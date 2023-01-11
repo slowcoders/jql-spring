@@ -1,4 +1,4 @@
-package org.eipgrid.jql;
+package org.eipgrid.jql.schema;
 
 import java.util.List;
 import java.util.stream.Collectors;

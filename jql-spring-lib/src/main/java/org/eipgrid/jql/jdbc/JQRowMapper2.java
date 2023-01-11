@@ -1,6 +1,6 @@
 package org.eipgrid.jql.jdbc;
 
-import org.eipgrid.jql.JQColumn;
+import org.eipgrid.jql.schema.JQColumn;
 import org.eipgrid.jql.util.KVEntity;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.ResultSetExtractor;

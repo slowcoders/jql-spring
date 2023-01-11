@@ -6,24 +6,42 @@ describe('Top', () => {
     const jql = {
       "name@like": "Luke%"
     }
-    const result = await jqlApi.top(jql);
-    expect(result.name).toContain("Luke");
+    const character = await jqlApi.top(jql);
+
+    expect(character.name).toBe("Luke Skywalker");
+
+    expect(character.name).toMatch("Sky");
+    expect(character.name).toMatch(/Luke Skywalker/);
+    expect(character.name).toMatch(/Luke .*/);
+
+    expect(character.name.indexOf("Luke") == 0).toBeTruthy();
+    expect(character.name.startsWith("Luke")).toBeTruthy();
   });
 
-  test('Find first having a starship that length > 10', async () => {
+  test('Select ID only', async () => {
+    const character = await jqlApi.top(null, { select: "0" });
+    expect(character.id).not.toBeUndefined();
+    expect(character.name).toBeUndefined();
+  });
+
+  test('Find any character having a starship that length > 10', async () => {
     const jql = {
       "starship": { "length@gt": 10 }
     }
-    const result = await jqlApi.top(jql);
-    expect(result.length).toBeGreaterThan(10);
+    const character = await jqlApi.top(jql);
+    for (const ship of character.starship) {
+      expect(ship.length).toBeGreaterThan(10);
+    }
   });
 
-  test('Find first having a starship that length < 10', async () => {
+  test('Find any character having a starship that length < 10', async () => {
     const jql = {
       "starship": { "length@lt": 10 }
     }
-    const result = await jqlApi.top(jql);
-    expect(result.length).toBeLessThan(10);
+    const character = await jqlApi.top(jql);
+    for (const ship of character.starship) {
+      expect(ship.length).toBeLessThan(10);
+    }
   });
 });
 

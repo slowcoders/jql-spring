@@ -1,7 +1,10 @@
 package org.eipgrid.jql.parser;
 
-import org.eipgrid.jql.*;
 import org.eipgrid.jql.jdbc.JQResultMapping;
+import org.eipgrid.jql.schema.JQColumn;
+import org.eipgrid.jql.schema.JQJoin;
+import org.eipgrid.jql.schema.JQSchema;
+import org.eipgrid.jql.schema.JQType;
 
 import java.util.*;
 
@@ -109,7 +112,7 @@ class TableFilter extends EntityFilter implements JQResultMapping {
         boolean hasAdditionalKey = false;
         int keyBits = 0;
         for (String k : keys) {
-            KeySet keySet = KeySet.toAlias(k.charAt(0));
+            KeySet keySet = KeySet.toAlias(k);
             if (keySet == null) {
                 hasAdditionalKey = true;
                 continue;
@@ -141,7 +144,7 @@ class TableFilter extends EntityFilter implements JQResultMapping {
         List<JQColumn> columns = new ArrayList<>(baseColumns);
 
         for (String k : keys) {
-            KeySet keySet = KeySet.toAlias(k.charAt(0));
+            KeySet keySet = KeySet.toAlias(k);
             if (keySet == null) {
                 JQColumn column = schema.getColumn(k);
                 if (!columns.contains(column)) columns.add(column);

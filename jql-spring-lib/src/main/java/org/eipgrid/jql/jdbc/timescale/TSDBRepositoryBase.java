@@ -1,10 +1,10 @@
 package org.eipgrid.jql.jdbc.timescale;
 
-import org.eipgrid.jql.JQColumn;
-import org.eipgrid.jql.JQSchema;
-import org.eipgrid.jql.JQType;
+import org.eipgrid.jql.schema.JQColumn;
+import org.eipgrid.jql.schema.JQSchema;
+import org.eipgrid.jql.schema.JQType;
 import org.eipgrid.jql.jpa.JPARepositoryBase;
-import org.eipgrid.jql.spring.JQService;
+import org.eipgrid.jql.JqlService;
 import org.eipgrid.jql.util.ClassUtils;
 
 import java.lang.reflect.Field;
@@ -15,7 +15,7 @@ public abstract class TSDBRepositoryBase<ENTITY, ID> extends JPARepositoryBase<E
 
     private final String timeKeyColumnName;
 
-    public TSDBRepositoryBase(JQService service, String timeKeyColumnName) {
+    public TSDBRepositoryBase(JqlService service, String timeKeyColumnName) {
         super(service);
         this.timeKeyColumnName = timeKeyColumnName;
 

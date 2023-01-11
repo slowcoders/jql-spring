@@ -1,9 +1,9 @@
-package org.eipgrid.jql.spring;
+package org.eipgrid.jql;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Schema;
-import org.eipgrid.jql.JQSelect;
+import org.eipgrid.jql.util.KVEntity;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
@@ -16,14 +16,14 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 
-public interface JQController<ENTITY, ID> {
+public interface JqlController<ENTITY, ID> {
 
-    JQRepository<ENTITY,ID> getRepository();
+    JqlRepository<ENTITY,ID> getRepository();
 
     /****************************************************************
      * Search API set
      */
-    interface Search<ENTITY, ID> extends JQController<ENTITY, ID> {
+    interface Search<ENTITY, ID> extends JqlController<ENTITY, ID> {
 
         @GetMapping(path = "/{id}")
         @ResponseBody
@@ -45,7 +45,7 @@ public interface JQController<ENTITY, ID> {
                             @RequestParam(value = "limit", defaultValue = "0") int limit,
                             @RequestParam(value = "select", required = false) String columns,
                             @RequestParam(value = "sort", required = false) String sort) {
-            return find(page, limit, sort, columns, null);
+            return find(page, limit, columns, sort, null);
         }
 
         @PostMapping(path = "/find")
@@ -57,19 +57,28 @@ public interface JQController<ENTITY, ID> {
                             @RequestParam(value = "select", required = false) String columns,
                             @RequestParam(value = "sort", required = false) String sort,
                             @Schema(implementation = Object.class)
-                            @RequestBody() HashMap<String, Object> filter) {
+                            @RequestBody() HashMap<String, Object> jsQuery) {
             boolean need_pagination = page >= 0 && limit > 1;
             int offset = need_pagination ? page * limit : 0;
-            JQSelect select = JQSelect.by(columns, sort, offset, limit);
-            List<ENTITY> res = getRepository().find(filter, select);
+            JqlSelect select = JqlSelect.by(columns, sort, offset, limit);
+            List<ENTITY> res = getRepository().find(jsQuery, select);
 
             if (need_pagination) {
-                long count = getRepository().count(filter);
+                long count = getRepository().count(jsQuery);
                 PageRequest pageReq = PageRequest.of(page, limit, select.getSort());
                 return new PageImpl(res, pageReq, count);
             } else {
-                return res;
+                return KVEntity.of("content", res);
             }
+        }
+
+        @PostMapping(path = "/count")
+        @ResponseBody
+        @Operation(summary = "엔터티 수 조회")
+        default long count(@Schema(implementation = Object.class)
+                            @RequestBody() HashMap<String, Object> jsQuery) {
+            long count = getRepository().count(jsQuery);
+            return count;
         }
 
         @PostMapping(path = "/top")
@@ -78,9 +87,9 @@ public interface JQController<ENTITY, ID> {
         default ENTITY top(@RequestParam(value = "select", required = false) String columns,
                            @RequestParam(value = "sort", required = false) String sort,
                            @Schema(implementation = Object.class)
-                           @RequestBody HashMap<String, Object> filter) {
-            JQSelect select = JQSelect.by(columns, sort, 0, 1);
-            List<ENTITY> res = getRepository().find(filter, select);
+                           @RequestBody HashMap<String, Object> jsQuery) {
+            JqlSelect select = JqlSelect.by(columns, sort, 0, 1);
+            List<ENTITY> res = getRepository().find(jsQuery, select);
             return res.size() > 0 ? res.get(0) : null;
         }
 
@@ -96,7 +105,7 @@ public interface JQController<ENTITY, ID> {
     /****************************************************************
      * Update API set
      */
-    interface Update<ENTITY, ID> extends JQController<ENTITY, ID> {
+    interface Update<ENTITY, ID> extends JqlController<ENTITY, ID> {
 
         @PostMapping(path = "/", consumes = { MediaType.APPLICATION_JSON_VALUE })
         @ResponseBody
@@ -134,7 +143,7 @@ public interface JQController<ENTITY, ID> {
     /****************************************************************
      * Form Control API set
      */
-    interface Form<ENTITY, ID> extends JQController<ENTITY, ID> {
+    interface Form<ENTITY, ID> extends JqlController<ENTITY, ID> {
 
         @PostMapping(path = "/", consumes = { MediaType.MULTIPART_FORM_DATA_VALUE })
         @ResponseBody
@@ -159,14 +168,14 @@ public interface JQController<ENTITY, ID> {
     }
 
     abstract class SearchAndUpdate<ENTITY, ID> implements Search<ENTITY, ID>, Update<ENTITY, ID> {
-        JQRepository<ENTITY, ID> repository;
+        JqlRepository<ENTITY, ID> repository;
 
-        public SearchAndUpdate(JQRepository<ENTITY, ID> repository) {
+        public SearchAndUpdate(JqlRepository<ENTITY, ID> repository) {
             this.repository = repository;
         }
 
         @Override
-        public JQRepository<ENTITY, ID> getRepository() {
+        public JqlRepository<ENTITY, ID> getRepository() {
             return repository;
         }
 

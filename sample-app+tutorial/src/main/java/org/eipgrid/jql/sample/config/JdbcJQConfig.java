@@ -1,7 +1,7 @@
 package org.eipgrid.jql.sample.config;
 
 import org.eipgrid.jql.jdbc.JdbcJQService;
-import org.eipgrid.jql.spring.config.DefaultJQConfig;
+import org.eipgrid.jql.config.DefaultJQConfig;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.convert.ConversionService;

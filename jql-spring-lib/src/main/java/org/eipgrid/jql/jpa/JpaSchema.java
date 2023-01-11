@@ -1,7 +1,7 @@
 package org.eipgrid.jql.jpa;
 
-import org.eipgrid.jql.JQSchema;
-import org.eipgrid.jql.JQSchemaLoader;
+import org.eipgrid.jql.schema.JQSchema;
+import org.eipgrid.jql.schema.JQSchemaLoader;
 
 import javax.persistence.Transient;
 import java.lang.reflect.Field;

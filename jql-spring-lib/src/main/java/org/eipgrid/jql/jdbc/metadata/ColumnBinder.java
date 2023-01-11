@@ -1,7 +1,7 @@
 package org.eipgrid.jql.jdbc.metadata;
 
-import org.eipgrid.jql.JQColumn;
-import org.eipgrid.jql.JQSchemaLoader;
+import org.eipgrid.jql.schema.JQColumn;
+import org.eipgrid.jql.schema.JQSchemaLoader;
 
 class ColumnBinder {
     private final JQSchemaLoader schemaLoader;

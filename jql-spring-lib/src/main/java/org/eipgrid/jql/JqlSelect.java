@@ -4,39 +4,36 @@ import org.springframework.data.domain.Sort;
 
 import java.util.ArrayList;
 
-public class JQSelect {
+public class JqlSelect {
 
     private final String[] keys;
     private Sort sort;
     private int offset;
     private int limit;
 
-    public static final char ALL_PROPERTIES = '*';
-    public static final char PRIMARY_KEYS = '0';
+    public static final String All = "*";
+    public static final String PrimaryKeys = "0";
+    public static final String Auto = "@";
 
-    public static final char COMPARED_PROPERTIES = '@';
+    public static final JqlSelect Whole = new JqlSelect(new String[] { All }, null, 0, 0);
+    public static final JqlSelect NotAtAll = new JqlSelect(new String[0], null, 0, 0);
 
-    public static final char NOTHING = '_';
-
-    public static final JQSelect Whole = new JQSelect(new String[] { "*" }, null, 0, 0);
-    public static final JQSelect NotAtAll = new JQSelect(new String[0], null, 0, 0);
-
-    protected JQSelect(String[] keys, Sort sort, int offset, int limit) {
+    protected JqlSelect(String[] keys, Sort sort, int offset, int limit) {
         this.keys = keys == null ? Whole.keys : keys;
         this.sort = sort;
         this.offset = offset;
         this.limit = limit;
     }
 
-    public static JQSelect by(String[] keys, Sort sort, int offset, int limit) {
-        return new JQSelect(keys, sort, offset, limit);
+    public static JqlSelect by(String[] keys, Sort sort, int offset, int limit) {
+        return new JqlSelect(keys, sort, offset, limit);
     }
 
-    public static JQSelect by(String[] keys, String[] sort, int offset, int limit) {
+    public static JqlSelect by(String[] keys, String[] sort, int offset, int limit) {
         return by(keys, buildSort(sort), offset, limit);
     }
 
-    public static JQSelect by(String keys, String sort, int offset, int limit) {
+    public static JqlSelect by(String keys, String sort, int offset, int limit) {
         String[] _columns = splitPropertyKeys(keys);
         return by(_columns, parseSort(sort), offset, limit);
     }

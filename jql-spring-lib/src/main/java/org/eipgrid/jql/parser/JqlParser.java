@@ -1,8 +1,8 @@
 package org.eipgrid.jql.parser;
 
-import org.eipgrid.jql.JQColumn;
-import org.eipgrid.jql.JQSchema;
-import org.eipgrid.jql.JQSelect;
+import org.eipgrid.jql.schema.JQColumn;
+import org.eipgrid.jql.schema.JQSchema;
+import org.eipgrid.jql.JqlSelect;
 import org.springframework.core.convert.ConversionService;
 
 import javax.persistence.FetchType;
@@ -51,7 +51,7 @@ public class JqlParser {
                 int select_start = key.indexOf('<');
                 if (select_start > 0 && select_start < select_end) {
                     String keys = key.substring(select_start+1, select_end);
-                    selectedKeys = JQSelect.splitPropertyKeys(keys);
+                    selectedKeys = JqlSelect.splitPropertyKeys(keys);
                     key = key.substring(0, select_start);
                 }
             }

@@ -1,10 +1,10 @@
 package org.eipgrid.jql.jdbc.timescale;
 
-import org.eipgrid.jql.JQColumn;
-import org.eipgrid.jql.JQSchema;
-import org.eipgrid.jql.JQType;
-import org.eipgrid.jql.spring.JQRepository;
-import org.eipgrid.jql.spring.JQService;
+import org.eipgrid.jql.schema.JQColumn;
+import org.eipgrid.jql.schema.JQSchema;
+import org.eipgrid.jql.schema.JQType;
+import org.eipgrid.jql.JqlRepository;
+import org.eipgrid.jql.JqlService;
 import org.eipgrid.jql.util.SourceWriter;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.ConnectionCallback;
@@ -22,7 +22,7 @@ public abstract class TSDBHelper {
     private static final boolean USE_CONN = true;
 
     private final String tableName;
-    private final JQService service;
+    private final JqlService service;
     private final JdbcTemplate jdbc;
 
     private JQColumn timeKeyColumn;
@@ -30,7 +30,7 @@ public abstract class TSDBHelper {
     private JQSchema schema;
     private Connection conn;
 
-    public TSDBHelper(JQService service, String tableName) {
+    public TSDBHelper(JqlService service, String tableName) {
         this.jdbc = service.getJdbcTemplate();
         this.service = service;
         this.tableName = tableName;
@@ -311,7 +311,7 @@ public abstract class TSDBHelper {
         return sb.toString();
     }
 
-    public JQRepository getRepository() throws SQLException {
+    public JqlRepository getRepository() throws SQLException {
         Connection con = service.getDataSource().getConnection();
 //        return jdbc.execute(new ConnectionCallback<JQRepository>() {
 //            @Override

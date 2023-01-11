@@ -1,6 +1,6 @@
 package org.eipgrid.jql.csv;
 
-import org.eipgrid.jql.JQType;
+import org.eipgrid.jql.schema.JQType;
 import org.eipgrid.jql.util.ClassUtils;
 import org.eipgrid.jql.util.KVEntity;
 

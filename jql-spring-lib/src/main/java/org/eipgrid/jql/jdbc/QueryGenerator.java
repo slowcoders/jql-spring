@@ -1,13 +1,13 @@
 package org.eipgrid.jql.jdbc;
 
-import org.eipgrid.jql.JQSchema;
-import org.eipgrid.jql.JQSelect;
+import org.eipgrid.jql.schema.JQSchema;
+import org.eipgrid.jql.JqlSelect;
 import org.eipgrid.jql.parser.JqlQuery;
 
 import java.util.Map;
 
-public interface QueryBuilder {
-    String createSelectQuery(JqlQuery where, JQSelect columns);
+public interface QueryGenerator {
+    String createSelectQuery(JqlQuery where, JqlSelect columns);
 
     String createCountQuery(JqlQuery where);
 

@@ -1,18 +1,18 @@
 package org.eipgrid.jql.jdbc;
 
-import org.eipgrid.jql.JQColumn;
-import org.eipgrid.jql.JQSchema;
-import org.eipgrid.jql.JQJoin;
+import org.eipgrid.jql.schema.JQColumn;
+import org.eipgrid.jql.schema.JQSchema;
+import org.eipgrid.jql.schema.JQJoin;
 import org.eipgrid.jql.parser.Expression;
 import org.eipgrid.jql.parser.JqlQuery;
 import org.eipgrid.jql.parser.EntityFilter;
 import org.eipgrid.jql.util.SourceWriter;
-import org.eipgrid.jql.JQSelect;
+import org.eipgrid.jql.JqlSelect;
 import org.springframework.data.domain.Sort;
 
 import java.util.*;
 
-public class SqlGenerator extends SqlConverter implements QueryBuilder {
+public class SqlGenerator extends SqlConverter implements QueryGenerator {
 
     public SqlGenerator() {
         super(new SourceWriter('\''));
@@ -118,7 +118,7 @@ public class SqlGenerator extends SqlConverter implements QueryBuilder {
         return false;
     }
 
-    public String createSelectQuery(JqlQuery where, JQSelect columns) {
+    public String createSelectQuery(JqlQuery where, JqlSelect columns) {
         sw.reset();
         where.setSelectedProperties(columns.getPropertyKeys());
         String tableName = where.getTableName();
@@ -190,7 +190,7 @@ public class SqlGenerator extends SqlConverter implements QueryBuilder {
         sw.replaceTrailingComma("");
     }
 
-    private void writePagination(JQSelect pagination) {
+    private void writePagination(JqlSelect pagination) {
         int offset = pagination.getOffset();
         int limit  = pagination.getLimit();
         if (offset > 0) sw.write("\nOFFSET " + offset);

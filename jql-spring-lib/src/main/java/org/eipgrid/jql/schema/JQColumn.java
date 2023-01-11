@@ -1,4 +1,4 @@
-package org.eipgrid.jql;
+package org.eipgrid.jql.schema;
 
 import org.eipgrid.jql.util.ClassUtils;
 

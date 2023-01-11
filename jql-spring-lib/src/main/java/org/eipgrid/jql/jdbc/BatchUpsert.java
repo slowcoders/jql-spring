@@ -1,8 +1,8 @@
 package org.eipgrid.jql.jdbc;
 
-import org.eipgrid.jql.JQColumn;
-import org.eipgrid.jql.JQSchema;
-import org.eipgrid.jql.JQType;
+import org.eipgrid.jql.schema.JQColumn;
+import org.eipgrid.jql.schema.JQSchema;
+import org.eipgrid.jql.schema.JQType;
 
 import java.sql.PreparedStatement;
 import java.sql.SQLException;

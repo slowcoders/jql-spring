@@ -1,6 +1,6 @@
 package org.eipgrid.jql.parser;
 
-import org.eipgrid.jql.JQSchema;
+import org.eipgrid.jql.schema.JQSchema;
 
 import java.util.HashMap;
 

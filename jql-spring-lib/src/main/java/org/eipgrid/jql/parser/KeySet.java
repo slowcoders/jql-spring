@@ -1,11 +1,11 @@
 package org.eipgrid.jql.parser;
 
-enum KeySet {
-    Auto("@"),
-    All("*"),
-    PrimaryKeys("0"),
-    Nothing("_");
+import org.eipgrid.jql.JqlSelect;
 
+enum KeySet {
+    Auto(JqlSelect.Auto),
+    All(JqlSelect.All),
+    PrimaryKeys(JqlSelect.PrimaryKeys);
     private final String text;
 
     private final String[] keys;
@@ -15,24 +15,18 @@ enum KeySet {
         this.keys = new String[]{this.text};
     }
 
-    public static KeySet toAlias(char c) {
-        switch (c) {
-            case '*':
+    public static KeySet toAlias(String key) {
+        if (key.length() != 1) return null;
+        switch (key) {
+            case JqlSelect.All:
                 return All;
-            case '0':
+            case JqlSelect.PrimaryKeys:
                 return PrimaryKeys;
-            case '@':
+            case JqlSelect.Auto:
                 return Auto;
-            case '_':
-                return Nothing;
             default:
                 return null;
         }
-    }
-
-    public static KeySet toAlias(String key) {
-        if (key.length() != 1) return null;
-        return toAlias(key.charAt(0));
     }
 
     @Override

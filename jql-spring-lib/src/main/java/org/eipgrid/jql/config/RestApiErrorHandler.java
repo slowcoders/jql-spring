@@ -1,4 +1,4 @@
-package org.eipgrid.jql.spring.config;
+package org.eipgrid.jql.config;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

@@ -1,16 +1,15 @@
 package org.eipgrid.jql.jpa;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.eipgrid.jql.JQSchema;
+import org.eipgrid.jql.schema.JQSchema;
 import org.eipgrid.jql.jdbc.BatchUpsert;
 import org.eipgrid.jql.jdbc.JdbcJQService;
-import org.eipgrid.jql.spring.JQRepository;
-import org.eipgrid.jql.spring.JQService;
+import org.eipgrid.jql.JqlRepository;
+import org.eipgrid.jql.JqlService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
-import org.eipgrid.jql.JQSelect;
-import org.springframework.data.domain.Sort;
+import org.eipgrid.jql.JqlSelect;
 import org.springframework.data.repository.NoRepositoryBean;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 
@@ -22,21 +21,21 @@ import java.io.IOException;
 import java.util.*;
 
 @NoRepositoryBean
-public abstract class JPARepositoryBase<ENTITY, ID> extends JPAQueryBuilder<ENTITY, ID> implements JQRepository<ENTITY, ID> {
+public abstract class JPARepositoryBase<ENTITY, ID> extends JPAQueryBuilder<ENTITY, ID> implements JqlRepository<ENTITY, ID> {
 
     private final static HashMap<Class<?>, JPARepositoryBase<?,?>>jqlServices = new HashMap<>();
-    private final JQService service;
+    private final JqlService service;
     private final HashMap<ID, Object> associatedCache = new HashMap<>();
 
     private final MappingJackson2HttpMessageConverter jsonConverter;
 
-    public JPARepositoryBase(JQService service) {
+    public JPARepositoryBase(JqlService service) {
         super(service);
         this.service = service;
         jsonConverter = service.getJsonConverter();
     }
 
-    public JQService getService() {
+    public JqlService getService() {
         return service;
     }
 
@@ -83,12 +82,12 @@ public abstract class JPARepositoryBase<ENTITY, ID> extends JPAQueryBuilder<ENTI
     }
 
     @Override
-    public List<ENTITY> find(Map<String, Object> jsQuery, JQSelect columns) {
+    public List<ENTITY> find(Map<String, Object> jsQuery, JqlSelect columns) {
         return find(jsQuery, columns, columns.getLimit(), super.getEntityType());
     }
 
     //@Override
-    public <T> List<T> find(Map<String, Object> filterConditions, JQSelect columns, int limit, Class<T> resultType) {
+    public <T> List<T> find(Map<String, Object> filterConditions, JqlSelect columns, int limit, Class<T> resultType) {
         Query query = super.buildSearchQuery(filterConditions, columns.getSort(), resultType);
 
         /** Hibernate 버그: limit 값이 생략되면, join 된 row 수만큼 entity 가 생성된다.
@@ -114,13 +113,6 @@ public abstract class JPARepositoryBase<ENTITY, ID> extends JPAQueryBuilder<ENTI
     }
 
     @Override
-    public ENTITY findTop(Map<String, Object> jsQuery, Sort sort) {
-        Query query = super.buildSearchQuery(jsQuery, sort, this.getEntityType());
-        List<ENTITY> res = query.setMaxResults(1).getResultList();
-        return res.size() > 0 ? res.get(0) : null;
-    }
-
-    @Override
     public ID insert(Map<String, Object> dataSet) throws IOException {
         ENTITY entity = super.convert(dataSet, getEntityType());
         return insert(entity);
@@ -137,7 +129,7 @@ public abstract class JPARepositoryBase<ENTITY, ID> extends JPAQueryBuilder<ENTI
         return getEntityId(entity);
     }
 
-    public List<ID> insertAll(Collection<Map<String, Object>> entities) {
+    public List<ID> insert(Collection<Map<String, Object>> entities) {
         if (entities.isEmpty()) return null;
         JQSchema schema = ((JdbcJQService)service).loadSchema(this.getEntityType());
         BatchUpsert batch = new BatchUpsert(schema, entities, true);

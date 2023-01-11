@@ -1,7 +1,7 @@
 package org.eipgrid.jql.jdbc.metadata;
 
-import org.eipgrid.jql.JQSchema;
-import org.eipgrid.jql.JQJoin;
+import org.eipgrid.jql.schema.JQSchema;
+import org.eipgrid.jql.schema.JQJoin;
 
 import java.util.HashMap;
 

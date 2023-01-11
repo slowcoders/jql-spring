@@ -1,8 +1,8 @@
 package org.eipgrid.jql.js;
 
-import org.eipgrid.jql.JQColumn;
-import org.eipgrid.jql.JQSchema;
-import org.eipgrid.jql.JQJoin;
+import org.eipgrid.jql.schema.JQColumn;
+import org.eipgrid.jql.schema.JQSchema;
+import org.eipgrid.jql.schema.JQJoin;
 import org.eipgrid.jql.jdbc.metadata.JdbcColumn;
 import org.eipgrid.jql.util.ClassUtils;
 

@@ -3,8 +3,8 @@ package org.eipgrid.jql.jdbc;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Schema;
-import org.eipgrid.jql.JQSelect;
-import org.eipgrid.jql.spring.JQRepository;
+import org.eipgrid.jql.JqlSelect;
+import org.eipgrid.jql.JqlRepository;
 import org.eipgrid.jql.util.KVEntity;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -30,7 +30,7 @@ public abstract class JdbcController {
     @Operation(summary = "지정 엔터티 읽기")
     public KVEntity get(@PathVariable("table") String table,
                         @PathVariable("id") String id$) {
-        JQRepository<KVEntity, Object> repository = getRepository(table);
+        JqlRepository<KVEntity, Object> repository = getRepository(table);
         Object id = repository.convertId(id$);
         KVEntity entity = repository.find(id);
         if (entity == null) {
@@ -64,9 +64,9 @@ public abstract class JdbcController {
                        @RequestBody() HashMap<String, Object> filter) {
         boolean need_pagination = page >= 0 && limit > 1;
         int offset = need_pagination ? page * limit : 0;
-        JQSelect select = JQSelect.by(columns, sort, offset, limit);
+        JqlSelect select = JqlSelect.by(columns, sort, offset, limit);
 
-        JQRepository<KVEntity, Object> repository = getRepository(table);
+        JqlRepository<KVEntity, Object> repository = getRepository(table);
         List<KVEntity> res = repository.find(filter, select);
 
         if (need_pagination) {
@@ -86,8 +86,8 @@ public abstract class JdbcController {
                         @RequestParam(value = "sort", required = false) String sort,
                         @Schema(implementation = Object.class)
                         @RequestBody HashMap<String, Object> filter) {
-        JQRepository<KVEntity, Object> repository = getRepository(table);
-        JQSelect select = JQSelect.by(columns, sort, 0, 1);
+        JqlRepository<KVEntity, Object> repository = getRepository(table);
+        JqlSelect select = JqlSelect.by(columns, sort, 0, 1);
         List<KVEntity>  res = repository.find(filter, select);
         return res.size() > 0 ? res.get(0) : null;
     }
@@ -98,7 +98,7 @@ public abstract class JdbcController {
     public KVEntity add(@PathVariable("table") String table,
                         @Schema(implementation = Object.class)
                         @RequestBody Map<String, Object> entity) throws Exception {
-        JQRepository<KVEntity, Object> repository = getRepository(table);
+        JqlRepository<KVEntity, Object> repository = getRepository(table);
         Object id = repository.insert(entity);
         KVEntity newEntity = repository.find(id);
         return newEntity;
@@ -112,7 +112,7 @@ public abstract class JdbcController {
                        @PathVariable("idList") Collection<Object> idList,
                        @Schema(implementation = Object.class)
                        @RequestBody HashMap<String, Object> updateSet) throws Exception {
-        JQRepository<KVEntity, Object> repository = getRepository(table);
+        JqlRepository<KVEntity, Object> repository = getRepository(table);
         repository.update(idList, updateSet);
         List<KVEntity> entities = repository.list(idList);
         return entities;
@@ -124,12 +124,12 @@ public abstract class JdbcController {
     public Collection<String> delete(@PathVariable("table") String table,
                                      @Schema(implementation = String.class)
                                      @PathVariable("idList") Collection<String> idList) {
-        JQRepository<KVEntity, Object> repository = getRepository(table);
+        JqlRepository<KVEntity, Object> repository = getRepository(table);
         repository.delete(idList);
         return idList;
     }
 
-    protected JQRepository<KVEntity, Object> getRepository(String tableName) {
+    protected JqlRepository<KVEntity, Object> getRepository(String tableName) {
         String tablePath = service.makeTablePath(default_namespace, tableName);
         return service.makeRepository(tablePath);
     }
