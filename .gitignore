@@ -27,3 +27,4 @@ tutorial+sample-app/db/postgres_data
 tutorial+sample-app/target
 jql-spring-lib/bin
 tutorial+sample-app/bin
+tutorial+sample-app/src/test/resources/postgres_data

@@ -45,7 +45,7 @@ public interface JQLController<ENTITY, ID> {
                             @RequestParam(value = "limit", defaultValue = "0") int limit,
                             @RequestParam(value = "select", required = false) String columns,
                             @RequestParam(value = "sort", required = false) String sort) {
-            return find(page, limit, sort, columns, null);
+            return find(page, limit, columns, sort, null);
         }
 
         @PostMapping(path = "/find")
