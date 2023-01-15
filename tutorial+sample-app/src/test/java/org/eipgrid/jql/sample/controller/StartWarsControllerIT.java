@@ -37,10 +37,7 @@ public class StartWarsControllerIT {
 
     @Test
     public void should_return_character_with_id_in_jql() {
-        String jql =
-        """
-        { "id": 1001 }
-        """;
+        String jql = "{ \"id\": 1001 }";
 
         ResponseEntity<List<Character>> response = this.webClient.find(jql);
 
