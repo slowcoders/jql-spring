@@ -41,9 +41,12 @@ describe('Comapre', () => {
     const res = await jqlApi.find(jql);
     const characters = res.content;
     expect(characters.length).toBe(count - refs.length)
-    for (character of characters) {
-      expect(character.id == ref[0].id || character.id == refs[1].id).toBeFalsy();
+    const id_set = {};
+    for (const character of characters) {
+      id_set[character.id] = 0;
     }
+    expect(id_set[refs[0].id]).toBeUndefined();
+    expect(id_set[refs[1].id]).toBeUndefined();
   });
 
   test('@like []', async () => {
@@ -58,12 +61,12 @@ describe('Comapre', () => {
       id_set[character.id] = 0;
     }
     expect(id_set[refs[0].id]).not.toBeUndefined();
-    expect(id_set[refs[0].id]).not.toBeUndefined();
+    expect(id_set[refs[1].id]).not.toBeUndefined();
   });
 
   test('@not like []', async () => {
     const jql = {
-      "name@like": [refs[0].name.substring(0, 4) + "%", refs[1].name.substring(0, 4) + "%"] 
+      "name@not like": [refs[0].name.substring(0, 4) + "%", refs[1].name.substring(0, 4) + "%"] 
     }
     const res = await jqlApi.find(jql);
     const characters = res.content;
@@ -73,7 +76,7 @@ describe('Comapre', () => {
       id_set[character.id] = 0;
     }
     expect(id_set[refs[0].id]).toBeUndefined();
-    expect(id_set[refs[0].id]).toBeUndefined();
+    expect(id_set[refs[1].id]).toBeUndefined();
   });
 });
 
