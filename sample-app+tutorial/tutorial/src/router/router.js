@@ -8,6 +8,7 @@ import SimpleJoin from "../views/join/SimpleJoin.vue"
 import OrJoin from "@/views/join/OrJoin";
 import AdvancedJoin1 from "@/views/join/AdvancedJoin1";
 import RecursiveJoin from "@/views/join/RecursiveJoin";
+import JsonSearch from "@/views/join/JsonSearch";
 import ExternalLinks from "@/views/ExternalLinks";
 
 const router = createRouter({
@@ -48,6 +49,10 @@ const router = createRouter({
         {
             path: '/join/or',
             component: OrJoin,
+        },
+        {
+            path: '/join/json',
+            component: JsonSearch,
         },
         {
             path: '/external',
