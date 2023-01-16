@@ -13,5 +13,3 @@ sample-app+tutorial/build
 sample-app+tutorial/target
 sample-app+tutorial/.gradle
 sample-app+tutorial/db/postgres_data
-test-22
-Archive.zip
