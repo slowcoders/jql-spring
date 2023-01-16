@@ -1,15 +1,12 @@
 package org.eipgrid.jql.jdbc;
 
-import org.eipgrid.jql.schema.JQType;
 import org.eipgrid.jql.parser.*;
 import org.eipgrid.jql.util.SourceWriter;
 
 import java.util.*;
 
-public class SqlConverter implements PredicateVisitor {
+public abstract class SqlConverter implements PredicateVisitor {
     protected final SourceWriter sw;
-    private EntityFilter currentNode;
-
     public enum Command {
         Insert,
         Delete,
@@ -20,70 +17,12 @@ public class SqlConverter implements PredicateVisitor {
         this.sw = sw;
     }
 
-    public void visitNode(EntityFilter node) {
-        EntityFilter old = this.currentNode;
-        this.currentNode = node;
-//        node.getPredicates().accept(this);
-//        this.currentNode = old;
-    }
 
-    private void writeJsonPath(EntityFilter node) {
-        if (node.isJsonNode()) {
-            EntityFilter parent = node.getParentNode();
-            writeJsonPath(parent);
-            if (parent.isJsonNode()) {
-                sw.writeQuoted(node.getMappingAlias());
-            } else {
-                sw.write(node.getMappingAlias());
-            }
-            sw.write("->");
-        } else {
-            sw.write(node.getMappingAlias()).write('.');
-        }
-    }
-
-    private void writeTypeCast(Class valueType) {
-        JQType vf = JQType.of(valueType);
-        switch (vf) {
-            case Integer:
-            case Float:
-                sw.write("::NUMERIC");
-                break;
-            case Date:
-                sw.write("::DATE");
-                break;
-            case Time:
-                sw.write("::TIME");
-                break;
-            case Timestamp:
-                sw.write("::TIMESTAMP");
-                break;
-            case Text:
-                sw.write("::TEXT");
-                break;
-            case Array:
-            case Object:
-                sw.write("::JSONB");
-                break;
-        }
-    }
-
-    private void writeQualifiedName(String name, Object value) {
-        if (!currentNode.isJsonNode()) {
-            sw.write(this.currentNode.getMappingAlias()).write('.').write(name);
-        }
-        else {
-            writeJsonPath(currentNode);
-            sw.writeQuoted(name);
-            if (value != null) {
-                writeTypeCast(value.getClass());
-            }
-        }
-    }
+    protected abstract void writeQualifiedColumnName(String columnName, Object value);
 
     @Override
     public void visitPredicate(String column, JqlOp operator, Object value) {
-        writeQualifiedName(column, value);
+        writeQualifiedColumnName(column, value);
         String op = "";
         assert (value != null);
         switch (operator) {
@@ -127,7 +66,7 @@ public class SqlConverter implements PredicateVisitor {
     @Override
     public void visitMatchAny(String column, JqlOp operator, Collection values) {
         if (operator == JqlOp.EQ || operator == JqlOp.NE) {
-            writeQualifiedName(column, values);
+            writeQualifiedColumnName(column, values);
         }
         switch (operator) {
             case NE:
@@ -151,7 +90,7 @@ public class SqlConverter implements PredicateVisitor {
                     } else {
                         sw.write(" OR ");
                     }
-                    writeQualifiedName(column, "");
+                    writeQualifiedColumnName(column, "");
                     sw.write(" LIKE ");
                     sw.writeQuoted(v);
                 }
@@ -176,7 +115,7 @@ public class SqlConverter implements PredicateVisitor {
             default:
                 throw new RuntimeException("Invalid match operator with null value: " + operator);
         }
-        writeQualifiedName(column, null);
+        writeQualifiedColumnName(column, null);
         //key.printSQL(this);
         sw.write(value);
     }

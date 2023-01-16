@@ -1,7 +1,5 @@
 package org.eipgrid.jql.jdbc;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.eipgrid.jql.schema.JQColumn;
 import org.eipgrid.jql.schema.JQSchema;
 import org.eipgrid.jql.schema.JQJoin;
@@ -17,6 +15,8 @@ import java.util.*;
 
 public class SqlGenerator extends SqlConverter implements QueryGenerator {
 
+    private EntityFilter currentNode;
+
     public SqlGenerator() {
         super(new SourceWriter('\''));
     }
@@ -26,7 +26,7 @@ public class SqlGenerator extends SqlConverter implements QueryGenerator {
     }
 
     protected void writeFilter(EntityFilter jql) {
-        super.visitNode(jql);
+        currentNode = jql;
         Expression ps = jql.getPredicates();
         if (!ps.isEmpty()) {
             ps.accept(this);
@@ -36,6 +36,62 @@ public class SqlGenerator extends SqlConverter implements QueryGenerator {
             if (!child.isEmpty()) {
                 writeFilter(child);
             }
+        }
+    }
+
+    protected void writeQualifiedColumnName(String columnName, Object value) {
+        if (!currentNode.isJsonNode()) {
+            sw.write(this.currentNode.getMappingAlias()).write('.').write(columnName);
+        }
+        else {
+            sw.write('(');
+            writeJsonPath(currentNode);
+            sw.writeQuoted(columnName);
+            sw.write(')');
+            if (value != null) {
+                writeTypeCast(value.getClass());
+            }
+        }
+    }
+
+    private void writeJsonPath(EntityFilter node) {
+        if (node.isJsonNode()) {
+            EntityFilter parent = node.getParentNode();
+            writeJsonPath(parent);
+            if (parent.isJsonNode()) {
+                sw.writeQuoted(node.getMappingAlias());
+            } else {
+                sw.write(node.getMappingAlias());
+            }
+            sw.write("->");
+        } else {
+            sw.write(node.getMappingAlias()).write('.');
+        }
+    }
+
+    private void writeTypeCast(Class valueType) {
+        JQType vf = JQType.of(valueType);
+        switch (vf) {
+            case Integer:
+            case Float:
+                sw.write("::NUMERIC");
+                break;
+            case Date:
+                sw.write("::DATE");
+                break;
+            case Time:
+                sw.write("::TIME");
+                break;
+            case Timestamp:
+                sw.write("::TIMESTAMP");
+                break;
+            case Text:
+                sw.write("::TEXT");
+                break;
+            case Array:
+            case Object:
+                sw.write("::JSONB");
+                break;
         }
     }
 

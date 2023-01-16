@@ -65,6 +65,11 @@ export default {
           title: "Recursive Joined query",
           icon: "fa fa-file-alt"
         },
+        {
+          href: "/join/json",
+          title: "Json column search",
+          icon: "fa fa-file-alt"
+        },
 
         {
           href: "/external",

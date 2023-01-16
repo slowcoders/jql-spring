@@ -22,7 +22,13 @@ public abstract class EntityFilter {
     /** return null if schemaless node. cf) json node */
     public JQSchema getSchema() { return null; }
 
-    public boolean isEmpty() { return predicates.isEmpty(); }
+    public boolean isEmpty() {
+        if (!predicates.isEmpty()) return false;
+        for (EntityFilter subNode: subFilters.values()) {
+            if (!subNode.isEmpty()) return false;
+        }
+        return true;
+    }
 
     public Expression getPredicates() {
         return predicates;

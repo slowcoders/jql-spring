@@ -189,15 +189,6 @@ class TableFilter extends EntityFilter implements JQResultMapping {
         return subQuery;
     }
 
-    public boolean isEmpty() {
-        if (!super.isEmpty()) return false;
-        for (EntityFilter subNode: subFilters.values()) {
-            if (!subNode.isEmpty()) return false;
-        }
-        return true;
-    }
-
-
     @Override
     protected String getColumnName(String key) {
         while (!this.schema.hasColumn(key)) {

@@ -3,16 +3,16 @@ INSERT INTO starwars.episode (title) values
 on conflict DO NOTHING;
 
 
-INSERT INTO starwars.character (species, id, name, home_planet, height, mass, primary_function) values
-('Human', 1000, 'Luke Skywalker', 'Tatooine', 1.72, 77, null),
-('Human', 1001, 'Darth Vader', 'Tatooine', 2.02, 136, null),
-('Human', 1002, 'Han Solo', null, 1.8, 80, null),
-('Human', 1003, 'Leia Organa', 'Alderaan', 1.5, 49, null),
-('Human', 1004, 'Wilhuff Tarkin', null, 1.8, null, null),
-('Human', 1005, 'Extra-1', null, 1.19, 50, null),
-('Human', 1006, 'Extra-2', null, 1.8, 121, null),
-('Droid', 2000, 'C-3PO', null, 1.71, 75, 'protocol'),
-('Droid', 2001, 'R2-D2', null, 1.09, 32, 'Astromech')
+INSERT INTO starwars.character (species, id, name, home_planet, height, mass, primary_function, note) values
+('Human', 1000, 'Luke Skywalker', 'Tatooine', 1.72, 77, null, '{"actor": { "name": "Mark Hamill", "birth-day": "1951-09-05", "nationality": "USA" } }'),
+('Human', 1001, 'Darth Vader', 'Tatooine', 2.02, 136, null, null),
+('Human', 1002, 'Han Solo', null, 1.8, 80, null, null),
+('Human', 1003, 'Leia Organa', 'Alderaan', 1.5, 49, null, null),
+('Human', 1004, 'Wilhuff Tarkin', null, 1.8, null, null, null),
+('Human', 1005, 'Extra-1', null, 1.19, 50, null, null),
+('Human', 1006, 'Extra-2', null, 1.8, 121, null, null),
+('Droid', 2000, 'C-3PO', null, 1.71, 75, 'protocol', null),
+('Droid', 2001, 'R2-D2', null, 1.09, 32, 'Astromech', null)
 on conflict DO NOTHING;
 
 
