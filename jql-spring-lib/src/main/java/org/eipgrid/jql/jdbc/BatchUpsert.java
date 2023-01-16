@@ -1,5 +1,7 @@
 package org.eipgrid.jql.jdbc;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.eipgrid.jql.schema.JQColumn;
 import org.eipgrid.jql.schema.JQSchema;
 import org.eipgrid.jql.schema.JQType;
@@ -17,6 +19,8 @@ public class BatchUpsert<ID> implements BatchPreparedStatementSetterWithKeyHolde
     private final String sql;
     private final JQSchema schema;
     private List<Map<String, Object>> generatedKeys;
+
+    private static ObjectMapper objectMapper = new ObjectMapper();
 
     public BatchUpsert(JQSchema schema, Collection<Map<String, Object>> entities, boolean ignoreConflict) {
         this.sql = new SqlGenerator().prepareBatchInsertStatement(schema, ignoreConflict);
@@ -41,8 +45,19 @@ public class BatchUpsert<ID> implements BatchPreparedStatementSetterWithKeyHolde
         ps.getGeneratedKeys();
     }
 
-    private Object convertJsonValueToColumnValue(JQColumn col, Object v) {
+    static Object convertJsonValueToColumnValue(JQColumn col, Object v) {
         if (v == null) return null;
+
+        if (col.getType() == JQType.Json) {
+            if ((v instanceof Map) || (v instanceof Collection)) {
+                try {
+                    v = objectMapper.writeValueAsString(v);
+                } catch (JsonProcessingException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+            return v.toString();
+        }
 
         if (v.getClass().isEnum()) {
             if (col.getType() == JQType.Text) {

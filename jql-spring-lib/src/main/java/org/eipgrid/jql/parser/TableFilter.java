@@ -173,7 +173,7 @@ class TableFilter extends EntityFilter implements JQResultMapping {
         JQJoin join = schema.getEntityJoinBy(key);
         if (join == null) {
             JQColumn column = schema.getColumn(key);
-            if (column.getType() != JQType.Object) return this;
+            if (column.getType() != JQType.Json) return this;
         }
 
         EntityFilter subQuery = subFilters.get(key);

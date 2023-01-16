@@ -121,7 +121,7 @@ public class JDBCRepositoryBase<ID> /*extends JDBCQueryBuilder*/ implements JqlR
     }
 
     protected ResultSetExtractor<List<KVEntity>> getColumnMapRowMapper(JqlQuery filter) {
-        return new JQRowMapper(filter.getResultMappings());
+        return new JQRowMapper(filter.getResultMappings(), service.getObjectMapper());
     }
 
     protected List<KVEntity> find_impl(Map<String, Object> jsQuery, JqlSelect columns) {

@@ -70,7 +70,7 @@ public class JqlParser {
                 }
              */
 
-            if (!isValidKey(key)) {
+            if (!baseFilter.isJsonNode() && !isValidKey(key)) {
                 if (op.isAttributeNameRequired()) {
                     if (op_start == 0) {
                         throw new IllegalArgumentException("Property name is missing : " + entry.getKey());

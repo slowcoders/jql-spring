@@ -1,7 +1,10 @@
 package org.eipgrid.jql.jdbc;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.eipgrid.jql.schema.JQColumn;
 import org.eipgrid.jql.schema.JQSchema;
+import org.eipgrid.jql.schema.JQType;
 import org.eipgrid.jql.util.KVEntity;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.ResultSetExtractor;
@@ -14,13 +17,15 @@ import java.util.*;
 
 public class JQRowMapper implements ResultSetExtractor<List<KVEntity>> {
     private final List<JQResultMapping> resultMappings;
+    private final ObjectMapper objectMapper;
     private ResultCache resultCacheRoot;
     private CachedEntity baseEntity = null;
     private ArrayList<KVEntity> results = new ArrayList<>();
     private MappedColumn[] mappedColumns;
 
-    public JQRowMapper(List<JQResultMapping> rowMappings) {
+    public JQRowMapper(List<JQResultMapping> rowMappings, ObjectMapper objectMapper) {
         this.resultMappings = rowMappings;
+        this.objectMapper = objectMapper;
     }
 
     @Override
@@ -55,7 +60,7 @@ public class JQRowMapper implements ResultSetExtractor<List<KVEntity>> {
                 List<JQColumn> pkColumns = mapping.getSchema().getPKColumns();
                 int pkIndex = idxColumn;
                 for (int pkCount = pkColumns.size(); --pkCount >= 0; pkIndex++) {
-                    Object value = getColumnValue(rs, pkIndex + 1);
+                    Object value = getColumnValue(rs, pkIndex + 1, mappedColumns[pkIndex].column.getType());
                     mappedColumns[pkIndex].value = value;
                     if (value == null) {
                         continue read_mapping;
@@ -130,7 +135,7 @@ public class JQRowMapper implements ResultSetExtractor<List<KVEntity>> {
         }
     }
 
-    private CachedEntity readColumns(ResultSet rs, int idxColumn, int count) throws SQLException {
+    private CachedEntity readColumns(ResultSet rs, int idxColumn, int count) throws SQLException, DataAccessException {
         int columnCount = idxColumn + count;
         CachedEntity currEntity;
         if (idxColumn == 0) {
@@ -140,8 +145,8 @@ public class JQRowMapper implements ResultSetExtractor<List<KVEntity>> {
         currEntity = makeSubEntity(mappedColumns[idxColumn].mapping);
 
         for (; idxColumn < columnCount; ) {
-            MappedColumn mappedColumn = mappedColumns[idxColumn];
-            Object value = getColumnValue(rs, ++idxColumn);
+            MappedColumn mappedColumn = mappedColumns[idxColumn++];
+            Object value = getColumnValue(rs, idxColumn, mappedColumn.column.getType());
             mappedColumn.value = value;
             putValue(currEntity, mappedColumn, value);
         }
@@ -197,8 +202,21 @@ public class JQRowMapper implements ResultSetExtractor<List<KVEntity>> {
         return (CachedEntity)subEntity;
     }
 
-    protected Object getColumnValue(ResultSet rs, int index) throws SQLException {
-        return JdbcUtils.getResultSetValue(rs, index);
+    protected Object getColumnValue(ResultSet rs, int index, JQType columnType) throws SQLException {
+        Object value;
+        if (columnType == JQType.Json) {
+            try {
+                value = rs.getString(index);
+                if (value != null) {
+                    value = objectMapper.readValue(value.toString(), HashMap.class);
+                }
+            } catch (JsonProcessingException e) {
+                throw new RuntimeException(e);
+            }
+        } else {
+            value = JdbcUtils.getResultSetValue(rs, index);
+        }
+        return value;
     }
 
 

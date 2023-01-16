@@ -19,6 +19,7 @@ public enum JQType {
     Date,
     Time,
     Timestamp,
+    Json,
     Array,
 
     Object;
@@ -49,7 +50,7 @@ public enum JQType {
         }
         if (javaType == Object.class ||
                 Map.class.isAssignableFrom(javaType)) {
-            return JQType.Object;
+            return JQType.Json;
         }
         if (java.util.Collection.class.isAssignableFrom(javaType)) {
             return JQType.Array;
@@ -75,6 +76,6 @@ public enum JQType {
             }
             return JQType.Integer;
         }
-        return JQType.Text;
+        return javaType == String.class ? JQType.Text : JQType.Object;
     }
 }

@@ -1,11 +1,14 @@
 package org.eipgrid.jql.jdbc;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.eipgrid.jql.schema.JQColumn;
 import org.eipgrid.jql.schema.JQSchema;
 import org.eipgrid.jql.schema.JQJoin;
 import org.eipgrid.jql.parser.Expression;
 import org.eipgrid.jql.parser.JqlQuery;
 import org.eipgrid.jql.parser.EntityFilter;
+import org.eipgrid.jql.schema.JQType;
 import org.eipgrid.jql.util.SourceWriter;
 import org.eipgrid.jql.JqlSelect;
 import org.springframework.data.domain.Sort;
@@ -17,10 +20,6 @@ public class SqlGenerator extends SqlConverter implements QueryGenerator {
     public SqlGenerator() {
         super(new SourceWriter('\''));
     }
-
-//    public SqlGenerator(SourceWriter out) {
-//        this.sw = sqlConverter;//new SqlWriter(schema, null);
-//    }
 
     protected String getCommand(SqlConverter.Command command) {
         return command.toString();
@@ -197,12 +196,14 @@ public class SqlGenerator extends SqlConverter implements QueryGenerator {
         if (limit > 0) sw.write("\nLIMIT " + limit);
     }
 
+
     public String createUpdateQuery(JqlQuery where, Map<String, Object> updateSet) {
         sw.write("\nUPDATE ").write(where.getTableName()).write(" ").write(where.getMappingAlias()).writeln(" SET");
 
         for (Map.Entry<String, Object> entry : updateSet.entrySet()) {
             String key = entry.getKey();
-            Object value = entry.getValue();
+            JQColumn col = where.getSchema().getColumn(key);
+            Object value = BatchUpsert.convertJsonValueToColumnValue(col, entry.getValue());
             sw.write("  ");
             sw.write(key).write(" = ").writeValue(value);
             sw.write(",\n");
@@ -250,7 +251,8 @@ public class SqlGenerator extends SqlConverter implements QueryGenerator {
         sw.decTab();
         sw.writeln("\n) VALUES (");
         for (String k : keys) {
-            Object v = entity.get(k);
+            JQColumn col = schema.getColumn(k);
+            Object v = BatchUpsert.convertJsonValueToColumnValue(col, entity.get(k));
             sw.writeValue(v).write(", ");
         }
         sw.replaceTrailingComma(")");
@@ -268,8 +270,8 @@ public class SqlGenerator extends SqlConverter implements QueryGenerator {
             sw.write(col.getPhysicalName()).write(", ");
         }
         sw.replaceTrailingComma("\n) VALUES (");
-        for (int i = schema.getWritableColumns().size(); --i >= 0; ) {
-            sw.write("?,");
+        for (JQColumn column : schema.getWritableColumns()) {
+            sw.write(column.getType() == JQType.Json ? "?::jsonb, " : "?,");
         }
         sw.replaceTrailingComma(")");
         if (ignoreConflict) {
