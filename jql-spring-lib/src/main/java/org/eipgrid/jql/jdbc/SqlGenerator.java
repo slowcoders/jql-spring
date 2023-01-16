@@ -46,10 +46,15 @@ public class SqlGenerator extends SqlConverter implements QueryGenerator {
         else {
             sw.write('(');
             writeJsonPath(currentNode);
+            JQType valueType = value == null ? null : JQType.of(value.getClass());
+            if (valueType == JQType.Text) {
+                sw.write('>');
+                valueType = null;
+            }
             sw.writeQuoted(columnName);
             sw.write(')');
-            if (value != null) {
-                writeTypeCast(value.getClass());
+            if (valueType != null) {
+                writeTypeCast(valueType);
             }
         }
     }
@@ -69,8 +74,7 @@ public class SqlGenerator extends SqlConverter implements QueryGenerator {
         }
     }
 
-    private void writeTypeCast(Class valueType) {
-        JQType vf = JQType.of(valueType);
+    private void writeTypeCast(JQType vf) {
         switch (vf) {
             case Integer:
             case Float:

@@ -7,11 +7,9 @@ create table if not exists starwars.character
         constraint character_pkey
             primary key,
     name varchar(255) not null,
-    primary_function varchar(255),
     height real,
-    home_planet varchar(255),
     mass real,
-    note jsonb
+    metadata jsonb
 );
 alter table starwars.character owner to jql_demo;
 
