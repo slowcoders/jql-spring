@@ -18,17 +18,17 @@ import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.List;
 
-public class JdbcJQService extends JqlService {
+public class JdbcJqlService extends JqlService {
     JdbcSchemaLoader jdbcSchemaLoader;
     private HashMap<String, JqlRepository> repositories = new HashMap<>();
 
-    public JdbcJQService(DataSource dataSource,
-                         TransactionTemplate transactionTemplate,
-                         MappingJackson2HttpMessageConverter jsonConverter,
-                         ConversionService conversionService,
-                         RequestMappingHandlerMapping handlerMapping,
-                         EntityManager entityManager,
-                         EntityManagerFactory entityManagerFactory) throws Exception {
+    public JdbcJqlService(DataSource dataSource,
+                          TransactionTemplate transactionTemplate,
+                          MappingJackson2HttpMessageConverter jsonConverter,
+                          ConversionService conversionService,
+                          RequestMappingHandlerMapping handlerMapping,
+                          EntityManager entityManager,
+                          EntityManagerFactory entityManagerFactory) throws Exception {
         super(dataSource, transactionTemplate, jsonConverter, conversionService,
                 handlerMapping, entityManager, entityManagerFactory);
         jdbcSchemaLoader = new JdbcSchemaLoader(dataSource, AttributeNameConverter.defaultConverter);

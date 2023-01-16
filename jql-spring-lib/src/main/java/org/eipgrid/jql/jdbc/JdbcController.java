@@ -17,10 +17,10 @@ import java.util.*;
 
 public abstract class JdbcController {
 
-    private final JdbcJQService service;
+    private final JdbcJqlService service;
     private final String default_namespace;
 
-    public JdbcController(JdbcJQService service, String default_namespace) {
+    public JdbcController(JdbcJqlService service, String default_namespace) {
         this.service = service;
         this.default_namespace = default_namespace;
     }

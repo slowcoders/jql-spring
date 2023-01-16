@@ -16,7 +16,7 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.persistence.Entity;
 import java.nio.charset.StandardCharsets;
 
-public class DefaultJQConfig {
+public class DefaultJqlConfig {
 
     /**
      * Serialize 시 무한 루프 방지를 위한 Jackson 모듈

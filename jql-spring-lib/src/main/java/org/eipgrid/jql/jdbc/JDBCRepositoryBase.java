@@ -21,17 +21,17 @@ public class JDBCRepositoryBase<ID> /*extends JDBCQueryBuilder*/ implements JqlR
     private final JdbcTemplate jdbc;
     private final ObjectMapper objectMapper;
     private final QueryGenerator sqlGenerator;
-    private final JdbcJQService service;
+    private final JdbcJqlService service;
     private final List<JQColumn> pkColumns;
     private final JQSchema schema;
     private final JqlParser jqlParser;
     private String lastGeneratedSql;
 
-    public JDBCRepositoryBase(JdbcJQService service, Class<?> entityType) {
+    public JDBCRepositoryBase(JdbcJqlService service, Class<?> entityType) {
         this(service, service.loadSchema(entityType)); //  JQSchema.loadSchema(entityType));
     }
 
-    public JDBCRepositoryBase(JdbcJQService service, JQSchema schema) {
+    public JDBCRepositoryBase(JdbcJqlService service, JQSchema schema) {
         this.service = service;
         this.sqlGenerator = service.getQueryGenerator();
         this.jdbc = service.getJdbcTemplate();

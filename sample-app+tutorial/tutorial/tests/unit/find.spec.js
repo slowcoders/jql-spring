@@ -8,9 +8,10 @@ describe('Join Test', () => {
         "name" : "Han Solo",
         "+friend<name>": {} 
       }      
-      const result = await jqlApi.find(jql);
-      expect(result.length).toBe(1);
-      expect(result[0]["+friend"].length).toBeGreaterThanOrEqual(3);
+      const res = await jqlApi.find(jql);
+      const characters = res.content;
+      expect(characters.length).toBe(1);
+      expect(characters[0]["+friend"].length).toBeGreaterThanOrEqual(3);
     });
 
     test('Find friends of Han Solo with joined query', async () => {
@@ -18,9 +19,10 @@ describe('Join Test', () => {
         "name" : "Han Solo",
         "+friend<name>": { "starship<name, @>": { "length@ge": 10 } }
       }
-      const result = await jqlApi.find(jql);
-      expect(result.length).toBe(1);
-      expect(result[0]["+friend"].length).toBe(1);
+      const res = await jqlApi.find(jql);
+      const characters = res.content;
+      expect(characters.length).toBe(1);
+      expect(characters[0]["+friend"].length).toBe(1);
     });
   });
 });

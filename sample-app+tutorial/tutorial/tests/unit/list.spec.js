@@ -45,7 +45,7 @@ describe('Listing', () => {
   });
 
   test('Pagination & Sort', async () => {
-    const limit = 5;
+    const limit = 3;
     const page = 1;
     const res = await jqlApi.list({ sort: "-name", limit, page });
     const characters = res.content;

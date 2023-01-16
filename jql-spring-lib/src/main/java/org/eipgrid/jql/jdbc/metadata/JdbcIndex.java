@@ -3,7 +3,7 @@ package org.eipgrid.jql.jdbc.metadata;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-public class JqlIndex {
+public class JdbcIndex {
 
     String table_schem;
     String table_name;
@@ -21,7 +21,7 @@ public class JqlIndex {
     int cardinality;
     int pages;
 
-    public JqlIndex(ResultSet rs) throws SQLException {
+    public JdbcIndex(ResultSet rs) throws SQLException {
 
         table_schem = rs.getString("table_schem");
         table_name = rs.getString("table_name");

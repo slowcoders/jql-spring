@@ -22,12 +22,12 @@ public class JqlParser {
     public JqlQuery parse(JQSchema schema, Map<String, Object> jsQuery) {
         JqlQuery where = new JqlQuery(schema);
         if (jsQuery != null) {
-            this.parse(where.getPredicateSet(), jsQuery);
+            this.parse(where.getPredicateSet(), jsQuery, true);
         }
         return where;
     }
 
-    public void parse(PredicateSet predicates, Map<String, Object> filter) {
+    public void parse(PredicateSet predicates, Map<String, Object> filter, boolean excludeConstantAttribute) {
         // "joinColumn명" : { "id@?EQ" : "joinedColumn2.joinedColumn3.columnName" }; // Fetch 자동 수행.
         //   --> @?EQ 기능은 넣되, 숨겨진 고급기능으로..
         // "groupBy@" : ["attr1", "attr2/attr3" ]
@@ -72,6 +72,9 @@ public class JqlParser {
 
             if (!isValidKey(key)) {
                 if (op.isAttributeNameRequired()) {
+                    if (op_start == 0) {
+                        throw new IllegalArgumentException("Property name is missing : " + entry.getKey());
+                    }
                     throw new IllegalArgumentException("invalid JQL key: " + entry.getKey());
                 }
                 key = null;
@@ -90,17 +93,16 @@ public class JqlParser {
                 if (valueNodeType == NodeType.Entity) {
                     Map<String, Object> subJql = (Map<String, Object>) value;
                     if (!subJql.isEmpty()) {
-                        this.parse(ps, subJql);
+                        this.parse(ps, subJql, true);
                     }
                     else if (selectedKeys == null) {
                         subFilter.setSelectedProperties_withEmptyFilter();
                     }
                 }
-                else {
-                    // ValueNodeType.Entities
+                else {  // ValueNodeType.Entities
                     for (Map<String, Object> map : (Collection<Map<String, Object>>) value) {
                         PredicateSet and_qs = new PredicateSet(Conjunction.AND, ps.getBaseFilter());
-                        this.parse(and_qs, map);
+                        this.parse(and_qs, map, false);
                         ps.add(and_qs);
                     }
                 }
@@ -108,7 +110,7 @@ public class JqlParser {
             }
 
             String columnName = subFilter.getColumnName(key);
-            if (op_start > 0) {
+            if (!excludeConstantAttribute || op_start > 0) {
                 subFilter.addComparedPropertyToSelection(columnName);
             }
             if (value != null) {

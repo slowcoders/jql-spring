@@ -14,9 +14,9 @@ import java.util.List;
 
 public abstract class JdbcMetadataController {
 
-    private final JdbcJQService service;
+    private final JdbcJqlService service;
 
-    public JdbcMetadataController(JdbcJQService service) {
+    public JdbcMetadataController(JdbcJqlService service) {
         this.service = service;
     }
 

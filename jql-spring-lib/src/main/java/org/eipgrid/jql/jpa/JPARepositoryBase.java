@@ -3,7 +3,7 @@ package org.eipgrid.jql.jpa;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.eipgrid.jql.schema.JQSchema;
 import org.eipgrid.jql.jdbc.BatchUpsert;
-import org.eipgrid.jql.jdbc.JdbcJQService;
+import org.eipgrid.jql.jdbc.JdbcJqlService;
 import org.eipgrid.jql.JqlRepository;
 import org.eipgrid.jql.JqlService;
 import org.springframework.data.domain.Page;
@@ -131,7 +131,7 @@ public abstract class JPARepositoryBase<ENTITY, ID> extends JPAQueryBuilder<ENTI
 
     public List<ID> insert(Collection<Map<String, Object>> entities) {
         if (entities.isEmpty()) return null;
-        JQSchema schema = ((JdbcJQService)service).loadSchema(this.getEntityType());
+        JQSchema schema = ((JdbcJqlService)service).loadSchema(this.getEntityType());
         BatchUpsert batch = new BatchUpsert(schema, entities, true);
         service.getJdbcTemplate().batchUpdate(batch.getSql(), batch);
         return batch.getEntityIDs();
