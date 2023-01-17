@@ -179,7 +179,6 @@ public class SqlGenerator extends SqlConverter implements QueryGenerator {
 
     public String createSelectQuery(JqlQuery where, JqlSelect columns) {
         sw.reset();
-        where.setSelectedProperties(columns.getPropertyKeys());
         String tableName = where.getTableName();
 
         boolean need_complex_pagination = (columns.getLimit() > 0 || columns.getOffset() > 0) && needDistinctPagination(where);
@@ -196,7 +195,7 @@ public class SqlGenerator extends SqlConverter implements QueryGenerator {
             sw.write("\n)");
         }
 
-        sw.write("\nSELECT\n");
+        sw.write("\nSELECT DISTINCT \n");
         for (JQResultMapping mapping : where.getResultMappings()) {
             sw.write('\t');
             String alias = mapping.getMappingAlias();
@@ -208,7 +207,7 @@ public class SqlGenerator extends SqlConverter implements QueryGenerator {
         sw.replaceTrailingComma("\n");
         writeFrom(where, tableName, false);
         writeWhere(where);
-        writeOrderBy(where, columns.getSort(), where.hasArrayDescendantNode());
+        writeOrderBy(where, columns.getSort(), false);//where.hasArrayDescendantNode());
         if (!need_complex_pagination) {
             writePagination(columns);
         }

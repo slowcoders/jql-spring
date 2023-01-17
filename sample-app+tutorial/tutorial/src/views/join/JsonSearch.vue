@@ -17,10 +17,10 @@ import LessonView from "@/components/LessonView";
 
 const sample_code = `
 const jql_1 = {
-  "metadata": { "memo" : { "favorite-food" : "kimchi" } }
+  "metadata": { "memo" : { "favoriteFood" : "kimchi" } }
 }
 const jql_2 = {
-  "metadata": { "memo" : { "shoe-size(cm)@ge" : 270 } }
+  "metadata": { "memo" : { "shoeSize@ge" : 270 } }
 }
 
 const jql = jql_1;

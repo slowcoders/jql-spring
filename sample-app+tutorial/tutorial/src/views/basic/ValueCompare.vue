@@ -26,13 +26,25 @@ const jql = {
   // "id@lt": 1001
   // "id@ge": 1001
   // "id@gt": 1001
-  // "id@ge": 1001, "id@le": 1002
 
+  // "id@ge": 1001, "id@le": 1002
   // "id@between": [1001, 1002]
   // "id@not between": [1001, 1002]
 
-  // "name@like": "Luke%"
-  // "name@not like": "Luke%"
+  // "name": "Luke Skywalker"
+  // "name@not": "Luke Skywalker"
+
+  // "name@le": "Luke Skywalker"
+  // "name@lt": "Luke Skywalker"
+  // "name@ge": "Luke Skywalker"
+  // "name@gt": "Luke Skywalker"
+
+  // "name@ge": "Darth Vader", "name@le": "Luke Skywalker"
+  // "name@between": ["Darth Vader", "Luke Skywalker"]
+  // "name@not between": ["Darth Vader", "Luke Skywalker"]
+
+  // "name@like": "L%"
+  // "name@not like": "L%"
 }
 `
 

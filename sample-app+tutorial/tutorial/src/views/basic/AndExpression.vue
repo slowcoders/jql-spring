@@ -22,7 +22,7 @@ const jql = {
   //  "height@gt": 1.2,
   //  "height@lt": 2.0,
   //  "mass@gt": 60,
-  //  "homePlanet": "Tatooine",
+  //  "metadata.homePlanet": "Tatooine",
 }
 `
 

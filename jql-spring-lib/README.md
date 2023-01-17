@@ -107,14 +107,12 @@ JQL-JDBC 구현체는 JDBC metadata 를 분석하여 foreign key 로 연결된 T
         "id": 2000,
         "species": "Droid",
         "name": "C-3PO",
-        "primaryFunction": "protocol",
         ...
       },
       {
         "id": 2001,
         "species": "Droid",
         "name": "R2-D2",
-        "primaryFunction": "Astromech",
         ...
       }
     ]
@@ -126,12 +124,10 @@ JQL-JDBC 구현체는 JDBC metadata 를 분석하여 foreign key 로 연결된 T
 starwars.character = {
   id: bigint (pk)
   height: real
-  home_planet: text
   mass: real
   name: text
-  note: jsonb
-  primary_function: text
   species: text
+  metadata: jsonb
 };
 
 // assicative table

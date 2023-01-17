@@ -21,8 +21,12 @@ const sample_code = `
 const jql = {
   // "id": [1001, 1002]
   // "id@not": [1001, 1002]
-  // "name@like": [ "Luke%", "Darth%" ]
-  // "name@not like": [ "Luke%", "Darth%" ]
+
+  // "name": ["Darth Vader", "Luke Skywalker"]
+  // "name@not": ["Darth Vader", "Luke Skywalker"]
+
+  // "name@like": [ "L%", "D%" ]
+  // "name@not like": [ "L%", "D%" ]
 }
 `
 

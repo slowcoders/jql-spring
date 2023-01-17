@@ -19,8 +19,11 @@ public class JqlParser {
         this.conversionService = conversionService;
     }
 
-    public JqlQuery parse(JQSchema schema, Map<String, Object> jsQuery) {
+    public JqlQuery parse(JQSchema schema, Map<String, Object> jsQuery, JqlSelect select) {
         JqlQuery where = new JqlQuery(schema);
+        if (select != null) {
+            where.setSelectedProperties(select.getPropertyKeys());
+        }
         if (jsQuery != null) {
             this.parse(where.getPredicateSet(), jsQuery, true);
         }
@@ -85,10 +88,10 @@ public class JqlParser {
             PredicateSet targetPredicates = predicates;
             if (subFilter != baseFilter) {
                 targetPredicates = subFilter.getPredicateSet();
-                subFilter.setSelectedProperties(selectedKeys);
             }
 
             if (valueNodeType != NodeType.Leaf) {
+                subFilter.setSelectedProperties(selectedKeys);
                 PredicateSet ps = op.getPredicates(subFilter, valueNodeType);
                 if (valueNodeType == NodeType.Entity) {
                     Map<String, Object> subJql = (Map<String, Object>) value;

@@ -49,7 +49,7 @@ public class JQRowMapper implements ResultSetExtractor<List<KVEntity>> {
                 List<JQColumn> columns = mapping.getSelectedColumns();
                 if (columns.size() == 0) continue;
 
-                boolean doCache = mapping.isArrayNode() && mapping.hasArrayDescendantNode();
+                boolean doCache = mapping.isArrayNode();// && mapping.hasArrayDescendantNode();
                 if (!doCache) {
                     readColumns(rs, idxColumn, columns.size());
                     idxColumn += columns.size();
@@ -88,6 +88,9 @@ public class JQRowMapper implements ResultSetExtractor<List<KVEntity>> {
                             }
                             data.add(cachedEntity);
                         }
+                    }
+                    if (idxColumn == 0) {
+                        baseEntity = cachedEntity;
                     }
                 }
                 idxColumn += columns.size();

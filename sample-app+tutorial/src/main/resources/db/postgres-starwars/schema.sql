@@ -2,10 +2,9 @@ create schema if not exists starwars;
 
 create table if not exists starwars.character
 (
-    species varchar(31) not null,
     id bigserial not null
-        constraint character_pkey
-            primary key,
+        constraint character_pkey primary key,
+    species varchar(31) not null,
     name varchar(255) not null,
     height real,
     mass real,

@@ -15,6 +15,13 @@ public interface JqlRepository<ENTITY, ID> {
 
     ENTITY find(ID id);
 
+    default ENTITY get(ID id) {
+        ENTITY entity = find(id);
+        if (entity == null) throw new IllegalArgumentException(getEntityType().getSimpleName() +
+                " not found: " + id);
+        return entity;
+    }
+
     List<ENTITY> list(Collection<ID> idList);
 
     long count(Map<String, Object> jsQuery);

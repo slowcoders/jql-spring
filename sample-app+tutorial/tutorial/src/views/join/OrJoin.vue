@@ -8,7 +8,6 @@
       <div class="details">
         JQL 문법은 { } 내부는 And 연산, [ ] 내부는 Or 연산을 기본 적용한다.<br>
         Join 할 Entity 검색 조건을 [ ] 로 묶으면 Or 로 처리한다. <br>
-        아래는 JEDI 또는 NEWHOPE 에피소드 출연자 중 5m 이상의 비행선의 조종사를 검색하는 예제이다.
       </div>
     </template>
   </LessonView>
@@ -18,15 +17,23 @@
 import LessonView from "@/components/LessonView";
 
 const sample_code = `
-const jql = {
+// JEDI 또는 NEWHOPE 에피소드 출연자를 검색하는 Query
+const jql_1 = {
   "+episode": [
     { "title": "JEDI" },
     { "title": "NEWHOPE" }
   ],
-  "starship": {
-    "length@ge": 5
-  }
 }
+
+// 10m 이하 또는 20m 이상의 비행선의 조종사를 검색하는 Query.
+const jql_2 = {
+  "starship": [
+    { "length@le": 10 },
+    { "length@ge": 20 }
+  ]
+}
+
+const jql = jql_1
 `
 
 export default {

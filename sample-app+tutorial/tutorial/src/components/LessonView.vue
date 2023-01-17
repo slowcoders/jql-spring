@@ -18,8 +18,8 @@
                 <b-form-checkbox-group v-model="selectedColumns"
                                        :options="selectableColumns"
                                        stacked
-                                       @change="onSelectChanged()"/>
-                <b-button @click="selectedColumns=[]">Clear</b-button>
+                                       @change="onSelectChanged"/>
+<!--                <b-button @click="selectedColumns=[]">Clear</b-button>-->
             </b-dropdown-item>
           </b-dropdown>
         </td><td>
@@ -121,6 +121,7 @@ export default {
       tableNames: sampleTables,
       selectableColumns: [],
       selectedColumns: ["*"],
+      allColumnSelected: true,
       sortOptions: [],
       first_sort: '',
       columns: '*',
@@ -194,9 +195,9 @@ ${vm.schemaInfo}`
       then((res) => {
         const sortOptions = [];
         const selectableColumns = [
-          { value: "*", text: "* all" },
-          { value: "0", text: "0 primary keys" },
-          // { value: "@", text: "@ compared properties" }
+          { value: "*", text: "* (all)" },
+          { value: "0", text: "0 (primary keys)" },
+          { value: "@", text: "@ (auto)" }
         ];
         for (const column of res.data) {
           sortOptions.push(" " + column);
@@ -213,8 +214,21 @@ ${vm.schemaInfo}`
       this.resultView.setValue("!!!! " + msg);
     },
 
-    onSelectChanged() {
+    onSelectChanged(new_v) {
       const vm = this;
+      if (vm.selectedColumns.length > 1 && vm.allColumnSelected) {
+        vm.selectedColumns = vm.selectedColumns.filter((k) => "*" != k);
+        vm.allColumnSelected = false;
+      }
+      else {
+        const wasAllColumnSelected = vm.allColumnSelected;
+        vm.allColumnSelected = vm.selectedColumns.indexOf("*") >= 0;
+        if (!wasAllColumnSelected && vm.allColumnSelected) {
+          vm.selectedColumns = ["*"];
+        }
+      }
+      console.log("allColumnSelected", vm.allColumnSelected);
+
       vm.sortColumn = null;
       vm.codeView.setValue(vm.make_sample_code());
       vm.resultView.setValue("");

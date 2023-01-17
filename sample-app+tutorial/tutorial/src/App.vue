@@ -56,7 +56,7 @@ export default {
           icon: "fa fa-download",
         },
         {
-          href: "/join/lesson-1",
+          href: "/join/join-select",
           title: "Joined property selection",
           icon: "fa fa-file-alt"
         },

@@ -16,10 +16,9 @@ class TableFilter extends EntityFilter implements JQResultMapping {
 
     private String[] entityMappingPath;
     private List<JQColumn> selectedColumns = null;
-    private boolean doSelectComparedAttribute;
     private boolean hasArrayDescendant;
+    private int selectAliases;
 
-//    private KeySet joinedPropertyDefaultSelection;
     private static final String[] emptyPath = new String[0];
 
     TableFilter(JQSchema schema, String mappingAlias) {
@@ -58,10 +57,16 @@ class TableFilter extends EntityFilter implements JQResultMapping {
     public String[] getEntityMappingPath() {
         String[] jsonPath = this.entityMappingPath;
         if (jsonPath == null) {
-            String[] basePath = getParentNode().getEntityMappingPath();
-            jsonPath = new String[basePath.length + 1];
+            TableFilter parent = getParentNode();
+            String[] basePath = parent.getEntityMappingPath();
+            boolean mergeLast = (parent.selectedColumns == null) && basePath.length > 0;
+            jsonPath = new String[basePath.length + (mergeLast ? 0 : 1)];
             System.arraycopy(basePath, 0, jsonPath, 0, basePath.length);
-            jsonPath[basePath.length] = join.getJsonKey();
+            String lastPath = join.getJsonKey();
+            if (mergeLast) {
+                lastPath = basePath[basePath.length - 1] + "." + lastPath;
+            }
+            jsonPath[jsonPath.length - 1] = lastPath;
             this.entityMappingPath = jsonPath;
         }
         return jsonPath;
@@ -72,32 +77,44 @@ class TableFilter extends EntityFilter implements JQResultMapping {
 
     @Override
     public List<JQColumn> getSelectedColumns() {
-//        if (selectedColumns == null && getParentNode() != null) {
-//            String[] keys = getParentNode().getDefaultJoinedPropertySelection().asKeyArray();
-//            selectedColumns = selectProperties_internal(keys);
-//        }
         return selectedColumns == null ? Collections.EMPTY_LIST : selectedColumns;
     }
-
-//    private KeySet getDefaultJoinedPropertySelection() {
-//        KeySet keySet = joinedPropertyDefaultSelection;
-//        if (keySet == null) {
-//            TableFilter parent = this.getParentNode();
-//            keySet = parent == null ? KeySet.Auto : parent.getDefaultJoinedPropertySelection();
-//        }
-//        return keySet;
-//    }
 
 
     public void setSelectedProperties(String[] keys) {
         if (keys == null) {
-            TableFilter parent = getParentNode();
-            this.doSelectComparedAttribute = parent == null || parent.selectedColumns != Collections.EMPTY_LIST;
-            this.selectedColumns = doSelectComparedAttribute ? new ArrayList<>() : Collections.EMPTY_LIST;
+            if (this.selectedColumns == null) {
+                TableFilter parent = getParentNode();
+                if (parent == null) {
+                    this.selectedColumns = schema.getReadableColumns();
+                    this.selectAliases = KeySet.All.bit();
+                } else {
+                    while (parent.selectedColumns == null) {
+                        parent = parent.getParentNode();
+                    }
+                    this.selectAliases = parent.selectAliases;
+                    this.selectedColumns = resolveSelectedColumns(null, false);
+                }
+            }
             return;
         }
 
-        this.selectedColumns = selectProperties_internal(keys);
+        if (keys.length == 0) {
+            this.selectedColumns = Collections.EMPTY_LIST;
+        } else {
+            boolean hasAdditionalKey = false;
+            for (String k : keys) {
+                KeySet keySet = KeySet.toAlias(k);
+                if (keySet != null) {
+                    selectAliases |= 1 << keySet.ordinal();
+                }
+                else {
+                    hasAdditionalKey = true;
+                }
+            }
+
+            this.selectedColumns = resolveSelectedColumns(keys, hasAdditionalKey);
+        }
     }
 
     protected void setSelectedProperties_withEmptyFilter() {
@@ -106,48 +123,35 @@ class TableFilter extends EntityFilter implements JQResultMapping {
         }
     }
 
-    private List<JQColumn> selectProperties_internal(String[] keys) {
-        if (keys.length == 0) return Collections.EMPTY_LIST;
-
-        boolean hasAdditionalKey = false;
-        int keyBits = 0;
-        for (String k : keys) {
-            KeySet keySet = KeySet.toAlias(k);
-            if (keySet == null) {
-                hasAdditionalKey = true;
-                continue;
-            }
-            keyBits |= 1 << keySet.ordinal();
-//            if (k.length() == 1) continue;
-//            if (k.length() == 3 && k.charAt(1) == '.' && joinedPropertyDefaultSelection == null) {
-//                joinedPropertyDefaultSelection = KeySet.toAlias(k.charAt(2));
-//            }
-//            else {
-//                throw new RuntimeException("Joined entity selections are conflicted");
-//            }
-        }
-
-        if ((keyBits & KeySet.All.bit()) != 0) {
+    private List<JQColumn> resolveSelectedColumns(String[] keys, boolean hasAdditionalKey) {
+        if ((selectAliases & KeySet.All.bit()) != 0) {
             return schema.getReadableColumns();
         }
 
-        boolean explicitPKs = (keyBits & KeySet.PrimaryKeys.bit()) != 0;
-        this.doSelectComparedAttribute = (keyBits & KeySet.Auto.bit()) != 0;
+        boolean explicitPKs = (selectAliases & KeySet.PrimaryKeys.bit()) != 0;
+        boolean doSelectComparedAttribute = (selectAliases & KeySet.Auto.bit()) != 0;
 
-        boolean includePKs = explicitPKs || (doSelectComparedAttribute && this.isArrayNode() && this.hasArrayDescendantNode());
+        boolean includePKs = explicitPKs || (doSelectComparedAttribute && this.isArrayNode());
         List<JQColumn> baseColumns = includePKs ? schema.getPKColumns() : Collections.EMPTY_LIST;
 
-        if (!doSelectComparedAttribute && !hasAdditionalKey) {
+        if (selectedColumns == null && !doSelectComparedAttribute && !hasAdditionalKey) {
             return baseColumns;
         }
 
         List<JQColumn> columns = new ArrayList<>(baseColumns);
-
-        for (String k : keys) {
-            KeySet keySet = KeySet.toAlias(k);
-            if (keySet == null) {
-                JQColumn column = schema.getColumn(k);
+        if (selectedColumns != null) {
+            for (JQColumn column : selectedColumns) {
                 if (!columns.contains(column)) columns.add(column);
+            }
+        }
+
+        if (hasAdditionalKey) {
+            for (String k : keys) {
+                KeySet keySet = KeySet.toAlias(k);
+                if (keySet == null) {
+                    JQColumn column = schema.getColumn(k);
+                    if (!columns.contains(column)) columns.add(column);
+                }
             }
         }
         return columns;
@@ -240,7 +244,7 @@ class TableFilter extends EntityFilter implements JQResultMapping {
     }
 
     protected void addComparedPropertyToSelection(String key) {
-        if (doSelectComparedAttribute) {
+        if ((selectAliases & KeySet.Auto.bit()) != 0) {
             JQColumn column = schema.getColumn(key);
             if (!this.selectedColumns.contains(column)) {
                 this.selectedColumns.add(column);

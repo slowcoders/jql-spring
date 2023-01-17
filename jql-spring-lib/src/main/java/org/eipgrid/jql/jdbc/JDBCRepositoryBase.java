@@ -125,7 +125,7 @@ public class JDBCRepositoryBase<ID> /*extends JDBCQueryBuilder*/ implements JqlR
     }
 
     protected List<KVEntity> find_impl(Map<String, Object> jsQuery, JqlSelect columns) {
-        JqlQuery query = buildQuery(jsQuery);
+        JqlQuery query = buildQuery(jsQuery, columns);
         String sql = sqlGenerator.createSelectQuery(query, columns);
         this.lastGeneratedSql = sql;
         List<KVEntity> res = (List)jdbc.query(sql, getColumnMapRowMapper(query));
@@ -143,7 +143,7 @@ public class JDBCRepositoryBase<ID> /*extends JDBCQueryBuilder*/ implements JqlR
 
     @Override
     public long count(Map<String, Object> jsQuery) {
-        JqlQuery query = this.buildQuery(jsQuery);
+        JqlQuery query = this.buildQuery(jsQuery, null);
         String sqlCount = sqlGenerator.createCountQuery(query);
         long count = jdbc.queryForObject(sqlCount, Long.class);
         return count;
@@ -202,27 +202,27 @@ public class JDBCRepositoryBase<ID> /*extends JDBCQueryBuilder*/ implements JqlR
 
     @Override
     public void update(Collection<ID> idList, Map<String, Object> updateSet) throws IOException {
-        JqlQuery filter = buildQuery(createJqlFilterWithIdList(idList));
+        JqlQuery filter = buildQuery(createJqlFilterWithIdList(idList), null);
         String sql = sqlGenerator.createUpdateQuery(filter, updateSet);
         jdbc.update(sql);
     }
 
     @Override
     public void delete(ID id) {
-        JqlQuery filter = buildQuery(createJqlFilterWithId(id));
+        JqlQuery filter = buildQuery(createJqlFilterWithId(id), null);
         String sql = sqlGenerator.createDeleteQuery(filter);
         jdbc.update(sql);
     }
 
     @Override
     public int delete(Collection<ID> idList) {
-        JqlQuery filter = buildQuery(createJqlFilterWithIdList(idList));
+        JqlQuery filter = buildQuery(createJqlFilterWithIdList(idList), null);
         String sql = sqlGenerator.createDeleteQuery(filter);
         return jdbc.update(sql);
     }
 
-    private JqlQuery buildQuery(Map<String, Object> jsQuery) {
-        return jqlParser.parse(this.schema, jsQuery);
+    private JqlQuery buildQuery(Map<String, Object> jsQuery, JqlSelect select) {
+        return jqlParser.parse(this.schema, jsQuery, select);
     }
 
     @Override

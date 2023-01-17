@@ -4,15 +4,15 @@ on conflict DO NOTHING;
 
 
 INSERT INTO starwars.character (species, id, name, height, mass, metadata) values
-('Human', 1000, 'Luke Skywalker', 1.72, 77, '{ "home_planet": "Tatooine", "memo": { "favorite-food": "kimchi", "shoe-size(cm)": 260 } }'),
-('Human', 1001, 'Darth Vader', 2.02, 136, '{ "home_planet": "Tatooine", "memo": { "favorite-food": "pork", "shoe-size(cm)": 370 } }'),
-('Human', 1002, 'Han Solo', 1.8, 80, '{ "memo": { "favorite-food": "apple", "shoe-size(cm)": 270 } }'),
-('Human', 1003, 'Leia Organa', 1.5, 49, '{ "home_planet": "Alderaan" }'),
-('Human', 1004, 'Wilhuff Tarkin', 1.8, null, '{ "memo": { "favorite-food": "fish", "shoe-size(cm)": 350 } }'),
+('Human', 1000, 'Luke Skywalker', 1.72, 77, '{ "homePlanet": "Tatooine", "memo": { "favoriteFood": "kimchi", "shoeSize": 260 } }'),
+('Human', 1001, 'Darth Vader', 2.02, 136, '{ "homePlanet": "Tatooine", "memo": { "favoriteFood": "pork", "shoeSize": 370 } }'),
+('Human', 1002, 'Han Solo', 1.8, 80, '{ "memo": { "favoriteFood": "apple", "shoeSize": 270 } }'),
+('Human', 1003, 'Leia Organa', 1.5, 49, '{ "homePlanet": "Alderaan" }'),
+('Human', 1004, 'Wilhuff Tarkin', 1.8, null, '{ "memo": { "favoriteFood": "fish", "shoeSize": 350 } }'),
 ('Human', 1005, 'Extra-1', 1.19, 50, null),
 ('Human', 1006, 'Extra-2', 1.8, 121, null),
-('Droid', 2000, 'C-3PO', 1.71, 75, '{ "primary_function": "protocol" }'),
-('Droid', 2001, 'R2-D2', 1.09, 32, '{ "primary_function": "Astromech" }')
+('Droid', 2000, 'C-3PO', 1.71, 75, '{ "primaryFunction": "protocol" }'),
+('Droid', 2001, 'R2-D2', 1.09, 32, '{ "primaryFunction": "Astromech" }')
 on conflict DO NOTHING;
 
 
