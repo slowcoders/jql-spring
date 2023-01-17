@@ -20,8 +20,8 @@ management.security.enabled: false
 security.basic.enabled: false
 
 server:
-  url: http://localhost:6090
-  port: 6090
+  url: http://localhost:7007
+  port: 7007
   contextPath: "/"
   compression:
     enabled: true # 응답 결과 압축 허용.

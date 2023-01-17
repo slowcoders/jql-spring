@@ -91,6 +91,7 @@ import { ref } from "vue";
 import axios from "axios";
 
 const dbSchema = 'starwars';
+const baseUrl = 'http://localhost:7007/api/jql'
 
 function count_lines(code) {
   const lines = code.split("\n");
@@ -183,7 +184,7 @@ const select = '${vm.selectedColumns}'
 const sort = '${vm.first_sort}'
 const limit = ${vm.limit?vm.limit:0}
 ${vm.js_code}
-const find_url=\`http://localhost:6090/api/jql/\${dbSchema}/\${dbTable}/find\`
+const find_url=\`${baseUrl}/\${dbSchema}/\${dbTable}/find\`
 this.http_post(find_url+\`?select=\${select}&sort=\${sort}&limit=\${limit}\`, jql);
 ${vm.schemaInfo}`
     },
@@ -191,7 +192,7 @@ ${vm.schemaInfo}`
     resetColumns() {
       const vm = this;
 
-      axios.get(`http://localhost:6090/api/jql/metadata/${dbSchema}/${vm.selectedTable}`).
+      axios.get(`${baseUrl}/metadata/${dbSchema}/${vm.selectedTable}`).
       then((res) => {
         const sortOptions = [];
         const selectableColumns = [
@@ -238,7 +239,7 @@ ${vm.schemaInfo}`
     onTableChanged() {
       const vm = this;
       if (vm.showSchemaInfo) {
-        const url = `http://localhost:6090/api/jql/metadata/${dbSchema}/${vm.selectedTable}/Simple`
+        const url = `${baseUrl}/metadata/${dbSchema}/${vm.selectedTable}/Simple`
         axios.get(url).then(res => {
           vm.schemaInfo = `\n/*************** Schema<${vm.selectedTable}> ***********************\n${res.data}*/`;
           vm.onSelectChanged()
@@ -258,7 +259,7 @@ ${vm.schemaInfo}`
       let find_result = null;
       axios.post(url, jql).then(res => {
         find_result = res;
-        return axios.get(`http://localhost:6090/api/jql/${dbSchema}/${vm.selectedTable}/last-executed-sql`);
+        return axios.get(`${baseUrl}/${dbSchema}/${vm.selectedTable}/last-executed-sql`);
       }).then(last_sql => {
         console.log(last_sql)
         vm.cntTest ++;

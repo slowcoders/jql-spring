@@ -4,7 +4,7 @@
     <h1>JQL Sample & Tutorial</h1>
     <h3>Essential Links</h3>
     <ul>
-      <li><a href="http://localhost:6090/swagger-ui.html" target="_blank" rel="noopener">Swagger API</a></li>
+      <li><a href="http://localhost:7007/swagger-ui.html" target="_blank" rel="noopener">Swagger API</a></li>
       <li><a href="https://github.com/slowcoders/jql-spring" target="_blank" rel="noopener">Sources</a></li>
     </ul>
   </div>

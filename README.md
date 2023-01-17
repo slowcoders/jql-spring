@@ -11,7 +11,7 @@ sh build_and_run_totorial.sh
 ```
 
 ### See tutorial
-http://localhost:6090
+http://localhost:7007/tutorial
 
 
 ## run test (jest)

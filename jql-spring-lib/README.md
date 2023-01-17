@@ -17,7 +17,7 @@ attribute_name 은 논리적인 DB Column 명으로, JPA Entity의 Java 필드�
 다음은 starwars.character table 에서 키가 2m 이상인 character 를 검색하는 예제이다.
 ```sh
 curl -X 'POST' \
-  'http://localhost:6090/api/jql/starwars/character/find' \
+  'http://localhost:7007/api/jql/starwars/character/find' \
   -H 'accept: */*' \
   -H 'Content-Type: application/json' \
   -d '{
