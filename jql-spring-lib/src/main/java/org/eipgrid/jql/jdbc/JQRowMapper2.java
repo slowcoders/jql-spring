@@ -67,7 +67,6 @@ public class JQRowMapper2 implements ResultSetExtractor<List<KVEntity>> {
             int lastMappingIndex = resultMappings.size() - 1;
 
             HashMap<CacheNode.Key, CacheNode> cacheNodes = rootEntityCache;
-            check_duplicated_columns:
             for (int i = 0; i < lastMappingIndex; i++) {
                 JQResultMapping mapping = resultMappings.get(i);
                 if (!mapping.hasArrayDescendantNode()) break;

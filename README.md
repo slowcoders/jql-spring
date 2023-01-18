@@ -11,10 +11,10 @@ sh build_and_run_totorial.sh
 ```
 
 ### See tutorial
-http://localhost:7007/tutorial
+http://localhost:7007
 
 
-## run test (jest)
+## Run test (jest)
 ```
 cd sample-app+tutorial
 npm install

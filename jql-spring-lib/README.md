@@ -10,10 +10,10 @@
 ## Grammar
 JQL 은 JSON 과 문법적으로 동일하다. 단, object member name(=key) 을 다음과 같이 확장하여 사용한다.
 ```sh
-jql_key = attribute_name '@' operator
+jql_key = property_name '@' operator
 ```
 
-attribute_name 은 논리적인 DB Column 명으로, JPA Entity의 Java 필드명에 해당한다.<br>
+property_name 은 논리적인 DB Column 명으로, JPA Entity 의 경우엔 필드명에 해당한다.<br>
 다음은 starwars.character table 에서 키가 2m 이상인 character 를 검색하는 예제이다.
 ```sh
 curl -X 'POST' \
@@ -27,7 +27,7 @@ curl -X 'POST' \
 
 ## JQL operators
 ### is, not
-* SQL 문 '=', '!=' 에 해당, Join 쿼리 시엔 'in', 'not in' 에 해당한다. 'is' 연산자는 생략 가능하다.
+* SQL 문 '=', '!=' 에 해당한다. 'is' 연산자는 생략 가능하다.
 ```
 { "id" : 1000 }              /* --> where id = 1000 */ 
 { "id@is" : 1000 }           /* --> where id = 1000 */ 
@@ -56,31 +56,27 @@ curl -X 'POST' \
 { "id@not between" : [1000, 10001] }    /* --> where not (id >= 1000 and id <= 1001) */ 
 ```
 
-### is, in and not, not in
-* Join 검색 또는 부가적인 검색 조건절을 추가하기 위해 사용된다. is 와 in, not 과 not in 는 동일한 검색을 수행한다. <br>
-  단 in 영역의 property 들은 검색 결과에 포함되지 않는다.
+### join 검색.
+* Json 하부 객체 형태로 Join 검색 검색 조건을 설정한다. 어레이 객체는 or 조건으로 해석된다 <br>
 ```
-{ "starship" : { id = 3000 } }           /* --> SELECT t_0.*, t_1.* FROM starwars.character as t_0
-                                                inner join starwars.starship as t_1 on
-                                                t_0.id = t_1.pilot_id
-                                                WHERE (t_1.id = 3000) */
-{ "starship@is" : { id = 3000 } } -> { "starship" : { id = 3000 } } 과 동일
+{ "starship" : { id: 3000 } }           
+    --> SELECT t_0.*, t_1.* FROM starwars.character as t_0
+        inner join starwars.starship as t_1 on
+        t_0.id = t_1.pilot_id
+        WHERE (t_1.id = 3000)
+{ "starship@is" : { id: 3000 } } --> { "starship" : { id = 3000 } } 과 동일
+
+{ "starship" : [ { id: 3000 }, { id: 3001 }  ] }           
+    --> SELECT t_0.*, t_1.* FROM starwars.character as t_0
+        inner join starwars.starship as t_1 on
+        t_0.id = t_1.pilot_id
+        WHERE (t_1.id = 3000 or t_1.id = 3001) */
                                                   
-{ "starship@in" : { id = 3000 } }       /* --> SELECT t_0.* FROM starwars.character as t_0
-                                               inner join starwars.starship as t_1 on
-                                               t_0.id = t_1.pilot_id
-                                               WHERE (t_1.id = 3000) */
-                                        (starship entity 는 검색 결과에 포함하지 않음)
-                                        
-{ "starship@not" : { id = 3000 } }      /* --> SELECT t_0.* FROM starwars.character as t_0
-                                               inner join starwars.starship as t_1 on
-                                               NOT (t_0.id = t_1.pilot_id)
-                                               WHERE (t_1.id = 3000) */ 
-{ "starship@not" : { id = 3000 } }      /* --> SELECT t_0.* t_1.* FROM starwars.character as t_0
-                                               inner join starwars.starship as t_1 on
-                                               NOT (t_0.id = t_1.pilot_id)
-                                               WHERE (t_1.id = 3000) */ 
-                                        (starship entity 는 검색 결과에 포함하지 않음)
+{ "starship@not" : { id: 3000 } }      
+    --> SELECT t_0.* FROM starwars.character as t_0
+        inner join starwars.starship as t_1 on
+        NOT (t_0.id = t_1.pilot_id)
+        WHERE (t_1.id = 3000) */ 
 ```
 
 
