@@ -64,12 +64,7 @@ public class JQRowMapper implements ResultSetExtractor<List<KVEntity>> {
                     mappedColumns[pkIndex].value = value;
                     if (value == null) {
                         if (isArray) {
-                            KVEntity base = makeBaseEntity(mapping);
-                            String[] entityPath = mapping.getEntityMappingPath();
-                            String key = entityPath[entityPath.length - 1];
-                            if (base.get(key) == null) {
-                                base.put(key, new ArrayList());
-                            }
+                            makeSubArray(mapping);
                         }
                         continue read_mapping;
                     }
@@ -105,6 +100,15 @@ public class JQRowMapper implements ResultSetExtractor<List<KVEntity>> {
             }
         }
         return results;
+    }
+
+    private void makeSubArray(JQResultMapping mapping) {
+        KVEntity base = makeBaseEntity(mapping);
+        String[] entityPath = mapping.getEntityMappingPath();
+        String key = entityPath[entityPath.length - 1];
+        if (base.get(key) == null) {
+            base.put(key, new ArrayList());
+        }
     }
 
     private Object makeCacheKey(JQSchema schema, int idxColumn) {

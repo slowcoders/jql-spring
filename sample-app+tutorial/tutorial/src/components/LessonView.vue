@@ -184,7 +184,7 @@ const select = '${vm.selectedColumns}'
 const sort = '${vm.first_sort}'
 const limit = ${vm.limit?vm.limit:0}
 ${vm.js_code}
-const find_url=\`${baseUrl}/\${dbSchema}/\${dbTable}/find\`
+const find_url=\`\${baseUrl}/\${dbSchema}/\${dbTable}/find\`
 this.http_post(find_url+\`?select=\${select}&sort=\${sort}&limit=\${limit}\`, jql);
 ${vm.schemaInfo}`
     },

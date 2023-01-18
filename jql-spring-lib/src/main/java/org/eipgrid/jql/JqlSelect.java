@@ -11,11 +11,11 @@ public class JqlSelect {
     private int offset;
     private int limit;
 
-    public static final String All = "*";
-    public static final String PrimaryKeys = "0";
-    public static final String Auto = "@";
+    public static final char All = '*';
+    public static final char PrimaryKeys = '0';
+    public static final char Auto = '@';
 
-    public static final JqlSelect Whole = new JqlSelect(new String[] { All }, null, 0, 0);
+    public static final JqlSelect Whole = new JqlSelect(new String[] { Character.toString(All) }, null, 0, 0);
     public static final JqlSelect NotAtAll = new JqlSelect(new String[0], null, 0, 0);
 
     protected JqlSelect(String[] keys, Sort sort, int offset, int limit) {

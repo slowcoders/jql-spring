@@ -10,13 +10,12 @@ enum KeySet {
 
     private final String[] keys;
 
-    KeySet(String key) {
-        this.text = key;
+    KeySet(char key) {
+        this.text = Character.toString(key);
         this.keys = new String[]{this.text};
     }
 
-    public static KeySet toAlias(String key) {
-        if (key.length() != 1) return null;
+    public static KeySet toAlias(char key) {
         switch (key) {
             case JqlSelect.All:
                 return All;
@@ -27,6 +26,11 @@ enum KeySet {
             default:
                 return null;
         }
+    }
+
+    public static KeySet toAlias(String key) {
+        if (key.length() != 1) return null;
+        return toAlias(key.charAt(0));
     }
 
     @Override
