@@ -21,7 +21,6 @@ public interface JQResultMapping {
 
     boolean isArrayNode();
 
-    // It has not any array node in descendants.
     boolean hasArrayDescendantNode();
 
     boolean isEmpty();

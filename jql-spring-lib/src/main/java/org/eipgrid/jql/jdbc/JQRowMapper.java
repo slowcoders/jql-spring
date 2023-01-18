@@ -49,8 +49,8 @@ public class JQRowMapper implements ResultSetExtractor<List<KVEntity>> {
                 List<JQColumn> columns = mapping.getSelectedColumns();
                 if (columns.size() == 0) continue;
 
-                boolean doCache = mapping.isArrayNode();// && mapping.hasArrayDescendantNode();
-                if (!doCache) {
+                boolean isArray = mapping.isArrayNode();// && mapping.hasArrayDescendantNode();
+                if (!isArray) {
                     readColumns(rs, idxColumn, columns.size());
                     idxColumn += columns.size();
                     continue;
@@ -63,6 +63,14 @@ public class JQRowMapper implements ResultSetExtractor<List<KVEntity>> {
                     Object value = getColumnValue(rs, pkIndex + 1, mappedColumns[pkIndex].column.getType());
                     mappedColumns[pkIndex].value = value;
                     if (value == null) {
+                        if (isArray) {
+                            KVEntity base = makeBaseEntity(mapping);
+                            String[] entityPath = mapping.getEntityMappingPath();
+                            String key = entityPath[entityPath.length - 1];
+                            if (base.get(key) == null) {
+                                base.put(key, new ArrayList());
+                            }
+                        }
                         continue read_mapping;
                     }
                 }
