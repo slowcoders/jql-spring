@@ -18,7 +18,7 @@
 import LessonView from "@/components/LessonView";
 
 const sample_code = `
-const jql = {
+const filter = {
   /*
     각 캐릭터와 해당 캐릭터가 조종하는 비행선 정보를 표시한다.
     참고로, 'starship' table 은 pilot_id(FK) 를 통해 'character' 테이블과 연결된다.

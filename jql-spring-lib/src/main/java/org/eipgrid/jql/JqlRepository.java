@@ -48,4 +48,5 @@ public interface JqlRepository<ENTITY, ID> {
 
     void clearEntityCache(ID id);
 
+    default List<ENTITY> select(JqlRequest request) { throw new RuntimeException("not impl"); }
 }

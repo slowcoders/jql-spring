@@ -45,7 +45,7 @@ public class ControlApiCustomizingDemoController extends JdbcTableController<Obj
         }
     }
 
-    @PostMapping(path = "/", consumes = { MediaType.APPLICATION_JSON_VALUE })
+    @PutMapping(path = "/", consumes = { MediaType.APPLICATION_JSON_VALUE })
     @ResponseBody
     @Operation(summary = "엔터티 추가 API 변경. default 값 설정.")
     @Transactional

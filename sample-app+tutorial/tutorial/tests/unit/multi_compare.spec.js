@@ -5,14 +5,14 @@ describe('Comapre', () => {
   let refs;
 
   beforeAll(async () => {
-    const jql = {}
+    const filter = {}
     const res = await jqlApi.find(jql, {limit: 2, sort: "id" });
     refs = res.content;
     expect(refs.length).toBe(2);
   })
 
   test('@is: [] (default)', async () => {
-    const jql = {
+    const filter = {
       "id": [refs[0].id, refs[1].id]
     }
     const res = await jqlApi.find(jql, { sort: "id" });
@@ -23,7 +23,7 @@ describe('Comapre', () => {
   });
 
   test('@is: [] (explicit)', async () => {
-    const jql = {
+    const filter = {
       "id": [refs[0].id, refs[1].id]
     }
     const res = await jqlApi.find(jql, { sort: "id" });
@@ -34,7 +34,7 @@ describe('Comapre', () => {
   });
 
   test('@not: []', async () => {
-    const jql = {
+    const filter = {
       "id@not": [refs[0].id, refs[1].id]
     }
     const count = await jqlApi.count();
@@ -50,7 +50,7 @@ describe('Comapre', () => {
   });
 
   test('@like []', async () => {
-    const jql = {
+    const filter = {
       "name@like": [refs[0].name.substring(0, 4) + "%", refs[1].name.substring(0, 4) + "%"] 
     }
     const res = await jqlApi.find(jql);
@@ -65,7 +65,7 @@ describe('Comapre', () => {
   });
 
   test('@not like []', async () => {
-    const jql = {
+    const filter = {
       "name@not like": [refs[0].name.substring(0, 4) + "%", refs[1].name.substring(0, 4) + "%"] 
     }
     const res = await jqlApi.find(jql);

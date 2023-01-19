@@ -180,12 +180,14 @@ export default {
       return ` // JQL Sample
 const dbSchema = '${dbSchema}'
 const dbTable = '${vm.selectedTable}'
-const select = '${vm.selectedColumns}'
-const sort = '${vm.first_sort}'
-const limit = ${vm.limit?vm.limit:0}
 ${vm.js_code}
-const find_url=\`\${baseUrl}/\${dbSchema}/\${dbTable}/find\`
-this.http_post(find_url+\`?select=\${select}&sort=\${sort}&limit=\${limit}\`, jql);
+const jql = {
+  select: '${vm.selectedColumns}',
+  sort: '${vm.first_sort}',
+  limit: ${vm.limit?vm.limit:0},
+  filter: filter
+}
+this.http_post(\`\${baseUrl}/\${dbSchema}/\${dbTable}/list\`, jql);
 ${vm.schemaInfo}`
     },
 
@@ -257,7 +259,10 @@ ${vm.schemaInfo}`
     http_post(url, jql) {
       const vm = this;
       let find_result = null;
-      axios.post(url, jql).then(res => {
+      const options = {
+        headers: { "Content-Type": `application/json`}
+      }
+      axios.post(url, jql, options).then(res => {
         find_result = res;
         return axios.get(`${baseUrl}/${dbSchema}/${vm.selectedTable}/last-executed-sql`);
       }).then(last_sql => {

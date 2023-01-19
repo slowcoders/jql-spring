@@ -5,14 +5,14 @@ describe('Comapre', () => {
   let ref;
 
   beforeAll(async () => {
-    const jql = {
+    const filter = {
       "name": "Luke Skywalker"
     }
     ref = await jqlApi.top(jql);
   })
 
   test('@is (default)', async () => {
-    const jql = {
+    const filter = {
       "id": ref.id
     }
     const res = await jqlApi.find(jql);
@@ -21,7 +21,7 @@ describe('Comapre', () => {
   });
 
   test('@is (explicit)', async () => {
-    const jql = {
+    const filter = {
       "id@is": ref.id
     }
     const res = await jqlApi.find(jql);
@@ -30,7 +30,7 @@ describe('Comapre', () => {
   });
 
   test('@not', async () => {
-    const jql = {
+    const filter = {
       "id@not": ref.id
     }
     const count = await jqlApi.count();
@@ -40,7 +40,7 @@ describe('Comapre', () => {
   });
 
   test('@le (less or equals)', async () => {
-    const jql = {
+    const filter = {
       "id@le": ref.id
     }
     const res = await jqlApi.find(jql);
@@ -51,7 +51,7 @@ describe('Comapre', () => {
   });
 
   test('@lt (less than)', async () => {
-    const jql = {
+    const filter = {
       "id@lt": ref.id
     }
     const res = await jqlApi.find(jql);
@@ -62,7 +62,7 @@ describe('Comapre', () => {
   });
 
   test('@ge (greater or equals)', async () => {
-    const jql = {
+    const filter = {
       "id@ge": ref.id
     }
     const res = await jqlApi.find(jql);
@@ -73,7 +73,7 @@ describe('Comapre', () => {
   });
 
   test('@gt (greater than)', async () => {
-    const jql = {
+    const filter = {
       "id@gt": ref.id
     }
     const res = await jqlApi.find(jql);
@@ -84,7 +84,7 @@ describe('Comapre', () => {
   });  
 
   test('@ge && @le', async () => {
-    const jql = {
+    const filter = {
       "id@ge": ref.id,
       "id@le": ref.id + 1
     }
@@ -97,7 +97,7 @@ describe('Comapre', () => {
   });    
 
   test('@between', async () => {
-    const jql = {
+    const filter = {
       "id@between": [ref.id, ref.id + 1]
     }
     const res = await jqlApi.find(jql);
@@ -110,7 +110,7 @@ describe('Comapre', () => {
   });    
 
   test('@not between', async () => {
-    const jql = {
+    const filter = {
       "id@not between": [ref.id, ref.id + 1]
     }
     const res = await jqlApi.find(jql);
@@ -123,7 +123,7 @@ describe('Comapre', () => {
 
   test('@like', async () => {
     const name_start = ref.name.substring(0, 4);
-    const jql = {
+    const filter = {
       "name@like": name_start + "%"
     }
     const res = await jqlApi.find(jql);
@@ -137,7 +137,7 @@ describe('Comapre', () => {
 
   test('@not like', async () => {
     const name_start = ref.name.substring(0, 4);
-    const jql = {
+    const filter = {
       "name@not like": name_start + "%"
     }
     const res = await jqlApi.find(jql);

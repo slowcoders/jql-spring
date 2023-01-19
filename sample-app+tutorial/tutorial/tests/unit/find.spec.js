@@ -4,7 +4,7 @@ import { jqlApi } from '@/api/jqlApi'
 describe('Join Test', () => {
   describe('Advanced Join', () => {
     test('Find friends of Han Solo', async () => {
-      const jql = {
+      const filter = {
         "name" : "Han Solo",
         "+friend<name>": {} 
       }      
@@ -15,7 +15,7 @@ describe('Join Test', () => {
     });
 
     test('Find friends of Han Solo with joined query', async () => {
-      const jql = {
+      const filter = {
         "name" : "Han Solo",
         "+friend<name>": { "starship<name, @>": { "length@ge": 10 } }
       }

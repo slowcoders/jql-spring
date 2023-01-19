@@ -6,6 +6,7 @@ import org.eipgrid.jql.schema.JQJoin;
 import org.eipgrid.jql.schema.JQSchema;
 import org.eipgrid.jql.schema.JQType;
 
+import javax.persistence.Column;
 import java.util.*;
 
 class TableFilter extends EntityFilter implements JQResultMapping {
@@ -59,7 +60,7 @@ class TableFilter extends EntityFilter implements JQResultMapping {
         if (jsonPath == null) {
             TableFilter parent = getParentNode();
             String[] basePath = parent.getEntityMappingPath();
-            boolean mergeLast = (parent.selectedColumns == null) && basePath.length > 0;
+            boolean mergeLast = false && (parent.getSelectedColumns().isEmpty()) && basePath.length > 0;
             jsonPath = new String[basePath.length + (mergeLast ? 0 : 1)];
             System.arraycopy(basePath, 0, jsonPath, 0, basePath.length);
             String lastPath = join.getJsonKey();
@@ -73,91 +74,110 @@ class TableFilter extends EntityFilter implements JQResultMapping {
     }
 
 
-    public String getTableName() { return schema.getTableName(); }
+    public String getTableName() {
+        return schema.getTableName();
+    }
 
     @Override
     public List<JQColumn> getSelectedColumns() {
-        return selectedColumns == null ? Collections.EMPTY_LIST : selectedColumns;
-    }
+        if (selectedColumns == null) {
+            if (!getRootNode().isSelectAuto()) {
+                this.selectedColumns = Collections.EMPTY_LIST;
+            }
+            else {
+                this.selectedColumns = schema.getReadableColumns();
 
-
-    public void setSelectedProperties(String[] keys) {
-        if (keys == null) {
-            if (this.selectedColumns == null) {
-                TableFilter parent = getParentNode();
-                if (parent == null) {
-                    this.selectedColumns = schema.getReadableColumns();
-                    this.selectAliases = KeySet.All.bit();
-                } else {
-                    while (parent.selectedColumns == null) {
-                        parent = parent.getParentNode();
+                Set<JQColumn> hiddenKeys = this.getHiddenForeignKeys();
+                if (!hiddenKeys.isEmpty()) {
+                    ArrayList<JQColumn> columns2 = new ArrayList<>();
+                    for (JQColumn column : selectedColumns) {
+                        if (hiddenKeys.contains(column)) continue;
+                        columns2.add(column);
                     }
-                    this.selectAliases = parent.selectAliases;
-                    this.selectedColumns = resolveSelectedColumns(null, false);
+                    selectedColumns = columns2;
                 }
             }
-            return;
         }
-
-        if (keys.length == 0) {
-            this.selectedColumns = Collections.EMPTY_LIST;
-        } else {
-            boolean hasAdditionalKey = false;
-            for (String k : keys) {
-                KeySet keySet = KeySet.toAlias(k);
-                if (keySet != null) {
-                    selectAliases |= 1 << keySet.ordinal();
-                }
-                else {
-                    hasAdditionalKey = true;
-                }
-            }
-
-            this.selectedColumns = resolveSelectedColumns(keys, hasAdditionalKey);
-        }
+        return selectedColumns;
     }
 
-    protected void setSelectedProperties_withEmptyFilter() {
-        if (this.selectedColumns == null || selectedColumns.size() == 0) {
-            this.selectedColumns = schema.getPKColumns();
-        }
-    }
+//
+//    public void setSelectedProperties(String[] keys) {
+//        if (keys == null) {
+//            if (this.selectedColumns == null) {
+//                TableFilter parent = getParentNode();
+//                if (parent == null) {
+//                    this.selectedColumns = schema.getReadableColumns();
+//                    this.selectAliases = KeySet.All.bit();
+//                } else {
+//                    while (parent.selectedColumns == null) {
+//                        parent = parent.getParentNode();
+//                    }
+//                    this.selectAliases = parent.selectAliases;
+//                    this.selectedColumns = resolveSelectedColumns(null, false);
+//                }
+//            }
+//            return;
+//        }
+//
+//        if (keys.length == 0) {
+//            this.selectedColumns = Collections.EMPTY_LIST;
+//        } else {
+//            boolean hasAdditionalKey = false;
+//            for (String k : keys) {
+//                KeySet keySet = KeySet.toAlias(k);
+//                if (keySet != null) {
+//                    selectAliases |= 1 << keySet.ordinal();
+//                } else {
+//                    hasAdditionalKey = true;
+//                }
+//            }
+//
+//            this.selectedColumns = resolveSelectedColumns(keys, hasAdditionalKey);
+//        }
+//    }
+//
+//    protected void setSelectedProperties_withEmptyFilter() {
+//        if (this.selectedColumns == null || selectedColumns.size() == 0) {
+//            this.selectedColumns = schema.getPKColumns();
+//        }
+//    }
+//
+//    private List<JQColumn> resolveSelectedColumns(String[] keys, boolean hasAdditionalKey) {
+//        if ((selectAliases & KeySet.All.bit()) != 0) {
+//            return schema.getReadableColumns();
+//        }
+//
+//        boolean explicitPKs = (selectAliases & KeySet.PrimaryKeys.bit()) != 0;
+//        boolean doSelectComparedAttribute = (selectAliases & KeySet.Auto.bit()) != 0;
+//
+//        boolean includePKs = explicitPKs || (doSelectComparedAttribute && this.isArrayNode());
+//        List<JQColumn> baseColumns = includePKs ? schema.getPKColumns() : Collections.EMPTY_LIST;
+//
+//        if (selectedColumns == null && !doSelectComparedAttribute && !hasAdditionalKey) {
+//            return baseColumns;
+//        }
+//
+//        List<JQColumn> columns = new ArrayList<>(baseColumns);
+//        if (selectedColumns != null) {
+//            for (JQColumn column : selectedColumns) {
+//                if (!columns.contains(column)) columns.add(column);
+//            }
+//        }
+//
+//        if (hasAdditionalKey) {
+//            for (String k : keys) {
+//                KeySet keySet = KeySet.toAlias(k);
+//                if (keySet == null) {
+//                    JQColumn column = schema.getColumn(k);
+//                    if (!columns.contains(column)) columns.add(column);
+//                }
+//            }
+//        }
+//        return columns;
+//    }
 
-    private List<JQColumn> resolveSelectedColumns(String[] keys, boolean hasAdditionalKey) {
-        if ((selectAliases & KeySet.All.bit()) != 0) {
-            return schema.getReadableColumns();
-        }
-
-        boolean explicitPKs = (selectAliases & KeySet.PrimaryKeys.bit()) != 0;
-        boolean doSelectComparedAttribute = (selectAliases & KeySet.Auto.bit()) != 0;
-
-        boolean includePKs = explicitPKs || (doSelectComparedAttribute && this.isArrayNode());
-        List<JQColumn> baseColumns = includePKs ? schema.getPKColumns() : Collections.EMPTY_LIST;
-
-        if (selectedColumns == null && !doSelectComparedAttribute && !hasAdditionalKey) {
-            return baseColumns;
-        }
-
-        List<JQColumn> columns = new ArrayList<>(baseColumns);
-        if (selectedColumns != null) {
-            for (JQColumn column : selectedColumns) {
-                if (!columns.contains(column)) columns.add(column);
-            }
-        }
-
-        if (hasAdditionalKey) {
-            for (String k : keys) {
-                KeySet keySet = KeySet.toAlias(k);
-                if (keySet == null) {
-                    JQColumn column = schema.getColumn(k);
-                    if (!columns.contains(column)) columns.add(column);
-                }
-            }
-        }
-        return columns;
-    }
-
-    private Set<JQColumn> getHiddenForeignKeys() {
+    Set<JQColumn> getHiddenForeignKeys() {
         Set<JQColumn> hiddenColumns = (Set<JQColumn>) Collections.EMPTY_SET;
         for (EntityFilter node : this.subFilters.values()) {
             TableFilter table = node.asTableFilter();
@@ -165,7 +185,7 @@ class TableFilter extends EntityFilter implements JQResultMapping {
             if (!table.join.isInverseMapped()) {
                 if (hiddenColumns == Collections.EMPTY_SET) hiddenColumns = new HashSet<>();
                 List<JQColumn> fkColumns = table.join.getForeignKeyColumns();
-                assert(fkColumns.get(0).getSchema() == this.schema);
+                assert (fkColumns.get(0).getSchema() == this.schema);
                 hiddenColumns.addAll(fkColumns);
             }
         }
@@ -176,21 +196,53 @@ class TableFilter extends EntityFilter implements JQResultMapping {
     protected EntityFilter makeSubNode(String key, JqlParser.NodeType nodeType) {
         JQJoin join = schema.getEntityJoinBy(key);
         if (join == null) {
-            JQColumn column = schema.getColumn(key);
-            if (column.getType() != JQType.Json) return this;
+            if (schema.getColumn(key).getType() != JQType.Json) return this;
         }
 
         EntityFilter subQuery = subFilters.get(key);
         if (subQuery == null) {
             if (join != null) {
                 subQuery = new TableFilter(this, join);
-            }
-            else {
+            } else {
                 subQuery = new JsonFilter(this, key);
             }
             subFilters.put(key, subQuery);
         }
         return subQuery;
+    }
+
+    final void addSelectedColumn(String key) {
+        if (key.equals("*")) {
+            this.selectedColumns = schema.getReadableColumns();
+        }
+        else if (key.equals("0")) {
+            if (this.selectedColumns == null) {
+                this.selectedColumns = schema.getPKColumns();
+            }
+            else {
+                for (JQColumn k : schema.getPKColumns()) {
+                    addSelectedColumn(k);
+                }
+            }
+        }
+        else {
+            JQColumn column = schema.getColumn(key);
+            addSelectedColumn(column);
+        }
+    }
+
+    private void addSelectedColumn(JQColumn column) {
+        if (this.selectedColumns == null) {
+            this.selectedColumns = this.isArrayNode() ? new ArrayList<>(schema.getPKColumns()) : new ArrayList<>();
+        }
+
+        if (this.selectedColumns.contains(column)) return;
+
+        if (this.selectedColumns == schema.getPKColumns()) {
+            // makes mutable!!
+            this.selectedColumns = new ArrayList<>(this.selectedColumns);
+        }
+        this.selectedColumns.add(column);
     }
 
     @Override
@@ -228,18 +280,6 @@ class TableFilter extends EntityFilter implements JQResultMapping {
                 table.gatherColumnMappings(columnGroupMappings);
                 this.hasArrayDescendant |= table.isArrayNode() || table.hasArrayDescendant;
             }
-        }
-
-        if (this.selectedColumns == null || selectedColumns.size() == 0) return;
-
-        Set<JQColumn> hiddenKeys = getHiddenForeignKeys();
-        if (!hiddenKeys.isEmpty()) {
-            ArrayList<JQColumn> columns = new ArrayList<>();
-            for (JQColumn column : this.getSelectedColumns()) {
-                if (hiddenKeys.contains(column)) continue;
-                columns.add(column);
-            }
-            this.selectedColumns = columns;
         }
     }
 

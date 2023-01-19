@@ -1,5 +1,6 @@
 package org.eipgrid.jql.jdbc;
 
+import org.eipgrid.jql.JqlRequest;
 import org.eipgrid.jql.schema.JQSchema;
 import org.eipgrid.jql.JqlSelect;
 import org.eipgrid.jql.parser.JqlQuery;
@@ -18,4 +19,6 @@ public interface QueryGenerator {
     String prepareFindByIdStatement(JQSchema schema);
 
     String createInsertStatement(JQSchema schema, Map entity, boolean ignoreConflict);
+
+    String createSelectQuery(JqlQuery query, JqlRequest request);
 }

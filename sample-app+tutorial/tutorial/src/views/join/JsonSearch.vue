@@ -23,7 +23,7 @@ const jql_2 = {
   "metadata": { "memo" : { "shoeSize@ge" : 270 } }
 }
 
-const jql = jql_1;
+const filter = jql_1;
 `
 
 export default {

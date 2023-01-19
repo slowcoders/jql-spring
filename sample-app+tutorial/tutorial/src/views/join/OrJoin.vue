@@ -33,7 +33,7 @@ const jql_2 = {
   ]
 }
 
-const jql = jql_1
+const filter = jql_1
 `
 
 export default {

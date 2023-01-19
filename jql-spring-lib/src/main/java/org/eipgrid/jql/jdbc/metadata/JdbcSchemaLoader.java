@@ -374,6 +374,11 @@ public class JdbcSchemaLoader extends JQSchemaLoader implements QueryGenerator {
         return createSqlGenerator().createInsertStatement(schema, entity, ignoreConflict);
     }
 
+    @Override
+    public String createSelectQuery(JqlQuery where, JqlRequest request) {
+        return createSqlGenerator().createSelectQuery(where, request);
+    }
+
     protected SqlGenerator createSqlGenerator() {
         return new SqlGenerator();
     }

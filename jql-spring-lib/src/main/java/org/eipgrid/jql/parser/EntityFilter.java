@@ -61,13 +61,10 @@ public abstract class EntityFilter {
         for (int p; (p = key.indexOf('.')) > 0; ) {
             JQSchema schema = scope.getSchema();
             if (schema != null && schema.hasColumn(key)) {
-                // TODO 고려 사항
-                //  1) '.' 으로 이어진 Composite Key 는 Leaf-Column(Not joined) 에만 사용 가능.
-                //  2) '.' 으로 이어진 Composite Key 키에 대해서도 Join-Column 허용?
                 return scope;
             }
             String token = key.substring(0, p);
-            scope = scope.makeSubNode(token, nodeType);
+            scope = scope.makeSubNode(token, JqlParser.NodeType.Entity);
             key = key.substring(p + 1);
         }
         scope = scope.makeSubNode(key, nodeType);

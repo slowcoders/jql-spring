@@ -58,7 +58,7 @@ const jql_6 = find_pilot_having_big_starships__with_auto_sub_entity_selection
 const jql_7 = find_pilot_having_big_starships__without_sub_entity_selection
 
 /** 아래의 대입문을 수정하여 jql_1~7 의 검색 결과를 비교해 본다 */
-const jql = jql_1;
+const filter = jql_1;
 `
 
 export default {

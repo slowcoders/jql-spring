@@ -36,10 +36,11 @@ public class JQRowMapper implements ResultSetExtractor<List<KVEntity>> {
         final int cntMapping = resultMappings.size();
         while (rs.next()) {
             int idxColumn = 0;
+            int cntColumn;
             JQResultMapping lastMapping = null;
             ResultCache resultCache = resultCacheRoot;
             read_mapping:
-            for (int idxMapping = 0; idxMapping < cntMapping; idxMapping++) {
+            for (int idxMapping = 0; idxMapping < cntMapping; idxMapping++, idxColumn+=cntColumn) {
                 JQResultMapping mapping = resultMappings.get(idxMapping);
                 if (mapping.getParentNode() != lastMapping) {
                     resultCache = resultCacheRoot;
@@ -47,16 +48,11 @@ public class JQRowMapper implements ResultSetExtractor<List<KVEntity>> {
                 lastMapping = mapping;
 
                 List<JQColumn> columns = mapping.getSelectedColumns();
-                if (columns.size() == 0) continue;
+                cntColumn = columns.size();
+                if (cntColumn == 0) continue;
 
                 boolean isArray = mapping.isArrayNode();// && mapping.hasArrayDescendantNode();
-                if (!isArray) {
-                    readColumns(rs, idxColumn, columns.size());
-                    idxColumn += columns.size();
-                    continue;
-                }
 
-                resultCache = resultCache.getCache(idxMapping);
                 List<JQColumn> pkColumns = mapping.getSchema().getPKColumns();
                 int pkIndex = idxColumn;
                 for (int pkCount = pkColumns.size(); --pkCount >= 0; pkIndex++) {
@@ -70,33 +66,38 @@ public class JQRowMapper implements ResultSetExtractor<List<KVEntity>> {
                     }
                 }
 
+                if (!isArray) {
+                    readColumns(rs, idxColumn, columns.size());
+                    continue;
+                }
+
                 Object key = makeCacheKey(mapping.getSchema(), idxColumn);
                 if (key == null) {
                     readColumns(rs, idxColumn, columns.size());
+                    continue;
                 }
-                else {
-                    CachedEntity cachedEntity = resultCache.get(key);
-                    if (cachedEntity == null) {
-                        cachedEntity = readColumns(rs, idxColumn, columns.size());
-                        resultCache.put(key, cachedEntity);
-                    } else if (idxMapping > 0) {
-                        CachedEntity entity = makeBaseEntity(mapping);
-                        if (cachedEntity.addParent(entity)) {
-                            String[] entityPath = mapping.getEntityMappingPath();
-                            String key2 = entityPath[entityPath.length - 1];
-                            List data = (List) entity.get(key2);
-                            if (data == null) {
-                                data = new ArrayList();
-                                entity.put(key2, data);
-                            }
-                            data.add(cachedEntity);
+
+                resultCache = resultCache.getCache(idxMapping);
+                CachedEntity cachedEntity = resultCache.get(key);
+                if (cachedEntity == null) {
+                    cachedEntity = readColumns(rs, idxColumn, columns.size());
+                    resultCache.put(key, cachedEntity);
+                } else if (idxMapping > 0) {
+                    CachedEntity entity = makeBaseEntity(mapping);
+                    if (cachedEntity.addParent(entity)) {
+                        String[] entityPath = mapping.getEntityMappingPath();
+                        String key2 = entityPath[entityPath.length - 1];
+                        List data = (List) entity.get(key2);
+                        if (data == null) {
+                            data = new ArrayList();
+                            entity.put(key2, data);
                         }
-                    }
-                    if (idxColumn == 0) {
-                        baseEntity = cachedEntity;
+                        data.add(cachedEntity);
                     }
                 }
-                idxColumn += columns.size();
+                if (idxColumn == 0) {
+                    baseEntity = cachedEntity;
+                }
             }
         }
         return results;
@@ -157,6 +158,7 @@ public class JQRowMapper implements ResultSetExtractor<List<KVEntity>> {
             baseEntity = new CachedEntity(null);
             results.add(baseEntity);
         }
+
         currEntity = makeSubEntity(mappedColumns[idxColumn].mapping);
 
         for (; idxColumn < columnCount; ) {
@@ -173,7 +175,7 @@ public class JQRowMapper implements ResultSetExtractor<List<KVEntity>> {
         String[] entityPath = currMapping.getEntityMappingPath();
         int idxLastPath = entityPath.length - 1;
         for (int i = 0; i < idxLastPath; i++) {
-            currEntity = makeSubEntity(currEntity, entityPath[i], false);
+            currEntity = makeSubEntity(currEntity, entityPath[i], currMapping.isArrayNode());
         }
         return currEntity;
     }
@@ -212,7 +214,10 @@ public class JQRowMapper implements ResultSetExtractor<List<KVEntity>> {
             }
         } else if (subEntity instanceof ArrayList) {
             ArrayList<CachedEntity> list = (ArrayList<CachedEntity>) subEntity;
-            subEntity = list.get(list.size()-1);
+            if (list.isEmpty()) {
+                list.add(new CachedEntity(entity));
+            }
+            subEntity = list.isEmpty() ? new ArrayList<>() : list.get(list.size()-1);
         }
         return (CachedEntity)subEntity;
     }

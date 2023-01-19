@@ -37,39 +37,21 @@ public interface JqlController<ENTITY, ID> {
             return entity;
         }
 
-        @GetMapping(path = "/")
+        @PostMapping(path = "/", consumes = { MediaType.MULTIPART_FORM_DATA_VALUE })
         @ResponseBody
-        @Operation(summary = "전체 엔터티 리스트")
-        default Object list(@RequestParam(value = "page", defaultValue = "-1") int page,
-                            @Parameter(name = "limit", example = "10")
-                            @RequestParam(value = "limit", defaultValue = "0") int limit,
-                            @RequestParam(value = "select", required = false) String columns,
-                            @RequestParam(value = "sort", required = false) String sort) {
-            return find(page, limit, columns, sort, null);
+        @Operation(summary = "엔터티 검색")
+        default Object select_form(@Schema(example = "{ \"select\": \"\", \"sort\": \"\", \"page\": 0, \"limit\": 0, \"query\": { } }")
+                                  @ModelAttribute JqlRequest.Builder request) {
+            return select(request);
         }
 
-        @PostMapping(path = "/find")
+        @PostMapping(path = "/", consumes = { MediaType.APPLICATION_JSON_VALUE })
         @ResponseBody
-        @Operation(summary = "조건 검색")
-        default Object find(@RequestParam(value = "page", defaultValue = "-1") int page,
-                            @Parameter(name = "limit", example = "10")
-                            @RequestParam(value = "limit", defaultValue = "0") int limit,
-                            @RequestParam(value = "select", required = false) String columns,
-                            @RequestParam(value = "sort", required = false) String sort,
-                            @Schema(implementation = Object.class)
-                            @RequestBody() HashMap<String, Object> jsQuery) {
-            boolean need_pagination = page >= 0 && limit > 1;
-            int offset = need_pagination ? page * limit : 0;
-            JqlSelect select = JqlSelect.by(columns, sort, offset, limit);
-            List<ENTITY> res = getRepository().find(jsQuery, select);
-
-            if (need_pagination) {
-                long count = getRepository().count(jsQuery);
-                PageRequest pageReq = PageRequest.of(page, limit, select.getSort());
-                return new PageImpl(res, pageReq, count);
-            } else {
-                return KVEntity.of("content", res);
-            }
+        @Operation(summary = "엔터티 검색")
+        default Object select(@Schema(example = "{ \"select\": \"\", \"sort\": \"\", \"page\": 0, \"limit\": 0, \"query\": { } }")
+                             @RequestBody JqlRequest.Builder request) {
+            List<ENTITY> res = getRepository().select(request.build());
+            return KVEntity.of("content", res);
         }
 
         @PostMapping(path = "/count")
@@ -81,17 +63,6 @@ public interface JqlController<ENTITY, ID> {
             return count;
         }
 
-        @PostMapping(path = "/top")
-        @ResponseBody
-        @Operation(summary = "조건 검색 첫 엔터티 읽기")
-        default ENTITY top(@RequestParam(value = "select", required = false) String columns,
-                           @RequestParam(value = "sort", required = false) String sort,
-                           @Schema(implementation = Object.class)
-                           @RequestBody HashMap<String, Object> jsQuery) {
-            JqlSelect select = JqlSelect.by(columns, sort, 0, 1);
-            List<ENTITY> res = getRepository().find(jsQuery, select);
-            return res.size() > 0 ? res.get(0) : null;
-        }
 
         @PostMapping(path = "/clear-cache")
         @ResponseBody
@@ -107,7 +78,7 @@ public interface JqlController<ENTITY, ID> {
      */
     interface Update<ENTITY, ID> extends JqlController<ENTITY, ID> {
 
-        @PostMapping(path = "/", consumes = { MediaType.APPLICATION_JSON_VALUE })
+        @PutMapping(path = "/", consumes = { MediaType.APPLICATION_JSON_VALUE })
         @ResponseBody
         @Operation(summary = "엔터티 추가")
         @Transactional
@@ -154,17 +125,17 @@ public interface JqlController<ENTITY, ID> {
             return getRepository().find(id);
         }
 
-        @PatchMapping(path = "/{idList}", consumes = { MediaType.MULTIPART_FORM_DATA_VALUE })
-        @ResponseBody
-        @Operation(summary = "엔터티 내용 일부 변경")
-        @Transactional
-        default List<ENTITY> update(
-                @Schema(type="string", required = true) @PathVariable("idList") Collection<ID> idList,
-                @RequestBody HashMap<String, Object> updateSet) throws Exception {
-            getRepository().update(idList, updateSet);
-            List<ENTITY> entities = getRepository().list(idList);
-            return entities;
-        }
+//        @PatchMapping(path = "/{id}", consumes = { MediaType.MULTIPART_FORM_DATA_VALUE })
+//        @ResponseBody
+//        @Operation(summary = "엔터티 내용 일부 변경")
+//        @Transactional
+//        default List<ENTITY> update(
+//                @Schema(type="string", required = true) @PathVariable("id") ID id,
+//                @ModelAttribute ENTITY entity) throws Exception {
+//            getRepository().update(idList, updateSet);
+//            List<ENTITY> entities = getRepository().list(idList);
+//            return entity;
+//        }
     }
 
     abstract class SearchAndUpdate<ENTITY, ID> implements Search<ENTITY, ID>, Update<ENTITY, ID> {

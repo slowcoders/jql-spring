@@ -15,6 +15,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.persistence.Entity;
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
 
 public class DefaultJqlConfig {
 
@@ -57,6 +58,23 @@ public class DefaultJqlConfig {
         }
     }
 
+    @Component
+    @ConfigurationPropertiesBinding
+    public static class StringToHashMapDeserializer implements Converter<String, HashMap> {
+
+        private ObjectMapper om;
+
+        public StringToHashMapDeserializer() {
+            om = new ObjectMapper();
+        }
+
+        @SneakyThrows
+        @Override
+        public HashMap convert(String source) {
+            if (source == null) return null;
+            return om.readValue(source, HashMap.class);
+        }
+    }
 
 
     @Component

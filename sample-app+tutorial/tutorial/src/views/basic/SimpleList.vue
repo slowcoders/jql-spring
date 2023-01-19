@@ -16,7 +16,7 @@
 import LessonView from "@/components/LessonView";
 
 const sample_code = `
-const jql = {}
+const filter = {}
 `
 
 export default {

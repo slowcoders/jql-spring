@@ -1,6 +1,7 @@
 package org.eipgrid.jql.jdbc;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.eipgrid.jql.JqlRequest;
 import org.eipgrid.jql.schema.JQColumn;
 import org.eipgrid.jql.schema.JQSchema;
 import org.eipgrid.jql.JqlRepository;
@@ -127,6 +128,15 @@ public class JDBCRepositoryBase<ID> /*extends JDBCQueryBuilder*/ implements JqlR
     protected List<KVEntity> find_impl(Map<String, Object> jsQuery, JqlSelect columns) {
         JqlQuery query = buildQuery(jsQuery, columns);
         String sql = sqlGenerator.createSelectQuery(query, columns);
+        this.lastGeneratedSql = sql;
+        List<KVEntity> res = (List)jdbc.query(sql, getColumnMapRowMapper(query));
+        return res;
+    }
+
+    public List<KVEntity> select(JqlRequest request) {
+//        return jqlParser.parse(this.schema, jsQuery, select);
+        JqlQuery query = jqlParser.parse(this.schema, request.getFilter());
+        String sql = sqlGenerator.createSelectQuery(query, request);
         this.lastGeneratedSql = sql;
         List<KVEntity> res = (List)jdbc.query(sql, getColumnMapRowMapper(query));
         return res;

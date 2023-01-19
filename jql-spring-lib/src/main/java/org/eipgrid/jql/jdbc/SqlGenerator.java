@@ -1,5 +1,6 @@
 package org.eipgrid.jql.jdbc;
 
+import org.eipgrid.jql.JqlRequest;
 import org.eipgrid.jql.schema.JQColumn;
 import org.eipgrid.jql.schema.JQSchema;
 import org.eipgrid.jql.schema.JQJoin;
@@ -175,6 +176,45 @@ public class SqlGenerator extends SqlConverter implements QueryGenerator {
             }
         }
         return false;
+    }
+
+    public String createSelectQuery(JqlQuery where, JqlRequest columns) {
+        sw.reset();
+        String tableName = where.getTableName();
+        where.setSelectedProperties(columns.getSelect());
+
+        boolean need_complex_pagination = columns.getLimit() > 0 && needDistinctPagination(where);
+        if (need_complex_pagination) {
+            sw.write("\nWITH _cte AS (\n"); // WITH _cte AS NOT MATERIALIZED
+            sw.incTab();
+            sw.write("SELECT DISTINCT t_0.* ");
+            writeFrom(where, tableName, true);
+            writeWhere(where);
+            tableName = "_cte";
+            writeOrderBy(where, columns.getSort(), false);
+//            writePagination(columns);
+            sw.decTab();
+            sw.write("\n)");
+        }
+
+        sw.write("\nSELECT DISTINCT \n");
+        for (JQResultMapping mapping : where.getResultMappings()) {
+            sw.write('\t');
+            String alias = mapping.getMappingAlias();
+            for (JQColumn col : mapping.getSelectedColumns()) {
+                sw.write(alias).write('.').write(col.getPhysicalName()).write(", ");
+            }
+            sw.write('\n');
+        }
+        sw.replaceTrailingComma("\n");
+        writeFrom(where, tableName, false);
+        writeWhere(where);
+        writeOrderBy(where, columns.getSort(), false);//where.hasArrayDescendantNode());
+//        if (!need_complex_pagination) {
+//            writePagination(columns);
+//        }
+        String sql = sw.reset();
+        return sql;
     }
 
     public String createSelectQuery(JqlQuery where, JqlSelect columns) {

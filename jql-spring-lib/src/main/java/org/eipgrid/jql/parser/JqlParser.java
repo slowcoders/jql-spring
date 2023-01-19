@@ -1,5 +1,6 @@
 package org.eipgrid.jql.parser;
 
+import org.eipgrid.jql.JqlRequest;
 import org.eipgrid.jql.schema.JQColumn;
 import org.eipgrid.jql.schema.JQSchema;
 import org.eipgrid.jql.JqlSelect;
@@ -29,6 +30,15 @@ public class JqlParser {
         }
         return where;
     }
+
+    public JqlQuery parse(JQSchema schema, Map<String, Object> jsQuery) {
+        JqlQuery where = new JqlQuery(schema);
+        if (jsQuery != null) {
+            this.parse(where.getPredicateSet(), jsQuery, true);
+        }
+        return where;
+    }
+
 
     public void parse(PredicateSet predicates, Map<String, Object> filter, boolean excludeConstantAttribute) {
         // "joinColumn명" : { "id@?EQ" : "joinedColumn2.joinedColumn3.columnName" }; // Fetch 자동 수행.
@@ -91,16 +101,16 @@ public class JqlParser {
             }
 
             if (valueNodeType != NodeType.Leaf) {
-                subFilter.setSelectedProperties(selectedKeys);
+//                subFilter.setSelectedProperties(selectedKeys);
                 PredicateSet ps = op.getPredicates(subFilter, valueNodeType);
                 if (valueNodeType == NodeType.Entity) {
                     Map<String, Object> subJql = (Map<String, Object>) value;
                     if (!subJql.isEmpty()) {
                         this.parse(ps, subJql, true);
                     }
-                    else if (selectedKeys == null) {
-                        subFilter.setSelectedProperties_withEmptyFilter();
-                    }
+//                    else if (selectedKeys == null) {
+//                        subFilter.setSelectedProperties_withEmptyFilter();
+//                    }
                 }
                 else {  // ValueNodeType.Entities
                     for (Map<String, Object> map : (Collection<Map<String, Object>>) value) {
@@ -188,6 +198,7 @@ public class JqlParser {
         }
         return NodeType.Leaf;
     }
+
 
     enum NodeType {
         Leaf,

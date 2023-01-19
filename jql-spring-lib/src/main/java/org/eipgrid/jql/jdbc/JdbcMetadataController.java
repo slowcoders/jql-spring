@@ -1,6 +1,7 @@
 package org.eipgrid.jql.jdbc;
 
 import io.swagger.v3.oas.annotations.Operation;
+import org.eipgrid.jql.JqlRequest;
 import org.eipgrid.jql.schema.JQColumn;
 import org.eipgrid.jql.jdbc.metadata.JdbcSchema;
 import org.eipgrid.jql.JqlRepository;
@@ -42,6 +43,8 @@ public abstract class JdbcMetadataController {
         }
         return columns;
     }
+
+
 
 
     @GetMapping("/{schema}/{table}/{type}")

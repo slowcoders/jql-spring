@@ -17,7 +17,7 @@
 import LessonView from "@/components/LessonView";
 
 const sample_code = `
-const jql = {
+const filter = {
   //  "species": "Human",
   //  "height@gt": 1.2,
   //  "height@lt": 2.0,

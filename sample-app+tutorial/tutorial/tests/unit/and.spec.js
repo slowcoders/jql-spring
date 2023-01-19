@@ -3,10 +3,10 @@ import { jqlApi } from '@/api/jqlApi'
 
 describe('And operation', () => {
   let last_count;
-  const jql = {}
+  const filter = {}
 
   beforeAll(async () => {
-    const jql = {}
+    const filter = {}
     last_count = await jqlApi.count();
   })
 

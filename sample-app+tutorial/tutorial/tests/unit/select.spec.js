@@ -3,7 +3,7 @@ import { jqlApi } from '@/api/jqlApi'
 
 describe('Top', () => {
   test('Find first', async () => {
-    const jql = {
+    const filter = {
       "name@like": "Luke%"
     }
     const character = await jqlApi.top(jql);
@@ -42,7 +42,7 @@ describe('Top', () => {
   });
 
   test('Find any character having a starship that length > 10', async () => {
-    const jql = {
+    const filter = {
       "starship": { "length@gt": 10 }
     }
     const character = await jqlApi.top(jql);
@@ -52,7 +52,7 @@ describe('Top', () => {
   });
 
   test('Find any character having a starship that length < 10', async () => {
-    const jql = {
+    const filter = {
       "starship": { "length@lt": 10 }
     }
     const character = await jqlApi.top(jql);
