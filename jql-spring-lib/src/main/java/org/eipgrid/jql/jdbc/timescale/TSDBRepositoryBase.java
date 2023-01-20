@@ -15,8 +15,8 @@ public abstract class TSDBRepositoryBase<ENTITY, ID> extends JPARepositoryBase<E
 
     private final String timeKeyColumnName;
 
-    public TSDBRepositoryBase(JqlService service, String timeKeyColumnName) {
-        super(service);
+    public TSDBRepositoryBase(JqlService service, Class<ENTITY> entityType, Class<ID> idType, String timeKeyColumnName) {
+        super(service, entityType, idType);
         this.timeKeyColumnName = timeKeyColumnName;
 
         QSchema schema = getService().loadSchema(getEntityType());
@@ -30,7 +30,6 @@ public abstract class TSDBRepositoryBase<ENTITY, ID> extends JPARepositoryBase<E
     public String getTimeKeyColumnName() {
         return timeKeyColumnName;
     }
-
 
     private class Initializer extends TSDBHelper {
         private final QSchema schema;

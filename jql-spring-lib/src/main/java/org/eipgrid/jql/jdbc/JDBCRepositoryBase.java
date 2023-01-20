@@ -1,6 +1,7 @@
 package org.eipgrid.jql.jdbc;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.eipgrid.jql.JqlEntity;
 import org.eipgrid.jql.JqlQuery;
 import org.eipgrid.jql.schema.QColumn;
 import org.eipgrid.jql.schema.QSchema;
@@ -15,7 +16,7 @@ import org.springframework.jdbc.core.ResultSetExtractor;
 import java.io.IOException;
 import java.util.*;
 
-public class JDBCRepositoryBase<ID> /*extends JDBCQueryBuilder*/ implements JqlRepository<KVEntity, ID> {
+public class JDBCRepositoryBase<ID> /*extends JDBCQueryBuilder*/ implements JqlRepository<ID> {
 
     private final static HashMap<Class<?>, JDBCRepositoryBase> loadedServices = new HashMap<>();
     private final JdbcTemplate jdbc;
@@ -91,8 +92,8 @@ public class JDBCRepositoryBase<ID> /*extends JDBCQueryBuilder*/ implements JqlR
     }
 
     @Override
-    public KVEntity find(ID id) {
-        List<KVEntity> res = find_impl(JqlQuery.of(this, id));
+    public JqlEntity find(ID id) {
+        List<JqlEntity> res = find_impl(JqlQuery.of(this, id));
         return res.size() > 0 ? res.get(0) : null;
     }
 
@@ -100,17 +101,17 @@ public class JDBCRepositoryBase<ID> /*extends JDBCQueryBuilder*/ implements JqlR
         return new JsonRowMapper(filter.getResultMappings(), service.getObjectMapper());
     }
 
-    protected List<KVEntity> find_impl(JqlQuery query) {
+    protected List<JqlEntity> find_impl(JqlQuery query) {
         String sql = sqlGenerator.createSelectQuery(query);
         this.lastGeneratedSql = sql;
-        List<KVEntity> res = (List)jdbc.query(sql, getColumnMapRowMapper(query.getFilter()));
+        List<JqlEntity> res = (List)jdbc.query(sql, getColumnMapRowMapper(query.getFilter()));
         return res;
     }
 
-    public List<KVEntity> find(JqlQuery query) {
+    public List<JqlEntity> find(JqlQuery query) {
         String sql = sqlGenerator.createSelectQuery(query);
         this.lastGeneratedSql = sql;
-        List<KVEntity> res = (List)jdbc.query(sql, getColumnMapRowMapper(query.getFilter()));
+        List<JqlEntity> res = (List)jdbc.query(sql, getColumnMapRowMapper(query.getFilter()));
         return res;
     }
 
@@ -132,12 +133,8 @@ public class JDBCRepositoryBase<ID> /*extends JDBCQueryBuilder*/ implements JqlR
 //    }
 
     @Override
-    public List<KVEntity> list(Collection<ID> idList) {
+    public List<JqlEntity> list(Collection<ID> idList) {
         return find_impl(JqlQuery.of(this, idList));
-    }
-
-    public ID insert(KVEntity entity) {
-        return insert((Map<String, Object>)entity);
     }
 
 

@@ -208,4 +208,8 @@ public abstract class QSchema {
     public int hashCode() {
         return tableName.hashCode();
     }
+
+    public boolean hasGeneratedId() {
+        throw new RuntimeException("not impl");
+    }
 }

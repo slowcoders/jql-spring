@@ -77,7 +77,7 @@ public interface BatchPreparedStatementSetterWithKeyHolder extends BatchPrepared
             new RowMapperResultSetExtractor<Map<String, Object>>(new ColumnMapRowMapper(), 1);
     static List<Map<String, Object>> emptyKeys = new ArrayList<>();
 
-    private static List<Map<String, Object>> getGeneratedKeys(PreparedStatement ps) throws SQLException {
+    static List<Map<String, Object>> getGeneratedKeys(PreparedStatement ps) throws SQLException {
         List<Map<String, Object>> keys = emptyKeys;
         ResultSet rs = ps.getGeneratedKeys();
         if (rs != null) {
