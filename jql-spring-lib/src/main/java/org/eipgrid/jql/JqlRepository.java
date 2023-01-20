@@ -40,13 +40,13 @@ public interface JqlRepository<ENTITY, ID> {
 
     void update(Collection<ID> idList, Map<String, Object> updateSet) throws IOException;
 
-//    void update(Map<String, Object> filter, Map<String, Object> updateSet) throws IOException;
+//    void update(JqlFilter filter, Map<String, Object> updateSet) throws IOException;
 
     void delete(ID id);
 
     int delete(Collection<ID> idList);
 
-//    void delete(Map<String, Object> filter) throws IOException;
+//    void delete(JqlFilter filter) throws IOException;
 
     void clearEntityCache(ID id);
 

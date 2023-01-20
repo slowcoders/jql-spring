@@ -1,13 +1,10 @@
 package org.eipgrid.jql.jdbc;
 
 import org.eipgrid.jql.JqlQuery;
-import org.eipgrid.jql.schema.QColumn;
-import org.eipgrid.jql.schema.QSchema;
-import org.eipgrid.jql.schema.QJoin;
+import org.eipgrid.jql.schema.*;
 import org.eipgrid.jql.parser.Expression;
 import org.eipgrid.jql.parser.JqlFilter;
 import org.eipgrid.jql.parser.EntityFilter;
-import org.eipgrid.jql.schema.QType;
 import org.eipgrid.jql.util.SourceWriter;
 import org.springframework.data.domain.Sort;
 
@@ -115,7 +112,7 @@ public class SqlGenerator extends SqlConverter implements QueryGenerator {
 
     private void writeFrom(JqlFilter where, String tableName, boolean ignoreEmptyFilter) {
         sw.write("FROM ").write(tableName).write(" as ").write(where.getMappingAlias());
-        for (JQResultMapping fetch : where.getResultMappings()) {
+        for (QResultMapping fetch : where.getResultMappings()) {
             QJoin join = fetch.getEntityJoin();
             if (join == null) continue;
 
@@ -164,7 +161,7 @@ public class SqlGenerator extends SqlConverter implements QueryGenerator {
     private boolean needDistinctPagination(JqlFilter where) {
         if (!where.hasArrayDescendantNode()) return false;
 
-        for (JQResultMapping mapping : where.getResultMappings()) {
+        for (QResultMapping mapping : where.getResultMappings()) {
             QJoin join = mapping.getEntityJoin();
             if (join == null) continue;
 
@@ -198,7 +195,7 @@ public class SqlGenerator extends SqlConverter implements QueryGenerator {
         }
 
         sw.write("\nSELECT DISTINCT \n");
-        for (JQResultMapping mapping : where.getResultMappings()) {
+        for (QResultMapping mapping : where.getResultMappings()) {
             sw.write('\t');
             String alias = mapping.getMappingAlias();
             for (QColumn col : mapping.getSelectedColumns()) {
@@ -235,7 +232,7 @@ public class SqlGenerator extends SqlConverter implements QueryGenerator {
             });
         }
         if (need_joined_result_set_ordering) {
-            for (JQResultMapping mapping : where.getResultMappings()) {
+            for (QResultMapping mapping : where.getResultMappings()) {
                 if (!mapping.hasArrayDescendantNode()) continue;
                 if (mapping != where && !mapping.isArrayNode()) continue;
                 String table = mapping.getMappingAlias();

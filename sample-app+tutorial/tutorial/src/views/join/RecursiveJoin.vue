@@ -23,8 +23,8 @@ const filter = {
    Luke 의 친구의 친구 중 JEDI episode 에 출연한 캐릭터를 검색한다.
   */
   "name@like": "Luke%",
-  "+friend<name>": {
-    "+friend<name>": {
+  "+friend": {
+    "+friend": {
       "+episode" : {
           "title" : "JEDI"
       },

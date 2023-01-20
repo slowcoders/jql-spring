@@ -1,6 +1,6 @@
 package org.eipgrid.jql.parser;
 
-import org.eipgrid.jql.jdbc.JQResultMapping;
+import org.eipgrid.jql.schema.QResultMapping;
 import org.eipgrid.jql.schema.QColumn;
 import org.eipgrid.jql.schema.QJoin;
 import org.eipgrid.jql.schema.QSchema;
@@ -8,7 +8,7 @@ import org.eipgrid.jql.schema.QType;
 
 import java.util.*;
 
-class TableFilter extends EntityFilter implements JQResultMapping {
+class TableFilter extends EntityFilter implements QResultMapping {
     private final QSchema schema;
 
     private final QJoin join;
@@ -199,7 +199,7 @@ class TableFilter extends EntityFilter implements JQResultMapping {
         return this.hasArrayDescendant;
     }
 
-    protected void gatherColumnMappings(List<JQResultMapping> columnGroupMappings) {
+    protected void gatherColumnMappings(List<QResultMapping> columnGroupMappings) {
         columnGroupMappings.add(this);
         this.hasArrayDescendant = false;
         for (EntityFilter q : subFilters.values()) {

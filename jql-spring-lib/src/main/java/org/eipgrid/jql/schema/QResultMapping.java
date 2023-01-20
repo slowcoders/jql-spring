@@ -1,13 +1,9 @@
-package org.eipgrid.jql.jdbc;
-
-import org.eipgrid.jql.schema.QColumn;
-import org.eipgrid.jql.schema.QJoin;
-import org.eipgrid.jql.schema.QSchema;
+package org.eipgrid.jql.schema;
 
 import java.util.List;
 
-public interface JQResultMapping {
-    JQResultMapping getParentNode();
+public interface QResultMapping {
+    QResultMapping getParentNode();
 
     QSchema getSchema();
 

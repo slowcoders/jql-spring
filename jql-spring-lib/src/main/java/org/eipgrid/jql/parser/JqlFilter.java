@@ -1,7 +1,7 @@
 package org.eipgrid.jql.parser;
 
 import org.eipgrid.jql.schema.QSchema;
-import org.eipgrid.jql.jdbc.JQResultMapping;
+import org.eipgrid.jql.schema.QResultMapping;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -9,7 +9,7 @@ import java.util.List;
 
 public class JqlFilter extends TableFilter {
 
-    private final ArrayList<JQResultMapping> columnGroupMappings = new ArrayList<>();
+    private final ArrayList<QResultMapping> columnGroupMappings = new ArrayList<>();
     private int cntMappingAlias;
 
     private boolean selectAuto;
@@ -80,7 +80,7 @@ public class JqlFilter extends TableFilter {
         return true;
     }
 
-    public List<JQResultMapping> getResultMappings() {
+    public List<QResultMapping> getResultMappings() {
         if (columnGroupMappings.size() == 0) {
             gatherColumnMappings(columnGroupMappings);
         }

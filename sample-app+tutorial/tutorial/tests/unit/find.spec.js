@@ -6,7 +6,7 @@ describe('Join Test', () => {
     test('Find friends of Han Solo', async () => {
       const filter = {
         "name" : "Han Solo",
-        "+friend<name>": {} 
+        "+friend": {} 
       }      
       const res = await jqlApi.find(filter);
       const characters = res.content;

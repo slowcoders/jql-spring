@@ -2,6 +2,7 @@ package org.eipgrid.jql.jdbc;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.eipgrid.jql.schema.QResultMapping;
 import org.eipgrid.jql.schema.QColumn;
 import org.eipgrid.jql.schema.QSchema;
 import org.eipgrid.jql.schema.QType;
@@ -16,14 +17,14 @@ import java.sql.SQLException;
 import java.util.*;
 
 public class JsonRowMapper implements ResultSetExtractor<List<KVEntity>> {
-    private final List<JQResultMapping> resultMappings;
+    private final List<QResultMapping> resultMappings;
     private final ObjectMapper objectMapper;
     private ResultCache resultCacheRoot;
     private CachedEntity baseEntity = null;
     private ArrayList<KVEntity> results = new ArrayList<>();
     private MappedColumn[] mappedColumns;
 
-    public JsonRowMapper(List<JQResultMapping> rowMappings, ObjectMapper objectMapper) {
+    public JsonRowMapper(List<QResultMapping> rowMappings, ObjectMapper objectMapper) {
         this.resultMappings = rowMappings;
         this.objectMapper = objectMapper;
     }
@@ -37,11 +38,11 @@ public class JsonRowMapper implements ResultSetExtractor<List<KVEntity>> {
         while (rs.next()) {
             int idxColumn = 0;
             int cntColumn;
-            JQResultMapping lastMapping = null;
+            QResultMapping lastMapping = null;
             ResultCache resultCache = resultCacheRoot;
             read_mapping:
             for (int idxMapping = 0; idxMapping < cntMapping; idxMapping++, idxColumn+=cntColumn) {
-                JQResultMapping mapping = resultMappings.get(idxMapping);
+                QResultMapping mapping = resultMappings.get(idxMapping);
                 if (mapping.getParentNode() != lastMapping) {
                     resultCache = resultCacheRoot;
                 }
@@ -103,7 +104,7 @@ public class JsonRowMapper implements ResultSetExtractor<List<KVEntity>> {
         return results;
     }
 
-    private void makeSubArray(JQResultMapping mapping) {
+    private void makeSubArray(QResultMapping mapping) {
         KVEntity base = makeBaseEntity(mapping);
         String[] entityPath = mapping.getEntityMappingPath();
         String key = entityPath[entityPath.length - 1];
@@ -170,7 +171,7 @@ public class JsonRowMapper implements ResultSetExtractor<List<KVEntity>> {
         return currEntity;
     }
 
-    private CachedEntity makeBaseEntity(JQResultMapping currMapping) {
+    private CachedEntity makeBaseEntity(QResultMapping currMapping) {
         CachedEntity currEntity = baseEntity;
         String[] entityPath = currMapping.getEntityMappingPath();
         int idxLastPath = entityPath.length - 1;
@@ -180,7 +181,7 @@ public class JsonRowMapper implements ResultSetExtractor<List<KVEntity>> {
         return currEntity;
     }
 
-    private CachedEntity makeSubEntity(JQResultMapping currMapping) {
+    private CachedEntity makeSubEntity(QResultMapping currMapping) {
         CachedEntity currEntity = makeBaseEntity(currMapping);
         String[] entityPath = currMapping.getEntityMappingPath();
         int last = entityPath.length - 1;
@@ -249,7 +250,7 @@ public class JsonRowMapper implements ResultSetExtractor<List<KVEntity>> {
         ColumnMappingHelper helper = new ColumnMappingHelper();
 
         int idxColumn = 0;
-        for (JQResultMapping mapping : resultMappings) {
+        for (QResultMapping mapping : resultMappings) {
             List<QColumn> columns = mapping.getSelectedColumns();
             if (columns.size() == 0) {
                 continue;
@@ -305,11 +306,11 @@ public class JsonRowMapper implements ResultSetExtractor<List<KVEntity>> {
 
     private static class MappedColumn {
         final QColumn column;
-        final JQResultMapping mapping;
+        final QResultMapping mapping;
         final String[] mappingPath;
         private Object   value;
 
-        public MappedColumn(JQResultMapping mapping, QColumn column, String[] path) {
+        public MappedColumn(QResultMapping mapping, QColumn column, String[] path) {
             this.mapping = mapping;
             this.column = column;
             this.mappingPath = path;
