@@ -14,3 +14,6 @@ sample-app+tutorial/target
 sample-app+tutorial/.gradle
 sample-app+tutorial/db/postgres_data
 sample-app+tutorial/src/main/resources/static/static
+jql-spring-lib/out
+sample-app+tutorial/htmlReport
+sample-app+tutorial/out
