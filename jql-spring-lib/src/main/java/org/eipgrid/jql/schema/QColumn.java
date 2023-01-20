@@ -4,28 +4,28 @@ import org.eipgrid.jql.util.ClassUtils;
 
 import java.lang.reflect.Field;
 
-public abstract class JQColumn {
-    private final JQSchema schema;
+public abstract class QColumn {
+    private final QSchema schema;
     private final String physicalName;
-    private JQType columnType;
+    private QType columnType;
     private Class<?> javaType;
 
-    protected JQColumn(JQSchema schema, String physicalName, Class<?> javaType, JQType type) {
+    protected QColumn(QSchema schema, String physicalName, Class<?> javaType, QType type) {
         this.schema = schema;
         this.physicalName = physicalName;
         this.columnType = type;
         this.javaType = javaType;
     }
 
-    protected JQColumn(JQSchema schema, String physicalName, Class javaType) {
-        this(schema, physicalName, javaType, JQType.of(javaType));
+    protected QColumn(QSchema schema, String physicalName, Class javaType) {
+        this(schema, physicalName, javaType, QType.of(javaType));
     }
 
-    public final JQSchema getSchema() {
+    public final QSchema getSchema() {
         return schema;
     }
 
-    public final JQType getType() {
+    public final QType getType() {
         return columnType;
     }
 
@@ -70,7 +70,7 @@ public abstract class JQColumn {
         return null;
     }
 
-    public JQColumn getJoinedPrimaryColumn() {
+    public QColumn getJoinedPrimaryColumn() {
         return null;
     }
 
@@ -82,7 +82,7 @@ public abstract class JQColumn {
     public String toString() { return getSchema().getSimpleTableName() + "::" + this.getJsonKey()+ "<" + physicalName + ">"; }
 
     protected void setMappedField(Field f) {
-        this.columnType = JQType.of(f);
+        this.columnType = QType.of(f);
         this.javaType = ClassUtils.getElementType(f);
     }
 }

@@ -1,5 +1,8 @@
 package org.eipgrid.jql;
 
+import org.eipgrid.jql.parser.JqlFilter;
+import org.eipgrid.jql.schema.QSchema;
+
 import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
@@ -11,7 +14,7 @@ public interface JqlRepository<ENTITY, ID> {
 
     ID convertId(Object v);
 
-    List<ENTITY> find(Map<String, Object> jsQuery, JqlSelect columns);
+    default List<ENTITY> find(JqlQuery request) { throw new RuntimeException("not impl"); }
 
     ENTITY find(ID id);
 
@@ -24,8 +27,7 @@ public interface JqlRepository<ENTITY, ID> {
 
     List<ENTITY> list(Collection<ID> idList);
 
-    long count(Map<String, Object> jsQuery);
-
+    long count(JqlFilter filter);
 
     ID insert(ENTITY entity);
 
@@ -48,5 +50,7 @@ public interface JqlRepository<ENTITY, ID> {
 
     void clearEntityCache(ID id);
 
-    default List<ENTITY> select(JqlRequest request) { throw new RuntimeException("not impl"); }
+    JqlFilter buildFilter(Map<String, Object> filter);
+
+    QSchema getSchema();
 }

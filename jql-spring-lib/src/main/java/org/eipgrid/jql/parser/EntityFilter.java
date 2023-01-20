@@ -1,6 +1,6 @@
 package org.eipgrid.jql.parser;
 
-import org.eipgrid.jql.schema.JQSchema;
+import org.eipgrid.jql.schema.QSchema;
 
 import java.util.HashMap;
 
@@ -20,7 +20,7 @@ public abstract class EntityFilter {
     public final boolean isJsonNode() { return getSchema() == null; }
 
     /** return null if schemaless node. cf) json node */
-    public JQSchema getSchema() { return null; }
+    public QSchema getSchema() { return null; }
 
     public boolean isEmpty() {
         if (!predicates.isEmpty()) return false;
@@ -40,7 +40,7 @@ public abstract class EntityFilter {
 
     public EntityFilter getParentNode() { return this.parent; }
 
-    public JqlQuery getRootNode() {
+    public JqlFilter getRootNode() {
         return parent.getRootNode();
     }
 
@@ -59,7 +59,7 @@ public abstract class EntityFilter {
 
         EntityFilter scope = this;
         for (int p; (p = key.indexOf('.')) > 0; ) {
-            JQSchema schema = scope.getSchema();
+            QSchema schema = scope.getSchema();
             if (schema != null && schema.hasColumn(key)) {
                 return scope;
             }

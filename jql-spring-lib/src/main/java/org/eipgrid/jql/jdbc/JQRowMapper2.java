@@ -1,6 +1,6 @@
 package org.eipgrid.jql.jdbc;
 
-import org.eipgrid.jql.schema.JQColumn;
+import org.eipgrid.jql.schema.QColumn;
 import org.eipgrid.jql.util.KVEntity;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.ResultSetExtractor;
@@ -139,7 +139,7 @@ public class JQRowMapper2 implements ResultSetExtractor<List<KVEntity>> {
     }
 
     private Object[] readPrimaryKeys(JQResultMapping mapping, ResultSet rs, int pkIndex) throws SQLException {
-        List<JQColumn> pkColumns = mapping.getSchema().getPKColumns();
+        List<QColumn> pkColumns = mapping.getSchema().getPKColumns();
         Object[] pks = new Object[pkColumns.size()];
         for (int idxPk = 0; idxPk < pks.length; idxPk++) {
             Object value = getColumnValue(rs, ++pkIndex);
@@ -187,7 +187,7 @@ public class JQRowMapper2 implements ResultSetExtractor<List<KVEntity>> {
         int idxColumn = 0;
         for (JQResultMapping mapping : resultMappings) {
             helper.reset(mapping.getEntityMappingPath());
-            for (JQColumn column : mapping.getSelectedColumns()) {
+            for (QColumn column : mapping.getSelectedColumns()) {
                 String[] path = helper.getEntityMappingPath(column);
                 mappedColumns[idxColumn++] = new MappedColumn(mapping, column, path);
             }
@@ -207,7 +207,7 @@ public class JQRowMapper2 implements ResultSetExtractor<List<KVEntity>> {
             this.clear();
         }
 
-        public String[] getEntityMappingPath(JQColumn column) {
+        public String[] getEntityMappingPath(QColumn column) {
             String jsonKey = column.getJsonKey();
             ColumnMappingHelper cache = this;
             for (int p; (p = jsonKey.indexOf('.')) > 0; ) {
@@ -236,13 +236,13 @@ public class JQRowMapper2 implements ResultSetExtractor<List<KVEntity>> {
     }
 
     private static class MappedColumn {
-        final JQColumn column;
+        final QColumn column;
         final JQResultMapping mapping;
         final String[] mappingPath;
         final String fieldName;
         Object value;
 
-        public MappedColumn(JQResultMapping mapping, JQColumn column, String[] path) {
+        public MappedColumn(JQResultMapping mapping, QColumn column, String[] path) {
             this.mapping = mapping;
             this.column = column;
             this.mappingPath = path;

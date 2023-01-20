@@ -1,7 +1,7 @@
 package org.eipgrid.jql;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.eipgrid.jql.schema.JQSchema;
+import org.eipgrid.jql.schema.QSchema;
 import org.eipgrid.jql.jdbc.postgres.UpdateListener;
 import org.eipgrid.jql.jpa.JPARepositoryBase;
 import org.hibernate.boot.model.naming.Identifier;
@@ -72,9 +72,9 @@ public abstract class JqlService implements AttributeNameConverter {
 
     public abstract JqlRepository makeRepository(String tableName);
 
-    public abstract JQSchema loadSchema(String tableName, Class ormType);
+    public abstract QSchema loadSchema(String tableName, Class ormType);
 
-    public abstract JQSchema loadSchema(Class ormType);
+    public abstract QSchema loadSchema(Class ormType);
 
     public String resolveTableName(Class<?> entityType) {
         String name = "";

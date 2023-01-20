@@ -2,9 +2,9 @@ package org.eipgrid.jql.jdbc;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.eipgrid.jql.schema.JQColumn;
-import org.eipgrid.jql.schema.JQSchema;
-import org.eipgrid.jql.schema.JQType;
+import org.eipgrid.jql.schema.QColumn;
+import org.eipgrid.jql.schema.QSchema;
+import org.eipgrid.jql.schema.QType;
 import org.eipgrid.jql.util.KVEntity;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.ResultSetExtractor;
@@ -15,7 +15,7 @@ import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.*;
 
-public class JQRowMapper implements ResultSetExtractor<List<KVEntity>> {
+public class JsonRowMapper implements ResultSetExtractor<List<KVEntity>> {
     private final List<JQResultMapping> resultMappings;
     private final ObjectMapper objectMapper;
     private ResultCache resultCacheRoot;
@@ -23,7 +23,7 @@ public class JQRowMapper implements ResultSetExtractor<List<KVEntity>> {
     private ArrayList<KVEntity> results = new ArrayList<>();
     private MappedColumn[] mappedColumns;
 
-    public JQRowMapper(List<JQResultMapping> rowMappings, ObjectMapper objectMapper) {
+    public JsonRowMapper(List<JQResultMapping> rowMappings, ObjectMapper objectMapper) {
         this.resultMappings = rowMappings;
         this.objectMapper = objectMapper;
     }
@@ -47,13 +47,13 @@ public class JQRowMapper implements ResultSetExtractor<List<KVEntity>> {
                 }
                 lastMapping = mapping;
 
-                List<JQColumn> columns = mapping.getSelectedColumns();
+                List<QColumn> columns = mapping.getSelectedColumns();
                 cntColumn = columns.size();
                 if (cntColumn == 0) continue;
 
                 boolean isArray = mapping.isArrayNode();// && mapping.hasArrayDescendantNode();
 
-                List<JQColumn> pkColumns = mapping.getSchema().getPKColumns();
+                List<QColumn> pkColumns = mapping.getSchema().getPKColumns();
                 int pkIndex = idxColumn;
                 for (int pkCount = pkColumns.size(); --pkCount >= 0; pkIndex++) {
                     Object value = getColumnValue(rs, pkIndex + 1, mappedColumns[pkIndex].column.getType());
@@ -67,20 +67,20 @@ public class JQRowMapper implements ResultSetExtractor<List<KVEntity>> {
                 }
 
                 if (!isArray) {
-                    readColumns(rs, idxColumn, columns.size());
+                    readColumns(rs, idxColumn, cntColumn);
                     continue;
                 }
 
                 Object key = makeCacheKey(mapping.getSchema(), idxColumn);
                 if (key == null) {
-                    readColumns(rs, idxColumn, columns.size());
+                    readColumns(rs, idxColumn, cntColumn);
                     continue;
                 }
 
                 resultCache = resultCache.getCache(idxMapping);
                 CachedEntity cachedEntity = resultCache.get(key);
                 if (cachedEntity == null) {
-                    cachedEntity = readColumns(rs, idxColumn, columns.size());
+                    cachedEntity = readColumns(rs, idxColumn, cntColumn);
                     resultCache.put(key, cachedEntity);
                 } else if (idxMapping > 0) {
                     CachedEntity entity = makeBaseEntity(mapping);
@@ -112,8 +112,8 @@ public class JQRowMapper implements ResultSetExtractor<List<KVEntity>> {
         }
     }
 
-    private Object makeCacheKey(JQSchema schema, int idxColumn) {
-        List<JQColumn> pkColumns = schema.getPKColumns();
+    private Object makeCacheKey(QSchema schema, int idxColumn) {
+        List<QColumn> pkColumns = schema.getPKColumns();
         int cntPk = pkColumns.size();
         if (cntPk == 0) {
             pkColumns = schema.getReadableColumns();
@@ -132,7 +132,7 @@ public class JQRowMapper implements ResultSetExtractor<List<KVEntity>> {
 
     private static void putValue(CachedEntity entity, MappedColumn mappedColumn, Object value) {
         CachedEntity node = entity;
-        JQColumn column = mappedColumn.column;
+        QColumn column = mappedColumn.column;
         String fieldName = column.getJsonKey(); /* .getJavaFieldName();
         for (JQColumn pk; (pk = column.getJoinedPrimaryColumn()) != null; ) {
             CachedEntity pkEntity = (CachedEntity) node.get(fieldName);
@@ -152,7 +152,7 @@ public class JQRowMapper implements ResultSetExtractor<List<KVEntity>> {
     }
 
     private CachedEntity readColumns(ResultSet rs, int idxColumn, int count) throws SQLException, DataAccessException {
-        int columnCount = idxColumn + count;
+        int end = idxColumn + count;
         CachedEntity currEntity;
         if (idxColumn == 0) {
             baseEntity = new CachedEntity(null);
@@ -161,7 +161,7 @@ public class JQRowMapper implements ResultSetExtractor<List<KVEntity>> {
 
         currEntity = makeSubEntity(mappedColumns[idxColumn].mapping);
 
-        for (; idxColumn < columnCount; ) {
+        for (; idxColumn < end; ) {
             MappedColumn mappedColumn = mappedColumns[idxColumn++];
             Object value = getColumnValue(rs, idxColumn, mappedColumn.column.getType());
             mappedColumn.value = value;
@@ -175,7 +175,7 @@ public class JQRowMapper implements ResultSetExtractor<List<KVEntity>> {
         String[] entityPath = currMapping.getEntityMappingPath();
         int idxLastPath = entityPath.length - 1;
         for (int i = 0; i < idxLastPath; i++) {
-            currEntity = makeSubEntity(currEntity, entityPath[i], currMapping.isArrayNode());
+            currEntity = makeSubEntity(currEntity, entityPath[i], false);
         }
         return currEntity;
     }
@@ -217,14 +217,14 @@ public class JQRowMapper implements ResultSetExtractor<List<KVEntity>> {
             if (list.isEmpty()) {
                 list.add(new CachedEntity(entity));
             }
-            subEntity = list.isEmpty() ? new ArrayList<>() : list.get(list.size()-1);
+            subEntity = list.get(list.size()-1);
         }
         return (CachedEntity)subEntity;
     }
 
-    protected Object getColumnValue(ResultSet rs, int index, JQType columnType) throws SQLException {
+    protected Object getColumnValue(ResultSet rs, int index, QType columnType) throws SQLException {
         Object value;
-        if (columnType == JQType.Json) {
+        if (columnType == QType.Json) {
             try {
                 value = rs.getString(index);
                 if (value != null) {
@@ -250,12 +250,12 @@ public class JQRowMapper implements ResultSetExtractor<List<KVEntity>> {
 
         int idxColumn = 0;
         for (JQResultMapping mapping : resultMappings) {
-            List<JQColumn> columns = mapping.getSelectedColumns();
+            List<QColumn> columns = mapping.getSelectedColumns();
             if (columns.size() == 0) {
                 continue;
             }
             helper.reset(mapping.getEntityMappingPath());
-            for (JQColumn column : columns) {
+            for (QColumn column : columns) {
                 String[] path = helper.getEntityMappingPath(column);
                 mappedColumns[idxColumn++] = new MappedColumn(mapping, column, path);
             }
@@ -275,7 +275,7 @@ public class JQRowMapper implements ResultSetExtractor<List<KVEntity>> {
             this.clear();
         }
 
-        public String[] getEntityMappingPath(JQColumn column) {
+        public String[] getEntityMappingPath(QColumn column) {
             String jsonKey = column.getJsonKey();
             ColumnMappingHelper cache = this;
             for (int p; (p = jsonKey.indexOf('.')) > 0; ) {
@@ -304,12 +304,12 @@ public class JQRowMapper implements ResultSetExtractor<List<KVEntity>> {
     }
 
     private static class MappedColumn {
-        final JQColumn column;
+        final QColumn column;
         final JQResultMapping mapping;
         final String[] mappingPath;
         private Object   value;
 
-        public MappedColumn(JQResultMapping mapping, JQColumn column, String[] path) {
+        public MappedColumn(JQResultMapping mapping, QColumn column, String[] path) {
             this.mapping = mapping;
             this.column = column;
             this.mappingPath = path;

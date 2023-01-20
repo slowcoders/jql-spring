@@ -2,10 +2,10 @@ package org.eipgrid.jql.jdbc.metadata;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import org.eipgrid.jql.schema.JQColumn;
-import org.eipgrid.jql.schema.JQJoin;
-import org.eipgrid.jql.schema.JQSchema;
-import org.eipgrid.jql.schema.JQType;
+import org.eipgrid.jql.schema.QColumn;
+import org.eipgrid.jql.schema.QJoin;
+import org.eipgrid.jql.schema.QSchema;
+import org.eipgrid.jql.schema.QType;
 import org.eipgrid.jql.util.ClassUtils;
 
 import java.lang.reflect.Field;
@@ -15,7 +15,7 @@ import java.util.ArrayList;
 import java.util.Map;
 
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.NONE)
-public class JdbcColumn extends JQColumn {
+public class JdbcColumn extends QColumn {
 
     private final boolean isReadOnly;
     private final boolean isAutoIncrement;
@@ -36,7 +36,7 @@ public class JdbcColumn extends JQColumn {
     private int precision;
     private int scale;
 
-    public JdbcColumn(JQSchema schema, ResultSetMetaData md, int col, ColumnBinder pkBinder, String comment, ArrayList<String> primaryKeys) throws SQLException {
+    public JdbcColumn(QSchema schema, ResultSetMetaData md, int col, ColumnBinder pkBinder, String comment, ArrayList<String> primaryKeys) throws SQLException {
         super(schema, md.getColumnName(col), resolveJavaType(md, col));
 
         this.isAutoIncrement = md.isAutoIncrement(col);
@@ -91,9 +91,9 @@ public class JdbcColumn extends JQColumn {
         return colTypeName;
     }
 
-    public JQColumn getJoinedPrimaryColumn() {
+    public QColumn getJoinedPrimaryColumn() {
         if (this.pkBinder == null) return null;
-        JQType valueKind = this.getType();
+        QType valueKind = this.getType();
         Class javaType = null;
         if (!valueKind.isPrimitive()) {
             javaType = getJavaType();
@@ -111,9 +111,9 @@ public class JdbcColumn extends JQColumn {
 
     private String resolveFieldName() {
         StringBuilder sb = new StringBuilder();
-        JQColumn col = this;
-        for (JQColumn joinedPk; (joinedPk = col.getJoinedPrimaryColumn()) != null; col = joinedPk) {
-            String token = JQJoin.initJsonKey(col);
+        QColumn col = this;
+        for (QColumn joinedPk; (joinedPk = col.getJoinedPrimaryColumn()) != null; col = joinedPk) {
+            String token = QJoin.initJsonKey(col);
             sb.append(token).append('.');
         }
         CharSequence rawFieldName = (col != this) ? sb.append(col.getPhysicalName()) : this.getPhysicalName();

@@ -8,7 +8,7 @@ describe('Join Test', () => {
         "name" : "Han Solo",
         "+friend<name>": {} 
       }      
-      const res = await jqlApi.find(jql);
+      const res = await jqlApi.find(filter);
       const characters = res.content;
       expect(characters.length).toBe(1);
       expect(characters[0]["+friend"].length).toBeGreaterThanOrEqual(3);
@@ -19,7 +19,7 @@ describe('Join Test', () => {
         "name" : "Han Solo",
         "+friend<name>": { "starship<name, @>": { "length@ge": 10 } }
       }
-      const res = await jqlApi.find(jql);
+      const res = await jqlApi.find(filter);
       const characters = res.content;
       expect(characters.length).toBe(1);
       expect(characters[0]["+friend"].length).toBe(1);

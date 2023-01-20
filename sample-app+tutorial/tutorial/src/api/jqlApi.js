@@ -20,10 +20,15 @@ function to_url_param(options) {
     return params;
 }
 
-async function call_http(method, command, jql, options) {
-    const params = to_url_param(options)
-    const url = `${baseUrl}/${command}${params}`
-    const response = await axios[method].call(axios, url, jql);
+async function call_http(method, command, filter, options) {
+    //const params = to_url_param(options)
+    const jql = { ...options, filter };
+    const url = `${baseUrl}/${command}`
+    const response = await axios[method].call(axios, url, jql, {
+        headers: {
+            "Content-Type" : "application/json"
+        }
+    });
     return response.data;
 }
 
@@ -43,21 +48,19 @@ export const jqlApi = {
     cachedListTs: 0,
     cachedList: null,
 
-    async count(jql, options) {
-        return await call_http('post', 'count', jql ?? {}, options)
+    async count(filter) {
+        return await call_http('post', 'count', filter)
     },
 
-    async list(options, paginationCallback) {
-        return await call_http('get', '', null, options)
+    async find(filter, options) {
+        return await call_http('post', '', filter, options);
     },
 
-    async find(jql, options) {
-        return await call_http('post', 'find', jql ?? {}, options);
-    },
-
-    async top(jql, options) {
-        jql = jql ?? {}
-        return await call_http('post', 'top', jql ?? {}, options)
+    async top(filter, options) {
+        options = { ...options, page: -1, limit: 1 }
+        const res = await call_http('post', '', filter, options);
+        console.log(res.content);
+        return res.content.length > 0 ? res.content[0] : null;
     },
 }
 

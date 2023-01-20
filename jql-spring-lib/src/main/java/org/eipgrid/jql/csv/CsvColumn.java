@@ -1,21 +1,21 @@
 package org.eipgrid.jql.csv;
 
-import org.eipgrid.jql.schema.JQType;
+import org.eipgrid.jql.schema.QType;
 import org.eipgrid.jql.jpa.JpaColumn;
 import org.eipgrid.jql.util.ClassUtils;
 
 import java.lang.reflect.Field;
 
 public class CsvColumn {
-    private final JQType valueType;
+    private final QType valueType;
     private final Field field;
     private final Class<?> elementType;
     private boolean isNullable;
 
     public CsvColumn(Field f) {
         this.field = f;
-        this.valueType = JQType.of(f);
-        if (this.valueType == JQType.Array) {
+        this.valueType = QType.of(f);
+        if (this.valueType == QType.Array) {
             this.elementType = ClassUtils.getElementType(f);
             this.isNullable = false;
         } else {
@@ -36,7 +36,7 @@ public class CsvColumn {
         return this.isNullable;
     }
 
-    public JQType getValueType() {
+    public QType getValueType() {
         return this.valueType;
     }
 }

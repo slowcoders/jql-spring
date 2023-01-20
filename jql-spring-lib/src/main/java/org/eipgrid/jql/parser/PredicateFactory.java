@@ -8,7 +8,7 @@ import java.util.HashMap;
 abstract class PredicateFactory {
 
 
-    static PredicateFactory defaultParser = new MatchAny(JqlOp.EQ);
+    static PredicateFactory IS = new MatchAny(JqlOp.EQ);
 
     public Class<?> getAccessType(Object value, Class<?> fieldType) {
         return fieldType;
@@ -19,7 +19,7 @@ abstract class PredicateFactory {
     public abstract Predicate createPredicate(String column, Object value);
 
     public static PredicateFactory getFactory(String function) {
-        if (function == null) return defaultParser;
+        if (function == null) return IS;
         return operators.get(function);
     }
 

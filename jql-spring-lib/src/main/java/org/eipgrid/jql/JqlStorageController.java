@@ -1,14 +1,9 @@
-package org.eipgrid.jql.jdbc;
+package org.eipgrid.jql;
 
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Schema;
-import org.eipgrid.jql.JqlRequest;
-import org.eipgrid.jql.JqlSelect;
-import org.eipgrid.jql.JqlRepository;
+import org.eipgrid.jql.jdbc.JdbcJqlService;
 import org.eipgrid.jql.util.KVEntity;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
@@ -16,12 +11,12 @@ import org.springframework.web.client.HttpServerErrorException;
 
 import java.util.*;
 
-public abstract class JdbcController {
+public abstract class JqlStorageController {
 
-    private final JdbcJqlService service;
+    private final JqlService service;
     private final String default_namespace;
 
-    public JdbcController(JdbcJqlService service, String default_namespace) {
+    public JqlStorageController(JdbcJqlService service, String default_namespace) {
         this.service = service;
         this.default_namespace = default_namespace;
     }
@@ -43,21 +38,20 @@ public abstract class JdbcController {
     @PostMapping(path = "/{table}", consumes = { MediaType.MULTIPART_FORM_DATA_VALUE })
     @ResponseBody
     @Operation(summary = "엔터티 검색")
-    public Object select_form(@PathVariable("table") String table,
-                              @Schema(example = "{ \"select\": \"\", \"sort\": \"\", \"page\": 0, \"limit\": 0, \"query\": { } }")
-                              @ModelAttribute JqlRequest.Builder request) {
-        return select(table, request);
+    public Object find_form(@PathVariable("table") String table,
+                              @Schema(example = "{ \"select\": \"\", \"sort\": \"\", \"page\": 0, \"limit\": 0, \"filter\": { } }")
+                              @ModelAttribute JqlQuery.Request request) {
+        return find(table, request);
     }
 
     @PostMapping(path = "/{table}", consumes = { MediaType.APPLICATION_JSON_VALUE })
     @ResponseBody
     @Operation(summary = "엔터티 검색")
-    public Object select(@PathVariable("table") String table,
-                         @Schema(example = "{ \"select\": \"\", \"sort\": \"\", \"page\": 0, \"limit\": 0, \"query\": { } }")
-                         @RequestBody JqlRequest.Builder request) {
+    public Object find(@PathVariable("table") String table,
+                         @Schema(example = "{ \"select\": \"\", \"sort\": \"\", \"page\": 0, \"limit\": 0, \"filter\": { } }")
+                         @RequestBody JqlQuery.Request request) {
         JqlRepository<KVEntity, Object> repository = getRepository(table);
-        List<KVEntity> res = repository.select(request.build());
-        return KVEntity.of("content", res);
+        return request.execute(repository);
     }
 
     @PutMapping(path = "/{table}/", consumes = { MediaType.APPLICATION_JSON_VALUE })

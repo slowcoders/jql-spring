@@ -1,24 +1,22 @@
 package org.eipgrid.jql.jdbc;
 
-import org.eipgrid.jql.JqlRequest;
-import org.eipgrid.jql.schema.JQSchema;
-import org.eipgrid.jql.JqlSelect;
-import org.eipgrid.jql.parser.JqlQuery;
+import org.eipgrid.jql.JqlQuery;
+import org.eipgrid.jql.schema.QSchema;
+import org.eipgrid.jql.parser.JqlFilter;
 
 import java.util.Map;
 
 public interface QueryGenerator {
-    String createSelectQuery(JqlQuery where, JqlSelect columns);
+    String createSelectQuery(JqlQuery query);
 
-    String createCountQuery(JqlQuery where);
+    String createCountQuery(JqlFilter where);
 
-    String createUpdateQuery(JqlQuery where, Map<String, Object> updateSet);
+    String createUpdateQuery(JqlFilter where, Map<String, Object> updateSet);
 
-    String createDeleteQuery(JqlQuery where);
+    String createDeleteQuery(JqlFilter where);
 
-    String prepareFindByIdStatement(JQSchema schema);
+    String prepareFindByIdStatement(QSchema schema);
 
-    String createInsertStatement(JQSchema schema, Map entity, boolean ignoreConflict);
+    String createInsertStatement(QSchema schema, Map entity, boolean ignoreConflict);
 
-    String createSelectQuery(JqlQuery query, JqlRequest request);
 }

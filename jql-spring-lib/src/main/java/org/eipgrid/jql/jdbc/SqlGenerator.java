@@ -1,15 +1,14 @@
 package org.eipgrid.jql.jdbc;
 
-import org.eipgrid.jql.JqlRequest;
-import org.eipgrid.jql.schema.JQColumn;
-import org.eipgrid.jql.schema.JQSchema;
-import org.eipgrid.jql.schema.JQJoin;
+import org.eipgrid.jql.JqlQuery;
+import org.eipgrid.jql.schema.QColumn;
+import org.eipgrid.jql.schema.QSchema;
+import org.eipgrid.jql.schema.QJoin;
 import org.eipgrid.jql.parser.Expression;
-import org.eipgrid.jql.parser.JqlQuery;
+import org.eipgrid.jql.parser.JqlFilter;
 import org.eipgrid.jql.parser.EntityFilter;
-import org.eipgrid.jql.schema.JQType;
+import org.eipgrid.jql.schema.QType;
 import org.eipgrid.jql.util.SourceWriter;
-import org.eipgrid.jql.JqlSelect;
 import org.springframework.data.domain.Sort;
 
 import java.util.*;
@@ -47,8 +46,8 @@ public class SqlGenerator extends SqlConverter implements QueryGenerator {
         else {
             sw.write('(');
             writeJsonPath(currentNode);
-            JQType valueType = value == null ? null : JQType.of(value.getClass());
-            if (valueType == JQType.Text) {
+            QType valueType = value == null ? null : QType.of(value.getClass());
+            if (valueType == QType.Text) {
                 sw.write('>');
                 valueType = null;
             }
@@ -75,7 +74,7 @@ public class SqlGenerator extends SqlConverter implements QueryGenerator {
         }
     }
 
-    private void writeTypeCast(JQType vf) {
+    private void writeTypeCast(QType vf) {
         switch (vf) {
             case Integer:
             case Float:
@@ -100,7 +99,7 @@ public class SqlGenerator extends SqlConverter implements QueryGenerator {
         }
     }
 
-    protected void writeWhere(JqlQuery where) {
+    protected void writeWhere(JqlFilter where) {
         if (!where.isEmpty()) {
             sw.write("\nWHERE ");
             writeFilter(where);
@@ -110,14 +109,14 @@ public class SqlGenerator extends SqlConverter implements QueryGenerator {
         }
     }
 
-    private void writeFrom(JqlQuery where) {
+    private void writeFrom(JqlFilter where) {
         writeFrom(where, where.getTableName(), false);
     }
 
-    private void writeFrom(JqlQuery where, String tableName, boolean ignoreEmptyFilter) {
+    private void writeFrom(JqlFilter where, String tableName, boolean ignoreEmptyFilter) {
         sw.write("FROM ").write(tableName).write(" as ").write(where.getMappingAlias());
         for (JQResultMapping fetch : where.getResultMappings()) {
-            JQJoin join = fetch.getEntityJoin();
+            QJoin join = fetch.getEntityJoin();
             if (join == null) continue;
 
             if (ignoreEmptyFilter && fetch.isEmpty()) continue;
@@ -125,7 +124,7 @@ public class SqlGenerator extends SqlConverter implements QueryGenerator {
             String parentAlias = fetch.getParentNode().getMappingAlias();
             String alias = fetch.getMappingAlias();
             if (true || join.isUniqueJoin()) {
-                JQJoin associated = join.getAssociativeJoin();
+                QJoin associated = join.getAssociativeJoin();
                 writeJoinStatement(join, parentAlias, associated == null ? alias : "p" + alias);
                 if (associated != null) {
                     writeJoinStatement(associated, "p" + alias, alias);
@@ -137,12 +136,12 @@ public class SqlGenerator extends SqlConverter implements QueryGenerator {
     }
 
 
-    private void writeJoinStatement(JQJoin joinKeys, String baseAlias, String alias) {
+    private void writeJoinStatement(QJoin joinKeys, String baseAlias, String alias) {
         boolean isInverseMapped = joinKeys.isInverseMapped();
         String joinedTable = joinKeys.getJoinedSchema().getTableName();
         sw.write("\nleft join ").write(joinedTable).write(" as ").write(alias).write(" on\n\t");
-        for (JQColumn fk : joinKeys.getForeignKeyColumns()) {
-            JQColumn anchor, linked;
+        for (QColumn fk : joinKeys.getForeignKeyColumns()) {
+            QColumn anchor, linked;
             if (isInverseMapped) {
                 linked = fk; anchor = fk.getJoinedPrimaryColumn();
             } else {
@@ -154,7 +153,7 @@ public class SqlGenerator extends SqlConverter implements QueryGenerator {
         sw.shrinkLength(6);
     }
 
-    public String createCountQuery(JqlQuery where) {
+    public String createCountQuery(JqlFilter where) {
         sw.write("\nSELECT count(*) ");
         writeFrom(where);
         writeWhere(where);
@@ -162,11 +161,11 @@ public class SqlGenerator extends SqlConverter implements QueryGenerator {
         return sql;
     }
 
-    private boolean needDistinctPagination(JqlQuery where) {
+    private boolean needDistinctPagination(JqlFilter where) {
         if (!where.hasArrayDescendantNode()) return false;
 
         for (JQResultMapping mapping : where.getResultMappings()) {
-            JQJoin join = mapping.getEntityJoin();
+            QJoin join = mapping.getEntityJoin();
             if (join == null) continue;
 
             if (mapping.getSelectedColumns().size() == 0) continue;
@@ -178,12 +177,13 @@ public class SqlGenerator extends SqlConverter implements QueryGenerator {
         return false;
     }
 
-    public String createSelectQuery(JqlQuery where, JqlRequest columns) {
+    public String createSelectQuery(JqlQuery query) {
         sw.reset();
+        JqlFilter where = query.getFilter();
         String tableName = where.getTableName();
-        where.setSelectedProperties(columns.getSelect());
+        where.setSelectedProperties(query.getSelect());
 
-        boolean need_complex_pagination = columns.getLimit() > 0 && needDistinctPagination(where);
+        boolean need_complex_pagination = query.getLimit() > 0 && needDistinctPagination(where);
         if (need_complex_pagination) {
             sw.write("\nWITH _cte AS (\n"); // WITH _cte AS NOT MATERIALIZED
             sw.incTab();
@@ -191,8 +191,8 @@ public class SqlGenerator extends SqlConverter implements QueryGenerator {
             writeFrom(where, tableName, true);
             writeWhere(where);
             tableName = "_cte";
-            writeOrderBy(where, columns.getSort(), false);
-//            writePagination(columns);
+            writeOrderBy(where, query.getSort(), false);
+            writePagination(query);
             sw.decTab();
             sw.write("\n)");
         }
@@ -201,7 +201,7 @@ public class SqlGenerator extends SqlConverter implements QueryGenerator {
         for (JQResultMapping mapping : where.getResultMappings()) {
             sw.write('\t');
             String alias = mapping.getMappingAlias();
-            for (JQColumn col : mapping.getSelectedColumns()) {
+            for (QColumn col : mapping.getSelectedColumns()) {
                 sw.write(alias).write('.').write(col.getPhysicalName()).write(", ");
             }
             sw.write('\n');
@@ -209,53 +209,15 @@ public class SqlGenerator extends SqlConverter implements QueryGenerator {
         sw.replaceTrailingComma("\n");
         writeFrom(where, tableName, false);
         writeWhere(where);
-        writeOrderBy(where, columns.getSort(), false);//where.hasArrayDescendantNode());
-//        if (!need_complex_pagination) {
-//            writePagination(columns);
-//        }
-        String sql = sw.reset();
-        return sql;
-    }
-
-    public String createSelectQuery(JqlQuery where, JqlSelect columns) {
-        sw.reset();
-        String tableName = where.getTableName();
-
-        boolean need_complex_pagination = (columns.getLimit() > 0 || columns.getOffset() > 0) && needDistinctPagination(where);
-        if (need_complex_pagination) {
-            sw.write("\nWITH _cte AS (\n"); // WITH _cte AS NOT MATERIALIZED
-            sw.incTab();
-            sw.write("SELECT DISTINCT t_0.* ");
-            writeFrom(where, tableName, true);
-            writeWhere(where);
-            tableName = "_cte";
-            writeOrderBy(where, columns.getSort(), false);
-            writePagination(columns);
-            sw.decTab();
-            sw.write("\n)");
-        }
-
-        sw.write("\nSELECT DISTINCT \n");
-        for (JQResultMapping mapping : where.getResultMappings()) {
-            sw.write('\t');
-            String alias = mapping.getMappingAlias();
-            for (JQColumn col : mapping.getSelectedColumns()) {
-                sw.write(alias).write('.').write(col.getPhysicalName()).write(", ");
-            }
-            sw.write('\n');
-        }
-        sw.replaceTrailingComma("\n");
-        writeFrom(where, tableName, false);
-        writeWhere(where);
-        writeOrderBy(where, columns.getSort(), false);//where.hasArrayDescendantNode());
+        writeOrderBy(where, query.getSort(), false);//where.hasArrayDescendantNode());
         if (!need_complex_pagination) {
-            writePagination(columns);
+            writePagination(query);
         }
         String sql = sw.reset();
         return sql;
     }
 
-    private void writeOrderBy(JqlQuery where, Sort sort, boolean need_joined_result_set_ordering) {
+    private void writeOrderBy(JqlFilter where, Sort sort, boolean need_joined_result_set_ordering) {
         if (!need_joined_result_set_ordering) {
             if (sort == null || sort.isUnsorted()) return;
         }
@@ -263,7 +225,7 @@ public class SqlGenerator extends SqlConverter implements QueryGenerator {
         sw.write("\nORDER BY ");
         final HashSet<String> explicitSortColumns = new HashSet<>();
         if (sort != null) {
-            JQSchema schema = where.getSchema();
+            QSchema schema = where.getSchema();
             sort.forEach(order -> {
                 String p = order.getProperty();
                 String qname = where.getMappingAlias() + '.' + schema.getColumn(p).getPhysicalName();
@@ -277,7 +239,7 @@ public class SqlGenerator extends SqlConverter implements QueryGenerator {
                 if (!mapping.hasArrayDescendantNode()) continue;
                 if (mapping != where && !mapping.isArrayNode()) continue;
                 String table = mapping.getMappingAlias();
-                for (JQColumn column : mapping.getSchema().getPKColumns()) {
+                for (QColumn column : mapping.getSchema().getPKColumns()) {
                     String qname = table + '.' + column.getPhysicalName();
                     if (!explicitSortColumns.contains(qname)) {
                         sw.write(table).write('.').write(column.getPhysicalName()).write(", ");
@@ -288,7 +250,7 @@ public class SqlGenerator extends SqlConverter implements QueryGenerator {
         sw.replaceTrailingComma("");
     }
 
-    private void writePagination(JqlSelect pagination) {
+    private void writePagination(JqlQuery pagination) {
         int offset = pagination.getOffset();
         int limit  = pagination.getLimit();
         if (offset > 0) sw.write("\nOFFSET " + offset);
@@ -296,12 +258,12 @@ public class SqlGenerator extends SqlConverter implements QueryGenerator {
     }
 
 
-    public String createUpdateQuery(JqlQuery where, Map<String, Object> updateSet) {
+    public String createUpdateQuery(JqlFilter where, Map<String, Object> updateSet) {
         sw.write("\nUPDATE ").write(where.getTableName()).write(" ").write(where.getMappingAlias()).writeln(" SET");
 
         for (Map.Entry<String, Object> entry : updateSet.entrySet()) {
             String key = entry.getKey();
-            JQColumn col = where.getSchema().getColumn(key);
+            QColumn col = where.getSchema().getColumn(key);
             Object value = BatchUpsert.convertJsonValueToColumnValue(col, entry.getValue());
             sw.write("  ");
             sw.write(key).write(" = ").writeValue(value);
@@ -314,7 +276,7 @@ public class SqlGenerator extends SqlConverter implements QueryGenerator {
 
     }
 
-    public String createDeleteQuery(JqlQuery where) {
+    public String createDeleteQuery(JqlFilter where) {
         sw.write("\nDELETE ");
         this.writeFrom(where);
         this.writeWhere(where);
@@ -322,9 +284,9 @@ public class SqlGenerator extends SqlConverter implements QueryGenerator {
         return sql;
     }
 
-    public String prepareFindByIdStatement(JQSchema schema) {
+    public String prepareFindByIdStatement(QSchema schema) {
         sw.write("\nSELECT * FROM ").write(schema.getTableName()).write("\nWHERE ");
-        List<JQColumn> keys = schema.getPKColumns();
+        List<QColumn> keys = schema.getPKColumns();
         for (int i = 0; i < keys.size(); ) {
             String key = keys.get(i).getPhysicalName();
             sw.write(key).write(" = ? ");
@@ -336,7 +298,7 @@ public class SqlGenerator extends SqlConverter implements QueryGenerator {
         return sql;
     }
 
-    public String createInsertStatement(JQSchema schema, Map entity, boolean ignoreConflict) {
+    public String createInsertStatement(QSchema schema, Map entity, boolean ignoreConflict) {
 
         Set<String> keys = ((Map<String, ?>)entity).keySet();
         sw.writeln();
@@ -350,7 +312,7 @@ public class SqlGenerator extends SqlConverter implements QueryGenerator {
         sw.decTab();
         sw.writeln("\n) VALUES (");
         for (String k : keys) {
-            JQColumn col = schema.getColumn(k);
+            QColumn col = schema.getColumn(k);
             Object v = BatchUpsert.convertJsonValueToColumnValue(col, entity.get(k));
             sw.writeValue(v).write(", ");
         }
@@ -362,15 +324,15 @@ public class SqlGenerator extends SqlConverter implements QueryGenerator {
         return sql;
     }
 
-    public String prepareBatchInsertStatement(JQSchema schema, boolean ignoreConflict) {
+    public String prepareBatchInsertStatement(QSchema schema, boolean ignoreConflict) {
         sw.writeln();
         sw.write(getCommand(SqlConverter.Command.Insert)).write(" INTO ").write(schema.getTableName()).writeln("(");
-        for (JQColumn col : schema.getWritableColumns()) {
+        for (QColumn col : schema.getWritableColumns()) {
             sw.write(col.getPhysicalName()).write(", ");
         }
         sw.replaceTrailingComma("\n) VALUES (");
-        for (JQColumn column : schema.getWritableColumns()) {
-            sw.write(column.getType() == JQType.Json ? "?::jsonb, " : "?,");
+        for (QColumn column : schema.getWritableColumns()) {
+            sw.write(column.getType() == QType.Json ? "?::jsonb, " : "?,");
         }
         sw.replaceTrailingComma(")");
         if (ignoreConflict) {

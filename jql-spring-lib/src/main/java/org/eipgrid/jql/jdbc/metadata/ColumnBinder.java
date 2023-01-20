@@ -1,21 +1,21 @@
 package org.eipgrid.jql.jdbc.metadata;
 
-import org.eipgrid.jql.schema.JQColumn;
-import org.eipgrid.jql.schema.JQSchemaLoader;
+import org.eipgrid.jql.schema.QColumn;
+import org.eipgrid.jql.schema.SchemaLoader;
 
 class ColumnBinder {
-    private final JQSchemaLoader schemaLoader;
+    private final SchemaLoader schemaLoader;
     private final String tableName;
     private final String columnName;
-    private JQColumn pk;
+    private QColumn pk;
 
-    ColumnBinder(JQSchemaLoader schemaLoader, String tableName, String columnName) {
+    ColumnBinder(SchemaLoader schemaLoader, String tableName, String columnName) {
         this.schemaLoader = schemaLoader;
         this.tableName = tableName;
         this.columnName = columnName;
     }
 
-    public JQColumn getJoinedColumn(Class<?> javaType) {
+    public QColumn getJoinedColumn(Class<?> javaType) {
         if (pk == null) {
             pk = schemaLoader.loadSchema(tableName, javaType).getColumn(columnName);
             assert (pk != null);

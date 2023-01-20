@@ -8,13 +8,12 @@ import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public abstract class JQSchemaLoader {
+public abstract class SchemaLoader {
 
-    private final HashMap<Class<?>, JQSchema> classToSchemaMap = new HashMap<>();
+    private final HashMap<Class<?>, QSchema> classToSchemaMap = new HashMap<>();
     private final AttributeNameConverter nameConverter;
-    private AtomicInteger cntSchema = new AtomicInteger();
 
-    protected JQSchemaLoader(AttributeNameConverter nameConverter) {
+    protected SchemaLoader(AttributeNameConverter nameConverter) {
         this.nameConverter = nameConverter;
     }
 
@@ -24,10 +23,10 @@ public abstract class JQSchemaLoader {
 
     public String getDefaultDBSchema() { return "public"; }
 
-    public abstract JQSchema loadSchema(String tablePath, Class<?> ormType);
+    public abstract QSchema loadSchema(String tablePath, Class<?> ormType);
 
-    public JQSchema loadSchema(Class<?> entityType) {
-        JQSchema schema = classToSchemaMap.get(entityType);
+    public QSchema loadSchema(Class<?> entityType) {
+        QSchema schema = classToSchemaMap.get(entityType);
         if (schema == null) {
             String tableName = resolveTableName(entityType);
             schema = loadSchema(tableName, entityType);
@@ -60,15 +59,10 @@ public abstract class JQSchemaLoader {
         return name;
     }
 
-    public String toColumnType(Class<?> javaType, Field f) {
-        return JsUtil.getColumnType(javaType);
-    }
+//    public String toColumnType(Class<?> javaType, Field f) {
+//        return JsUtil.getColumnType(javaType, joinedPK);
+//    }
 
-    protected String generateUniqueAlias(JQSchema schema) {
-        int id = cntSchema.getAndIncrement();
-        String alias = (id < 10 ? "t_" : "t") + id;
-        return alias;
-    }
 
-    protected abstract HashMap<String, JQJoin> loadJoinMap(JQSchema schema);
+    protected abstract HashMap<String, QJoin> loadJoinMap(QSchema schema);
 }

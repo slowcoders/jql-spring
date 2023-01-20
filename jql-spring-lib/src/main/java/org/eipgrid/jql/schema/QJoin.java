@@ -3,23 +3,23 @@ package org.eipgrid.jql.schema;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class JQJoin {
-    private final JQJoin associateJoin;
+public class QJoin {
+    private final QJoin associateJoin;
     private final String jsonKey;
     private final boolean isUnique;
     private final boolean inverseMapped;
-    private final List<JQColumn> fkColumns;
-    private final JQSchema baseSchema;
-    private final JQSchema joinedSchema;
+    private final List<QColumn> fkColumns;
+    private final QSchema baseSchema;
+    private final QSchema joinedSchema;
 
-    public JQJoin(JQSchema baseSchema, List<JQColumn> fkColumns) {
+    public QJoin(QSchema baseSchema, List<QColumn> fkColumns) {
         this(baseSchema, fkColumns, null);
     }
 
-    public JQJoin(JQSchema baseSchema, List<JQColumn> fkColumns, JQJoin associatedJoin) {
+    public QJoin(QSchema baseSchema, List<QColumn> fkColumns, QJoin associatedJoin) {
         this.fkColumns = fkColumns;
         this.baseSchema = baseSchema;
-        JQSchema fkSchema = fkColumns.get(0).getSchema();
+        QSchema fkSchema = fkColumns.get(0).getSchema();
         this.inverseMapped = baseSchema != fkSchema;
         if (inverseMapped) {
             assert(associatedJoin == null || !associatedJoin.inverseMapped);
@@ -29,7 +29,7 @@ public class JQJoin {
         } else {
             assert(associatedJoin == null);
             this.joinedSchema = fkColumns.get(0).getJoinedPrimaryColumn().getSchema();
-            List<JQColumn> pkColumns = fkColumns.stream()
+            List<QColumn> pkColumns = fkColumns.stream()
                     .map(col -> col.getJoinedPrimaryColumn())
                     .collect(Collectors.toList());
             this.isUnique = joinedSchema.isUniqueConstrainedColumnSet(pkColumns);
@@ -38,11 +38,11 @@ public class JQJoin {
         this.jsonKey = associatedJoin != null ? '+' + associatedJoin.getJsonKey() : initJsonKey();
     }
 
-    public List<JQColumn> getForeignKeyColumns() {
+    public List<QColumn> getForeignKeyColumns() {
         return fkColumns;
     }
 
-    public JQJoin getAssociativeJoin() {
+    public QJoin getAssociativeJoin() {
         return associateJoin;
     }
 
@@ -62,7 +62,7 @@ public class JQJoin {
         if (this.jsonKey != null) {
             throw new RuntimeException("already initialized");
         }
-        JQColumn first = fkColumns.get(0);
+        QColumn first = fkColumns.get(0);
         String name;
         if (inverseMapped) {
             // column 이 없으므로 타입을 이용하여 이름을 정한다.
@@ -78,9 +78,9 @@ public class JQJoin {
         return name;
     }
 
-    public static String initJsonKey(JQColumn fk) {
+    public static String initJsonKey(QColumn fk) {
         String fk_name = fk.getPhysicalName();
-        JQColumn joinedPk = fk.getJoinedPrimaryColumn();
+        QColumn joinedPk = fk.getJoinedPrimaryColumn();
         String pk_name = joinedPk.getPhysicalName();
         if (fk_name.endsWith("_" + pk_name)) {
             return fk_name.substring(0, fk_name.length() - pk_name.length() - 1);
@@ -89,15 +89,15 @@ public class JQJoin {
         }
     }
 
-    public JQSchema getJoinedSchema() {
-        JQColumn col = fkColumns.get(0);
+    public QSchema getJoinedSchema() {
+        QColumn col = fkColumns.get(0);
         if (!inverseMapped) {
             col = col.getJoinedPrimaryColumn();
         }
         return col.getSchema();
     }
 
-    public JQSchema getBaseSchema() {
+    public QSchema getBaseSchema() {
         return this.baseSchema;
     }
 
@@ -105,7 +105,7 @@ public class JQJoin {
         return fkColumns.size() == 1;
     }
 
-    public JQSchema getAssociatedSchema() {
+    public QSchema getAssociatedSchema() {
         if (associateJoin != null) {
             return associateJoin.getJoinedSchema();
         } else {

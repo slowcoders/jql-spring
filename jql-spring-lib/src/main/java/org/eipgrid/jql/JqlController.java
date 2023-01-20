@@ -1,11 +1,7 @@
 package org.eipgrid.jql;
 
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Schema;
-import org.eipgrid.jql.util.KVEntity;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
@@ -20,15 +16,21 @@ public interface JqlController<ENTITY, ID> {
 
     JqlRepository<ENTITY,ID> getRepository();
 
-    /****************************************************************
-     * Search API set
-     */
-    interface Search<ENTITY, ID> extends JqlController<ENTITY, ID> {
+    class Search<ENTITY, ID> implements JqlController<ENTITY, ID> {
+        private final JqlRepository<ENTITY, ID> repository;
+
+        public Search(JqlRepository<ENTITY, ID> repository) {
+            this.repository = repository;
+        }
+
+        public JqlRepository<ENTITY, ID> getRepository() {
+            return repository;
+        }
 
         @GetMapping(path = "/{id}")
         @ResponseBody
         @Operation(summary = "지정 엔터티 읽기")
-        default ENTITY get(@PathVariable("id") String id$) {
+        public ENTITY get(@PathVariable("id") String id$) {
             ID id = getRepository().convertId(id$);
             ENTITY entity = getRepository().find(id);
             if (entity == null) {
@@ -37,29 +39,28 @@ public interface JqlController<ENTITY, ID> {
             return entity;
         }
 
-        @PostMapping(path = "/", consumes = { MediaType.MULTIPART_FORM_DATA_VALUE })
+        @PostMapping(path = "/", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
         @ResponseBody
         @Operation(summary = "엔터티 검색")
-        default Object select_form(@Schema(example = "{ \"select\": \"\", \"sort\": \"\", \"page\": 0, \"limit\": 0, \"query\": { } }")
-                                  @ModelAttribute JqlRequest.Builder request) {
-            return select(request);
+        public Object find_form(@Schema(example = "{ \"select\": \"\", \"sort\": \"\", \"page\": 0, \"limit\": 0, \"filter\": { } }")
+                                @ModelAttribute JqlQuery.Request request) {
+            return find(request);
         }
 
-        @PostMapping(path = "/", consumes = { MediaType.APPLICATION_JSON_VALUE })
+        @PostMapping(path = "/", consumes = {MediaType.APPLICATION_JSON_VALUE})
         @ResponseBody
         @Operation(summary = "엔터티 검색")
-        default Object select(@Schema(example = "{ \"select\": \"\", \"sort\": \"\", \"page\": 0, \"limit\": 0, \"query\": { } }")
-                             @RequestBody JqlRequest.Builder request) {
-            List<ENTITY> res = getRepository().select(request.build());
-            return KVEntity.of("content", res);
+        public Object find(@Schema(example = "{ \"select\": \"\", \"sort\": \"\", \"page\": 0, \"limit\": 0, \"filter\": { } }")
+                           @RequestBody JqlQuery.Request request) {
+            return request.execute(getRepository());
         }
 
         @PostMapping(path = "/count")
         @ResponseBody
         @Operation(summary = "엔터티 수 조회")
-        default long count(@Schema(implementation = Object.class)
-                            @RequestBody() HashMap<String, Object> jsQuery) {
-            long count = getRepository().count(jsQuery);
+        public long count(@Schema(implementation = Object.class)
+                          @RequestBody() HashMap<String, Object> jsFilter) {
+            long count = getRepository().count(getRepository().buildFilter(jsFilter));
             return count;
         }
 
@@ -67,18 +68,14 @@ public interface JqlController<ENTITY, ID> {
         @PostMapping(path = "/clear-cache")
         @ResponseBody
         @Operation(summary = "Cache 비우기")
-        default void clearCache() {
+        public void clearCache() {
             getRepository().clearEntityCache(null);
         }
     }
 
+    interface Insert<ENTITY, ID> extends JqlController<ENTITY, ID> {
 
-    /****************************************************************
-     * Update API set
-     */
-    interface Update<ENTITY, ID> extends JqlController<ENTITY, ID> {
-
-        @PutMapping(path = "/", consumes = { MediaType.APPLICATION_JSON_VALUE })
+        @PutMapping(path = "/", consumes = {MediaType.APPLICATION_JSON_VALUE})
         @ResponseBody
         @Operation(summary = "엔터티 추가")
         @Transactional
@@ -86,19 +83,24 @@ public interface JqlController<ENTITY, ID> {
             ID id = getRepository().insert(entity);
             return getRepository().find(id);
         }
+    }
 
-        @PatchMapping(path = "/{idList}", consumes = { MediaType.APPLICATION_JSON_VALUE })
+    interface Update<ENTITY, ID> extends JqlController<ENTITY, ID> {
+
+        @PatchMapping(path = "/{idList}", consumes = {MediaType.APPLICATION_JSON_VALUE})
         @ResponseBody
-        @Operation(summary = "엔터티 내용 일부 변경")
+        @Operation(summary = "엔터티 내용 변경")
         @Transactional
         default List<ENTITY> update(
-                @Schema(type="string", required = true) @PathVariable("idList") Collection<ID> idList,
+                @Schema(type = "string", required = true) @PathVariable("idList") Collection<ID> idList,
                 @RequestBody HashMap<String, Object> updateSet) throws Exception {
             getRepository().update(idList, updateSet);
             List<ENTITY> entities = getRepository().list(idList);
             return entities;
         }
+    }
 
+    interface Delete<ENTITY, ID> extends JqlController<ENTITY, ID> {
         @DeleteMapping("/{idList}")
         @ResponseBody
         @Operation(summary = "엔터티 삭제")
@@ -114,7 +116,7 @@ public interface JqlController<ENTITY, ID> {
     /****************************************************************
      * Form Control API set
      */
-    interface Form<ENTITY, ID> extends JqlController<ENTITY, ID> {
+    interface InsertForm<ENTITY, ID> extends JqlController<ENTITY, ID> {
 
         @PostMapping(path = "/", consumes = { MediaType.MULTIPART_FORM_DATA_VALUE })
         @ResponseBody
@@ -124,32 +126,13 @@ public interface JqlController<ENTITY, ID> {
             ID id = getRepository().insert(entity);
             return getRepository().find(id);
         }
-
-//        @PatchMapping(path = "/{id}", consumes = { MediaType.MULTIPART_FORM_DATA_VALUE })
-//        @ResponseBody
-//        @Operation(summary = "엔터티 내용 일부 변경")
-//        @Transactional
-//        default List<ENTITY> update(
-//                @Schema(type="string", required = true) @PathVariable("id") ID id,
-//                @ModelAttribute ENTITY entity) throws Exception {
-//            getRepository().update(idList, updateSet);
-//            List<ENTITY> entities = getRepository().list(idList);
-//            return entity;
-//        }
     }
 
-    abstract class SearchAndUpdate<ENTITY, ID> implements Search<ENTITY, ID>, Update<ENTITY, ID> {
-        JqlRepository<ENTITY, ID> repository;
-
-        public SearchAndUpdate(JqlRepository<ENTITY, ID> repository) {
-            this.repository = repository;
+    class CRUD<ENTITY, ID> extends Search<ENTITY, ID>
+            implements Insert<ENTITY, ID>, Update<ENTITY, ID>, Delete<ENTITY, ID> {
+        public CRUD(JqlRepository<ENTITY, ID> repository) {
+            super(repository);
         }
-
-        @Override
-        public JqlRepository<ENTITY, ID> getRepository() {
-            return repository;
-        }
-
     }
 }
 

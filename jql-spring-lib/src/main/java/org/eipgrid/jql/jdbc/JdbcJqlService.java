@@ -1,7 +1,7 @@
 package org.eipgrid.jql.jdbc;
 
-import org.eipgrid.jql.schema.JQSchema;
-import org.eipgrid.jql.schema.JQSchemaLoader;
+import org.eipgrid.jql.schema.QSchema;
+import org.eipgrid.jql.schema.SchemaLoader;
 import org.eipgrid.jql.jdbc.metadata.JdbcSchemaLoader;
 import org.eipgrid.jql.JqlRepository;
 import org.eipgrid.jql.JqlService;
@@ -34,25 +34,25 @@ public class JdbcJqlService extends JqlService {
         jdbcSchemaLoader = new JdbcSchemaLoader(dataSource, AttributeNameConverter.defaultConverter);
     }
 
-    public JQSchemaLoader getSchemaLoader() {
+    public SchemaLoader getSchemaLoader() {
         return jdbcSchemaLoader;
     }
 
     public JqlRepository makeRepository(String tableName) {
         JqlRepository repo = repositories.get(tableName);
         if (repo == null) {
-            JQSchema schema = jdbcSchemaLoader.loadSchema(tableName, null);
+            QSchema schema = jdbcSchemaLoader.loadSchema(tableName, null);
             repo = new JDBCRepositoryBase(this, schema);
             repositories.put(tableName, repo);
         }
         return repo;
     }
 
-    public JQSchema loadSchema(String tablePath, Class entityType) {
+    public QSchema loadSchema(String tablePath, Class entityType) {
         return jdbcSchemaLoader.loadSchema(tablePath, entityType);
     }
 
-    public JQSchema loadSchema(Class entityType) {
+    public QSchema loadSchema(Class entityType) {
         return jdbcSchemaLoader.loadSchema(entityType);
     }
 

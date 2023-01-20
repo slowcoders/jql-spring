@@ -1,8 +1,8 @@
 package org.eipgrid.jql.jdbc.timescale;
 
-import org.eipgrid.jql.schema.JQColumn;
-import org.eipgrid.jql.schema.JQSchema;
-import org.eipgrid.jql.schema.JQType;
+import org.eipgrid.jql.schema.QColumn;
+import org.eipgrid.jql.schema.QSchema;
+import org.eipgrid.jql.schema.QType;
 import org.eipgrid.jql.jpa.JPARepositoryBase;
 import org.eipgrid.jql.JqlService;
 import org.eipgrid.jql.util.ClassUtils;
@@ -19,7 +19,7 @@ public abstract class TSDBRepositoryBase<ENTITY, ID> extends JPARepositoryBase<E
         super(service);
         this.timeKeyColumnName = timeKeyColumnName;
 
-        JQSchema schema = getService().loadSchema(getEntityType());
+        QSchema schema = getService().loadSchema(getEntityType());
         try {
             new Initializer(schema).initializeTSDB(schema);
         } catch (SQLException e) {
@@ -33,16 +33,16 @@ public abstract class TSDBRepositoryBase<ENTITY, ID> extends JPARepositoryBase<E
 
 
     private class Initializer extends TSDBHelper {
-        private final JQSchema schema;
+        private final QSchema schema;
 
-        public Initializer(JQSchema schema) {
+        public Initializer(QSchema schema) {
             super(getService(), getTableName());
             this.schema = schema;
         }
 
         public HashMap<String, AggregateType> resolveAggregationTypeMap() {
             HashMap<String, AggregateType> aggTypeMap = new HashMap<>();
-            for (JQColumn col : schema.getWritableColumns()) {
+            for (QColumn col : schema.getWritableColumns()) {
                 AggregateType aggType = resolveAggregationType(col);
                 String col_name = col.getPhysicalName();
                 aggTypeMap.put(col_name, aggType);
@@ -50,7 +50,7 @@ public abstract class TSDBRepositoryBase<ENTITY, ID> extends JPARepositoryBase<E
             return aggTypeMap;
         }
 
-        private AggregateType resolveAggregationType(JQColumn col) {
+        private AggregateType resolveAggregationType(QColumn col) {
             Class entityType = getEntityType();
             Field f = ClassUtils.findDeclaredField(entityType, col.getJsonKey());
             if (f == null) {
@@ -60,7 +60,7 @@ public abstract class TSDBRepositoryBase<ENTITY, ID> extends JPARepositoryBase<E
             if (c != null) {
                 return c.value();
             }
-            if (col.getType() == JQType.Float) {
+            if (col.getType() == QType.Float) {
                 return AggregateType.Mean;
             }
             return AggregateType.None;

@@ -1,15 +1,14 @@
 package org.eipgrid.jql.jdbc;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.eipgrid.jql.JqlRequest;
-import org.eipgrid.jql.schema.JQColumn;
-import org.eipgrid.jql.schema.JQSchema;
+import org.eipgrid.jql.JqlQuery;
+import org.eipgrid.jql.schema.QColumn;
+import org.eipgrid.jql.schema.QSchema;
 import org.eipgrid.jql.JqlRepository;
 import org.eipgrid.jql.parser.JqlParser;
-import org.eipgrid.jql.parser.JqlQuery;
+import org.eipgrid.jql.parser.JqlFilter;
 import org.eipgrid.jql.util.KVEntity;
 import org.springframework.core.convert.ConversionService;
-import org.eipgrid.jql.JqlSelect;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.ResultSetExtractor;
 
@@ -23,8 +22,8 @@ public class JDBCRepositoryBase<ID> /*extends JDBCQueryBuilder*/ implements JqlR
     private final ObjectMapper objectMapper;
     private final QueryGenerator sqlGenerator;
     private final JdbcJqlService service;
-    private final List<JQColumn> pkColumns;
-    private final JQSchema schema;
+    private final List<QColumn> pkColumns;
+    private final QSchema schema;
     private final JqlParser jqlParser;
     private String lastGeneratedSql;
 
@@ -32,7 +31,7 @@ public class JDBCRepositoryBase<ID> /*extends JDBCQueryBuilder*/ implements JqlR
         this(service, service.loadSchema(entityType)); //  JQSchema.loadSchema(entityType));
     }
 
-    public JDBCRepositoryBase(JdbcJqlService service, JQSchema schema) {
+    public JDBCRepositoryBase(JdbcJqlService service, QSchema schema) {
         this.service = service;
         this.sqlGenerator = service.getQueryGenerator();
         this.jdbc = service.getJdbcTemplate();
@@ -46,7 +45,7 @@ public class JDBCRepositoryBase<ID> /*extends JDBCQueryBuilder*/ implements JqlR
         return objectMapper;
     }
 
-    public JQSchema getSchema() {
+    public QSchema getSchema() {
         return schema;
     }
 
@@ -58,7 +57,7 @@ public class JDBCRepositoryBase<ID> /*extends JDBCQueryBuilder*/ implements JqlR
     @Override
     public ID convertId(Object v) {
         ConversionService cvtService = service.getConversionService();
-        List<JQColumn> pkColumns = schema.getPKColumns();
+        List<QColumn> pkColumns = schema.getPKColumns();
         if (pkColumns.size() == 1) {
             return (ID)service.getConversionService().convert(v, pkColumns.get(0).getJavaType());
         }
@@ -83,7 +82,7 @@ public class JDBCRepositoryBase<ID> /*extends JDBCQueryBuilder*/ implements JqlR
         ConversionService cvtService = service.getConversionService();
         KVEntity map = new KVEntity();
         for (int i = 0; i < raw_values.length; i++) {
-            JQColumn pk = pkColumns.get(i);
+            QColumn pk = pkColumns.get(i);
             Object raw_v = raw_values == single_pk_value ? id : raw_values[i];
             Object k_v = cvtService.convert(raw_v, pk.getJavaType());
             map.put(pk.getJsonKey(), k_v);
@@ -91,83 +90,50 @@ public class JDBCRepositoryBase<ID> /*extends JDBCQueryBuilder*/ implements JqlR
         return map;
     }
 
-    public Map<String, Object> createJqlFilterWithIdList(Collection idList) {
-        if (pkColumns.size() == 1) {
-            return createJqlFilterWithId(idList);
-        }
-        if (idList.size() == 1) {
-            return createJqlFilterWithId(idList.iterator().next());
-        }
-        if (true) {
-            throw new IllegalArgumentException("JQL does not support ID-list of composite primary keys");
-        }
-        ArrayList list = new ArrayList();
-        for (Object id : idList) {
-            list.add(createJqlFilterWithId(id));
-        }
-        return newSimpleMap("@in", list);
-    }
-
-    public static KVEntity newSimpleMap(String key, Object value) {
-        KVEntity map = new KVEntity();
-        map.put(key, value);
-        return map;
-    }
-
     @Override
     public KVEntity find(ID id) {
-        Map<String, Object> filter = createJqlFilterWithId(id);
-        List<KVEntity> res = find_impl(filter, JqlSelect.Whole);
+        List<KVEntity> res = find_impl(JqlQuery.of(this, id));
         return res.size() > 0 ? res.get(0) : null;
     }
 
-    protected ResultSetExtractor<List<KVEntity>> getColumnMapRowMapper(JqlQuery filter) {
-        return new JQRowMapper(filter.getResultMappings(), service.getObjectMapper());
+    protected ResultSetExtractor<List<KVEntity>> getColumnMapRowMapper(JqlFilter filter) {
+        return new JsonRowMapper(filter.getResultMappings(), service.getObjectMapper());
     }
 
-    protected List<KVEntity> find_impl(Map<String, Object> jsQuery, JqlSelect columns) {
-        JqlQuery query = buildQuery(jsQuery, columns);
-        String sql = sqlGenerator.createSelectQuery(query, columns);
+    protected List<KVEntity> find_impl(JqlQuery query) {
+        String sql = sqlGenerator.createSelectQuery(query);
         this.lastGeneratedSql = sql;
-        List<KVEntity> res = (List)jdbc.query(sql, getColumnMapRowMapper(query));
+        List<KVEntity> res = (List)jdbc.query(sql, getColumnMapRowMapper(query.getFilter()));
         return res;
     }
 
-    public List<KVEntity> select(JqlRequest request) {
-//        return jqlParser.parse(this.schema, jsQuery, select);
-        JqlQuery query = jqlParser.parse(this.schema, request.getFilter());
-        String sql = sqlGenerator.createSelectQuery(query, request);
+    public List<KVEntity> find(JqlQuery query) {
+        String sql = sqlGenerator.createSelectQuery(query);
         this.lastGeneratedSql = sql;
-        List<KVEntity> res = (List)jdbc.query(sql, getColumnMapRowMapper(query));
+        List<KVEntity> res = (List)jdbc.query(sql, getColumnMapRowMapper(query.getFilter()));
         return res;
     }
-
-//    @Override
-//    public Page<KVEntity> find(Map<String, Object> jsQuery, @NotNull Pageable pageReq) {
-//        int size = pageReq.getPageSize();
-//        int offset = (pageReq.getPageNumber()) * size;
-//        List<KVEntity> res = find_impl(jsQuery, pageReq.getSort(), offset, size);
-//        long count = count(jsQuery);
-//        return new PageImpl(res, pageReq, count);
-//    }
 
     @Override
-    public long count(Map<String, Object> jsQuery) {
-        JqlQuery query = this.buildQuery(jsQuery, null);
-        String sqlCount = sqlGenerator.createCountQuery(query);
+    public JqlFilter buildFilter(Map<String, Object> filter) {
+        return jqlParser.parse(this.schema, filter);
+    }
+
+    @Override
+    public long count(JqlFilter filter) {
+        String sqlCount = sqlGenerator.createCountQuery(filter);
         long count = jdbc.queryForObject(sqlCount, Long.class);
         return count;
     }
 
-    @Override
-    public List<KVEntity> find(Map<String, Object> jsQuery, JqlSelect columns) {
-        return this.find_impl(jsQuery, columns);
-    }
+//    @Override
+//    public List<KVEntity> find(Map<String, Object> jsFilter, JqlRequest columns) {
+//        return this.find_impl(jsFilter, columns);
+//    }
 
     @Override
     public List<KVEntity> list(Collection<ID> idList) {
-        Map<String, Object> filter = createJqlFilterWithIdList( idList);
-        return find_impl(filter, JqlSelect.Whole);
+        return find_impl(JqlQuery.of(this, idList));
     }
 
     public ID insert(KVEntity entity) {
@@ -212,27 +178,23 @@ public class JDBCRepositoryBase<ID> /*extends JDBCQueryBuilder*/ implements JqlR
 
     @Override
     public void update(Collection<ID> idList, Map<String, Object> updateSet) throws IOException {
-        JqlQuery filter = buildQuery(createJqlFilterWithIdList(idList), null);
+        JqlFilter filter = JqlFilter.of(schema, idList);
         String sql = sqlGenerator.createUpdateQuery(filter, updateSet);
         jdbc.update(sql);
     }
 
     @Override
     public void delete(ID id) {
-        JqlQuery filter = buildQuery(createJqlFilterWithId(id), null);
+        JqlFilter filter = JqlFilter.of(schema, id);
         String sql = sqlGenerator.createDeleteQuery(filter);
         jdbc.update(sql);
     }
 
     @Override
     public int delete(Collection<ID> idList) {
-        JqlQuery filter = buildQuery(createJqlFilterWithIdList(idList), null);
+        JqlFilter filter = JqlFilter.of(schema, idList);
         String sql = sqlGenerator.createDeleteQuery(filter);
         return jdbc.update(sql);
-    }
-
-    private JqlQuery buildQuery(Map<String, Object> jsQuery, JqlSelect select) {
-        return jqlParser.parse(this.schema, jsQuery, select);
     }
 
     @Override

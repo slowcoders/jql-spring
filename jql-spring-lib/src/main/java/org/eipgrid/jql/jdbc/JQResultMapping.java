@@ -1,21 +1,21 @@
 package org.eipgrid.jql.jdbc;
 
-import org.eipgrid.jql.schema.JQColumn;
-import org.eipgrid.jql.schema.JQJoin;
-import org.eipgrid.jql.schema.JQSchema;
+import org.eipgrid.jql.schema.QColumn;
+import org.eipgrid.jql.schema.QJoin;
+import org.eipgrid.jql.schema.QSchema;
 
 import java.util.List;
 
 public interface JQResultMapping {
     JQResultMapping getParentNode();
 
-    JQSchema getSchema();
+    QSchema getSchema();
 
     String getMappingAlias();
 
-    JQJoin getEntityJoin();
+    QJoin getEntityJoin();
 
-    List<JQColumn> getSelectedColumns();
+    List<QColumn> getSelectedColumns();
 
     String[] getEntityMappingPath();
 

@@ -1,8 +1,8 @@
 package org.eipgrid.jql.jdbc.timescale;
 
-import org.eipgrid.jql.schema.JQColumn;
-import org.eipgrid.jql.schema.JQSchema;
-import org.eipgrid.jql.schema.JQType;
+import org.eipgrid.jql.schema.QColumn;
+import org.eipgrid.jql.schema.QSchema;
+import org.eipgrid.jql.schema.QType;
 import org.eipgrid.jql.JqlRepository;
 import org.eipgrid.jql.JqlService;
 import org.eipgrid.jql.util.SourceWriter;
@@ -25,9 +25,9 @@ public abstract class TSDBHelper {
     private final JqlService service;
     private final JdbcTemplate jdbc;
 
-    private JQColumn timeKeyColumn;
+    private QColumn timeKeyColumn;
     private HashMap<String, AggregateType> aggTypeMap;
-    private JQSchema schema;
+    private QSchema schema;
     private Connection conn;
 
     public TSDBHelper(JqlService service, String tableName) {
@@ -36,16 +36,16 @@ public abstract class TSDBHelper {
         this.tableName = tableName;
     }
 
-    private JQColumn resolveTimeKeyColumn() {
-        for (JQColumn column : this.schema.getPKColumns()) {
-            if (column.getType() == JQType.Timestamp) {
+    private QColumn resolveTimeKeyColumn() {
+        for (QColumn column : this.schema.getPKColumns()) {
+            if (column.getType() == QType.Timestamp) {
                 return column;
             }
         }
         throw new RuntimeException("Column for the timeKey is not found");
     }
 
-    public AggregateType getAggregationType(JQColumn col) {
+    public AggregateType getAggregationType(QColumn col) {
         AggregateType t = aggTypeMap.get(col.getPhysicalName());
         if (t == null) t = AggregateType.None;
         return t;
@@ -111,7 +111,7 @@ public abstract class TSDBHelper {
         }
     }
 
-    protected void initializeTSDB(JQSchema schema) throws SQLException {
+    protected void initializeTSDB(QSchema schema) throws SQLException {
         if (conn != null) {
             initializeTSDB_internal(schema);
         }
@@ -136,7 +136,7 @@ public abstract class TSDBHelper {
         }
     }
 
-    protected void initializeTSDB_internal(JQSchema schema) throws SQLException {
+    protected void initializeTSDB_internal(QSchema schema) throws SQLException {
         if (isTableExists(this.tableName + SUFFIX_DAILY_VIEW)) return;
 
         this.schema = schema;
@@ -182,21 +182,21 @@ public abstract class TSDBHelper {
         SourceWriter sb = new SourceWriter('\'');
         String tableName = schema.getTableName();
         String aggView = tableName + SUFFIX_CONT_AGG;
-        JQColumn ts_key = this.timeKeyColumn;
+        QColumn ts_key = this.timeKeyColumn;
         String ts_col_name = this.getTimeKeyColumnName();
 
         sb.write("CREATE MATERIALIZED VIEW IF NOT EXISTS ").writeln(aggView);
         sb.writeln("\tWITH (timescaledb.continuous)\nAS SELECT").incTab();
         sb.writeF("time_bucket('1 hour', {0}) AS time_h,\n", ts_col_name);
 
-        for (JQColumn col : schema.getPKColumns()) {
+        for (QColumn col : schema.getPKColumns()) {
             if (col != ts_key) {
                 sb.write(col.getPhysicalName()).writeln(",");
             }
         }
 
-        ArrayList<JQColumn> accColumns = new ArrayList<>();
-        for (JQColumn col : schema.getWritableColumns()) {
+        ArrayList<QColumn> accColumns = new ArrayList<>();
+        for (QColumn col : schema.getWritableColumns()) {
             String col_name = col.getPhysicalName();
             switch (getAggregationType(col)) {
                 case Sum: {
@@ -220,7 +220,7 @@ public abstract class TSDBHelper {
 
         sb.decTab().replaceTrailingComma("\nFROM ").write(schema.getTableName()).writeln();
         sb.write("GROUP BY ");
-        for (JQColumn col : schema.getPKColumns()) {
+        for (QColumn col : schema.getPKColumns()) {
             if (col == ts_key) {
                 sb.write("time_h, ");
             }
@@ -249,7 +249,7 @@ public abstract class TSDBHelper {
         }
         else {
             sb.incTab();
-            for (JQColumn col : schema.getPKColumns()) {
+            for (QColumn col : schema.getPKColumns()) {
                 if (col == ts_key) {
                     sb.write("time_h, ");
                 }
@@ -257,7 +257,7 @@ public abstract class TSDBHelper {
                     sb.write(col.getPhysicalName()).writeln(",");
                 }
             }
-            for (JQColumn col : schema.getWritableColumns()) {
+            for (QColumn col : schema.getWritableColumns()) {
                 switch (getAggregationType(col)) {
                     case Sum: {
                         String fmt =
@@ -277,7 +277,7 @@ public abstract class TSDBHelper {
             sb.decTab();
             sb.replaceTrailingComma("\nFROM ").writeln(aggView);
             sb.write("WINDOW _w AS(partition by ");
-            for (JQColumn col : schema.getPKColumns()) {
+            for (QColumn col : schema.getPKColumns()) {
                 if (col != ts_key) sb.write(col.getPhysicalName()).write(", ");
             }
             sb.replaceTrailingComma(" ORDER BY time_h);");
@@ -287,10 +287,10 @@ public abstract class TSDBHelper {
         sb.writeln();
         sb.writeF("CREATE OR REPLACE VIEW {0} AS\nSELECT\n", tableName + SUFFIX_DAILY_VIEW).incTab();
         sb.writeln("time_bucket('1 day', time_h) AS time_d,");
-        for (JQColumn col : schema.getPKColumns()) {
+        for (QColumn col : schema.getPKColumns()) {
             if (col != ts_key) sb.write(col.getPhysicalName()).writeln(",");
         }
-        for (JQColumn col : schema.getWritableColumns()) {
+        for (QColumn col : schema.getWritableColumns()) {
             switch (getAggregationType(col)) {
                 case Sum: {
                     sb.writeF("sum({0}) as {0},\n", col.getPhysicalName());
@@ -304,7 +304,7 @@ public abstract class TSDBHelper {
         }
         sb.decTab().replaceTrailingComma("\n");
         sb.writeF("FROM {0}\nGROUP BY ", tableName + SUFFIX_HOURLY_VIEW);
-        for (JQColumn col : schema.getPKColumns()) {
+        for (QColumn col : schema.getPKColumns()) {
             if (col != ts_key) sb.write(col.getPhysicalName()).write(", ");
         }
         sb.writeln("time_d;");
@@ -326,7 +326,7 @@ public abstract class TSDBHelper {
                         execute(sql);
                     }
 
-                    JQSchema schema = service.loadSchema(tableName, null);
+                    QSchema schema = service.loadSchema(tableName, null);
                     initializeTSDB(schema);
                     return service.makeRepository(tableName);
                 }

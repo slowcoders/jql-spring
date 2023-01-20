@@ -1,20 +1,23 @@
 package org.eipgrid.jql.js;
 
-import org.eipgrid.jql.schema.JQColumn;
-import org.eipgrid.jql.schema.JQSchema;
-import org.eipgrid.jql.schema.JQJoin;
+import org.eipgrid.jql.schema.QColumn;
+import org.eipgrid.jql.schema.QSchema;
+import org.eipgrid.jql.schema.QJoin;
 import org.eipgrid.jql.jdbc.metadata.JdbcColumn;
+import org.eipgrid.jql.schema.QType;
+import org.eipgrid.jql.util.AttributeNameConverter;
 import org.eipgrid.jql.util.ClassUtils;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class JsUtil {
 
-    public static String createDDL(JQSchema schema) {
+    public static String createDDL(QSchema schema) {
         StringBuilder sb = new StringBuilder();
         sb.append("const " + schema.getSimpleTableName() + "Schema_columns = [\n");
-        for (JQColumn col : schema.getReadableColumns()) {
+        for (QColumn col : schema.getReadableColumns()) {
             dumpJSONSchema(sb, (JdbcColumn)col);
             sb.append(",\n");
         }
@@ -22,7 +25,7 @@ public class JsUtil {
 
         if (!schema.getEntityJoinMap().isEmpty()) {
             sb.append("\nconst " + schema.getSimpleTableName() + "Schema_external_entities = [\n");
-            for (Map.Entry<String, JQJoin> entry : schema.getEntityJoinMap().entrySet()) {
+            for (Map.Entry<String, QJoin> entry : schema.getEntityJoinMap().entrySet()) {
                 sb.append("  jql.externalJoin(\"").append(entry.getKey()).append("\", ");
                 sb.append(entry.getValue().getJoinedSchema().getSimpleTableName()).append("Schema, \n");
                 sb.append(entry.getValue().isUniqueJoin() ? "{}" : "[]").append("),\n");
@@ -34,7 +37,7 @@ public class JsUtil {
     }
 
     public static String dumpJSONSchema(StringBuilder sb, JdbcColumn col) {
-        String jsonType = getColumnType(col.getJavaType());
+        String jsonType = getColumnType(col);
         if (jsonType == null) {
             throw new RuntimeException("JsonType not registered: " + col.getJavaType() + " " + col.getPhysicalName());
         }
@@ -63,10 +66,10 @@ public class JsUtil {
 
 
 
-    public static String createJoinJQL(JQSchema schema) {
+    public static String createJoinJQL(QSchema schema) {
         StringBuilder sb = new StringBuilder();
-        for (JQColumn jqlColumn : schema.getReadableColumns()) {
-            JQColumn joined_pk = jqlColumn.getJoinedPrimaryColumn();
+        for (QColumn jqlColumn : schema.getReadableColumns()) {
+            QColumn joined_pk = jqlColumn.getJoinedPrimaryColumn();
             if (joined_pk == null) continue;
 
             sb.append(schema.getSimpleTableName()).append("Schema.join(\"");
@@ -88,7 +91,14 @@ public class JsUtil {
         return name;
     }
 
-    public static String getColumnType(Class<?> javaType) {
+    private static String getColumnType(QColumn column) {
+        QColumn joinedPK = column.getJoinedPrimaryColumn();
+        if (joinedPK != null) {
+            String columnType = AttributeNameConverter.toCamelCase(joinedPK.getSchema().getSimpleTableName(), true);
+            return columnType;
+        }
+
+        Class javaType = column.getJavaType();
         String type = ClassUtils.getBoxedType(javaType).getName();
         String colType = mdkTypes.get(type);
         if (colType == null) {
@@ -147,57 +157,72 @@ public class JsUtil {
         }
     }
 
-    static String filler = "            ";
-    public static String getSimpleSchema(JQSchema schema) {
+    private static void dumpColumnInfo(QColumn col, StringBuilder sb) {
+        QColumn joinedPK = col.getJoinedPrimaryColumn();
+        String columnType = getColumnType(col);
+        if (!col.isNullable()) {
+            columnType = columnType + '!';
+        }
+        sb.append(columnType).append(filler.substring(columnType.length()));
+        sb.append(col.getJsonKey()).append('(').append(col.getPhysicalName()).append(')');
+        if (col.isPrimaryKey()) {
+            sb.append(" PK");
+        }
+        if (joinedPK != null) {
+            sb.append(" FK -> ");
+            sb.append(joinedPK.getSchema().getTableName());
+            sb.append(".").append(joinedPK.getJsonKey());
+        }
+
+        sb.append("\n");
+    }
+    static String filler = "                ";
+    public static String getSimpleSchema(QSchema schema) {
         StringBuilder sb = new StringBuilder();
         sb.append("Type").append(filler.substring("Type".length())).append("Key(physical_column_name)\n");
         sb.append("--------------------------------------------------\n");
-        for (JQColumn col : schema.getReadableColumns()) {
-            String columnType = getColumnType(col.getJavaType());
-            if (!col.isNullable()) {
-                columnType = columnType + '!';
-            }
-            sb.append(columnType).append(filler.substring(columnType.length()));
-            sb.append(col.getJsonKey()).append('(').append(col.getPhysicalName()).append(')');
-            JQColumn joinedPK;
-            if (col.isPrimaryKey()) {
-                sb.append(" PK");
-            }
-            else if ((joinedPK = col.getJoinedPrimaryColumn()) != null) {
-                sb.append(" FK -> ");
-                sb.append(joinedPK.getSchema().getTableName());
-                sb.append(".").append(joinedPK.getJsonKey());
-            }
-            sb.append("\n");
+        List<QColumn> primitiveColumns = schema.getPrimitiveColumns();
+        for (QColumn col : primitiveColumns) {
+            dumpColumnInfo(col, sb);
         }
 
-        if (!schema.getEntityJoinMap().isEmpty()) {
-            HashMap<String, JQJoin> associativeColumns = new HashMap<>();
-            sb.append("\n// external entities //\n");
-            for (Map.Entry<String, JQJoin> entry : schema.getEntityJoinMap().entrySet()) {
-                JQJoin join = entry.getValue();
-                if (join.getAssociativeJoin() != null) {
-                    associativeColumns.put(entry.getKey(), join);
-                    continue;
+        boolean hasRef = primitiveColumns.size() != schema.getReadableColumns().size()
+                || !schema.getEntityJoinMap().isEmpty();
+
+        if (hasRef) {
+            sb.append("\n// reference properties //\n");
+
+            for (QColumn col : schema.getReadableColumns()) {
+                if (!col.getType().isPrimitive()) {
+                    dumpColumnInfo(col, sb);
                 }
-                sb.append(entry.getKey());
-                if (!join.isUniqueJoin()) sb.append("[]");
-                sb.append(" -> ");
-                sb.append(join.getJoinedSchema().getSimpleTableName());
-                sb.append("\n");
             }
 
-            sb.append("\n// associative entities //\n");
-            for (Map.Entry<String, JQJoin> entry : associativeColumns.entrySet()) {
-                JQJoin join = entry.getValue();
-                sb.append(entry.getKey());
-                if (!join.isUniqueJoin()) sb.append("[]");
-                sb.append(" -> ");
-                sb.append(join.getJoinedSchema().getSimpleTableName()).append(".");
+            for (Map.Entry<String, QJoin> entry : schema.getEntityJoinMap().entrySet()) {
+                QJoin join = entry.getValue();
+                QSchema refSchema = join.getAssociatedSchema();
+                if (hasOnlyForeignKeys(refSchema)) continue;
+                int start = sb.length();
                 sb.append(join.getAssociatedSchema().getSimpleTableName());
+                if (!join.isUniqueJoin()) sb.append("[]");
+                int type_len = sb.length() - start;
+                if (type_len >= filler.length()) {
+                    type_len = filler.length() - 1;
+                }
+                sb.append(filler.substring(type_len));
+                sb.append(entry.getKey());
                 sb.append("\n");
             }
         }
         return sb.toString();
+    }
+
+    private static boolean hasOnlyForeignKeys(QSchema refSchema) {
+        for (QColumn col : refSchema.getReadableColumns()) {
+            if (col.getJoinedPrimaryColumn() == null) {
+                return false;
+            }
+        }
+        return true;
     }
 }

@@ -6,8 +6,14 @@ describe('And operation', () => {
   const filter = {}
 
   beforeAll(async () => {
-    const filter = {}
-    last_count = await jqlApi.count();
+    const res = await jqlApi.find();
+    last_count = res.content.length;
+
+    const res2 = await jqlApi.find(null);
+    expect(res2.content.length).toBe(last_count)
+
+    const res3 = await jqlApi.find(filter);
+    expect(res3.content.length).toBe(last_count)
   })
 
   test.each([
@@ -17,8 +23,8 @@ describe('And operation', () => {
     { attr: "mass@gt", value: 60 },
     { attr: "metadata.homePlanet", value: "Tatooine" }
   ]) ('And 조건 테스트', async ({attr, value}) => {
-    jql[attr] = value;
-    const res = await jqlApi.find(jql);
+    filter[attr] = value;
+    const res = await jqlApi.find(filter);
     const characters = res.content;
     expect(characters.length).toBeLessThan(last_count);
     last_count = characters.length;

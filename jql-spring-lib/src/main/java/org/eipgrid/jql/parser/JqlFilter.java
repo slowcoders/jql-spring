@@ -1,29 +1,41 @@
 package org.eipgrid.jql.parser;
 
-import org.eipgrid.jql.schema.JQColumn;
-import org.eipgrid.jql.schema.JQSchema;
+import org.eipgrid.jql.schema.QSchema;
 import org.eipgrid.jql.jdbc.JQResultMapping;
-import org.eipgrid.jql.schema.JQType;
 
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Collection;
 import java.util.List;
-import java.util.Set;
 
-public class JqlQuery extends TableFilter {
+public class JqlFilter extends TableFilter {
 
     private final ArrayList<JQResultMapping> columnGroupMappings = new ArrayList<>();
     private int cntMappingAlias;
 
     private boolean selectAuto;
 
-    public JqlQuery(JQSchema schema) {
+    public JqlFilter(QSchema schema) {
         super(schema, "t_0");
+    }
+
+    public static <ID> JqlFilter of(QSchema schema, ID id) {
+        JqlFilter filter = new JqlFilter(schema);
+        filter.getPredicateSet().add(PredicateFactory.IS.createPredicate(schema.getPKColumns().get(0).getPhysicalName(), id));
+        return filter;
+    }
+
+    public static <ID> JqlFilter of(QSchema schema, Collection<ID> idList) {
+        JqlFilter filter = new JqlFilter(schema);
+        filter.getPredicateSet().add(PredicateFactory.IS.createPredicate(schema.getPKColumns().get(0).getPhysicalName(), idList));
+        return filter;
     }
 
     public void setSelectedProperties(String[] keys) {
         selectAuto = (keys == null || keys.length == 0);
-        if (selectAuto) return;
+        if (selectAuto) {
+            this.addSelection("*");
+            return;
+        }
 
         for (int i = 0; i < keys.length; i ++) {
             String k = keys[i].trim();
@@ -34,7 +46,7 @@ public class JqlQuery extends TableFilter {
     private void addSelection(String key) {
         TableFilter scope = this;
         for (int p; (p = key.indexOf('.')) > 0; ) {
-            JQSchema schema = scope.getSchema();
+            QSchema schema = scope.getSchema();
             if (schema != null && schema.hasColumn(key)) {
                 break;
             }
@@ -42,16 +54,16 @@ public class JqlQuery extends TableFilter {
             scope = scope.makeSubNode(token, JqlParser.NodeType.Entity).asTableFilter();
             key = key.substring(p + 1);
         }
-        switch (key.charAt(0)) {
-            case '<':
-            case '[':
-                String[] keys = key.substring(1, key.length()-1).split("\\s");
-                for (String k : keys) {
-                    scope.addSelectedColumn(k);
-                }
-                return;
-            default:
-        }
+//        switch (key.charAt(0)) {
+//            case '<':
+//            case '[':
+//                String[] keys = key.substring(1, key.length()-1).split("\\s");
+//                for (String k : keys) {
+//                    scope.addSelectedColumn(k);
+//                }
+//                return;
+//            default:
+//        }
         if (scope.getSchema().getEntityJoinBy(key) != null) {
             scope = scope.makeSubNode(key, JqlParser.NodeType.Leaf).asTableFilter();
             key = "*";
@@ -59,7 +71,7 @@ public class JqlQuery extends TableFilter {
         scope.addSelectedColumn(key);
     }
 
-    public JqlQuery getRootNode() {
+    public JqlFilter getRootNode() {
         return this;
     }
 

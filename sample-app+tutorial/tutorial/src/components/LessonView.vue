@@ -15,11 +15,14 @@
         </td><td class="input-column">
           <b-dropdown text="Columns" ref="dropDown">
             <b-dropdown-item @click.stop="">
-                <b-form-checkbox-group v-model="selectedColumns"
+<!--              <b-form-checkbox-group v-model="selectedAliases"-->
+<!--                                     :options="selectableAliases"-->
+<!--                                     stacked-->
+<!--                                     @change="onSelectAliasChanged"/>-->
+              <b-form-checkbox-group v-model="selectedColumns"
                                        :options="selectableColumns"
                                        stacked
                                        @change="onSelectChanged"/>
-<!--                <b-button @click="selectedColumns=[]">Clear</b-button>-->
             </b-dropdown-item>
           </b-dropdown>
         </td><td>
@@ -120,6 +123,13 @@ export default {
       selectedTable: sampleTables[0],
       schemaInfo: '',
       tableNames: sampleTables,
+      selectedAliases: [],
+      selectableAliases: [
+        { value: "", text: "null (Auto)" },
+        { value: "*", text: "* (All)" },
+        { value: "0", text: "0 (Primary keys)" },
+        { value: "@", text: "@ (Primitive properties)" }
+      ],
       selectableColumns: [],
       selectedColumns: ["*"],
       allColumnSelected: true,
@@ -182,12 +192,12 @@ const dbSchema = '${dbSchema}'
 const dbTable = '${vm.selectedTable}'
 ${vm.js_code}
 const jql = {
-  select: '${vm.selectedColumns}',
-  sort: '${vm.first_sort}',
+  select: "${vm.selectedColumns}",
+  sort: "${vm.first_sort}",
   limit: ${vm.limit?vm.limit:0},
   filter: filter
 }
-this.http_post(\`\${baseUrl}/\${dbSchema}/\${dbTable}/list\`, jql);
+this.http_post(\`\${baseUrl}/\${dbSchema}/\${dbTable}/\`, jql);
 ${vm.schemaInfo}`
     },
 
@@ -198,9 +208,10 @@ ${vm.schemaInfo}`
       then((res) => {
         const sortOptions = [];
         const selectableColumns = [
-          { value: "*", text: "* (all)" },
-          { value: "0", text: "0 (primary keys)" },
-          { value: "@", text: "@ (auto)" }
+          { value: "", text: "null (Auto)" },
+          { value: "*", text: "* (All)" },
+          { value: "0", text: "0 (Primary keys)" },
+          { value: "@", text: "@ (Primitive properties)" }
         ];
         for (const column of res.data) {
           sortOptions.push(" " + column);
@@ -215,6 +226,24 @@ ${vm.schemaInfo}`
 
     show_error_in_result_view(msg) {
       this.resultView.setValue("!!!! " + msg);
+    },
+
+    onSelectAliasChanged() {
+      const vm = this;
+      // if (vm.selectedAliases.indexOf("") >= 0) {
+      //
+      // }
+      if (vm.selectedAliases.length > 1 && vm.allColumnSelected) {
+        vm.selectedAliases = vm.selectedAliases.filter((k) => "*" != k);
+        vm.allColumnSelected = false;
+      }
+      else {
+        const wasAllColumnSelected = vm.allColumnSelected;
+        vm.allColumnSelected = vm.selectedColumns.indexOf("*") >= 0;
+        if (!wasAllColumnSelected && vm.allColumnSelected) {
+          vm.selectedColumns = ["*"];
+        }
+      }
     },
 
     onSelectChanged(new_v) {

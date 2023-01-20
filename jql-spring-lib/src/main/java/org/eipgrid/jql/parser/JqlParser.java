@@ -1,9 +1,8 @@
 package org.eipgrid.jql.parser;
 
-import org.eipgrid.jql.JqlRequest;
-import org.eipgrid.jql.schema.JQColumn;
-import org.eipgrid.jql.schema.JQSchema;
-import org.eipgrid.jql.JqlSelect;
+import org.eipgrid.jql.schema.QColumn;
+import org.eipgrid.jql.schema.QSchema;
+import org.eipgrid.jql.JqlQuery;
 import org.springframework.core.convert.ConversionService;
 
 import javax.persistence.FetchType;
@@ -20,24 +19,14 @@ public class JqlParser {
         this.conversionService = conversionService;
     }
 
-    public JqlQuery parse(JQSchema schema, Map<String, Object> jsQuery, JqlSelect select) {
-        JqlQuery where = new JqlQuery(schema);
-        if (select != null) {
-            where.setSelectedProperties(select.getPropertyKeys());
-        }
-        if (jsQuery != null) {
-            this.parse(where.getPredicateSet(), jsQuery, true);
+    public JqlFilter parse(QSchema schema, Map<String, Object> filter) {
+        JqlFilter where = new JqlFilter(schema);
+        if (filter != null) {
+            this.parse(where.getPredicateSet(), filter, true);
         }
         return where;
     }
 
-    public JqlQuery parse(JQSchema schema, Map<String, Object> jsQuery) {
-        JqlQuery where = new JqlQuery(schema);
-        if (jsQuery != null) {
-            this.parse(where.getPredicateSet(), jsQuery, true);
-        }
-        return where;
-    }
 
 
     public void parse(PredicateSet predicates, Map<String, Object> filter, boolean excludeConstantAttribute) {
@@ -64,7 +53,7 @@ public class JqlParser {
                 int select_start = key.indexOf('<');
                 if (select_start > 0 && select_start < select_end) {
                     String keys = key.substring(select_start+1, select_end);
-                    selectedKeys = JqlSelect.splitPropertyKeys(keys);
+                    selectedKeys = JqlQuery.splitPropertyKeys(keys);
                     key = key.substring(0, select_start);
                 }
             }
@@ -127,9 +116,9 @@ public class JqlParser {
                 subFilter.addComparedPropertyToSelection(columnName);
             }
             if (value != null) {
-                JQSchema schema = subFilter.getSchema();
+                QSchema schema = subFilter.getSchema();
                 if (schema != null) {
-                    JQColumn column = schema.getColumn(columnName);
+                    QColumn column = schema.getColumn(columnName);
                     Class<?> fieldType = column.getJavaType();
                     Class<?> accessType = op.getAccessType(value, fieldType);
                     value = conversionService.convert(value, accessType);

@@ -4,11 +4,11 @@ import org.eipgrid.jql.*;
 import org.eipgrid.jql.jdbc.QueryGenerator;
 import org.eipgrid.jql.jdbc.SqlGenerator;
 import org.eipgrid.jql.jpa.JpaSchema;
-import org.eipgrid.jql.parser.JqlQuery;
-import org.eipgrid.jql.schema.JQColumn;
-import org.eipgrid.jql.schema.JQJoin;
-import org.eipgrid.jql.schema.JQSchema;
-import org.eipgrid.jql.schema.JQSchemaLoader;
+import org.eipgrid.jql.parser.JqlFilter;
+import org.eipgrid.jql.schema.QColumn;
+import org.eipgrid.jql.schema.QJoin;
+import org.eipgrid.jql.schema.QSchema;
+import org.eipgrid.jql.schema.SchemaLoader;
 import org.eipgrid.jql.util.AttributeNameConverter;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.ConnectionCallback;
@@ -18,11 +18,11 @@ import javax.sql.DataSource;
 import java.sql.*;
 import java.util.*;
 
-public class JdbcSchemaLoader extends JQSchemaLoader implements QueryGenerator {
+public class JdbcSchemaLoader extends SchemaLoader implements QueryGenerator {
     private final JdbcTemplate jdbc;
     private final String defaultSchema;
     private String catalog;
-    private final HashMap<String, JQSchema> metadataMap = new HashMap<>();
+    private final HashMap<String, QSchema> metadataMap = new HashMap<>();
 
     public JdbcSchemaLoader(DataSource dataSource, AttributeNameConverter nameConverter) {
         super(nameConverter);
@@ -38,18 +38,18 @@ public class JdbcSchemaLoader extends JQSchemaLoader implements QueryGenerator {
     public String getDefaultDBSchema() { return this.defaultSchema; }
 
 
-    public JQSchema loadSchema(String tablePath0, Class<?> ormType) {
+    public QSchema loadSchema(String tablePath0, Class<?> ormType) {
         if (tablePath0 == null) {
-            JQSchema schema = new JpaSchema(this, tablePath0, ormType);
+            QSchema schema = new JpaSchema(this, tablePath0, ormType);
             throw new RuntimeException("not impl");
         }
 
         final String tablePath = tablePath0.toLowerCase();
-        JQSchema schema = metadataMap.get(tablePath);
+        QSchema schema = metadataMap.get(tablePath);
         if (schema == null) {
-            schema = jdbc.execute(new ConnectionCallback<JQSchema>() {
+            schema = jdbc.execute(new ConnectionCallback<QSchema>() {
                 @Override
-                public JQSchema doInConnection(Connection conn) throws SQLException, DataAccessException {
+                public QSchema doInConnection(Connection conn) throws SQLException, DataAccessException {
                     return loadSchema(conn, tablePath, ormType);
                 }
             });
@@ -57,7 +57,7 @@ public class JdbcSchemaLoader extends JQSchemaLoader implements QueryGenerator {
         return schema;
     }
 
-    private JQSchema loadSchema(Connection conn, String tablePath, Class<?> ormType) throws SQLException {
+    private QSchema loadSchema(Connection conn, String tablePath, Class<?> ormType) throws SQLException {
         JdbcSchema schema = new JdbcSchema(JdbcSchemaLoader.this, tablePath);
         metadataMap.put(tablePath, schema);
 
@@ -73,14 +73,14 @@ public class JdbcSchemaLoader extends JQSchemaLoader implements QueryGenerator {
                 }
             }
         }
-        ArrayList<JQColumn> columns = getColumns(conn, dbSchema, tableName, schema, primaryKeys);
+        ArrayList<QColumn> columns = getColumns(conn, dbSchema, tableName, schema, primaryKeys);
         processForeignKeyConstraints(conn, schema, dbSchema, tableName, columns);
         schema.init(columns, uniqueConstraints, ormType);
         return schema;
     }
 
     @Override
-    protected HashMap<String, JQJoin> loadJoinMap(JQSchema schema) {
+    protected HashMap<String, QJoin> loadJoinMap(QSchema schema) {
         EntityJoinHelper exportedJoins = jdbc.execute(new ConnectionCallback<EntityJoinHelper>() {
             @Override
             public EntityJoinHelper doInConnection(Connection conn) throws SQLException, DataAccessException {
@@ -90,21 +90,21 @@ public class JdbcSchemaLoader extends JQSchemaLoader implements QueryGenerator {
         return createJoinMap((JdbcSchema) schema, exportedJoins);
     }
 
-    private HashMap<String, JQJoin> createJoinMap(JdbcSchema schema, EntityJoinHelper mappedJoins) {
-        HashMap<String, JQJoin> joinMap = new HashMap<>();
-        for (JQJoin join : schema.getForeignKeyConstraints().values()) {
+    private HashMap<String, QJoin> createJoinMap(JdbcSchema schema, EntityJoinHelper mappedJoins) {
+        HashMap<String, QJoin> joinMap = new HashMap<>();
+        for (QJoin join : schema.getForeignKeyConstraints().values()) {
             joinMap.put(join.getJsonKey(), join);
         }
-        for (JQJoin fkJoin : mappedJoins.values()) {
-            List<JQColumn> fkColumns = fkJoin.getForeignKeyColumns();
-            JQJoin childJoin = new JQJoin(schema, fkColumns);
+        for (QJoin fkJoin : mappedJoins.values()) {
+            List<QColumn> fkColumns = fkJoin.getForeignKeyColumns();
+            QJoin childJoin = new QJoin(schema, fkColumns);
             joinMap.put(childJoin.getJsonKey(), childJoin);
             JdbcSchema childSchema = (JdbcSchema) fkJoin.getBaseSchema();
-            Collection<JQJoin> joins = childSchema.getForeignKeyConstraints().values();
-            for (JQJoin j2 : joins) {
+            Collection<QJoin> joins = childSchema.getForeignKeyConstraints().values();
+            for (QJoin j2 : joins) {
                 assert(!j2.isInverseMapped());
                 if (j2 != fkJoin) {
-                    JQJoin associative = new JQJoin(schema, fkColumns, j2);
+                    QJoin associative = new QJoin(schema, fkColumns, j2);
                     joinMap.put(associative.getJsonKey(), associative);
                 }
             }
@@ -202,8 +202,8 @@ public class JdbcSchemaLoader extends JQSchemaLoader implements QueryGenerator {
         return indexMap;
     }
 
-    private JdbcColumn getColumn(ArrayList<JQColumn> columns, String columnName) {
-        for (JQColumn column : columns) {
+    private JdbcColumn getColumn(ArrayList<QColumn> columns, String columnName) {
+        for (QColumn column : columns) {
             if (columnName.equals(column.getPhysicalName())) {
                 return (JdbcColumn)column;
             }
@@ -211,7 +211,7 @@ public class JdbcSchemaLoader extends JQSchemaLoader implements QueryGenerator {
         throw new RuntimeException("column not found: " + columnName);
     }
 
-    private void processForeignKeyConstraints(Connection conn, JdbcSchema fkSchema, String dbSchema, String tableName, ArrayList<JQColumn> columns) throws SQLException {
+    private void processForeignKeyConstraints(Connection conn, JdbcSchema fkSchema, String dbSchema, String tableName, ArrayList<QColumn> columns) throws SQLException {
         DatabaseMetaData md = conn.getMetaData();
         ResultSet rs = md.getImportedKeys(catalog, dbSchema, tableName);
         while (rs.next()) {
@@ -231,17 +231,17 @@ public class JdbcSchemaLoader extends JQSchemaLoader implements QueryGenerator {
             JoinData join = new JoinData(rs, this);
             // @TODO loadSchema with ORM type
             JdbcSchema fkSchema = (JdbcSchema) loadSchema(join.fkTableQName, null);
-            JQJoin fkJoin = fkSchema.getForeignKeyConstraints().get(join.fk_name);
+            QJoin fkJoin = fkSchema.getForeignKeyConstraints().get(join.fk_name);
             assert(fkJoin != null);
             joins.put(fkSchema, fkJoin);
         }
         return joins;
     }
 
-    private ArrayList<JQColumn> getColumns(Connection conn, String dbSchema, String tableName, JQSchema schema, ArrayList<String> primaryKeys) throws SQLException {
+    private ArrayList<QColumn> getColumns(Connection conn, String dbSchema, String tableName, QSchema schema, ArrayList<String> primaryKeys) throws SQLException {
         //HashMap<String, JqlIndex> indexes = getUniqueConstraints(conn, dbSchema, tableName);
         Map<String, String> comments = getColumnComments(conn, dbSchema, tableName);
-        ArrayList<JQColumn> columns = new ArrayList<>();
+        ArrayList<QColumn> columns = new ArrayList<>();
         String qname = dbSchema == null ? tableName : dbSchema + "." + tableName;
         ResultSet rs = conn.createStatement().executeQuery("select * from " + qname + " limit 1");
         ResultSetMetaData md = rs.getMetaData();
@@ -286,7 +286,7 @@ public class JdbcSchemaLoader extends JQSchemaLoader implements QueryGenerator {
         }
     }
 
-    public String createDDL(JQSchema schema) {
+    public String createDDL(QSchema schema) {
 //        SQLWriter sb = new SQLWriter(schema);
 //        sb.write("const " + schema.getTableName() + "Schema = [\n");
 //        for (JQColumn col : schema.getColumns()) {
@@ -319,7 +319,7 @@ public class JdbcSchemaLoader extends JQSchemaLoader implements QueryGenerator {
         String pktable_cat;
         String fktable_cat;
 
-        JoinData(ResultSet rs, JQSchemaLoader loader) throws SQLException {
+        JoinData(ResultSet rs, SchemaLoader loader) throws SQLException {
             this.pk_name = rs.getString("pk_name");
             this.pktable_schem = rs.getString("pktable_schem");
             this.pktable_name  = rs.getString("pktable_name");
@@ -345,38 +345,33 @@ public class JdbcSchemaLoader extends JQSchemaLoader implements QueryGenerator {
     }
 
     @Override
-    public String createSelectQuery(JqlQuery where, JqlSelect columns) {
-        return createSqlGenerator().createSelectQuery(where, columns);
+    public String createSelectQuery(JqlQuery query) {
+        return createSqlGenerator().createSelectQuery(query);
     }
 
     @Override
-    public String createCountQuery(JqlQuery where) {
+    public String createCountQuery(JqlFilter where) {
         return createSqlGenerator().createCountQuery(where);
     }
 
     @Override
-    public String createUpdateQuery(JqlQuery where, Map<String, Object> updateSet) {
+    public String createUpdateQuery(JqlFilter where, Map<String, Object> updateSet) {
         return createSqlGenerator().createUpdateQuery(where, updateSet);
     }
 
     @Override
-    public String createDeleteQuery(JqlQuery where) {
+    public String createDeleteQuery(JqlFilter where) {
         return createSqlGenerator().createDeleteQuery(where);
     }
 
     @Override
-    public String prepareFindByIdStatement(JQSchema schema) {
+    public String prepareFindByIdStatement(QSchema schema) {
         return createSqlGenerator().prepareFindByIdStatement(schema);
     }
 
     @Override
-    public String createInsertStatement(JQSchema schema, Map entity, boolean ignoreConflict) {
+    public String createInsertStatement(QSchema schema, Map entity, boolean ignoreConflict) {
         return createSqlGenerator().createInsertStatement(schema, entity, ignoreConflict);
-    }
-
-    @Override
-    public String createSelectQuery(JqlQuery where, JqlRequest request) {
-        return createSqlGenerator().createSelectQuery(where, request);
     }
 
     protected SqlGenerator createSqlGenerator() {

@@ -1,10 +1,10 @@
 package org.eipgrid.jql.jdbc.metadata;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
-import org.eipgrid.jql.schema.JQColumn;
-import org.eipgrid.jql.schema.JQSchema;
-import org.eipgrid.jql.schema.JQJoin;
-import org.eipgrid.jql.schema.JQSchemaLoader;
+import org.eipgrid.jql.schema.QColumn;
+import org.eipgrid.jql.schema.QSchema;
+import org.eipgrid.jql.schema.QJoin;
+import org.eipgrid.jql.schema.SchemaLoader;
 import org.eipgrid.jql.util.SourceWriter;
 import org.eipgrid.jql.util.AttributeNameConverter;
 
@@ -14,16 +14,16 @@ import java.lang.reflect.Modifier;
 import java.util.*;
 
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
-public class JdbcSchema extends JQSchema {
+public class JdbcSchema extends QSchema {
     private HashMap<String, ArrayList<String>> uniqueConstraints = new HashMap<>();
-    private final HashMap<String, JQJoin> fkConstraints = new HashMap<>();
+    private final HashMap<String, QJoin> fkConstraints = new HashMap<>();
 
-    protected JdbcSchema(JQSchemaLoader schemaLoader, String tableName) {
+    protected JdbcSchema(SchemaLoader schemaLoader, String tableName) {
         super(schemaLoader, tableName,
                 AttributeNameConverter.camelCaseConverter.toLogicalAttributeName(tableName.substring(tableName.indexOf('.') + 1)));
     }
 
-    protected void init(ArrayList<? extends JQColumn> columns, HashMap<String, ArrayList<String>> uniqueConstraints, Class<?> ormType) {
+    protected void init(ArrayList<? extends QColumn> columns, HashMap<String, ArrayList<String>> uniqueConstraints, Class<?> ormType) {
         this.uniqueConstraints = uniqueConstraints;
         super.init(columns, ormType);
     }
@@ -44,7 +44,7 @@ public class JdbcSchema extends JQSchema {
             if ((f.getModifiers() & Modifier.TRANSIENT) == 0 &&
                     f.getAnnotation(Transient.class) == null) {
                 String colName = resolveColumnName(f);
-                JQColumn column = this.getColumn(colName);
+                QColumn column = this.getColumn(colName);
                 super.mapColumn(column, f);
             }
         }
@@ -116,7 +116,7 @@ public class JdbcSchema extends JQSchema {
             sb.incTab();
             sb.write("public static class ID implements Serializable {\n");
             sb.incTab();
-            for (JQColumn column : getPKColumns()) {
+            for (QColumn column : getPKColumns()) {
                 dumpORM(column, sb);
             }
             sb.decTab();
@@ -124,18 +124,18 @@ public class JdbcSchema extends JQSchema {
         }
         sb.incTab();
         //idColumns = getIDColumns();
-        for (JQColumn col : getReadableColumns()) {
+        for (QColumn col : getReadableColumns()) {
             dumpORM(col, sb);
             sb.writeln();
         }
 
-        for (Map.Entry<String, JQJoin> entry : this.getEntityJoinMap().entrySet()) {
-            JQJoin join = entry.getValue();
-            JQSchema mappedSchema = join.getAssociatedSchema();
+        for (Map.Entry<String, QJoin> entry : this.getEntityJoinMap().entrySet()) {
+            QJoin join = entry.getValue();
+            QSchema mappedSchema = join.getAssociatedSchema();
             boolean isInverseJoin = join.isInverseMapped();
             boolean isUniqueJoin = join.isUniqueJoin();
             boolean isArrayJoin = isInverseJoin && !isUniqueJoin;
-            JQColumn firstFk = join.getForeignKeyColumns().get(0);
+            QColumn firstFk = join.getForeignKeyColumns().get(0);
 
             sb.write("@Getter @Setter\n");
 
@@ -158,7 +158,7 @@ public class JdbcSchema extends JQSchema {
             sb.write(")\n");
 
             if (!isInverseJoin) {
-                JQColumn fk = firstFk;
+                QColumn fk = firstFk;
                 sb.write("@JoinColumn(name = ").writeQuoted(fk.getPhysicalName()).write(", ");
                 sb.write("referencedColumnName = ").writeQuoted(fk.getJoinedPrimaryColumn().resolveJavaFieldName()).write(")\n");
             }
@@ -185,7 +185,7 @@ public class JdbcSchema extends JQSchema {
         return AttributeNameConverter.toCamelCase(name, true);
     }
 
-    private String getJavaFieldName(JQJoin join) {
+    private String getJavaFieldName(QJoin join) {
         String name = join.getJsonKey();
         if (name.charAt(0) == '+') {
             name = name.substring(1);
@@ -193,7 +193,7 @@ public class JdbcSchema extends JQSchema {
         return name;
     }
 
-    private void dumpORM(JQColumn col, SourceWriter sb) {
+    private void dumpORM(QColumn col, SourceWriter sb) {
 //        if (col.getLabel() != null) {
 //            sb.write("\t/** ");
 //            sb.write(col.getLabel());
@@ -213,7 +213,7 @@ public class JdbcSchema extends JQSchema {
                 sb.writeln("@GeneratedValue(strategy = GenerationType.IDENTITY)");
             }
         }
-        JQColumn pk = col.getJoinedPrimaryColumn();
+        QColumn pk = col.getJoinedPrimaryColumn();
         if (pk != null) {
             boolean isUnique = this.isUniqueConstrainedColumnSet(Collections.singletonList(col));
             sb.write(isUnique ? "@One" : "@Many").writeln("ToOne(fetch = FetchType.LAZY)");
@@ -234,12 +234,12 @@ public class JdbcSchema extends JQSchema {
     }
 
 
-    public boolean isUniqueConstrainedColumnSet(List<JQColumn> fkColumns) {
+    public boolean isUniqueConstrainedColumnSet(List<QColumn> fkColumns) {
         int cntColumn = fkColumns.size();
         compare_constraint:
         for (List<String> uc : this.uniqueConstraints.values()) {
             if (uc.size() != cntColumn) continue;
-            for (JQColumn col : fkColumns) {
+            for (QColumn col : fkColumns) {
                 String col_name = col.getPhysicalName();
                 if (!uc.contains(col_name)) {
                     continue compare_constraint;
@@ -250,17 +250,17 @@ public class JdbcSchema extends JQSchema {
         return false;
     }
 
-    public HashMap<String, JQJoin> getForeignKeyConstraints() {
+    public HashMap<String, QJoin> getForeignKeyConstraints() {
         return this.fkConstraints;
     }
 
     protected void addForeignKeyConstraint(String fk_name, JdbcColumn fkColumn) {
-        JQJoin fkJoin = fkConstraints.get(fk_name);
-        List<JQColumn> fkColumns;
+        QJoin fkJoin = fkConstraints.get(fk_name);
+        List<QColumn> fkColumns;
         if (fkJoin == null) {
             fkColumns = new ArrayList<>();
             fkColumns.add(fkColumn);
-            JQJoin join = new JQJoin(this, fkColumns);
+            QJoin join = new QJoin(this, fkColumns);
             fkConstraints.put(fk_name, join);
         } else {
             fkColumns = fkJoin.getForeignKeyColumns();

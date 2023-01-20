@@ -6,7 +6,7 @@ describe('Top', () => {
     const filter = {
       "name@like": "Luke%"
     }
-    const character = await jqlApi.top(jql);
+    const character = await jqlApi.top(filter);
 
     expect(character.name).toBe("Luke Skywalker");
 
@@ -45,7 +45,7 @@ describe('Top', () => {
     const filter = {
       "starship": { "length@gt": 10 }
     }
-    const character = await jqlApi.top(jql);
+    const character = await jqlApi.top(filter);
     for (const ship of character.starship) {
       expect(ship.length).toBeGreaterThan(10);
     }
@@ -55,7 +55,7 @@ describe('Top', () => {
     const filter = {
       "starship": { "length@lt": 10 }
     }
-    const character = await jqlApi.top(jql);
+    const character = await jqlApi.top(filter);
     for (const ship of character.starship) {
       expect(ship.length).toBeLessThan(10);
     }

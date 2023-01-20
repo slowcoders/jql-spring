@@ -1,11 +1,10 @@
 package org.eipgrid.jql.jdbc;
 
 import io.swagger.v3.oas.annotations.Operation;
-import org.eipgrid.jql.JqlRequest;
-import org.eipgrid.jql.schema.JQColumn;
+import org.eipgrid.jql.schema.QColumn;
 import org.eipgrid.jql.jdbc.metadata.JdbcSchema;
 import org.eipgrid.jql.JqlRepository;
-import org.eipgrid.jql.schema.JQSchema;
+import org.eipgrid.jql.schema.QSchema;
 import org.eipgrid.jql.js.JsUtil;
 import org.eipgrid.jql.util.KVEntity;
 import org.springframework.web.bind.annotation.*;
@@ -22,7 +21,7 @@ public abstract class JdbcMetadataController {
     }
 
 
-    private JQSchema getSchema(String db_schema, String tableName) throws Exception {
+    private QSchema getSchema(String db_schema, String tableName) throws Exception {
         String tablePath = service.makeTablePath(db_schema, tableName);
         JqlRepository repo = service.makeRepository(tablePath);
         if (repo.getEntityType() != KVEntity.class) {
@@ -36,9 +35,9 @@ public abstract class JdbcMetadataController {
     @Operation(summary = "table column 목록")
     public List<String> columns(@PathVariable("schema") String db_schema,
                                 @PathVariable("table") String tableName) throws Exception {
-        JQSchema schema = getSchema(db_schema, tableName);
+        QSchema schema = getSchema(db_schema, tableName);
         ArrayList<String> columns = new ArrayList<>();
-        for (JQColumn column : schema.getReadableColumns()) {
+        for (QColumn column : schema.getReadableColumns()) {
             columns.add(column.getJsonKey());
         }
         return columns;
@@ -57,7 +56,7 @@ public abstract class JdbcMetadataController {
             return jpaSchemas(db_schema, type);
         }
 
-        JQSchema schema = getSchema(db_schema, tableName);
+        QSchema schema = getSchema(db_schema, tableName);
         String source;
         if (type == SchemaType.Simple) {
             source = JsUtil.getSimpleSchema(schema);
@@ -84,7 +83,7 @@ public abstract class JdbcMetadataController {
                              @PathVariable("type") SchemaType type) throws Exception {
         StringBuilder sb = new StringBuilder();
         for (String tableName : service.getTableNames(db_schema)) {
-            JQSchema schema = getSchema(db_schema, tableName);
+            QSchema schema = getSchema(db_schema, tableName);
             if (type == SchemaType.Javascript) {
                 String source = JsUtil.createDDL(schema);
                 String join = JsUtil.createJoinJQL(schema);

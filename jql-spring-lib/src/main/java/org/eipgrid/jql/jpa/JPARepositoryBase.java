@@ -1,15 +1,13 @@
 package org.eipgrid.jql.jpa;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.eipgrid.jql.schema.JQSchema;
+import org.eipgrid.jql.parser.JqlFilter;
+import org.eipgrid.jql.schema.QSchema;
 import org.eipgrid.jql.jdbc.BatchUpsert;
 import org.eipgrid.jql.jdbc.JdbcJqlService;
 import org.eipgrid.jql.JqlRepository;
 import org.eipgrid.jql.JqlService;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.Pageable;
-import org.eipgrid.jql.JqlSelect;
+import org.eipgrid.jql.JqlQuery;
 import org.springframework.data.repository.NoRepositoryBean;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 
@@ -60,34 +58,31 @@ public abstract class JPARepositoryBase<ENTITY, ID> extends JPAQueryBuilder<ENTI
     }
 
 //    @Override
-//    public Page<ENTITY> find(Map<String, Object> jsQuery, @NotNull Pageable pageReq) {
-//        return find(jsQuery, pageReq, super.getEntityType());
+//    public Page<ENTITY> find(Map<String, Object> jsFilter, @NotNull Pageable pageReq) {
+//        return find(jsFilter, pageReq, super.getEntityType());
 //    }
 
-    //@Override
-    public final <T> Page<T> find(Map<String, Object> conditions, Pageable pageReq, Class<T> resultType) {
-        Query query = super.buildSearchQuery(conditions, pageReq.getSort(), resultType);
-        int size = pageReq.getPageSize();
-        int offset = (int) (pageReq.getPageNumber()) * size;
-        List<T> res = query.setMaxResults(size)
-                .setFirstResult(offset).getResultList();
-        long count = count(conditions);
-        return new PageImpl(res, pageReq, count);
-    }
+//    //@Override
+//    public final <T> Page<T> find(Map<String, Object> conditions, Pageable pageReq, Class<T> resultType) {
+//        Query query = super.buildSearchQuery(conditions, pageReq.getSort(), resultType);
+//        int size = pageReq.getPageSize();
+//        int offset = (int) (pageReq.getPageNumber()) * size;
+//        List<T> res = query.setMaxResults(size)
+//                .setFirstResult(offset).getResultList();
+//        long count = count(conditions);
+//        return new PageImpl(res, pageReq, count);
+//    }
 
     @Override
-    public long count(Map<String, Object> jsQuery) {
-        long count = (Long) super.buildCountQuery(jsQuery).getSingleResult();
-        return count;
-    }
-
-    @Override
-    public List<ENTITY> find(Map<String, Object> jsQuery, JqlSelect columns) {
-        return find(jsQuery, columns, columns.getLimit(), super.getEntityType());
+    public long count(JqlFilter filter) {
+        throw new RuntimeException("not implemented");
+//        String sqlCount = sqlGenerator.createCountQuery(filter);
+//        long count = jdbc.queryForObject(sqlCount, Long.class);
+//        return count;
     }
 
     //@Override
-    public <T> List<T> find(Map<String, Object> filterConditions, JqlSelect columns, int limit, Class<T> resultType) {
+    public <T> List<T> find(Map<String, Object> filterConditions, JqlQuery columns, int limit, Class<T> resultType) {
         Query query = super.buildSearchQuery(filterConditions, columns.getSort(), resultType);
 
         /** Hibernate 버그: limit 값이 생략되면, join 된 row 수만큼 entity 가 생성된다.
@@ -131,7 +126,7 @@ public abstract class JPARepositoryBase<ENTITY, ID> extends JPAQueryBuilder<ENTI
 
     public List<ID> insert(Collection<Map<String, Object>> entities) {
         if (entities.isEmpty()) return null;
-        JQSchema schema = ((JdbcJqlService)service).loadSchema(this.getEntityType());
+        QSchema schema = ((JdbcJqlService)service).loadSchema(this.getEntityType());
         BatchUpsert batch = new BatchUpsert(schema, entities, true);
         service.getJdbcTemplate().batchUpdate(batch.getSql(), batch);
         return batch.getEntityIDs();

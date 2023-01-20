@@ -11,7 +11,7 @@ import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.Map;
 
-public enum JQType {
+public enum QType {
     Boolean,
     Integer,
     Float,
@@ -25,57 +25,57 @@ public enum JQType {
     Object;
 
     public boolean isPrimitive() {
-        return this.ordinal() < Array.ordinal();
+        return this.ordinal() < Json.ordinal();
     }
 
-    public static JQType of(Field f) {
+    public static QType of(Field f) {
         Class javaType = f.getType();
         if (javaType.isEnum()) {
             Enumerated e = f.getAnnotation(Enumerated.class);
             if (e != null && e.value() == EnumType.STRING) {
-                return JQType.Text;
+                return QType.Text;
             }
             else {
-                return JQType.Integer;
+                return QType.Integer;
             }
         }
-        return JQType.of(javaType);
+        return QType.of(javaType);
     }
 
 
-    public static JQType of(Class javaType) {
+    public static QType of(Class javaType) {
         if (javaType.getAnnotation(MappedSuperclass.class) != null
                 ||  javaType.getAnnotation(Embeddable.class) != null) {
-            return JQType.Object;
+            return QType.Object;
         }
         if (javaType == Object.class ||
                 Map.class.isAssignableFrom(javaType)) {
-            return JQType.Json;
+            return QType.Json;
         }
         if (java.util.Collection.class.isAssignableFrom(javaType)) {
-            return JQType.Array;
+            return QType.Array;
         }
         if (javaType == java.sql.Timestamp.class) {
-            return JQType.Timestamp;
+            return QType.Timestamp;
         }
         if (javaType == Instant.class || javaType == ZonedDateTime.class) {
-            return JQType.Timestamp;
+            return QType.Timestamp;
         }
 
         if (javaType == java.sql.Time.class) {
-            return JQType.Time;
+            return QType.Time;
         }
         if (javaType == java.sql.Date.class) {
-            return JQType.Date;
+            return QType.Date;
         }
 
         javaType = ClassUtils.getBoxedType(javaType);
         if (javaType == Boolean.class || Number.class.isAssignableFrom(javaType)) {
             if (javaType == Float.class || javaType == Double.class) {
-                return JQType.Float;
+                return QType.Float;
             }
-            return JQType.Integer;
+            return QType.Integer;
         }
-        return javaType == String.class ? JQType.Text : JQType.Object;
+        return javaType == String.class ? QType.Text : QType.Object;
     }
 }
