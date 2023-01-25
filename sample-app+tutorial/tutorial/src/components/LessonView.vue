@@ -15,10 +15,6 @@
         </td><td class="input-column">
           <b-dropdown text="Columns" ref="dropDown">
             <b-dropdown-item @click.stop="">
-<!--              <b-form-checkbox-group v-model="selectedAliases"-->
-<!--                                     :options="selectableAliases"-->
-<!--                                     stacked-->
-<!--                                     @change="onSelectAliasChanged"/>-->
               <b-form-checkbox-group v-model="selectedColumns"
                                        :options="selectableColumns"
                                        stacked
@@ -123,15 +119,8 @@ export default {
       selectedTable: sampleTables[0],
       schemaInfo: '',
       tableNames: sampleTables,
-      selectedAliases: [],
-      selectableAliases: [
-        { value: "", text: "null (Auto)" },
-        { value: "*", text: "* (All)" },
-        { value: "0", text: "0 (Primary keys)" },
-        { value: "@", text: "@ (Primitive properties)" }
-      ],
       selectableColumns: [],
-      selectedColumns: ["*"],
+      selectedColumns: [],
       allColumnSelected: true,
       sortOptions: [],
       first_sort: '',
@@ -190,12 +179,14 @@ export default {
       return ` // JQL Sample
 const dbSchema = '${dbSchema}'
 const dbTable = '${vm.selectedTable}'
+const AUTO = ""
+
 ${vm.js_code}
 const jql = {
-  select: "${vm.selectedColumns}",
-  sort: "${vm.first_sort}",
-  limit: ${vm.limit?vm.limit:0},
-  filter: filter
+  select: ${vm.selectedColumns?.length > 0 ? '"' + vm.selectedColumns + '"' : 'AUTO'},\
+  ${vm.first_sort?.length > 0 ? '\n  sort: "' + vm.first_sort + '", ' : ''}\
+  ${vm.limit > 0 ? '\n  limit: ' + vm.limit + ', ' : ''}
+  filter: jql_filter
 }
 this.http_post(\`\${baseUrl}/\${dbSchema}/\${dbTable}/\`, jql);
 ${vm.schemaInfo}`
@@ -208,15 +199,17 @@ ${vm.schemaInfo}`
       then((res) => {
         const sortOptions = [];
         const selectableColumns = [
-          { value: "", text: "null (Auto)" },
-          { value: "*", text: "* (All)" },
+          { value: "*", text: "* (All internal properties)" },
           { value: "0", text: "0 (Primary keys)" },
-          { value: "@", text: "@ (Primitive properties)" }
         ];
-        for (const column of res.data) {
+        for (const column of res.data.columns) {
           sortOptions.push(" " + column);
           sortOptions.push("-" + column);
           selectableColumns.push({value: column, text: column })
+        }
+        for (const column of res.data.references) {
+          const skey = column + ".<*>"
+          selectableColumns.push({value: skey, text: skey, is_ref: true })
         }
         vm.sortOptions = sortOptions;
         vm.selectableColumns = selectableColumns;
@@ -228,38 +221,21 @@ ${vm.schemaInfo}`
       this.resultView.setValue("!!!! " + msg);
     },
 
-    onSelectAliasChanged() {
+    onSelectChanged() {
       const vm = this;
-      // if (vm.selectedAliases.indexOf("") >= 0) {
-      //
-      // }
-      if (vm.selectedAliases.length > 1 && vm.allColumnSelected) {
-        vm.selectedAliases = vm.selectedAliases.filter((k) => "*" != k);
-        vm.allColumnSelected = false;
+      if (vm.allColumnSelected) {
+        if (vm.selectedColumns.filter((k) => k.indexOf('*') < 0).length > 0) {
+          vm.selectedColumns = vm.selectedColumns.filter((k) => k != '*');
+          vm.allColumnSelected = false;
+        }
       }
       else {
         const wasAllColumnSelected = vm.allColumnSelected;
         vm.allColumnSelected = vm.selectedColumns.indexOf("*") >= 0;
         if (!wasAllColumnSelected && vm.allColumnSelected) {
-          vm.selectedColumns = ["*"];
+          vm.selectedColumns = vm.selectedColumns.filter((k) => k.indexOf('*') >= 0);
         }
       }
-    },
-
-    onSelectChanged(new_v) {
-      const vm = this;
-      if (vm.selectedColumns.length > 1 && vm.allColumnSelected) {
-        vm.selectedColumns = vm.selectedColumns.filter((k) => "*" != k);
-        vm.allColumnSelected = false;
-      }
-      else {
-        const wasAllColumnSelected = vm.allColumnSelected;
-        vm.allColumnSelected = vm.selectedColumns.indexOf("*") >= 0;
-        if (!wasAllColumnSelected && vm.allColumnSelected) {
-          vm.selectedColumns = ["*"];
-        }
-      }
-      console.log("allColumnSelected", vm.allColumnSelected);
 
       vm.sortColumn = null;
       vm.codeView.setValue(vm.make_sample_code());

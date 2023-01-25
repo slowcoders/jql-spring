@@ -14,10 +14,11 @@ class EntityJoinHelper extends HashMap<QSchema, QJoin> {
     public QJoin put(QSchema schema, QJoin childJoin) {
         QJoin oldJoin = super.put(schema, childJoin);
         if (oldJoin != null && oldJoin != childJoin) {
-            if (oldJoin.getJsonKey().equals(tableName)) {
+            String jsKey = tableName + '_';
+            if (oldJoin.getJsonKey().equals(jsKey)) {
                 super.put(schema, oldJoin);
                 return oldJoin;
-            } else if (childJoin.getJsonKey().equals(tableName)) {
+            } else if (childJoin.getJsonKey().equals(jsKey)) {
                 // do nothing;
                 return oldJoin;
             }

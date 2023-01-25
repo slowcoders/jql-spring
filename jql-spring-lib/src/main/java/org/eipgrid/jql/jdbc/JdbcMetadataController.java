@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import org.eipgrid.jql.schema.QColumn;
 import org.eipgrid.jql.jdbc.metadata.JdbcSchema;
 import org.eipgrid.jql.JqlRepository;
+import org.eipgrid.jql.schema.QJoin;
 import org.eipgrid.jql.schema.QSchema;
 import org.eipgrid.jql.js.JsUtil;
 import org.eipgrid.jql.util.KVEntity;
@@ -11,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public abstract class JdbcMetadataController {
 
@@ -33,14 +35,27 @@ public abstract class JdbcMetadataController {
     @GetMapping("/{schema}/{table}")
     @ResponseBody
     @Operation(summary = "table column 목록")
-    public List<String> columns(@PathVariable("schema") String db_schema,
+    public Map columns(@PathVariable("schema") String db_schema,
                                 @PathVariable("table") String tableName) throws Exception {
         QSchema schema = getSchema(db_schema, tableName);
         ArrayList<String> columns = new ArrayList<>();
-        for (QColumn column : schema.getReadableColumns()) {
+        for (QColumn column : schema.getPrimitiveColumns()) {
             columns.add(column.getJsonKey());
         }
-        return columns;
+        ArrayList<String> refs = new ArrayList<>();
+        for (QColumn column : schema.getObjectColumns()) {
+            refs.add(column.getJsonKey());
+        }
+        for (Map.Entry<String, QJoin> entry : schema.getEntityJoinMap().entrySet()) {
+            if (!entry.getValue().getAssociatedSchema__22().hasOnlyForeignKeys()) {
+                refs.add(entry.getKey());
+            }
+        }
+        KVEntity entity = KVEntity.of("columns", columns);
+        if (refs.size() > 0) {
+            entity.put("references", refs);
+        }
+        return entity;
     }
 
 

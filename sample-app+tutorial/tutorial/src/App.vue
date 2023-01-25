@@ -51,16 +51,6 @@ export default {
           icon: "fa fa-file-alt",
         },
         {
-          href: "/join/or",
-          title: "Or Join query",
-          icon: "fa fa-download",
-        },
-        {
-          href: "/join/join-select",
-          title: "Joined property selection",
-          icon: "fa fa-file-alt"
-        },
-        {
           href: "/join/recursive",
           title: "Recursive Joined query",
           icon: "fa fa-file-alt"

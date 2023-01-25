@@ -18,7 +18,7 @@
 import LessonView from "@/components/LessonView";
 
 const sample_code = `
-const filter = {
+const jql_filter = {
   // "id": 1001
   // "id@not": 1001
 

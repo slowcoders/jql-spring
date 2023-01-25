@@ -133,11 +133,11 @@ public class SqlGenerator extends SqlConverter implements QueryGenerator {
     }
 
 
-    private void writeJoinStatement(QJoin joinKeys, String baseAlias, String alias) {
-        boolean isInverseMapped = joinKeys.isInverseMapped();
-        String joinedTable = joinKeys.getJoinedSchema().getTableName();
+    private void writeJoinStatement(QJoin join, String baseAlias, String alias) {
+        boolean isInverseMapped = join.isInverseMapped();
+        String joinedTable = join.getJoinedSchema().getTableName();
         sw.write("\nleft join ").write(joinedTable).write(" as ").write(alias).write(" on\n\t");
-        for (QColumn fk : joinKeys.getForeignKeyColumns()) {
+        for (QColumn fk : join.getForeignKeyColumns()) {
             QColumn anchor, linked;
             if (isInverseMapped) {
                 linked = fk; anchor = fk.getJoinedPrimaryColumn();

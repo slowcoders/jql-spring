@@ -129,12 +129,14 @@ public class JqlQuery<ENTITY> {
                     case '[':
                         String base = k.substring(0, p + 1);
                         k = k.substring(p + 2);
-                        for (int end = -1; end < 0; ) {
-                            end = k.indexOf(last_ch);
+                        while (true) {
+                            int end = k.indexOf(last_ch);
                             if (end > 0) {
                                 k = k.substring(0, end);
                             }
                             keys[i] = base + k;
+                            if (end > 0) break;
+
                             k = keys[++i];
                         }
                 }

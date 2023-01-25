@@ -119,6 +119,9 @@ public class JdbcColumn extends QColumn {
         CharSequence rawFieldName = (col != this) ? sb.append(col.getPhysicalName()) : this.getPhysicalName();
 
         String name = getSchema().getSchemaLoader().getNameConverter().toLogicalAttributeName(rawFieldName.toString());
+        if (this.getType() == QType.Json) {
+            name += '_';
+        }
         return name;
     }
 

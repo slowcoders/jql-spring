@@ -5,8 +5,6 @@ import MultiCompare from "../views/basic/MultiCompare.vue"
 import AndExpression from "@/views/basic/AndExpression";
 import OrExpression from "@/views/basic/OrExpression";
 import SimpleJoin from "../views/join/SimpleJoin.vue"
-import OrJoin from "@/views/join/OrJoin";
-import JoinedSelection from "@/views/join/JoinedSelection";
 import RecursiveJoin from "@/views/join/RecursiveJoin";
 import JsonSearch from "@/views/join/JsonSearch";
 import ExternalLinks from "@/views/ExternalLinks";
@@ -39,16 +37,8 @@ const router = createRouter({
             component: SimpleJoin,
         },
         {
-            path: '/join/join-select',
-            component: JoinedSelection,
-        },
-        {
             path: '/join/recursive',
             component: RecursiveJoin,
-        },
-        {
-            path: '/join/or',
-            component: OrJoin,
         },
         {
             path: '/join/json',

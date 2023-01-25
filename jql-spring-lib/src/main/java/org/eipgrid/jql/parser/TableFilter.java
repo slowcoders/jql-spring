@@ -17,7 +17,6 @@ class TableFilter extends EntityFilter implements QResultMapping {
     private String[] entityMappingPath;
     private List<QColumn> selectedColumns = null;
     private boolean hasArrayDescendant;
-    private int selectAliases;
 
     private static final String[] emptyPath = new String[0];
 
@@ -31,7 +30,7 @@ class TableFilter extends EntityFilter implements QResultMapping {
 
     TableFilter(TableFilter baseFilter, QJoin join) {
         super(baseFilter);
-        this.schema = join.getAssociatedSchema();
+        this.schema = join.getAssociatedSchema__22();
         this.join = join;
         this.mappingAlias = baseFilter.getRootNode().createUniqueMappingAlias();
     }
@@ -85,16 +84,14 @@ class TableFilter extends EntityFilter implements QResultMapping {
             }
             else {
                 this.selectedColumns = schema.getPrimitiveColumns();
-//
-//                Set<QColumn> hiddenKeys = this.getHiddenForeignKeys();
-//                if (!hiddenKeys.isEmpty()) {
-//                    ArrayList<QColumn> columns2 = new ArrayList<>();
-//                    for (QColumn column : selectedColumns) {
-//                        if (hiddenKeys.contains(column)) continue;
-//                        columns2.add(column);
-//                    }
-//                    selectedColumns = columns2;
-//                }
+                if (this.schema.getObjectColumns().size() > 0) {
+                    for (Map.Entry<String, EntityFilter> entry : this.subFilters.entrySet()) {
+                        EntityFilter filter = entry.getValue();
+                        if (filter.isJsonNode()) {
+                            addSelectedColumn(entry.getKey());
+                        }
+                    }
+                }
             }
         }
         return selectedColumns;
@@ -129,13 +126,17 @@ class TableFilter extends EntityFilter implements QResultMapping {
                 subQuery = new TableFilter(this, join);
             } else {
                 subQuery = new JsonFilter(this, key);
+                if (this.isArrayNode()) {
+                    this.addSelectedColumn("0");
+                }
+                this.addSelectedColumn(key);
             }
             subFilters.put(key, subQuery);
         }
         return subQuery;
     }
 
-    final void addSelectedColumn(String key) {
+    protected void addSelectedColumn(String key) {
         if (key.equals("*")) {
             this.selectedColumns = schema.getPrimitiveColumns();
         }
@@ -207,15 +208,6 @@ class TableFilter extends EntityFilter implements QResultMapping {
             if (table != null) {
                 table.gatherColumnMappings(columnGroupMappings);
                 this.hasArrayDescendant |= table.isArrayNode() || table.hasArrayDescendant;
-            }
-        }
-    }
-
-    protected void addComparedPropertyToSelection(String key) {
-        if ((selectAliases & KeySet.Auto.bit()) != 0) {
-            QColumn column = schema.getColumn(key);
-            if (!this.selectedColumns.contains(column)) {
-                this.selectedColumns.add(column);
             }
         }
     }

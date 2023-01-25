@@ -7,8 +7,9 @@
       <H5> Join Query. </H5>
       <div class="details">
         JQL 은 DB 의 metadata 를 분석하여 FK->PK Join 관계를 자동 분석하여 처리한다.<br>
-        Property key 를 '.' 기호로 연결하거나, 비교값 위치에 Object {} 또는 Object Array [ {} ] 를 사용하면 Entity 간 Join 을 자동 처리한다.<p/>
-        두 개의 FK 를 가진 Associative Table 을 경유하는 Join 처리는 단축 칼럼을 통해 표시할 수 있다. (단축 칼럼은 '+' 기호로 시작한다.)
+        Property key 를 '.' 기호로 연결하거나, 비교값 위치에 Object {} 또는 Object Array [ {} ] 를 사용하여 Joined Query 를 작성할 수 있다.<p/>
+        select 값을 명시하지 않으면, filter 노드에 포함된 entity 들이 검색 결과에 자동으로 포함된다.<p/>
+        Joined entity 의 특정 프로퍼티들만을 선택하고자 하는 경우, starship.&lt;name, length&gt; 와 대상을 명시할 수 있다.
       </div>
     </template>
   </LessonView>
@@ -18,22 +19,28 @@
 import LessonView from "@/components/LessonView";
 
 const sample_code = `
-const filter = {
-  /*
-    각 캐릭터와 해당 캐릭터가 조종하는 비행선 정보를 표시한다.
-    참고로, 'starship' table 은 pilot_id(FK) 를 통해 'character' 테이블과 연결된다.
-  */
-  // "starship": {},
+const jql_filter = {
+  "species" : "Human",
 
-  /*
-   아래는 JEDI 에피소드에 출연한 출연진을 검색하는 예제이다.
-   아래 5개의 검색 조건은 동등하나, 출력 결과에 차이가 있다.
-  */
-  // "characterEpisodeLink": { "episode": { "title": "JEDI" } }
-  // "characterEpisodeLink.episode": { "title": "JEDI" }
-  // "characterEpisodeLink.episode.title": "JEDI"
-  // "+episode": { "title": "JEDI" }
-  // "+episode.title": "JEDI"
+  /* 특정 JEDI 에피소드 출연진을 검색.
+  ----------------------------------------------------------*/
+  // "episode_": { "title": "JEDI" },
+
+  /* { } 내부의 비교식은 And 조건으로 처리된다. 아래 두 예제는 각각
+    길이가 10m 이상이고, 이름이 'M'으로 시작하는 비행선의 조종사를 검색한다.
+  ----------------------------------------------------------*/
+  // "starship_.length@ge": 10, "starship_.name@like": "M%"
+  // "starship_": { "length@ge": 10, "name@like": "M%" }
+
+  /* [ ] 내부의 비교 노드는 Or 조건으로 처리된다.
+     10m 이하 또는 20m 이상의 비행선의 조종사를 검색하는 예제.
+  ----------------------------------------------------------*/
+  // "starship_": [ { "length@le": 10 }, { "length@ge": 20 } ]
+
+  /* [ ] 내부의 비교 노드는 Or 조건으로 처리된다.
+     10m 이하 또는 이름이 'M'으로 시작하는 비행선의 조종사를 검색
+  ----------------------------------------------------------*/
+  // "starship_": [ { "length@le": 10 }, { "name@like": "M%" } ]
 }
 `
 

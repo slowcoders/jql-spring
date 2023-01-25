@@ -4,7 +4,6 @@ import org.eipgrid.jql.schema.QColumn;
 import org.eipgrid.jql.schema.QSchema;
 import org.eipgrid.jql.schema.QJoin;
 import org.eipgrid.jql.jdbc.metadata.JdbcColumn;
-import org.eipgrid.jql.schema.QType;
 import org.eipgrid.jql.util.AttributeNameConverter;
 import org.eipgrid.jql.util.ClassUtils;
 
@@ -17,18 +16,21 @@ public class JsUtil {
     public static String createDDL(QSchema schema) {
         StringBuilder sb = new StringBuilder();
         sb.append("const " + schema.getSimpleTableName() + "Schema_columns = [\n");
-        for (QColumn col : schema.getReadableColumns()) {
+        for (QColumn col : schema.getPrimitiveColumns()) {
             dumpJSONSchema(sb, (JdbcColumn)col);
             sb.append(",\n");
         }
         sb.append("];\n");
 
-        if (!schema.getEntityJoinMap().isEmpty()) {
+        if (!schema.getEntityJoinMap().isEmpty() || !schema.getObjectColumns().isEmpty()) {
             sb.append("\nconst " + schema.getSimpleTableName() + "Schema_external_entities = [\n");
+            for (QColumn column : schema.getObjectColumns()) {
+                sb.append("  jql.externalJoin(\"").append(column.getJsonKey()).append("\", Object,\n");
+            }
             for (Map.Entry<String, QJoin> entry : schema.getEntityJoinMap().entrySet()) {
                 sb.append("  jql.externalJoin(\"").append(entry.getKey()).append("\", ");
-                sb.append(entry.getValue().getJoinedSchema().getSimpleTableName()).append("Schema, \n");
-                sb.append(entry.getValue().isUniqueJoin() ? "{}" : "[]").append("),\n");
+                sb.append(entry.getValue().getJoinedSchema().getSimpleTableName()).append("Schema, ");
+                sb.append(entry.getValue().isUniqueJoin() ? "Object" : "Array").append("),\n");
             }
             sb.append("];\n");
         }
@@ -41,17 +43,8 @@ public class JsUtil {
         if (jsonType == null) {
             throw new RuntimeException("JsonType not registered: " + col.getJavaType() + " " + col.getPhysicalName());
         }
-
-////        String max = getPrecision(col, jsonType);
-//        sb.append("  \"").append(col.getJsonKey()).append('"');
-//        while (sb.length() < 20) {
-//            sb.append(' ');
-//        }
         sb.append("  jql.").append(jsonType).append("(\"")
                 .append(col.getJsonKey()).append("\"");
-//        if (max != null) {
-//            sb.append(", ").append(max);
-//        }
         sb.append(")");
 
         if (col.isReadOnly()) {
@@ -108,6 +101,66 @@ public class JsUtil {
         return colType;
     }
 
+    private static void dumpColumnInfo(QColumn col, StringBuilder sb) {
+        QColumn joinedPK = col.getJoinedPrimaryColumn();
+        String columnType = getColumnType(col);
+        if (!col.isNullable()) {
+            columnType = columnType + '!';
+        }
+        sb.append(columnType).append(filler.substring(columnType.length()));
+        sb.append(col.getJsonKey()).append('(').append(col.getPhysicalName()).append(')');
+        if (col.isPrimaryKey()) {
+            sb.append(" PK");
+        }
+        if (joinedPK != null) {
+            sb.append(" FK -> ");
+            sb.append(joinedPK.getSchema().getTableName());
+            sb.append(".").append(joinedPK.getJsonKey());
+        }
+
+        sb.append("\n");
+    }
+    static String filler = "                ";
+    public static String getSimpleSchema(QSchema schema) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("Type").append(filler.substring("Type".length())).append("Key(physical_column_name)\n");
+        sb.append("--------------------------------------------------\n");
+        List<QColumn> primitiveColumns = schema.getPrimitiveColumns();
+        for (QColumn col : primitiveColumns) {
+            dumpColumnInfo(col, sb);
+        }
+
+        boolean hasRef = primitiveColumns.size() != schema.getReadableColumns().size()
+                || !schema.getEntityJoinMap().isEmpty();
+
+        if (hasRef) {
+            sb.append("\n// reference properties //\n");
+
+            for (QColumn col : schema.getReadableColumns()) {
+                if (!col.getType().isPrimitive()) {
+                    dumpColumnInfo(col, sb);
+                }
+            }
+
+            for (Map.Entry<String, QJoin> entry : schema.getEntityJoinMap().entrySet()) {
+                QJoin join = entry.getValue();
+                QSchema refSchema = join.getAssociatedSchema__22();
+                if (refSchema.hasOnlyForeignKeys()) continue;
+                int start = sb.length();
+                sb.append(join.getAssociatedSchema__22().getSimpleTableName());
+                if (!join.isUniqueJoin()) sb.append("[]");
+                int type_len = sb.length() - start;
+                if (type_len >= filler.length()) {
+                    type_len = filler.length() - 1;
+                }
+                sb.append(filler.substring(type_len));
+                sb.append(entry.getKey());
+                sb.append("\n");
+            }
+        }
+        return sb.toString();
+    }
+
     private static final HashMap<String, String> mdkTypes = new HashMap<>();
     static {
         mdkTypes.put("java.lang.String", "Text");
@@ -157,72 +210,4 @@ public class JsUtil {
         }
     }
 
-    private static void dumpColumnInfo(QColumn col, StringBuilder sb) {
-        QColumn joinedPK = col.getJoinedPrimaryColumn();
-        String columnType = getColumnType(col);
-        if (!col.isNullable()) {
-            columnType = columnType + '!';
-        }
-        sb.append(columnType).append(filler.substring(columnType.length()));
-        sb.append(col.getJsonKey()).append('(').append(col.getPhysicalName()).append(')');
-        if (col.isPrimaryKey()) {
-            sb.append(" PK");
-        }
-        if (joinedPK != null) {
-            sb.append(" FK -> ");
-            sb.append(joinedPK.getSchema().getTableName());
-            sb.append(".").append(joinedPK.getJsonKey());
-        }
-
-        sb.append("\n");
-    }
-    static String filler = "                ";
-    public static String getSimpleSchema(QSchema schema) {
-        StringBuilder sb = new StringBuilder();
-        sb.append("Type").append(filler.substring("Type".length())).append("Key(physical_column_name)\n");
-        sb.append("--------------------------------------------------\n");
-        List<QColumn> primitiveColumns = schema.getPrimitiveColumns();
-        for (QColumn col : primitiveColumns) {
-            dumpColumnInfo(col, sb);
-        }
-
-        boolean hasRef = primitiveColumns.size() != schema.getReadableColumns().size()
-                || !schema.getEntityJoinMap().isEmpty();
-
-        if (hasRef) {
-            sb.append("\n// reference properties //\n");
-
-            for (QColumn col : schema.getReadableColumns()) {
-                if (!col.getType().isPrimitive()) {
-                    dumpColumnInfo(col, sb);
-                }
-            }
-
-            for (Map.Entry<String, QJoin> entry : schema.getEntityJoinMap().entrySet()) {
-                QJoin join = entry.getValue();
-                QSchema refSchema = join.getAssociatedSchema();
-                if (hasOnlyForeignKeys(refSchema)) continue;
-                int start = sb.length();
-                sb.append(join.getAssociatedSchema().getSimpleTableName());
-                if (!join.isUniqueJoin()) sb.append("[]");
-                int type_len = sb.length() - start;
-                if (type_len >= filler.length()) {
-                    type_len = filler.length() - 1;
-                }
-                sb.append(filler.substring(type_len));
-                sb.append(entry.getKey());
-                sb.append("\n");
-            }
-        }
-        return sb.toString();
-    }
-
-    private static boolean hasOnlyForeignKeys(QSchema refSchema) {
-        for (QColumn col : refSchema.getReadableColumns()) {
-            if (col.getJoinedPrimaryColumn() == null) {
-                return false;
-            }
-        }
-        return true;
-    }
 }

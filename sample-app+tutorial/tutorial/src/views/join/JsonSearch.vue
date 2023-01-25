@@ -17,13 +17,13 @@ import LessonView from "@/components/LessonView";
 
 const sample_code = `
 const jql_1 = {
-  "metadata": { "memo" : { "favoriteFood" : "kimchi" } }
+  "metadata_": { "memo" : { "favoriteFood" : "kimchi" } }
 }
 const jql_2 = {
-  "metadata": { "memo" : { "shoeSize@ge" : 270 } }
+  "metadata_": { "memo" : { "shoeSize@ge" : 270 } }
 }
 
-const filter = jql_1;
+const jql_filter = jql_1;
 `
 
 export default {

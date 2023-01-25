@@ -9,6 +9,7 @@ import org.eipgrid.jql.util.SourceWriter;
 import org.eipgrid.jql.util.AttributeNameConverter;
 
 import javax.persistence.*;
+import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.*;
@@ -16,7 +17,7 @@ import java.util.*;
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
 public class JdbcSchema extends QSchema {
     private HashMap<String, ArrayList<String>> uniqueConstraints = new HashMap<>();
-    private final HashMap<String, QJoin> fkConstraints = new HashMap<>();
+    private final HashMap<String, List<QColumn>> fkConstraints = new HashMap<>();
 
     protected JdbcSchema(SchemaLoader schemaLoader, String tableName) {
         super(schemaLoader, tableName,
@@ -131,7 +132,7 @@ public class JdbcSchema extends QSchema {
 
         for (Map.Entry<String, QJoin> entry : this.getEntityJoinMap().entrySet()) {
             QJoin join = entry.getValue();
-            QSchema mappedSchema = join.getAssociatedSchema();
+            QSchema mappedSchema = join.getAssociatedSchema__22();
             boolean isInverseJoin = join.isInverseMapped();
             boolean isUniqueJoin = join.isUniqueJoin();
             boolean isArrayJoin = isInverseJoin && !isUniqueJoin;
@@ -250,20 +251,27 @@ public class JdbcSchema extends QSchema {
         return false;
     }
 
-    public HashMap<String, QJoin> getForeignKeyConstraints() {
-        return this.fkConstraints;
+    protected QJoin getJoinByForeignKeyConstraints(String fkConstraint) {
+        List<QColumn> fkColumns = this.fkConstraints.get(fkConstraint);
+        for (QJoin join : this.getEntityJoinMap().values()) {
+            if (join.getForeignKeyColumns() == fkColumns) {
+                assert(join.getBaseSchema() == this && !join.isInverseMapped());
+                return join;
+            }
+        }
+        throw new RuntimeException("fk join not found: " + fkConstraint);
     }
 
+    HashMap<String, List<QColumn>> getForeignKeyConstraints() {
+        return this.fkConstraints;
+    }
     protected void addForeignKeyConstraint(String fk_name, JdbcColumn fkColumn) {
-        QJoin fkJoin = fkConstraints.get(fk_name);
-        List<QColumn> fkColumns;
-        if (fkJoin == null) {
+        List<QColumn> fkColumns = fkConstraints.get(fk_name);
+        if (fkColumns == null) {
             fkColumns = new ArrayList<>();
             fkColumns.add(fkColumn);
-            QJoin join = new QJoin(this, fkColumns);
-            fkConstraints.put(fk_name, join);
+            fkConstraints.put(fk_name, fkColumns);
         } else {
-            fkColumns = fkJoin.getForeignKeyColumns();
             fkColumns.add(fkColumn);
         }
     }
