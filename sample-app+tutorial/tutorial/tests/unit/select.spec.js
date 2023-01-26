@@ -43,20 +43,20 @@ describe('Top', () => {
 
   test('Find any character having a starship that length > 10', async () => {
     const filter = {
-      "starship": { "length@gt": 10 }
+      "starship_": { "length@gt": 10 }
     }
     const character = await jqlApi.top(filter);
-    for (const ship of character.starship) {
+    for (const ship of character.starship_) {
       expect(ship.length).toBeGreaterThan(10);
     }
   });
 
   test('Find any character having a starship that length < 10', async () => {
     const filter = {
-      "starship": { "length@lt": 10 }
+      "starship_": { "length@lt": 10 }
     }
     const character = await jqlApi.top(filter);
-    for (const ship of character.starship) {
+    for (const ship of character.starship_) {
       expect(ship.length).toBeLessThan(10);
     }
   });

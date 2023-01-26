@@ -116,8 +116,10 @@ class TableFilter extends EntityFilter implements QResultMapping {
     @Override
     protected EntityFilter makeSubNode(String key, JqlParser.NodeType nodeType) {
         QJoin join = schema.getEntityJoinBy(key);
+        QColumn jsonColumn = null;
         if (join == null) {
-            if (schema.getColumn(key).getType() != QType.Json) return this;
+            jsonColumn = schema.getColumn(key);
+            if (jsonColumn.getType() != QType.Json) return this;
         }
 
         EntityFilter subQuery = subFilters.get(key);
@@ -125,7 +127,7 @@ class TableFilter extends EntityFilter implements QResultMapping {
             if (join != null) {
                 subQuery = new TableFilter(this, join);
             } else {
-                subQuery = new JsonFilter(this, key);
+                subQuery = new JsonFilter(this, jsonColumn.getPhysicalName());
                 if (this.isArrayNode()) {
                     this.addSelectedColumn("0");
                 }

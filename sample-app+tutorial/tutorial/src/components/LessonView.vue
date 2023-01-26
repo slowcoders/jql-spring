@@ -208,7 +208,7 @@ ${vm.schemaInfo}`
           selectableColumns.push({value: column, text: column })
         }
         for (const column of res.data.references) {
-          const skey = column + ".<*>"
+          const skey = column + ".*"
           selectableColumns.push({value: skey, text: skey, is_ref: true })
         }
         vm.sortOptions = sortOptions;
