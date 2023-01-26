@@ -99,9 +99,6 @@ public class JDBCRepositoryBase<ENTITY, ID> /*extends JDBCQueryBuilder*/ impleme
         String sql = sqlGenerator.createSelectQuery(query);
         this.lastGeneratedSql = sql;
         List res = jdbc.query(sql, getColumnMapRowMapper(query.getFilter()));
-        if (entityType == null) {
-            entityType = getEntityType();
-        }
         if (entityType != JqlEntity.class) {
             ConversionService converter = service.getConversionService();
             for (int i = res.size(); --i >= 0; ) {
