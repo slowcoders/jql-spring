@@ -30,6 +30,7 @@ public class JqlFilter extends TableFilter {
         return filter;
     }
 
+
     public void setSelectedProperties(String[] keys) {
         selectAuto = (keys == null || keys.length == 0);
         if (selectAuto) {
@@ -44,29 +45,23 @@ public class JqlFilter extends TableFilter {
     }
 
     private void addSelection(String key) {
-        TableFilter scope = this;
+        EntityFilter scope = this;
         for (int p; (p = key.indexOf('.')) > 0; ) {
             QSchema schema = scope.getSchema();
             if (schema != null && schema.hasColumn(key)) {
                 break;
             }
             String token = key.substring(0, p);
-            scope = scope.makeSubNode(token, JqlParser.NodeType.Entity).asTableFilter();
+            scope = scope.makeSubNode(token, JqlParser.NodeType.Entity);
             key = key.substring(p + 1);
         }
-//        switch (key.charAt(0)) {
-//            case '<':
-//            case '[':
-//                String[] keys = key.substring(1, key.length()-1).split("\\s");
-//                for (String k : keys) {
-//                    scope.addSelectedColumn(k);
-//                }
-//                return;
-//            default:
-//        }
-        if (scope.getSchema().getEntityJoinBy(key) != null) {
-            scope = scope.makeSubNode(key, JqlParser.NodeType.Leaf).asTableFilter();
-            key = "*";
+
+        TableFilter table = scope.asTableFilter();
+        if (table != null) {
+            if (table.getSchema().getEntityJoinBy(key) != null) {
+                scope = table.makeSubNode(key, JqlParser.NodeType.Leaf).asTableFilter();
+                key = "*";
+            }
         }
         scope.addSelectedColumn(key);
     }

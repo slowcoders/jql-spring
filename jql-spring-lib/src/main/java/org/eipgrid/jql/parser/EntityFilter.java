@@ -75,8 +75,7 @@ public abstract class EntityFilter {
         return subFilters.values();
     }
 
-    protected void addComparedPropertyToSelection(String key) {}
+    protected void addSelectedColumn(String key) {
 
-    protected void setSelectedProperties_withEmptyFilter() {
     }
 }

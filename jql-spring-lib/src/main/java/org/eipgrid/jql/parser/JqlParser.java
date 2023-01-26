@@ -96,9 +96,6 @@ public class JqlParser {
             }
 
             String columnName = subFilter.getColumnName(key);
-            if (!excludeConstantAttribute || op_start > 0) {
-                subFilter.addComparedPropertyToSelection(columnName);
-            }
             if (value != null) {
                 QSchema schema = subFilter.getSchema();
                 if (schema != null) {

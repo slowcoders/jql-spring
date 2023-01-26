@@ -17,12 +17,12 @@
 import LessonView from "@/components/LessonView";
 
 const sample_code = `
-const filter = {
+const jql_filter = {
   //  "species": "Human",
   //  "height@gt": 1.2,
   //  "height@lt": 2.0,
   //  "mass@gt": 60,
-  //  "metadata.homePlanet": "Tatooine",
+  //  "metadata_.homePlanet": "Tatooine",
 }
 `
 

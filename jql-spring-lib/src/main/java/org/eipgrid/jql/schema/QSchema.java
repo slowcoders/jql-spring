@@ -15,6 +15,7 @@ public abstract class QSchema {
     private List<QColumn> pkColumns;
     private List<QColumn> allColumns;
     private List<QColumn> primitiveColumns;
+    private List<QColumn> objectColumns;
     private List<QColumn> writableColumns;
     private Map<String, QColumn> columnMap = new HashMap<>();
     private HashMap<String, QJoin> entityJoinMap;
@@ -39,6 +40,10 @@ public abstract class QSchema {
 
     public List<QColumn> getPrimitiveColumns() {
         return this.primitiveColumns;
+    }
+
+    public List<QColumn> getObjectColumns() {
+        return this.objectColumns;
     }
 
     public List<QColumn> getWritableColumns() {
@@ -81,6 +86,7 @@ public abstract class QSchema {
         ArrayList<QColumn> writableColumns = new ArrayList<>();
         ArrayList<QColumn> allColumns = new ArrayList<>();
         ArrayList<QColumn> primitiveColumns = new ArrayList<>();
+        ArrayList<QColumn> objectColumns = new ArrayList<>();
         List<QColumn> pkColumns = new ArrayList<>();
 
         for (QColumn ci: columns) {
@@ -88,8 +94,13 @@ public abstract class QSchema {
                 pkColumns.add(ci);
                 allColumns.add(ci);
             }
-            if (ci.getType().isPrimitive() && ci.getJoinedPrimaryColumn() == null) {
-                primitiveColumns.add(ci);
+            if (ci.getJoinedPrimaryColumn() == null) {
+                if (ci.getType().isPrimitive()) {
+                    primitiveColumns.add(ci);
+                }
+                else {
+                    objectColumns.add(ci);
+                }
             }
         }
 
@@ -108,6 +119,7 @@ public abstract class QSchema {
         this.allColumns = Collections.unmodifiableList(allColumns);
         this.writableColumns = Collections.unmodifiableList(writableColumns);
         this.primitiveColumns = Collections.unmodifiableList(primitiveColumns);
+        this.objectColumns = objectColumns.size() == 0 ? Collections.EMPTY_LIST : Collections.unmodifiableList(objectColumns);
         this.initJsonKeys(ormType);
         if (pkColumns.size() == 0) {
             pkColumns = this.allColumns;
@@ -141,10 +153,6 @@ public abstract class QSchema {
         return unknownProperties;
     }
 
-
-//    public String generateDDL() {
-//        return schemaLoader.createDDL(this);
-//    }
 
     public HashMap<String, QJoin> getEntityJoinMap() {
         if (this.entityJoinMap == null) {
@@ -211,5 +219,14 @@ public abstract class QSchema {
 
     public boolean hasGeneratedId() {
         throw new RuntimeException("not impl");
+    }
+
+    public boolean hasOnlyForeignKeys() {
+        for (QColumn col : getReadableColumns()) {
+            if (col.getJoinedPrimaryColumn() == null) {
+                return false;
+            }
+        }
+        return true;
     }
 }

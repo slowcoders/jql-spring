@@ -14,6 +14,6 @@
         <module name="jql-sample-app.jql-spring-lib.main" />
       </profile>
     </annotationProcessing>
-    <bytecodeTargetLevel target="1.8" />
+    <bytecodeTargetLevel target="11" />
   </component>
 </project>

@@ -6,23 +6,23 @@ describe('Join Test', () => {
     test('Find friends of Han Solo', async () => {
       const filter = {
         "name" : "Han Solo",
-        "+friend": {} 
+        "friend_": {} 
       }      
       const res = await jqlApi.find(filter);
       const characters = res.content;
       expect(characters.length).toBe(1);
-      expect(characters[0]["+friend"].length).toBeGreaterThanOrEqual(3);
+      expect(characters[0].friend_.length).toBeGreaterThanOrEqual(3);
     });
 
     test('Find friends of Han Solo with joined query', async () => {
       const filter = {
         "name" : "Han Solo",
-        "+friend": { "starship": { "length@ge": 10 } }
+        "friend_": { "starship_": { "length@ge": 10 } }
       }
       const res = await jqlApi.find(filter);
       const characters = res.content;
       expect(characters.length).toBe(1);
-      expect(characters[0]["+friend"].length).toBe(1);
+      expect(characters[0].friend_.length).toBe(1);
     });
   });
 });

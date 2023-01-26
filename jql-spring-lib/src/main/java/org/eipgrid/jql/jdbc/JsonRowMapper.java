@@ -60,7 +60,7 @@ public class JsonRowMapper implements ResultSetExtractor<List<KVEntity>> {
                     Object value = getColumnValue(rs, pkIndex + 1, mappedColumns[pkIndex].column.getType());
                     mappedColumns[pkIndex].value = value;
                     if (value == null) {
-                        if (isArray) {
+                        if (isArray && pkIndex > 0) {
                             makeSubArray(mapping);
                         }
                         continue read_mapping;

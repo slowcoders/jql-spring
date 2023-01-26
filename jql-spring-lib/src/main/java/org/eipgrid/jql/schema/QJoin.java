@@ -35,7 +35,7 @@ public class QJoin {
             this.isUnique = joinedSchema.isUniqueConstrainedColumnSet(pkColumns);
         }
         this.associateJoin = associatedJoin;
-        this.jsonKey = associatedJoin != null ? '+' + associatedJoin.getJsonKey() : initJsonKey();
+        this.jsonKey = associatedJoin != null ? associatedJoin.getJsonKey() : initJsonKey();
     }
 
     public List<QColumn> getForeignKeyColumns() {
@@ -66,8 +66,7 @@ public class QJoin {
         String name;
         if (inverseMapped) {
             // column 이 없으므로 타입을 이용하여 이름을 정한다.
-            name = // '+' +
-                    first.getSchema().getEntityClassName();
+            name = first.getSchema().getEntityClassName();
         }
         else if (fkColumns.size() == 1) {
             name = initJsonKey(first);
@@ -75,7 +74,7 @@ public class QJoin {
         else {
             name = first.getJoinedPrimaryColumn().getSchema().getEntityClassName();
         }
-        return name;
+        return name + '_';
     }
 
     public static String initJsonKey(QColumn fk) {
@@ -105,7 +104,7 @@ public class QJoin {
         return fkColumns.size() == 1;
     }
 
-    public QSchema getAssociatedSchema() {
+    public QSchema getAssociatedSchema__22() {
         if (associateJoin != null) {
             return associateJoin.getJoinedSchema();
         } else {

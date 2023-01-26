@@ -56,11 +56,11 @@ const too_small_or_too_tall__AND__too_light_or_too_heavy__short_expression = {
     "mass@not between": [40, 120],
 }
 
-const filter = too_small_or_too_tall;
-// const filter = too_light_or_too_heavy;
-// const filter = too_small_or_too_heavy;
-// const filter = too_small_or_too_tall__AND__too_light_or_too_heavy;
-// const filter = too_small_or_too_tall__AND__too_light_or_too_heavy__short_expression;
+const jql_filter = too_small_or_too_tall;
+// const jql_filter = too_light_or_too_heavy;
+// const jql_filter = too_small_or_too_heavy;
+// const jql_filter = too_small_or_too_tall__AND__too_light_or_too_heavy;
+// const jql_filter = too_small_or_too_tall__AND__too_light_or_too_heavy__short_expression;
 
 `
 
