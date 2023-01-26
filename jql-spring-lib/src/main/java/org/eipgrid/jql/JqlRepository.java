@@ -8,24 +8,32 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-public interface JqlRepository<ID> {
+public interface JqlRepository<ENTITY, ID> {
 
-    Class<?> getEntityType();
+    Class<ENTITY> getEntityType();
 
     ID convertId(Object v);
 
-    default List<JqlEntity> find(JqlQuery request) { throw new RuntimeException("not impl"); }
+    <T> List<T> find(JqlQuery query, Class<T> entityType);
 
-    JqlEntity find(ID id);
+    default List<ENTITY> find(JqlQuery query) { return find(query, null); }
 
-    default JqlEntity get(ID id) {
-        JqlEntity entity = find(id);
+    <T> T find(ID id, Class<T> entityType);
+
+    default ENTITY find(ID id) { return find(id, null); }
+
+    default <T> T get(ID id, Class<T> entityType) {
+        T entity = find(id, entityType);
         if (entity == null) throw new IllegalArgumentException(getEntityType().getSimpleName() +
                 " not found: " + id);
         return entity;
     }
 
-    List<JqlEntity> list(Collection<ID> idList);
+    default ENTITY get(ID id) { return get(id, null); }
+
+    <T> List<T> list(Collection<ID> idList, Class<T> entityType);
+
+    default List<ENTITY> list(Collection<ID> idList) { return list(idList, null); }
 
     long count(JqlFilter filter);
 

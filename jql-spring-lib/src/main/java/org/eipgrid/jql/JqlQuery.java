@@ -1,5 +1,6 @@
 package org.eipgrid.jql;
 
+import com.fasterxml.jackson.annotation.JsonAnyGetter;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.Getter;
@@ -19,7 +20,7 @@ import java.util.*;
 @Getter
 public class JqlQuery {
 
-    private final JqlRepository<?> repository;
+    private final JqlRepository repository;
     private final String[] select;
     private final JqlFilter filter;
 
@@ -33,16 +34,16 @@ public class JqlQuery {
 
     public static String[] AllProperties = new String[] { "*" };
 
-    private JqlQuery(JqlRepository<?> repository, String[] select, JqlFilter filter) {
+    private JqlQuery(JqlRepository repository, String[] select, JqlFilter filter) {
         this.repository = repository;
         this.select = select;
         this.filter = filter;
     }
-    private JqlQuery(JqlRepository<?> repository, String[] select, Map<String, Object> filter) {
+    private JqlQuery(JqlRepository repository, String[] select, Map<String, Object> filter) {
         this(repository, select, repository.buildFilter(filter));
     }
 
-    public static <T> JqlQuery of(JqlRepository<?>  repository, String[] select, Sort sort, int offset, int limit, Map<String, Object> filter) {
+    public static JqlQuery of(JqlRepository repository, String[] select, Sort sort, int offset, int limit, Map<String, Object> filter) {
         JqlQuery query = new JqlQuery(repository, select, filter);
         query.sort = sort;
         query.offset = offset;
@@ -50,19 +51,19 @@ public class JqlQuery {
         return query;
     }
 
-    public static <T> JqlQuery of(JqlRepository<?> repository, String[] select, Map<String, Object> filter) {
+    public static JqlQuery of(JqlRepository repository, String[] select, Map<String, Object> filter) {
         return new JqlQuery(repository, select, filter);
     }
 
-    public static <T> JqlQuery of(JqlRepository<?> repository, Map<String, Object> filter) {
+    public static JqlQuery of(JqlRepository repository, Map<String, Object> filter) {
         return new JqlQuery(repository, AllProperties, filter);
     }
 
-    public static <T, ID> JqlQuery of(JqlRepository<ID> repository, ID id) {
+    public static <ID> JqlQuery of(JqlRepository repository, ID id) {
         return new JqlQuery(repository, AllProperties, JqlFilter.of(repository.getSchema(), id));
     }
 
-    public static <T, ID> JqlQuery of(JqlRepository<ID> repository, Collection<ID> idList) {
+    public static <ID> JqlQuery of(JqlRepository repository, Collection<ID> idList) {
         return new JqlQuery(repository, AllProperties, JqlFilter.of(repository.getSchema(), idList));
     }
 
@@ -72,6 +73,10 @@ public class JqlQuery {
 
     public List<JqlEntity> execute() {
         return repository.find(this);
+    }
+
+    public <T> List<T> execute(Class<T> entityType) {
+        return repository.find(this, entityType);
     }
 
     public long count() {
@@ -88,7 +93,7 @@ public class JqlQuery {
         @Schema(implementation = Object.class)
         private HashMap filter;
 
-        public Object execute(JqlRepository repository) {
+        public Response execute(JqlRepository repository) {
             JqlQuery query = buildQuery(repository);
             List<JqlEntity> res = query.execute();// repository.select(query);
             return wrapResult(res, query);
@@ -104,14 +109,26 @@ public class JqlQuery {
             return query;
         }
 
-        protected Object wrapResult(List<JqlEntity> result, JqlQuery query) {
+        protected Response wrapResult(List<JqlEntity> result, JqlQuery query) {
+            Map<String, Object> properties = null;
             if (query.needPagination()) {
                 long count = query.count();
-                PageRequest pageReq = PageRequest.of(page, limit);
-                return new PageImpl(result, pageReq, count);
-            } else {
-                return KVEntity.of("content", result);
+                properties = KVEntity.of("totalElements", count);
             }
+            return new Response(result, properties);
+        }
+    }
+
+    @Data
+    public static class Response {
+
+        @JsonAnyGetter
+        private Map<String, Object> properties;
+        private Object content;
+
+        public Response(Object content, Map<String, Object> properties) {
+            this.content = content;
+            this.properties = properties;
         }
     }
 

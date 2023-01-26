@@ -1,6 +1,7 @@
 package org.eipgrid.jql;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.eipgrid.jql.jdbc.QueryGenerator;
 import org.eipgrid.jql.schema.QSchema;
 import org.eipgrid.jql.jdbc.postgres.UpdateListener;
 import org.eipgrid.jql.jpa.JPARepositoryBase;
@@ -53,6 +54,7 @@ public abstract class JqlService implements AttributeNameConverter {
         System.out.println(cname);
     }
 
+    public abstract QueryGenerator getQueryGenerator();
     public JdbcTemplate getJdbcTemplate() {
         return jdbc;
     }
@@ -71,7 +73,7 @@ public abstract class JqlService implements AttributeNameConverter {
         return objectMapper;
     }
 
-    public abstract JqlRepository makeRepository(String tableName);
+    public abstract JqlRepository getRepository(String tableName);
 
     public abstract QSchema loadSchema(String tableName, Class ormType);
 
@@ -122,4 +124,5 @@ public abstract class JqlService implements AttributeNameConverter {
     public TransactionTemplate getTransactionTemplate() {
         return this.transactionTemplate;
     }
+
 }

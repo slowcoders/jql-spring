@@ -38,7 +38,7 @@ public class JdbcJqlService extends JqlService {
         return jdbcSchemaLoader;
     }
 
-    public JqlRepository makeRepository(String tableName) {
+    public JqlRepository getRepository(String tableName) {
         JqlRepository repo = repositories.get(tableName);
         if (repo == null) {
             QSchema schema = jdbcSchemaLoader.loadSchema(tableName, null);

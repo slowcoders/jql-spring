@@ -11,7 +11,6 @@ import org.eipgrid.jql.util.KVEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 
 public abstract class JdbcMetadataController {
@@ -25,7 +24,7 @@ public abstract class JdbcMetadataController {
 
     private QSchema getSchema(String db_schema, String tableName) throws Exception {
         String tablePath = service.makeTablePath(db_schema, tableName);
-        JqlRepository repo = service.makeRepository(tablePath);
+        JqlRepository repo = service.getRepository(tablePath);
         if (repo.getEntityType() != KVEntity.class) {
             return service.loadSchema(repo.getEntityType());
         }

@@ -3,6 +3,7 @@ package org.eipgrid.jql.jdbc;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.eipgrid.jql.JqlEntity;
 import org.eipgrid.jql.JqlQuery;
+import org.eipgrid.jql.JqlService;
 import org.eipgrid.jql.schema.QColumn;
 import org.eipgrid.jql.schema.QSchema;
 import org.eipgrid.jql.JqlRepository;
@@ -16,30 +17,37 @@ import org.springframework.jdbc.core.ResultSetExtractor;
 import java.io.IOException;
 import java.util.*;
 
-public class JDBCRepositoryBase<ID> /*extends JDBCQueryBuilder*/ implements JqlRepository<ID> {
+public class JDBCRepositoryBase<ENTITY, ID> /*extends JDBCQueryBuilder*/ implements JqlRepository<ENTITY, ID> {
 
     private final static HashMap<Class<?>, JDBCRepositoryBase> loadedServices = new HashMap<>();
     private final JdbcTemplate jdbc;
     private final ObjectMapper objectMapper;
     private final QueryGenerator sqlGenerator;
-    private final JdbcJqlService service;
-    private final List<QColumn> pkColumns;
+    private final JqlService service;
     private final QSchema schema;
     private final JqlParser jqlParser;
     private String lastGeneratedSql;
 
-    public JDBCRepositoryBase(JdbcJqlService service, Class<?> entityType) {
-        this(service, service.loadSchema(entityType)); //  JQSchema.loadSchema(entityType));
-    }
 
-    public JDBCRepositoryBase(JdbcJqlService service, QSchema schema) {
+    protected JDBCRepositoryBase(JqlService service, QSchema schema) {
         this.service = service;
         this.sqlGenerator = service.getQueryGenerator();
         this.jdbc = service.getJdbcTemplate();
         this.objectMapper = service.getJsonConverter().getObjectMapper();
         this.schema = schema;
-        this.pkColumns = schema.getPKColumns();
         this.jqlParser = new JqlParser(service.getConversionService());
+    }
+
+    protected JDBCRepositoryBase(JqlService service, Class<?> entityType) {
+        this(service, service.loadSchema(entityType)); //  JQSchema.loadSchema(entityType));
+    }
+
+    public JqlService getService() {
+        return service;
+    }
+
+    public String getTableName() {
+        return schema.getTableName();
     }
 
     public ObjectMapper getObjectMapper() {
@@ -51,8 +59,12 @@ public class JDBCRepositoryBase<ID> /*extends JDBCQueryBuilder*/ implements JqlR
     }
 
     @Override
-    public Class<KVEntity> getEntityType() {
+    public Class getEntityType() {
         return (Class) KVEntity.class;
+    }
+
+    public boolean hasGeneratedId() {
+        return schema.hasGeneratedId();
     }
 
     @Override
@@ -73,45 +85,30 @@ public class JDBCRepositoryBase<ID> /*extends JDBCQueryBuilder*/ implements JqlR
         return (ID)ids;
     }
 
-    private static String[] single_pk_value = new String[1];
-    public Map<String, Object> createJqlFilterWithId(Object id) {
-        String raw_values[] = pkColumns.size() == 1 ? single_pk_value : ((String)id).split(":");
-        if (raw_values.length != pkColumns.size()) {
-            throw new RuntimeException("invalid primary keys: " + id);
-        }
-
-        ConversionService cvtService = service.getConversionService();
-        KVEntity map = new KVEntity();
-        for (int i = 0; i < raw_values.length; i++) {
-            QColumn pk = pkColumns.get(i);
-            Object raw_v = raw_values == single_pk_value ? id : raw_values[i];
-            Object k_v = cvtService.convert(raw_v, pk.getJavaType());
-            map.put(pk.getJsonKey(), k_v);
-        }
-        return map;
-    }
-
     @Override
-    public JqlEntity find(ID id) {
-        List<JqlEntity> res = find_impl(JqlQuery.of(this, id));
-        return res.size() > 0 ? res.get(0) : null;
+    public <T> T find(ID id, Class<T> entityType) {
+        List<T> res = find(JqlQuery.of(this, id), entityType);
+        return res.size() == 0 ? null : res.get(0);
     }
 
     protected ResultSetExtractor<List<KVEntity>> getColumnMapRowMapper(JqlFilter filter) {
         return new JsonRowMapper(filter.getResultMappings(), service.getObjectMapper());
     }
 
-    protected List<JqlEntity> find_impl(JqlQuery query) {
+    public <T> List<T> find(JqlQuery query, Class<T> entityType) {
         String sql = sqlGenerator.createSelectQuery(query);
         this.lastGeneratedSql = sql;
-        List<JqlEntity> res = (List)jdbc.query(sql, getColumnMapRowMapper(query.getFilter()));
-        return res;
-    }
-
-    public List<JqlEntity> find(JqlQuery query) {
-        String sql = sqlGenerator.createSelectQuery(query);
-        this.lastGeneratedSql = sql;
-        List<JqlEntity> res = (List)jdbc.query(sql, getColumnMapRowMapper(query.getFilter()));
+        List res = jdbc.query(sql, getColumnMapRowMapper(query.getFilter()));
+        if (entityType == null) {
+            entityType = getEntityType();
+        }
+        if (entityType != JqlEntity.class) {
+            ConversionService converter = service.getConversionService();
+            for (int i = res.size(); --i >= 0; ) {
+                ENTITY v = (ENTITY)converter.convert(res.get(i), entityType);
+                res.set(i, v);
+            }
+        }
         return res;
     }
 
@@ -127,16 +124,10 @@ public class JDBCRepositoryBase<ID> /*extends JDBCQueryBuilder*/ implements JqlR
         return count;
     }
 
-//    @Override
-//    public List<KVEntity> find(Map<String, Object> jsFilter, JqlRequest columns) {
-//        return this.find_impl(jsFilter, columns);
-//    }
-
     @Override
-    public List<JqlEntity> list(Collection<ID> idList) {
-        return find_impl(JqlQuery.of(this, idList));
+    public <T> List<T> list(Collection<ID> idList, Class<T> entityType) {
+        return find(JqlQuery.of(this, idList), entityType);
     }
-
 
     @Override
     public ID insert(Map<String, Object> entity) {
@@ -199,17 +190,6 @@ public class JDBCRepositoryBase<ID> /*extends JDBCQueryBuilder*/ implements JqlR
         // do nothing.
     }
 
-    protected JdbcTemplate getJdbcTemplate() {
-        return jdbc;
-    }
-
-
-    public static class Util {
-        public static JDBCRepositoryBase findRepository(Class<?> entityType) {
-            return JDBCRepositoryBase.loadedServices.get(entityType);
-        }
-    }
-
 
 
     public String getLastExecutedSql() {
@@ -220,7 +200,7 @@ public class JDBCRepositoryBase<ID> /*extends JDBCQueryBuilder*/ implements JqlR
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        JDBCRepositoryBase<?> that = (JDBCRepositoryBase<?>) o;
+        JDBCRepositoryBase that = (JDBCRepositoryBase) o;
         return Objects.equals(schema, that.schema);
     }
 

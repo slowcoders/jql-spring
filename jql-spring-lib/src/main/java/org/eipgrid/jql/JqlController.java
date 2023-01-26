@@ -13,27 +13,27 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public interface JqlController<ID> {
+public interface JqlController<ENTITY, ID> {
 
-    JqlRepository<ID> getRepository();
+    JqlRepository<ENTITY, ID> getRepository();
 
-    class Search<ID> implements JqlController<ID> {
-        private final JqlRepository<ID> repository;
+    class Search<ENTITY, ID> implements JqlController<ENTITY, ID> {
+        private final JqlRepository<ENTITY, ID> repository;
 
-        public Search(JqlRepository<ID> repository) {
+        public Search(JqlRepository<ENTITY, ID> repository) {
             this.repository = repository;
         }
 
-        public JqlRepository<ID> getRepository() {
+        public JqlRepository<ENTITY, ID> getRepository() {
             return repository;
         }
 
         @GetMapping(path = "/{id}")
         @ResponseBody
         @Operation(summary = "지정 엔터티 읽기")
-        public JqlEntity get(@PathVariable("id") String id$) {
+        public ENTITY get(@PathVariable("id") String id$) {
             ID id = getRepository().convertId(id$);
-            JqlEntity entity = getRepository().find(id);
+            ENTITY entity = getRepository().find(id);
             if (entity == null) {
                 throw new HttpServerErrorException("Entity(" + id + ") is not found", HttpStatus.NOT_FOUND, null, null, null, null);
             }
@@ -74,34 +74,34 @@ public interface JqlController<ID> {
         }
     }
 
-    interface Insert<ID> extends JqlController<ID> {
+    interface Insert<ENTITY, ID> extends JqlController<ENTITY, ID> {
 
         @PutMapping(path = "/", consumes = {MediaType.APPLICATION_JSON_VALUE})
         @ResponseBody
         @Operation(summary = "엔터티 추가")
         @Transactional
-        default JqlEntity add(@RequestBody Map<String, Object> entity) throws Exception {
+        default ENTITY add(@RequestBody Map<String, Object> entity) throws Exception {
             ID id = getRepository().insert(entity);
             return getRepository().find(id);
         }
     }
 
-    interface Update<ID> extends JqlController<ID> {
+    interface Update<ENTITY, ID> extends JqlController<ENTITY, ID> {
 
         @PatchMapping(path = "/{idList}", consumes = {MediaType.APPLICATION_JSON_VALUE})
         @ResponseBody
         @Operation(summary = "엔터티 내용 변경")
         @Transactional
-        default List<JqlEntity> update(
+        default List<ENTITY> update(
                 @Schema(type = "string", required = true) @PathVariable("idList") Collection<ID> idList,
                 @RequestBody HashMap<String, Object> updateSet) throws Exception {
             getRepository().update(idList, updateSet);
-            List<JqlEntity> entities = getRepository().list(idList);
+            List<ENTITY> entities = getRepository().list(idList);
             return entities;
         }
     }
 
-    interface Delete<ID> extends JqlController<ID> {
+    interface Delete<ENTITY, ID> extends JqlController<ENTITY, ID> {
         @DeleteMapping("/{idList}")
         @ResponseBody
         @Operation(summary = "엔터티 삭제")
@@ -110,32 +110,32 @@ public interface JqlController<ID> {
             getRepository().delete(idList);
             return idList;
         }
-
     }
 
 
     /****************************************************************
      * Form Control API set
      */
-    interface InsertForm<ENTITY, ID> extends JqlController<ID> {
+    interface InsertForm<ENTITY, ID> extends JqlController<ENTITY, ID> {
 
         @PostMapping(path = "/", consumes = { MediaType.MULTIPART_FORM_DATA_VALUE })
         @ResponseBody
         @Operation(summary = "엔터티 추가")
         @Transactional
-        default JqlEntity add_form(@ModelAttribute ENTITY entity) throws Exception {
+        default ENTITY add_form(@ModelAttribute ENTITY entity) throws Exception {
             throw new RuntimeException("not implemented!");
 //            ID id = getRepository().insert(entity);
 //            return getRepository().find(id);
         }
     }
 
-    class CRUD<ID> extends Search<ID>
-            implements Insert<ID>, Update<ID>, Delete<ID> {
-        public CRUD(JqlRepository<ID> repository) {
+    class CRUD<ENTITY, ID> extends Search<ENTITY, ID>
+            implements Insert<ENTITY, ID>, Update<ENTITY, ID>, Delete<ENTITY, ID> {
+        public CRUD(JqlRepository<ENTITY, ID> repository) {
             super(repository);
         }
     }
+
 }
 
 
