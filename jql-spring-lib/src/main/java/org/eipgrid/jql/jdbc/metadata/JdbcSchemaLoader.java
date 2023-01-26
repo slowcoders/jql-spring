@@ -45,16 +45,18 @@ public class JdbcSchemaLoader extends SchemaLoader implements QueryGenerator {
         }
 
         final String tablePath = tablePath0.toLowerCase();
-        QSchema schema = metadataMap.get(tablePath);
-        if (schema == null) {
-            schema = jdbc.execute(new ConnectionCallback<QSchema>() {
-                @Override
-                public QSchema doInConnection(Connection conn) throws SQLException, DataAccessException {
-                    return loadSchema(conn, tablePath, ormType);
-                }
-            });
+        synchronized (metadataMap) {
+            QSchema schema = metadataMap.get(tablePath);
+            if (schema == null) {
+                schema = jdbc.execute(new ConnectionCallback<QSchema>() {
+                    @Override
+                    public QSchema doInConnection(Connection conn) throws SQLException, DataAccessException {
+                        return loadSchema(conn, tablePath, ormType);
+                    }
+                });
+            }
+            return schema;
         }
-        return schema;
     }
 
     private QSchema loadSchema(Connection conn, String tablePath, Class<?> ormType) throws SQLException {

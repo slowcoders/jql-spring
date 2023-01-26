@@ -33,6 +33,7 @@ public abstract class JqlService implements AttributeNameConverter {
 
     private final RequestMappingHandlerMapping handlerMapping;
     private HashMap<String, JqlRepository> repositories = new HashMap<>();
+    private HashMap<String, JPARepositoryBase> jpaRepositories = new HashMap<>();
 
     public JqlService(DataSource dataSource,
                       TransactionTemplate transactionTemplate,
@@ -107,9 +108,9 @@ public abstract class JqlService implements AttributeNameConverter {
 
     public <ID, ENTITY> void registerRepository(JPARepositoryBase<ENTITY,ID> repository) {
         String qname = resolveTableName(repository.getEntityType());
-        UpdateListener.initAutoUpdateTrigger(this, qname, repository);
+        UpdateListener.initAutoUpdateTrigger(this, repository);
 
-        Object old = this.repositories.put(qname, repository);
+        Object old = this.jpaRepositories.put(qname, repository);
         assert (old == null);
     }
 

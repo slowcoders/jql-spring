@@ -26,7 +26,7 @@ public abstract class JqlStorageController {
     @Operation(summary = "지정 엔터티 읽기")
     public KVEntity get(@PathVariable("table") String table,
                         @PathVariable("id") String id$) {
-        JqlRepository<KVEntity, Object> repository = getRepository(table);
+        JqlRepository<Object> repository = getRepository(table);
         Object id = repository.convertId(id$);
         KVEntity entity = repository.find(id);
         if (entity == null) {
@@ -50,7 +50,7 @@ public abstract class JqlStorageController {
     public Object find(@PathVariable("table") String table,
                          @Schema(example = "{ \"select\": \"\", \"sort\": \"\", \"page\": 0, \"limit\": 0, \"filter\": { } }")
                          @RequestBody JqlQuery.Request request) {
-        JqlRepository<KVEntity, Object> repository = getRepository(table);
+        JqlRepository<Object> repository = getRepository(table);
         return request.execute(repository);
     }
 
@@ -60,7 +60,7 @@ public abstract class JqlStorageController {
     public KVEntity add(@PathVariable("table") String table,
                         @Schema(implementation = Object.class)
                         @RequestBody Map<String, Object> entity) throws Exception {
-        JqlRepository<KVEntity, Object> repository = getRepository(table);
+        JqlRepository<Object> repository = getRepository(table);
         Object id = repository.insert(entity);
         KVEntity newEntity = repository.find(id);
         return newEntity;
@@ -74,9 +74,9 @@ public abstract class JqlStorageController {
                        @PathVariable("idList") Collection<Object> idList,
                        @Schema(implementation = Object.class)
                        @RequestBody HashMap<String, Object> updateSet) throws Exception {
-        JqlRepository<KVEntity, Object> repository = getRepository(table);
+        JqlRepository<Object> repository = getRepository(table);
         repository.update(idList, updateSet);
-        List<KVEntity> entities = repository.list(idList);
+        List<JqlEntity> entities = repository.list(idList);
         return entities;
     }
 
@@ -86,12 +86,12 @@ public abstract class JqlStorageController {
     public Collection<String> delete(@PathVariable("table") String table,
                                      @Schema(implementation = String.class)
                                      @PathVariable("idList") Collection<String> idList) {
-        JqlRepository<KVEntity, Object> repository = getRepository(table);
+        JqlRepository<Object> repository = getRepository(table);
         repository.delete(idList);
         return idList;
     }
 
-    protected JqlRepository<KVEntity, Object> getRepository(String tableName) {
+    protected JqlRepository<Object> getRepository(String tableName) {
         String tablePath = service.makeTablePath(default_namespace, tableName);
         return service.makeRepository(tablePath);
     }

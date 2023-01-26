@@ -1,13 +1,16 @@
 package org.eipgrid.jql.jpa;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.eipgrid.jql.JqlEntity;
 import org.eipgrid.jql.parser.JqlFilter;
+import org.eipgrid.jql.schema.QColumn;
 import org.eipgrid.jql.schema.QSchema;
 import org.eipgrid.jql.jdbc.BatchUpsert;
 import org.eipgrid.jql.jdbc.JdbcJqlService;
 import org.eipgrid.jql.JqlRepository;
 import org.eipgrid.jql.JqlService;
 import org.eipgrid.jql.JqlQuery;
+import org.springframework.core.convert.ConversionService;
 import org.springframework.data.repository.NoRepositoryBean;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 
@@ -19,42 +22,54 @@ import java.io.IOException;
 import java.util.*;
 
 @NoRepositoryBean
-public abstract class JPARepositoryBase<ENTITY, ID> extends JPAQueryBuilder<ENTITY, ID> implements JqlRepository<ENTITY, ID> {
+public abstract class JPARepositoryBase<ENTITY, ID> { // extends JPAQueryBuilder<ENTITY, ID> implements JqlRepository<ID> {
 
     private final static HashMap<Class<?>, JPARepositoryBase<?,?>>jqlServices = new HashMap<>();
     private final JqlService service;
     private final HashMap<ID, Object> associatedCache = new HashMap<>();
 
     private final MappingJackson2HttpMessageConverter jsonConverter;
+    private final ConversionService conversionService;
+    private final Class<ENTITY> entityType;
+    private final Class<ID> idType;
+    private JqlRepository<ID> storage;
+    private QSchema jqlSchema;
+    private boolean hasGeneratedId;
 
-    public JPARepositoryBase(JqlService service) {
-        super(service);
+
+    public JPARepositoryBase(JqlService service, Class<ENTITY> entityType, Class<ID> idType) {
+//        super(service);
         this.service = service;
-        jsonConverter = service.getJsonConverter();
+        this.entityType = entityType;
+        this.idType = idType;
+        this.jqlSchema = service.loadSchema(entityType);
+        this.storage = service.makeRepository(service.loadSchema(entityType).getTableName());
+        this.conversionService = service.getConversionService();
+    jsonConverter = service.getJsonConverter();
+        this.service.registerRepository(this);
+        jqlServices.put(this.getEntityType(), this);
     }
 
     public JqlService getService() {
         return service;
     }
 
-    @PostConstruct
-    private void initService() {
-//        this.jqlSchema =
-                this.service.registerRepository(this);
-        jqlServices.put(this.getEntityType(), this);
+    public String getTableName() {
+        return jqlSchema.getTableName();
     }
 
-//    public JQSchema getSchema() {
-//        return this.jqlSchema;
-//    }
+
+
+    public final Class<ENTITY> getEntityType() {
+        return entityType;
+    }
 
     public ObjectMapper getObjectMapper() {
         return jsonConverter.getObjectMapper();
     }
 
-    @Override
     public ENTITY find(ID id) {
-        return super.find(id);
+        return convert(storage.find(id), entityType);
     }
 
 //    @Override
@@ -73,44 +88,32 @@ public abstract class JPARepositoryBase<ENTITY, ID> extends JPAQueryBuilder<ENTI
 //        return new PageImpl(res, pageReq, count);
 //    }
 
-    @Override
     public long count(JqlFilter filter) {
-        throw new RuntimeException("not implemented");
-//        String sqlCount = sqlGenerator.createCountQuery(filter);
-//        long count = jdbc.queryForObject(sqlCount, Long.class);
-//        return count;
+        return storage.count(filter);
     }
 
     //@Override
-    public <T> List<T> find(Map<String, Object> filterConditions, JqlQuery columns, int limit, Class<T> resultType) {
-        Query query = super.buildSearchQuery(filterConditions, columns.getSort(), resultType);
-
-        /** Hibernate 버그: limit 값이 생략되면, join 된 row 수만큼 entity 가 생성된다.
-         *  이에 limit 값 항상 명시 필요함. */
-        if (limit < 0) limit = Integer.MAX_VALUE;
-
-        query = query.setMaxResults(limit);
-        List<T> res = query.getResultList();
-        if (resultType != super.getEntityType()) {
+    public <T> List<T> find(JqlQuery query, Class<T> resultType) {
+        List res = query.execute();
+        if (resultType != JqlEntity.class) {
             for (int i = res.size(); --i >= 0; ) {
-                T v = (T)super.convert(res.get(i), resultType);
+                T v = (T)this.convert(res.get(i), resultType);
                 res.set(i, v);
             }
         }
         return res;
     }
 
-    @Override
-    public List<ENTITY> list(Collection<ID> idList) {
-        Query query = super.buildSearchQuery(idList, null, null);
-        List<ENTITY> res = query.getResultList();
-        return res;
+    public <T> T convert(Object arg, Class<T> type) {
+        return conversionService.convert(arg, type);
     }
 
-    @Override
+    public List<ENTITY> list(Collection<ID> idList) {
+        return find(JqlQuery.of(storage, idList), entityType);
+    }
+
     public ID insert(Map<String, Object> dataSet) throws IOException {
-        ENTITY entity = super.convert(dataSet, getEntityType());
-        return insert(entity);
+        return storage.insert(dataSet);
     }
 
     public ID insert(ENTITY entity) {
@@ -124,12 +127,14 @@ public abstract class JPARepositoryBase<ENTITY, ID> extends JPAQueryBuilder<ENTI
         return getEntityId(entity);
     }
 
-    public List<ID> insert(Collection<Map<String, Object>> entities) {
-        if (entities.isEmpty()) return null;
-        QSchema schema = ((JdbcJqlService)service).loadSchema(this.getEntityType());
-        BatchUpsert batch = new BatchUpsert(schema, entities, true);
-        service.getJdbcTemplate().batchUpdate(batch.getSql(), batch);
-        return batch.getEntityIDs();
+    private boolean hasGeneratedId() {
+        return jqlSchema.hasGeneratedId();
+    }
+
+    public abstract ID getEntityId(ENTITY entity);
+
+    public List<ID> insert(Collection<Map<String, Object>> entities) throws IOException {
+        return storage.insert(entities);
     }
 
     // Insert Or Update Entity
@@ -139,11 +144,14 @@ public abstract class JPARepositoryBase<ENTITY, ID> extends JPAQueryBuilder<ENTI
         return entity;
     }
 
+    private EntityManager getEntityManager() {
+        return service.getEntityManager();
+    }
+
     public ENTITY update(ENTITY entity) {
         return getEntityManager().merge(entity);
     }
 
-    @Override
     public void update(ID id, Map<String, Object> updateSet) throws IOException {
         ENTITY entity = find(id);
         if (entity == null) {
@@ -153,7 +161,7 @@ public abstract class JPARepositoryBase<ENTITY, ID> extends JPAQueryBuilder<ENTI
         update(entity);
     }
 
-    @Override
+
     public void update(Collection<ID> idList, Map<String, Object> updateSet) throws IOException {
         ArrayList<ENTITY> list = new ArrayList<>();
         for (ID id: idList) {
@@ -168,15 +176,14 @@ public abstract class JPARepositoryBase<ENTITY, ID> extends JPAQueryBuilder<ENTI
     }
 
     public void deleteEntity(ENTITY entity) {
-        EntityManager em = super.getEntityManager();
+        EntityManager em = getEntityManager();
         em.remove(entity);
     }
 
 
-    @Override
     public void delete(ID id) {
-        EntityManager em = super.getEntityManager();
-        ENTITY entity = em.find(getEntityType(), id);
+        EntityManager em = getEntityManager();
+        ENTITY entity = em.find(entityType, id);
         if (entity != null) deleteEntity(entity);
     }
 
@@ -187,13 +194,10 @@ public abstract class JPARepositoryBase<ENTITY, ID> extends JPAQueryBuilder<ENTI
     }
 
 
-    @Override
     public int delete(Collection<ID> idList) {
-        Query sql = super.buildDeleteQuery(idList);
-        return sql.executeUpdate();
+        return storage.delete(idList);
     }
 
-    @Override
     public void clearEntityCache(ID id) {
         Cache cache = getEntityManager().getEntityManagerFactory().getCache();
         if (id == null) {
@@ -217,6 +221,14 @@ public abstract class JPARepositoryBase<ENTITY, ID> extends JPAQueryBuilder<ENTI
 
     public void putAssociatedCache(ENTITY entity, Object value) {
         associatedCache.put(getEntityId(entity), value);
+    }
+
+    public ID convertId(Object _id) {
+        return conversionService.convert(_id, this.idType);
+    }
+
+    public QSchema getSchema() {
+        return jqlSchema;
     }
 
     public static class Util {

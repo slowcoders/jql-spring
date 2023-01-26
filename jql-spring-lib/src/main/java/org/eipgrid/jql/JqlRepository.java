@@ -8,28 +8,26 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-public interface JqlRepository<ENTITY, ID> {
+public interface JqlRepository<ID> {
 
-    Class<ENTITY> getEntityType();
+    Class<?> getEntityType();
 
     ID convertId(Object v);
 
-    default List<ENTITY> find(JqlQuery request) { throw new RuntimeException("not impl"); }
+    default List<JqlEntity> find(JqlQuery request) { throw new RuntimeException("not impl"); }
 
-    ENTITY find(ID id);
+    JqlEntity find(ID id);
 
-    default ENTITY get(ID id) {
-        ENTITY entity = find(id);
+    default JqlEntity get(ID id) {
+        JqlEntity entity = find(id);
         if (entity == null) throw new IllegalArgumentException(getEntityType().getSimpleName() +
                 " not found: " + id);
         return entity;
     }
 
-    List<ENTITY> list(Collection<ID> idList);
+    List<JqlEntity> list(Collection<ID> idList);
 
     long count(JqlFilter filter);
-
-    ID insert(ENTITY entity);
 
     ID insert(Map<String, Object> dataSet) throws IOException;
 

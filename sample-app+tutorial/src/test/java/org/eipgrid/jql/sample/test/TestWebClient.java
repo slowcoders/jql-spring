@@ -19,7 +19,7 @@ public class TestWebClient {
 
     public ResponseEntity<List<Character>> list() {
         return restTemplate.exchange(API_PATH + "/?select=*", HttpMethod.GET, null,
-                new ParameterizedTypeReference<>() {
+                new ParameterizedTypeReference() {
                 });
     }
 
@@ -29,7 +29,7 @@ public class TestWebClient {
         HttpEntity<String> request = new HttpEntity<>(jql, headers);
 
         return restTemplate.exchange(API_PATH + "/find?select=*", HttpMethod.POST, request,
-                new ParameterizedTypeReference<>() {
+                new ParameterizedTypeReference() {
                 });
     }
 }

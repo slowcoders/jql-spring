@@ -1,6 +1,7 @@
 package org.eipgrid.jql.jdbc.postgres;
 
 import lombok.SneakyThrows;
+import org.eipgrid.jql.schema.QColumn;
 import org.postgresql.jdbc.PgConnection;
 import org.eipgrid.jql.schema.AutoClearEntityCache;
 import org.eipgrid.jql.schema.AutoUpdateModifyTimestamp;
@@ -13,6 +14,7 @@ import org.springframework.transaction.support.TransactionCallbackWithoutResult;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.List;
 
 public class UpdateListener extends Thread {
     private final JqlService service;
@@ -31,16 +33,18 @@ public class UpdateListener extends Thread {
         stmt.close();
     }
 
-    public static <ID, ENTITY> void initAutoUpdateTrigger(JqlService service, String tablePath, JPARepositoryBase<ENTITY,ID> repository) {
+    public static <ID, ENTITY> void initAutoUpdateTrigger(JqlService service, JPARepositoryBase<ENTITY,ID> repository) {
         Class<?> entityType = repository.getEntityType();
         AutoUpdateModifyTimestamp autoUpdate = entityType.getAnnotation(AutoUpdateModifyTimestamp.class);
         AutoClearEntityCache autoClearCache = entityType.getAnnotation(AutoClearEntityCache.class);
         if (autoUpdate == null && autoClearCache == null) return;
 
         String colName = autoUpdate.column();
+        String tablePath = repository.getTableName();
         String tableName = tablePath.replace('.', '_');
-        String firstPrimaryKey = repository.getPrimaryKeys()[0];
-        if (repository.getPrimaryKeys().length > 1) {
+        List<QColumn> pkColumns = repository.getSchema().getPKColumns();
+        String firstPrimaryKey = pkColumns.get(0).getPhysicalName();
+        if (pkColumns.size() > 1) {
             throw new RuntimeException("can not listen update event on table with multi primary keys. ");
         }
 

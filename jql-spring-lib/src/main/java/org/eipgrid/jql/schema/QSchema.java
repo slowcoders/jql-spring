@@ -217,6 +217,10 @@ public abstract class QSchema {
         return tableName.hashCode();
     }
 
+    public boolean hasGeneratedId() {
+        throw new RuntimeException("not impl");
+    }
+
     public boolean hasOnlyForeignKeys() {
         for (QColumn col : getReadableColumns()) {
             if (col.getJoinedPrimaryColumn() == null) {
