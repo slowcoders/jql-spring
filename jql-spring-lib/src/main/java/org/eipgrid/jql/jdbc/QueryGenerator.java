@@ -7,8 +7,12 @@ import org.eipgrid.jql.parser.JqlFilter;
 import java.util.Map;
 
 public interface QueryGenerator {
-    String createSelectQuery(JqlQuery query);
+    String createSelectQuery(JqlQuery query, boolean selectPrimaryKeyOnly);
 
+    default String createSelectQuery(JqlQuery query) { 
+        return createSelectQuery(query, false);
+    }
+                             
     String createCountQuery(JqlFilter where);
 
     String createUpdateQuery(JqlFilter where, Map<String, Object> updateSet);

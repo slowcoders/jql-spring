@@ -1,19 +1,16 @@
 package org.eipgrid.jql.jpa;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.eipgrid.jql.JqlEntity;
 import org.eipgrid.jql.jdbc.JDBCRepositoryBase;
-import org.eipgrid.jql.parser.JqlFilter;
-import org.eipgrid.jql.schema.QSchema;
-import org.eipgrid.jql.JqlRepository;
 import org.eipgrid.jql.JqlService;
 import org.eipgrid.jql.JqlQuery;
-import org.springframework.core.convert.ConversionService;
+import org.eipgrid.jql.schema.QColumn;
+import org.eipgrid.jql.util.SourceWriter;
 import org.springframework.data.repository.NoRepositoryBean;
-import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 
 import javax.persistence.Cache;
 import javax.persistence.EntityManager;
+import javax.persistence.Query;
 import java.io.IOException;
 import java.util.*;
 
@@ -21,39 +18,43 @@ import java.util.*;
 public abstract class JPARepositoryBase<ENTITY, ID> extends JDBCRepositoryBase<ENTITY, ID> { // extends JPAQueryBuilder<ENTITY, ID> implements JqlRepository<ID> {
 
     private final static HashMap<Class<?>, JPARepositoryBase<?,?>>jqlServices = new HashMap<>();
-//    private final JqlService service;
     private final HashMap<ID, Object> associatedCache = new HashMap<>();
-//
-//    private final MappingJackson2HttpMessageConverter jsonConverter;
-//    private final ConversionService conversionService;
-    private final Class<ENTITY> entityType;
-//    private final Class<ID> idType;
-//    private JqlRepository<ENTITY, ID> storage;
-//    private QSchema jqlSchema;
-//    private boolean hasGeneratedId;
-
 
     public JPARepositoryBase(JqlService service, Class<ENTITY> entityType, Class<ID> idType) {
-        super(service, entityType);
-//        this.service = service;
-        this.entityType = entityType;
-//        this.idType = idType;
-//        this.jqlSchema = service.loadSchema(entityType);
-//        this.storage = service.getRepository(service.loadSchema(entityType).getTableName());
-//        this.conversionService = service.getConversionService();
-//    jsonConverter = service.getJsonConverter();
-//        this.service.registerRepository(this);
+        super(service, service.loadSchema(entityType));
         jqlServices.put(this.getEntityType(), this);
     }
 
     @Override
     public List<ENTITY> find(JqlQuery query) {
-        List<ENTITY> res = super.find(query, this.entityType);
+        List<Object[]> idList = super.listPrimaryKeys(query);
+        SourceWriter sw = new SourceWriter<>('\'');
+        List<QColumn> pkColumns = schema.getPKColumns();
+        boolean isMultiPk = pkColumns.size() > 1;
+
+        sw.write("select t FROM ").write(schema.getEntityClassName()).write(" t WHERE ");
+        if (isMultiPk) sw.write("(");
+        for (QColumn col : pkColumns) {
+            sw.write("t." + col.getJsonKey()).write(", ");
+        }
+        sw.replaceTrailingComma(isMultiPk ? ")" : "");
+        sw.write(" IN (");
+        for (Object[] id : idList) {
+            if (isMultiPk) sw.write("(");
+            for (Object k : id) {
+                sw.writeValue(k).write(", ");
+            }
+            sw.replaceTrailingComma(isMultiPk ? "), " : ", ");
+        }
+        sw.replaceTrailingComma(")");
+        EntityManager em = getEntityManager();
+        Query q = em.createQuery(sw.toString());
+        List<ENTITY> res = q.getResultList();
         // TODO entityManager
         return res;
     }
 
-    public ID insert(Map<String, Object> dataSet) {
+    public ID insert(Map<String, Object> dataSet) throws IOException {
         ID id = super.insert(dataSet);
         // TODO entityManager
         return id;
@@ -61,7 +62,9 @@ public abstract class JPARepositoryBase<ENTITY, ID> extends JDBCRepositoryBase<E
 
     public List<ID> insert(Collection<Map<String, Object>> entities) {
         List<ID> res = super.insert(entities);
-        // TODO entityManager
+//        List<ENTITY> res2 = super.find(res);
+//        EntityManager em = getEntityManager();
+//        em.setProperty();
         return res;
     }
 
@@ -104,6 +107,10 @@ public abstract class JPARepositoryBase<ENTITY, ID> extends JDBCRepositoryBase<E
         update(entity);
     }
 
+    private ObjectMapper getObjectMapper() {
+        return service.getObjectMapper();
+    }
+
 
     @Override
     public void update(Collection<ID> idList, Map<String, Object> updateSet) throws IOException {
@@ -127,8 +134,13 @@ public abstract class JPARepositoryBase<ENTITY, ID> extends JDBCRepositoryBase<E
 
     public void delete(ID id) {
         EntityManager em = getEntityManager();
-        ENTITY entity = em.find(entityType, id);
-        if (entity != null) deleteEntity(entity);
+        ENTITY entity = em.find(getEntityType(), id);
+        if (entity != null) {
+            deleteEntity(entity);
+        }
+        else {
+            super.delete(id);
+        }
     }
 
     public void deleteEntities(Collection<ENTITY> entities) {
@@ -143,14 +155,14 @@ public abstract class JPARepositoryBase<ENTITY, ID> extends JDBCRepositoryBase<E
         return super.delete(idList);
     }
 
+    public void clearEntityCaches() {
+        Cache cache = getEntityManager().getEntityManagerFactory().getCache();
+        cache.evict(getEntityType());
+    }
+
     public void clearEntityCache(ID id) {
         Cache cache = getEntityManager().getEntityManagerFactory().getCache();
-        if (id == null) {
-            cache.evict(getEntityType());
-        }
-        else {
-            cache.evict(getEntityType(), id);
-        }
+        cache.evict(getEntityType(), id);
         this.associatedCache.remove(id);
     }
 

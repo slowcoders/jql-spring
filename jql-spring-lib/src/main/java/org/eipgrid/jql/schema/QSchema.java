@@ -1,7 +1,12 @@
 package org.eipgrid.jql.schema;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import org.eipgrid.jql.JqlEntity;
+import org.eipgrid.jql.util.AttributeNameConverter;
+import org.eipgrid.jql.util.ClassUtils;
 
+import javax.persistence.Column;
+import javax.persistence.JoinColumn;
 import java.lang.reflect.Field;
 import java.util.*;
 
@@ -9,8 +14,9 @@ import java.util.*;
 public abstract class QSchema {
     private final SchemaLoader schemaLoader;
     private final String tableName;
+    private final Class<?> ormType;
 
-    private String jpaClassName;
+    private final String jpaClassName;
 
     private List<QColumn> pkColumns;
     private List<QColumn> allColumns;
@@ -20,19 +26,28 @@ public abstract class QSchema {
     private Map<String, QColumn> columnMap = new HashMap<>();
     private HashMap<String, QJoin> entityJoinMap;
 
-    public QSchema(SchemaLoader schemaLoader, String tableName, String jpaClassName) {
+    public QSchema(SchemaLoader schemaLoader, String tableName, Class<?> ormType) {
         this.tableName = tableName;
         this.schemaLoader = schemaLoader;
-        this.jpaClassName = jpaClassName;
+        this.ormType = ormType;
+        this.jpaClassName = !Map.class.isAssignableFrom(ormType) ? ormType.getSimpleName() :
+                AttributeNameConverter.camelCaseConverter.toLogicalAttributeName(getSimpleTableName());
     }
 
     public final SchemaLoader getSchemaLoader() {
         return schemaLoader;
     }
 
+//    @Override
+    public final Class<?> getJpaType() { return ormType; }
     public String getTableName() {
         return this.tableName;
     }
+
+    public String getSimpleTableName() {
+        return this.tableName.substring(this.tableName.indexOf('.') + 1);
+    }
+
 
     public List<QColumn> getReadableColumns() {
         return this.allColumns;
@@ -74,10 +89,6 @@ public abstract class QSchema {
         return columnMap.get(key) != null;
     }
 
-    public String getSimpleTableName() {
-        return this.tableName.substring(this.tableName.indexOf('.') + 1);
-    }
-
     public String getEntityClassName() {
         return this.jpaClassName;
     }
@@ -90,32 +101,30 @@ public abstract class QSchema {
         List<QColumn> pkColumns = new ArrayList<>();
 
         for (QColumn ci: columns) {
+            String colName = ci.getPhysicalName().toLowerCase();
+            this.columnMap.put(colName, ci);
+
             if (ci.isPrimaryKey()) {
                 pkColumns.add(ci);
+            }
+            else {
                 allColumns.add(ci);
             }
-            if (ci.getJoinedPrimaryColumn() == null) {
+
+            if (!ci.isForeignKey()) {
                 if (ci.getType().isPrimitive()) {
                     primitiveColumns.add(ci);
                 }
                 else {
                     objectColumns.add(ci);
                 }
+                if (!ci.isReadOnly()) {
+                    writableColumns.add(ci);
+                }
             }
         }
 
-        for (QColumn ci: columns) {
-            String colName = ci.getPhysicalName().toLowerCase();
-            this.columnMap.put(colName, ci);
-
-            if (!ci.isPrimaryKey()) {
-                allColumns.add(ci);
-            }
-            if (!ci.isReadOnly() && ci.getType().isPrimitive()) {
-                writableColumns.add(ci);
-            }
-        }
-
+        allColumns.addAll(0, pkColumns);
         this.allColumns = Collections.unmodifiableList(allColumns);
         this.writableColumns = Collections.unmodifiableList(writableColumns);
         this.primitiveColumns = Collections.unmodifiableList(primitiveColumns);
@@ -229,4 +238,6 @@ public abstract class QSchema {
         }
         return true;
     }
+
+
 }

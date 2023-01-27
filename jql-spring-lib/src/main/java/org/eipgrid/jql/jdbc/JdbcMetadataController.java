@@ -1,14 +1,15 @@
 package org.eipgrid.jql.jdbc;
 
 import io.swagger.v3.oas.annotations.Operation;
-import org.eipgrid.jql.schema.QColumn;
 import org.eipgrid.jql.jdbc.metadata.JdbcSchema;
-import org.eipgrid.jql.JqlRepository;
+import org.eipgrid.jql.js.JsUtil;
+import org.eipgrid.jql.schema.QColumn;
 import org.eipgrid.jql.schema.QJoin;
 import org.eipgrid.jql.schema.QSchema;
-import org.eipgrid.jql.js.JsUtil;
 import org.eipgrid.jql.util.KVEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.ResponseBody;
 
 import java.util.ArrayList;
 import java.util.Map;
@@ -24,10 +25,10 @@ public abstract class JdbcMetadataController {
 
     private QSchema getSchema(String db_schema, String tableName) throws Exception {
         String tablePath = service.makeTablePath(db_schema, tableName);
-        JqlRepository repo = service.getRepository(tablePath);
-        if (repo.getEntityType() != KVEntity.class) {
-            return service.loadSchema(repo.getEntityType());
-        }
+//        JqlRepository repo = service.getRepository(tablePath);
+//        if (repo.getEntityType() != JqlEntity.class) {
+//            return service.loadSchema(repo.getEntityType());
+//        }
         return service.loadSchema(tablePath, null);
     }
 

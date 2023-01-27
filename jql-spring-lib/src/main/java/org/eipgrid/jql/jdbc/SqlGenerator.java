@@ -90,7 +90,7 @@ public class SqlGenerator extends SqlConverter implements QueryGenerator {
                 sw.write("::TEXT");
                 break;
             case Array:
-            case Object:
+            case Reference:
                 sw.write("::JSONB");
                 break;
         }
@@ -174,13 +174,14 @@ public class SqlGenerator extends SqlConverter implements QueryGenerator {
         return false;
     }
 
-    public String createSelectQuery(JqlQuery query) {
+    public String createSelectQuery(JqlQuery query, boolean selectPrimaryKeyOnly) {
         sw.reset();
         JqlFilter where = query.getFilter();
         String tableName = where.getTableName();
-        where.setSelectedProperties(query.getSelect());
 
-        boolean need_complex_pagination = query.getLimit() > 0 && needDistinctPagination(where);
+        where.setSelectedProperties(selectPrimaryKeyOnly ? JqlQuery.PrimaryKeys : query.getSelect());
+
+        boolean need_complex_pagination = !selectPrimaryKeyOnly && query.getLimit() > 0 && needDistinctPagination(where);
         if (need_complex_pagination) {
             sw.write("\nWITH _cte AS (\n"); // WITH _cte AS NOT MATERIALIZED
             sw.incTab();
@@ -195,13 +196,22 @@ public class SqlGenerator extends SqlConverter implements QueryGenerator {
         }
 
         sw.write("\nSELECT DISTINCT \n");
-        for (QResultMapping mapping : where.getResultMappings()) {
+        if (selectPrimaryKeyOnly) {
             sw.write('\t');
-            String alias = mapping.getMappingAlias();
-            for (QColumn col : mapping.getSelectedColumns()) {
+            String alias = where.getMappingAlias();
+            for (QColumn col : where.getSchema().getPKColumns()) {
                 sw.write(alias).write('.').write(col.getPhysicalName()).write(", ");
             }
-            sw.write('\n');
+        }
+        else {
+            for (QResultMapping mapping : where.getResultMappings()) {
+                sw.write('\t');
+                String alias = mapping.getMappingAlias();
+                for (QColumn col : mapping.getSelectedColumns()) {
+                    sw.write(alias).write('.').write(col.getPhysicalName()).write(", ");
+                }
+                sw.write('\n');
+            }
         }
         sw.replaceTrailingComma("\n");
         writeFrom(where, tableName, false);

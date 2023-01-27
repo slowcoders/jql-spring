@@ -1,22 +1,29 @@
 package org.eipgrid.jql;
 
 import org.eipgrid.jql.jdbc.JDBCRepositoryBase;
+import org.eipgrid.jql.schema.QSchema;
 import org.eipgrid.jql.util.KVEntity;
 
+import java.util.List;
 import java.util.Map;
 
 public class JqlEntity extends KVEntity implements Map<String, Object> {
 
-    public static class CRUDController<ID> extends JqlController.CRUD<JqlEntity, ID> {
-        public CRUDController(JqlRepository<JqlEntity, ID> repository) {
-            super(repository);
+    public static class SearchController<ID> extends JqlController.Search<ID> {
+        public SearchController(JqlEntityStore<ID> store) {
+            super(store);
         }
     }
 
-    public static class Repository extends JDBCRepositoryBase<JqlEntity, Object> {
+    public static class CRUDController<ID> extends JqlController.CRUD<ID> {
+        public CRUDController(JqlEntityStore<ID> store) {
+            super(store);
+        }
+    }
 
-        public Repository(JqlService service, String tableName) {
-            super(service, service.loadSchema(tableName, null));
+    public static class Repository<ID> extends JDBCRepositoryBase<JqlEntity, ID> {
+        public Repository(JqlService service, QSchema schema) {
+            super(service, schema);
         }
     }
 }

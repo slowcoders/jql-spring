@@ -3,7 +3,7 @@ package org.eipgrid.jql.jdbc.metadata;
 import org.eipgrid.jql.*;
 import org.eipgrid.jql.jdbc.QueryGenerator;
 import org.eipgrid.jql.jdbc.SqlGenerator;
-import org.eipgrid.jql.jpa.JpaSchema;
+//import org.eipgrid.jql.jpa.JpaSchema;
 import org.eipgrid.jql.parser.JqlFilter;
 import org.eipgrid.jql.schema.QColumn;
 import org.eipgrid.jql.schema.QJoin;
@@ -14,6 +14,7 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.ConnectionCallback;
 import org.springframework.jdbc.core.JdbcTemplate;
 
+import javax.persistence.Table;
 import javax.sql.DataSource;
 import java.sql.*;
 import java.util.*;
@@ -37,14 +38,30 @@ public class JdbcSchemaLoader extends SchemaLoader implements QueryGenerator {
 
     public String getDefaultDBSchema() { return this.defaultSchema; }
 
+    public String resolveTableName(Class<?> entityType) {
+        String name = "";
+        Table table = entityType.getAnnotation(Table.class);
+        String schema = "";
+        if (table != null) {
+            name = table.name().trim();
+            schema = table.schema().trim();
+        }
+        if (name.length() == 0) {
+            name = entityType.getSimpleName();
+        }
+        return makeTablePath(schema, name);
+    }
 
-    public QSchema loadSchema(String tablePath0, Class<?> ormType) {
+    public QSchema loadSchema(String tablePath0, Class<?> ormType0) {
         if (tablePath0 == null) {
-            QSchema schema = new JpaSchema(this, tablePath0, ormType);
-            throw new RuntimeException("not impl");
+            tablePath0 = resolveTableName(ormType0);
+        }
+        else if (ormType0 == null) {
+            ormType0 = JqlEntity.class;
         }
 
         final String tablePath = tablePath0.toLowerCase();
+        final Class<?> ormType = ormType0;
         synchronized (metadataMap) {
             QSchema schema = metadataMap.get(tablePath);
             if (schema == null) {
@@ -60,7 +77,7 @@ public class JdbcSchemaLoader extends SchemaLoader implements QueryGenerator {
     }
 
     private QSchema loadSchema(Connection conn, String tablePath, Class<?> ormType) throws SQLException {
-        JdbcSchema schema = new JdbcSchema(JdbcSchemaLoader.this, tablePath);
+        JdbcSchema schema = new JdbcSchema(JdbcSchemaLoader.this, tablePath, ormType);
         metadataMap.put(tablePath, schema);
 
         int dot_p = tablePath.indexOf('.');
@@ -348,8 +365,8 @@ public class JdbcSchemaLoader extends SchemaLoader implements QueryGenerator {
     }
 
     @Override
-    public String createSelectQuery(JqlQuery query) {
-        return createSqlGenerator().createSelectQuery(query);
+    public String createSelectQuery(JqlQuery query, boolean selectPrimaryKeyOnly) {
+        return createSqlGenerator().createSelectQuery(query, selectPrimaryKeyOnly);
     }
 
     @Override

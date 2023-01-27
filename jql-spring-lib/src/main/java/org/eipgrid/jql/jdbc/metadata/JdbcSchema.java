@@ -1,10 +1,12 @@
 package org.eipgrid.jql.jdbc.metadata;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import org.eipgrid.jql.JqlEntity;
 import org.eipgrid.jql.schema.QColumn;
 import org.eipgrid.jql.schema.QSchema;
 import org.eipgrid.jql.schema.QJoin;
 import org.eipgrid.jql.schema.SchemaLoader;
+import org.eipgrid.jql.util.ClassUtils;
 import org.eipgrid.jql.util.SourceWriter;
 import org.eipgrid.jql.util.AttributeNameConverter;
 
@@ -19,63 +21,88 @@ public class JdbcSchema extends QSchema {
     private HashMap<String, ArrayList<String>> uniqueConstraints = new HashMap<>();
     private final HashMap<String, List<QColumn>> fkConstraints = new HashMap<>();
 
+    private ArrayList<QColumn> unresolvedJpaColumns;
+
+    protected JdbcSchema(SchemaLoader schemaLoader, String tableName, Class<?> ormType) {
+        super(schemaLoader, tableName, ormType);
+    }
+
     protected JdbcSchema(SchemaLoader schemaLoader, String tableName) {
-        super(schemaLoader, tableName,
-                AttributeNameConverter.camelCaseConverter.toLogicalAttributeName(tableName.substring(tableName.indexOf('.') + 1)));
+        this(schemaLoader, tableName, JqlEntity.class);
     }
 
     protected void init(ArrayList<? extends QColumn> columns, HashMap<String, ArrayList<String>> uniqueConstraints, Class<?> ormType) {
         this.uniqueConstraints = uniqueConstraints;
+
+        if (!Map.class.isAssignableFrom(ormType)) {
+            HashMap<String, Field> jpaColumns = new HashMap<>();
+            for (Field f: ClassUtils.getInstanceFields(ormType, true)) {
+                jpaColumns.put(resolvePhysicalName(f), f);
+            }
+
+            for (int i = columns.size(); --i >= 0; ) {
+                QColumn col = columns.get(i);
+                Field f = jpaColumns.get(col.getPhysicalName());
+                if (f == null) {
+                    columns.remove(i);
+                    if (unresolvedJpaColumns == null) unresolvedJpaColumns = new ArrayList<>();
+                    unresolvedJpaColumns.add(col);
+                }
+                else {
+                    super.mapColumn(col, f);
+                }
+            }
+        }
         super.init(columns, ormType);
     }
 
-    protected void initJsonKeys(Class<?> ormType) {
-        if (ormType != null) {
-            initFieldNames(ormType);
-        }
-        super.initJsonKeys(ormType);
-    }
-
-    private void initFieldNames(Class<?> ormType) {
-        Class<?> superClass = ormType.getSuperclass();
-        if (superClass != Object.class) {
-            initFieldNames(superClass);
-        }
-        for (Field f : ormType.getDeclaredFields()) {
-            if ((f.getModifiers() & Modifier.TRANSIENT) == 0 &&
-                    f.getAnnotation(Transient.class) == null) {
-                String colName = resolveColumnName(f);
-                QColumn column = this.getColumn(colName);
-                super.mapColumn(column, f);
-            }
-        }
-    }
-
-    private String resolveColumnName(Field f) {
-        if (true) {
-            Column c = f.getAnnotation(Column.class);
-            if (c != null) {
-                String colName = c.name();
-                if (colName != null && colName.length() > 0) {
-                    return colName;
-                }
-            }
-        }
-        if (true) {
-            JoinColumn c = f.getAnnotation(JoinColumn.class);
-            if (c != null) {
-                String colName = c.name();
-                if (colName != null && colName.length() > 0) {
-                    return colName;
-                }
-            }
-        }
-
-        AttributeNameConverter cvt = getSchemaLoader().getNameConverter();
-        String colName = cvt.toPhysicalColumnName(f.getName());
-        return colName;
-    }
-
+//    protected void initJsonKeys(Class<?> ormType) {
+//        if (ormType != null) {
+//            initFieldNames(ormType);
+//        }
+//        super.initJsonKeys(ormType);
+//    }
+//
+//    private void initFieldNames(Class<?> ormType) {
+//        Class<?> superClass = ormType.getSuperclass();
+//        if (superClass != Object.class) {
+//            initFieldNames(superClass);
+//        }
+//        for (Field f : ormType.getDeclaredFields()) {
+//            if ((f.getModifiers() & Modifier.TRANSIENT) == 0 &&
+//                    f.getAnnotation(Transient.class) == null) {
+//                String colName = resolveColumnName(f);
+//                QColumn column = this.getColumn(colName);
+//                super.mapColumn(column, f);
+//            }
+//        }
+//    }
+//
+//    private String resolveColumnName(Field f) {
+//        if (true) {
+//            Column c = f.getAnnotation(Column.class);
+//            if (c != null) {
+//                String colName = c.name();
+//                if (colName != null && colName.length() > 0) {
+//                    return colName;
+//                }
+//            }
+//        }
+//        if (true) {
+//            JoinColumn c = f.getAnnotation(JoinColumn.class);
+//            if (c != null) {
+//                String colName = c.name();
+//                if (colName != null && colName.length() > 0) {
+//                    return colName;
+//                }
+//            }
+//        }
+//
+//        AttributeNameConverter cvt = getSchemaLoader().getNameConverter();
+//        String colName = cvt.toPhysicalColumnName(f.getName());
+//        return colName;
+//    }
+//
 
 
     public String dumpJPAEntitySchema() {
@@ -274,5 +301,29 @@ public class JdbcSchema extends QSchema {
         } else {
             fkColumns.add(fkColumn);
         }
+    }
+
+    private String resolvePhysicalName(Field f) {
+        if (true) {
+            Column c = f.getAnnotation(Column.class);
+            if (c != null) {
+                String colName = c.name();
+                if (colName != null && colName.length() > 0) {
+                    return colName;
+                }
+            }
+        }
+        if (true) {
+            JoinColumn c = f.getAnnotation(JoinColumn.class);
+            if (c != null) {
+                String colName = c.name();
+                if (colName != null && colName.length() > 0) {
+                    return colName;
+                }
+            }
+        }
+        AttributeNameConverter cvt = getSchemaLoader().getNameConverter();
+        String colName = cvt.toPhysicalColumnName(f.getName());
+        return colName;
     }
 }

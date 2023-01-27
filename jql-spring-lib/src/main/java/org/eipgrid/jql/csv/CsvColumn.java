@@ -1,7 +1,6 @@
 package org.eipgrid.jql.csv;
 
 import org.eipgrid.jql.schema.QType;
-import org.eipgrid.jql.jpa.JpaColumn;
 import org.eipgrid.jql.util.ClassUtils;
 
 import java.lang.reflect.Field;
@@ -20,7 +19,7 @@ public class CsvColumn {
             this.isNullable = false;
         } else {
             this.elementType = f.getType();
-            this.isNullable = JpaColumn.resolveNullable(f);
+            this.isNullable = ClassUtils.resolveNullable(f);
         }
     }
 

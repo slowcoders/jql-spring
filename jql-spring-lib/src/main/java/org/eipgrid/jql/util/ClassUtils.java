@@ -1,5 +1,6 @@
 package org.eipgrid.jql.util;
 
+import javax.persistence.Column;
 import javax.persistence.Transient;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.*;
@@ -147,6 +148,18 @@ public class ClassUtils {
             }
         }
     }
+
+    public static boolean resolveNullable(Field f) {
+        Column column = f.getAnnotation(Column.class);
+        if (column != null) return column.nullable();
+        for (Annotation a : f.getAnnotations()) {
+            if (a.annotationType().getSimpleName().contains("NotNull")) {
+                return false;
+            }
+        }
+        return true;
+    }
+
 
     public static Class<?> getBoxedType(Class<?> clazz) {
         if (clazz.isPrimitive()) {

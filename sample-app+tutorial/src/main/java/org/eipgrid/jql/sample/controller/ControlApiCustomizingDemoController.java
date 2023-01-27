@@ -51,7 +51,7 @@ public class ControlApiCustomizingDemoController extends JqlEntity.CRUDControlle
     @ResponseBody
     @Operation(summary = "엔터티 추가 API 변경. default 값 설정.")
     @Transactional
-    public JqlEntity add(@RequestBody Map<String, Object> entity) throws Exception {
+    public Object add(@RequestBody Map<String, Object> entity) throws Exception {
         if (entity.get("note") == null) {
             entity.put("note", createNote());
         }

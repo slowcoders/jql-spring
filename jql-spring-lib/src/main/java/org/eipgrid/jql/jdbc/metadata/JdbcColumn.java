@@ -1,7 +1,6 @@
 package org.eipgrid.jql.jdbc.metadata;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.eipgrid.jql.schema.QColumn;
 import org.eipgrid.jql.schema.QJoin;
 import org.eipgrid.jql.schema.QSchema;
@@ -21,22 +20,22 @@ public class JdbcColumn extends QColumn {
     private final boolean isAutoIncrement;
     private final boolean isNullable;
     private final boolean isPk;
+    private Field field;
 
     private String fieldName;
-    private final String colTypeName;
 
     private String label;
-    private ColumnBinder pkBinder;
+    private ColumnBinder fkBinder;
+
+    //*
+    private String colTypeName;
 
     private int displaySize;
-//    @JsonIgnore
-//    private JqlIndex index;
-
-    @JsonIgnore
     private int precision;
     private int scale;
+    //*/
 
-    public JdbcColumn(QSchema schema, ResultSetMetaData md, int col, ColumnBinder pkBinder, String comment, ArrayList<String> primaryKeys) throws SQLException {
+    public JdbcColumn(QSchema schema, ResultSetMetaData md, int col, ColumnBinder fkBinder, String comment, ArrayList<String> primaryKeys) throws SQLException {
         super(schema, md.getColumnName(col), resolveJavaType(md, col));
 
         this.isAutoIncrement = md.isAutoIncrement(col);
@@ -44,16 +43,40 @@ public class JdbcColumn extends QColumn {
         this.isNullable = md.isNullable(col) != ResultSetMetaData.columnNoNulls;
         this.isPk = primaryKeys.contains(this.getPhysicalName());
 
-        this.pkBinder = pkBinder;
+        this.fkBinder = fkBinder;
+        this.field = null;
         boolean isWritable = md.isWritable(col);
         if (!isWritable) {
             throw new RuntimeException("!isWritable");
         }
-        this.colTypeName = md.getColumnTypeName(col);
+//        this.colTypeName = md.getColumnTypeName(col);
         this.label = comment != null ? comment : md.getColumnLabel(col);
         this.precision = md.getPrecision(col);
         this.scale = md.getScale(col);
         this.displaySize = md.getColumnDisplaySize(col);
+    }
+
+//    public JdbcColumn(QSchema schema, Field f) {
+//        super(schema, resolveColumnName(schema, f), ClassUtils.getElementType(f), QType.of(f));
+//        super.setMappedField(f);
+////        this.fk = resolveForeignKey(f);
+//
+//        this.field = f;
+//
+//        GeneratedValue gv = f.getAnnotation(GeneratedValue.class);
+//        this.isAutoIncrement = gv != null && gv.strategy() == GenerationType.IDENTITY;
+//        this.isPk = JPAUtils.isIdField(f);
+//
+////        this.isNullable = resolveNullable(f);
+//        this.isReadOnly = gv != null;
+//        this.label = null;
+//    }
+
+    public boolean isForeignKey() { return fkBinder != null; }
+
+    protected void setMappedField(Field f) {
+        this.field = f;
+        this.fieldName = f.getName();
     }
 
     @Override
@@ -92,21 +115,16 @@ public class JdbcColumn extends QColumn {
     }
 
     public QColumn getJoinedPrimaryColumn() {
-        if (this.pkBinder == null) return null;
+        if (this.fkBinder == null) return null;
         QType valueKind = this.getType();
-        Class javaType = null;
+        Class javaType = this.field == null ? null : ClassUtils.getElementType(field);
         if (!valueKind.isPrimitive()) {
             javaType = getJavaType();
             if (javaType == Object.class) {
                 javaType = null;
             }
         }
-        return pkBinder.getJoinedColumn(javaType);
-    }
-
-    protected void setMappedField(Field f) {
-        super.setMappedField(f);
-        this.fieldName = f.getName();
+        return fkBinder.getJoinedColumn(javaType);
     }
 
     private String resolveFieldName() {
@@ -127,7 +145,7 @@ public class JdbcColumn extends QColumn {
 
 
     protected void bindPrimaryKey(ColumnBinder pkBinder) {
-        this.pkBinder = pkBinder;
+        this.fkBinder = pkBinder;
     }
 
     private static Class resolveJavaType(ResultSetMetaData md, int col) throws SQLException {
@@ -147,5 +165,6 @@ public class JdbcColumn extends QColumn {
             throw new RuntimeException(e);
         }
     }
+
 
 }

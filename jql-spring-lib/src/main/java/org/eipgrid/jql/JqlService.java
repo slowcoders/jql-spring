@@ -79,20 +79,6 @@ public abstract class JqlService implements AttributeNameConverter {
 
     public abstract QSchema loadSchema(Class ormType);
 
-    public String resolveTableName(Class<?> entityType) {
-        String name = "";
-        Table table = entityType.getAnnotation(Table.class);
-        String schema = "";
-        if (table != null) {
-            name = table.name().trim();
-            schema = table.schema().trim();
-        }
-        if (name.length() == 0) {
-            name = entityType.getSimpleName();
-        }
-        return makeTablePath(schema, name);
-    }
-
     public String makeTablePath(String schema, String name) {
         name = schema + "." + name;
         return name;
@@ -108,14 +94,14 @@ public abstract class JqlService implements AttributeNameConverter {
         throw new RuntimeException("not implemented");
     }
 
-    public <ID, ENTITY> void registerRepository(JPARepositoryBase<ENTITY,ID> repository) {
-        String qname = resolveTableName(repository.getEntityType());
-        UpdateListener.initAutoUpdateTrigger(this, repository);
-
-        Object old = this.jpaRepositories.put(qname, repository);
-        assert (old == null);
-    }
-
+//    public <ID, ENTITY> void registerRepository(JPARepositoryBase<ENTITY,ID> repository) {
+//        String qname = resolveTableName(repository.getEntityType());
+//        UpdateListener.initAutoUpdateTrigger(this, repository);
+//
+//        Object old = this.jpaRepositories.put(qname, repository);
+//        assert (old == null);
+//    }
+//
 
     public DataSource getDataSource() {
         return this.jdbc.getDataSource();
