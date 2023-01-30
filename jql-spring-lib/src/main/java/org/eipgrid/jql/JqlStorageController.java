@@ -3,7 +3,6 @@ package org.eipgrid.jql;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Schema;
 import org.eipgrid.jql.jdbc.JdbcJqlService;
-import org.eipgrid.jql.util.KVEntity;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
@@ -24,11 +23,11 @@ public abstract class JqlStorageController {
     @GetMapping(path = "/{table}/{id}")
     @ResponseBody
     @Operation(summary = "지정 엔터티 읽기")
-    public KVEntity get(@PathVariable("table") String table,
+    public Object get(@PathVariable("table") String table,
                         @PathVariable("id") String id$) {
-        JqlRepository<Object> repository = getRepository(table);
+        JqlRepository repository = getRepository(table);
         Object id = repository.convertId(id$);
-        KVEntity entity = repository.find(id);
+        Object entity = repository.find(id);
         if (entity == null) {
             throw new HttpServerErrorException("Entity(" + id + ") is not found", HttpStatus.NOT_FOUND, null, null, null, null);
         }
@@ -50,19 +49,19 @@ public abstract class JqlStorageController {
     public Object find(@PathVariable("table") String table,
                          @Schema(example = "{ \"select\": \"\", \"sort\": \"\", \"page\": 0, \"limit\": 0, \"filter\": { } }")
                          @RequestBody JqlQuery.Request request) {
-        JqlRepository<Object> repository = getRepository(table);
-        return request.execute(repository);
+        JqlRepository repository = getRepository(table);
+        return request.buildQuery(repository).execute();
     }
 
     @PutMapping(path = "/{table}/", consumes = { MediaType.APPLICATION_JSON_VALUE })
     @ResponseBody
     @Operation(summary = "엔터티 추가")
-    public KVEntity add(@PathVariable("table") String table,
+    public Object add(@PathVariable("table") String table,
                         @Schema(implementation = Object.class)
                         @RequestBody Map<String, Object> entity) throws Exception {
-        JqlRepository<Object> repository = getRepository(table);
+        JqlRepository repository = getRepository(table);
         Object id = repository.insert(entity);
-        KVEntity newEntity = repository.find(id);
+        Object newEntity = repository.find(id);
         return newEntity;
     }
 
@@ -74,9 +73,9 @@ public abstract class JqlStorageController {
                        @PathVariable("idList") Collection<Object> idList,
                        @Schema(implementation = Object.class)
                        @RequestBody HashMap<String, Object> updateSet) throws Exception {
-        JqlRepository<Object> repository = getRepository(table);
+        JqlRepository repository = getRepository(table);
         repository.update(idList, updateSet);
-        List<JqlEntity> entities = repository.list(idList);
+        List<?> entities = repository.find(idList);
         return entities;
     }
 
@@ -86,14 +85,14 @@ public abstract class JqlStorageController {
     public Collection<String> delete(@PathVariable("table") String table,
                                      @Schema(implementation = String.class)
                                      @PathVariable("idList") Collection<String> idList) {
-        JqlRepository<Object> repository = getRepository(table);
+        JqlRepository repository = getRepository(table);
         repository.delete(idList);
         return idList;
     }
 
-    protected JqlRepository<Object> getRepository(String tableName) {
+    protected JqlRepository getRepository(String tableName) {
         String tablePath = service.makeTablePath(default_namespace, tableName);
-        return service.makeRepository(tablePath);
+        return service.getRepository(tablePath);
     }
 
 }

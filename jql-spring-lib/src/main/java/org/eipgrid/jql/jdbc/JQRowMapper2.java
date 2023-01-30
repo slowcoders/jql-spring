@@ -2,7 +2,7 @@ package org.eipgrid.jql.jdbc;
 
 import org.eipgrid.jql.schema.QResultMapping;
 import org.eipgrid.jql.schema.QColumn;
-import org.eipgrid.jql.util.KVEntity;
+import org.eipgrid.jql.JqlEntity;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.support.JdbcUtils;
@@ -15,7 +15,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
-public class JQRowMapper2 implements ResultSetExtractor<List<KVEntity>> {
+public class JQRowMapper2 implements ResultSetExtractor<List<JqlEntity>> {
     private final List<QResultMapping> resultMappings;
     private MappedColumn[] mappedColumns;
 
@@ -24,9 +24,9 @@ public class JQRowMapper2 implements ResultSetExtractor<List<KVEntity>> {
     }
 
     private static class CacheNode extends HashMap<CacheNode.Key, CacheNode> {
-        KVEntity cachedEntity;
+        JqlEntity cachedEntity;
 
-        public CacheNode(KVEntity cachedEntity) {
+        public CacheNode(JqlEntity cachedEntity) {
             this.cachedEntity = cachedEntity;
         }
 
@@ -53,18 +53,18 @@ public class JQRowMapper2 implements ResultSetExtractor<List<KVEntity>> {
     }
 
     @Override
-    public List<KVEntity> extractData(ResultSet rs) throws SQLException, DataAccessException {
+    public List<JqlEntity> extractData(ResultSet rs) throws SQLException, DataAccessException {
 
         initMappedColumns(rs);
 
-        ArrayList<KVEntity> results = new ArrayList<>();
+        ArrayList<JqlEntity> results = new ArrayList<>();
         HashMap<CacheNode.Key, CacheNode> rootEntityCache = new HashMap<>();
         CacheNode.Key searchKey = new CacheNode.Key(null);
 
         while (rs.next()) {
             int idxColumn = 0;
             int columnCount = mappedColumns.length;
-            KVEntity baseEntity = null;
+            JqlEntity baseEntity = null;
             int lastMappingIndex = resultMappings.size() - 1;
 
             HashMap<CacheNode.Key, CacheNode> cacheNodes = rootEntityCache;
@@ -81,7 +81,7 @@ public class JQRowMapper2 implements ResultSetExtractor<List<KVEntity>> {
                 CacheNode cacheNode = cacheNodes.get(searchKey);
                 boolean cacheFound = cacheNode != null;
                 if (cacheNode == null) {
-                    KVEntity newEntity = readEntity(mapping, baseEntity, rs, idxColumn);
+                    JqlEntity newEntity = readEntity(mapping, baseEntity, rs, idxColumn);
                     cacheNode = new CacheNode(newEntity);
                     cacheNodes.put(new CacheNode.Key(pk), cacheNode);
                     if (i == 0) {
@@ -98,10 +98,10 @@ public class JQRowMapper2 implements ResultSetExtractor<List<KVEntity>> {
             }
 
             if (idxColumn == 0) {
-                baseEntity = new KVEntity();
+                baseEntity = new JqlEntity();
                 results.add(baseEntity);
             }
-            KVEntity entity = baseEntity;
+            JqlEntity entity = baseEntity;
             QResultMapping mapping = mappedColumns[0].mapping;
             for (; idxColumn < columnCount; ) {
                 MappedColumn mappedColumn = mappedColumns[idxColumn];
@@ -116,9 +116,9 @@ public class JQRowMapper2 implements ResultSetExtractor<List<KVEntity>> {
         return results;
     }
 
-    private KVEntity makeSubEntity(KVEntity entity, QResultMapping mapping) {
+    private JqlEntity makeSubEntity(JqlEntity entity, QResultMapping mapping) {
         if (entity == null) {
-            return new KVEntity();
+            return new JqlEntity();
         }
         String[] entityPath = mapping.getEntityMappingPath();
         int idxLastPath = entityPath.length - 1;
@@ -129,8 +129,8 @@ public class JQRowMapper2 implements ResultSetExtractor<List<KVEntity>> {
         return entity;
     }
 
-    private KVEntity readEntity(QResultMapping mapping, KVEntity baseEntity, ResultSet rs, int idxColumn) throws SQLException {
-        KVEntity entity = makeSubEntity(baseEntity, mapping);
+    private JqlEntity readEntity(QResultMapping mapping, JqlEntity baseEntity, ResultSet rs, int idxColumn) throws SQLException {
+        JqlEntity entity = makeSubEntity(baseEntity, mapping);
         for (int i = mapping.getSelectedColumns().size(); --i >= 0; ) {
             MappedColumn mc = mappedColumns[idxColumn];
             Object v = getColumnValue(rs, ++idxColumn);
@@ -150,10 +150,10 @@ public class JQRowMapper2 implements ResultSetExtractor<List<KVEntity>> {
         return pks;
     }
 
-    private KVEntity makeSubEntity(KVEntity entity, String key, boolean isArray) {
+    private JqlEntity makeSubEntity(JqlEntity entity, String key, boolean isArray) {
         Object subEntity = entity.get(key);
         if (subEntity == null) {
-            subEntity = new KVEntity();
+            subEntity = new JqlEntity();
             if (isArray) {
                 ArrayList<Object> array = new ArrayList<>();
                 array.add(subEntity);
@@ -163,13 +163,13 @@ public class JQRowMapper2 implements ResultSetExtractor<List<KVEntity>> {
             }
         } else if (isArray) {
             ArrayList<Object> array = (ArrayList<Object>) subEntity;
-            subEntity = new KVEntity();
+            subEntity = new JqlEntity();
             array.add(subEntity);
         } else if (subEntity instanceof ArrayList) {
-            ArrayList<KVEntity> list = (ArrayList<KVEntity>) subEntity;
+            ArrayList<JqlEntity> list = (ArrayList<JqlEntity>) subEntity;
             subEntity = list.get(list.size()-1);
         }
-        return (KVEntity)subEntity;
+        return (JqlEntity)subEntity;
     }
 
     protected Object getColumnValue(ResultSet rs, int index) throws SQLException {

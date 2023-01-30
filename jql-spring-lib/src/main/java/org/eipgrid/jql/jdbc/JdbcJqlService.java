@@ -1,5 +1,6 @@
 package org.eipgrid.jql.jdbc;
 
+import org.eipgrid.jql.JqlEntity;
 import org.eipgrid.jql.schema.QSchema;
 import org.eipgrid.jql.schema.SchemaLoader;
 import org.eipgrid.jql.jdbc.metadata.JdbcSchemaLoader;
@@ -38,11 +39,12 @@ public class JdbcJqlService extends JqlService {
         return jdbcSchemaLoader;
     }
 
-    public JqlRepository makeRepository(String tableName) {
+    public JqlRepository getRepository(String tableName) {
         JqlRepository repo = repositories.get(tableName);
         if (repo == null) {
+            // TODO ormType
             QSchema schema = jdbcSchemaLoader.loadSchema(tableName, null);
-            repo = new JDBCRepositoryBase(this, schema);
+            repo = new JqlEntity.Repository(this, schema);
             repositories.put(tableName, repo);
         }
         return repo;

@@ -1,12 +1,12 @@
 package org.eipgrid.jql;
 
+import com.fasterxml.jackson.annotation.JsonAnyGetter;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.Getter;
 import org.eipgrid.jql.parser.JqlFilter;
 import org.eipgrid.jql.util.KVEntity;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Sort;
 
 import java.util.*;
@@ -19,7 +19,7 @@ import java.util.*;
 @Getter
 public class JqlQuery {
 
-    private final JqlRepository<?> repository;
+    private final JqlEntityStore<?> table;
     private final String[] select;
     private final JqlFilter filter;
 
@@ -27,55 +27,50 @@ public class JqlQuery {
     private int offset;
     private int limit;
 
-    public static final char All = '*';
-    public static final char PrimaryKeys = '0';
-    public static final char Auto = '@';
+    public static String[] All = new String[] { "*" };
 
-    public static String[] AllProperties = new String[] { "*" };
+    public static String[] PrimaryKeys = new String[] { "0" };
 
-    private JqlQuery(JqlRepository<?> repository, String[] select, JqlFilter filter) {
-        this.repository = repository;
+    public static String[] Auto = new String[0];
+
+
+    protected JqlQuery(JqlEntityStore<?> table, String[] select, JqlFilter filter) {
+        this.table = table;
         this.select = select;
         this.filter = filter;
     }
-    private JqlQuery(JqlRepository<?> repository, String[] select, Map<String, Object> filter) {
-        this(repository, select, repository.buildFilter(filter));
+    private JqlQuery(JqlEntityStore<?> table, String[] select, Map<String, Object> filter) {
+        this(table, select, table.createFilter(filter));
     }
 
-    public static <T> JqlQuery of(JqlRepository<?>  repository, String[] select, Sort sort, int offset, int limit, Map<String, Object> filter) {
-        JqlQuery query = new JqlQuery(repository, select, filter);
+    public static JqlQuery of(JqlEntityStore<?> table, String[] select, Sort sort, int offset, int limit, Map<String, Object> filter) {
+        JqlQuery query = new JqlQuery(table, select, filter);
         query.sort = sort;
         query.offset = offset;
         query.limit = limit;
         return query;
     }
 
-    public static <T> JqlQuery of(JqlRepository<?> repository, String[] select, Map<String, Object> filter) {
-        return new JqlQuery(repository, select, filter);
+    public static JqlQuery of(JqlEntityStore<?> table, String[] select, Map<String, Object> filter) {
+        return new JqlQuery(table, select, filter);
     }
-
-    public static <T> JqlQuery of(JqlRepository<?> repository, Map<String, Object> filter) {
-        return new JqlQuery(repository, AllProperties, filter);
-    }
-
-    public static <T, ID> JqlQuery of(JqlRepository<ID> repository, ID id) {
-        return new JqlQuery(repository, AllProperties, JqlFilter.of(repository.getSchema(), id));
-    }
-
-    public static <T, ID> JqlQuery of(JqlRepository<ID> repository, Collection<ID> idList) {
-        return new JqlQuery(repository, AllProperties, JqlFilter.of(repository.getSchema(), idList));
-    }
-
+    
     public boolean needPagination() {
         return offset >= 0 && limit > 0;
     }
 
-    public List<JqlEntity> execute() {
-        return repository.find(this);
+    public Response execute() {
+        List<?> result = table.find(this, null);
+        Map<String, Object> properties = null;
+        if (needPagination()) {
+            long count = this.count();
+            properties = KVEntity.of("totalElements", count);
+        }
+        return new Response(result, properties);
     }
 
     public long count() {
-        return repository.count(filter);
+        return table.count(filter);
     }
 
     @Data
@@ -88,30 +83,27 @@ public class JqlQuery {
         @Schema(implementation = Object.class)
         private HashMap filter;
 
-        public Object execute(JqlRepository repository) {
-            JqlQuery query = buildQuery(repository);
-            List<JqlEntity> res = query.execute();// repository.select(query);
-            return wrapResult(res, query);
-        }
-
-        public JqlQuery buildQuery(JqlRepository repository) {
+        public JqlQuery buildQuery(JqlEntityStore<?> table) {
             String[] _select = select == null ? null : parsePropertySelection(select);
             Sort _sort = parseSort(sort);
             int _limit = limit == null ? 0 : limit;
             int _page = page == null ? -1 : page;
 
-            JqlQuery query = JqlQuery.of(repository, _select, _sort, _page * _limit, _limit, filter);
+            JqlQuery query = JqlQuery.of(table, _select, _sort, _page * _limit, _limit, filter);
             return query;
         }
+    }
 
-        protected Object wrapResult(List<JqlEntity> result, JqlQuery query) {
-            if (query.needPagination()) {
-                long count = query.count();
-                PageRequest pageReq = PageRequest.of(page, limit);
-                return new PageImpl(result, pageReq, count);
-            } else {
-                return KVEntity.of("content", result);
-            }
+    @Data
+    public static class Response {
+
+        @JsonAnyGetter
+        private Map<String, Object> properties;
+        private Object content;
+
+        public Response(Object content, Map<String, Object> properties) {
+            this.content = content;
+            this.properties = properties;
         }
     }
 

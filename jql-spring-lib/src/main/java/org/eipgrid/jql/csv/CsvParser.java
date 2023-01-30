@@ -44,7 +44,7 @@ public class CsvParser {
             try {
                 Object value;
                 QType format = column.getValueType();
-                if (format == QType.Object) {
+                if (format == QType.Reference) {
                     value = readCsv(reader, column.getElementType());
                 }
                 else {

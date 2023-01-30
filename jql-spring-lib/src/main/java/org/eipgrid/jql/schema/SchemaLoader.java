@@ -28,25 +28,10 @@ public abstract class SchemaLoader {
     public QSchema loadSchema(Class<?> entityType) {
         QSchema schema = classToSchemaMap.get(entityType);
         if (schema == null) {
-            String tableName = resolveTableName(entityType);
-            schema = loadSchema(tableName, entityType);
+            schema = loadSchema(null, entityType);
             classToSchemaMap.put(entityType, schema);
         }
         return schema;
-    }
-
-    public String resolveTableName(Class<?> entityType) {
-        String name = "";
-        Table table = entityType.getAnnotation(Table.class);
-        String schema = "";
-        if (table != null) {
-            name = table.name().trim();
-            schema = table.schema().trim();
-        }
-        if (name.length() == 0) {
-            name = entityType.getSimpleName();
-        }
-        return makeTablePath(schema, name);
     }
 
     public String makeTablePath(String schema, String name) {

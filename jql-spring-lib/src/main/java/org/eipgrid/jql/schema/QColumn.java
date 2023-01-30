@@ -8,17 +8,15 @@ public abstract class QColumn {
     private final QSchema schema;
     private final String physicalName;
     private QType columnType;
-    private Class<?> javaType;
 
-    protected QColumn(QSchema schema, String physicalName, Class<?> javaType, QType type) {
+    protected QColumn(QSchema schema, String physicalName, QType type) {
         this.schema = schema;
         this.physicalName = physicalName;
         this.columnType = type;
-        this.javaType = javaType;
     }
 
     protected QColumn(QSchema schema, String physicalName, Class javaType) {
-        this(schema, physicalName, javaType, QType.of(javaType));
+        this(schema, physicalName, QType.of(javaType));
     }
 
     public final QSchema getSchema() {
@@ -30,7 +28,7 @@ public abstract class QColumn {
     }
 
     public final Class<?> getJavaType() {
-        return javaType;
+        return columnType.toJavaClass();
     }
 
     public final String getPhysicalName() {
@@ -66,6 +64,8 @@ public abstract class QColumn {
 
     public boolean isPrimaryKey() { return false; }
 
+    public boolean isForeignKey() { return false; }
+
     public String getLabel() {
         return null;
     }
@@ -81,8 +81,5 @@ public abstract class QColumn {
 
     public String toString() { return getSchema().getSimpleTableName() + "::" + this.getJsonKey()+ "<" + physicalName + ">"; }
 
-    protected void setMappedField(Field f) {
-        this.columnType = QType.of(f);
-        this.javaType = ClassUtils.getElementType(f);
-    }
+    protected void setMappedField(Field f) {}
 }

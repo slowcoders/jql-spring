@@ -6,23 +6,31 @@ import javax.persistence.Embeddable;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
 import javax.persistence.MappedSuperclass;
+import java.lang.ref.Reference;
 import java.lang.reflect.Field;
 import java.time.Instant;
 import java.time.ZonedDateTime;
+import java.util.Collection;
 import java.util.Map;
 
 public enum QType {
-    Boolean,
-    Integer,
-    Float,
-    Text,
-    Date,
-    Time,
-    Timestamp,
-    Json,
-    Array,
+    Boolean(Boolean.class),
+    Integer(Integer.class),
+    Float(Float.class),
+    Text(String.class),
+    Date(java.sql.Date.class),
+    Time(java.sql.Time.class),
+    Timestamp(java.sql.Timestamp.class),
+    Json(Map.class),
+    Array(Collection.class),
 
-    Object;
+    Reference(java.lang.ref.Reference.class);
+
+    private final Class<?> javaType;
+
+    QType(Class<?> javaType) {
+        this.javaType = javaType;
+    }
 
     public boolean isPrimitive() {
         return this.ordinal() < Json.ordinal();
@@ -46,7 +54,7 @@ public enum QType {
     public static QType of(Class javaType) {
         if (javaType.getAnnotation(MappedSuperclass.class) != null
                 ||  javaType.getAnnotation(Embeddable.class) != null) {
-            return QType.Object;
+            return QType.Reference;
         }
         if (javaType == Object.class ||
                 Map.class.isAssignableFrom(javaType)) {
@@ -76,6 +84,10 @@ public enum QType {
             }
             return QType.Integer;
         }
-        return javaType == String.class ? QType.Text : QType.Object;
+        return javaType == String.class ? QType.Text : QType.Reference;
+    }
+
+    public Class<?> toJavaClass() {
+        return javaType;
     }
 }

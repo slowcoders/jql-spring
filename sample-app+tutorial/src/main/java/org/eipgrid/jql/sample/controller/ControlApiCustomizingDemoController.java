@@ -3,7 +3,6 @@ package org.eipgrid.jql.sample.controller;
 import io.swagger.v3.oas.annotations.Operation;
 import org.eipgrid.jql.JqlController;
 import org.eipgrid.jql.JqlEntity;
-import org.eipgrid.jql.JqlService;
 import org.eipgrid.jql.jdbc.JdbcJqlService;
 import org.eipgrid.jql.util.KVEntity;
 import org.springframework.http.MediaType;
@@ -16,10 +15,10 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/jql/starwars/character")
-public class ControlApiCustomizingDemoController extends JqlController.CRUD<Object> {
+public class ControlApiCustomizingDemoController extends JqlEntity.CRUDController<Object> {
 
     public ControlApiCustomizingDemoController(JdbcJqlService service) {
-        super(service.makeRepository("starwars.character"));
+        super(service.getRepository("starwars.character"));
     }
 
     /**
@@ -52,7 +51,7 @@ public class ControlApiCustomizingDemoController extends JqlController.CRUD<Obje
     @ResponseBody
     @Operation(summary = "엔터티 추가 API 변경. default 값 설정.")
     @Transactional
-    public JqlEntity add(@RequestBody Map<String, Object> entity) throws Exception {
+    public Object add(@RequestBody Map<String, Object> entity) throws Exception {
         if (entity.get("note") == null) {
             entity.put("note", createNote());
         }

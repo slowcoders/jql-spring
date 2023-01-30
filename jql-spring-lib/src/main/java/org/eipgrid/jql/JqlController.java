@@ -15,25 +15,24 @@ import java.util.Map;
 
 public interface JqlController<ID> {
 
-    JqlRepository<ID> getRepository();
+    JqlEntityStore<ID> getStore();
 
     class Search<ID> implements JqlController<ID> {
-        private final JqlRepository<ID> repository;
+        private final JqlEntityStore<ID> store;
 
-        public Search(JqlRepository<ID> repository) {
-            this.repository = repository;
+        public Search(JqlEntityStore<ID> store) {
+            this.store = store;
         }
 
-        public JqlRepository<ID> getRepository() {
-            return repository;
+        public JqlEntityStore<ID> getStore() {
+            return store;
         }
 
         @GetMapping(path = "/{id}")
         @ResponseBody
         @Operation(summary = "지정 엔터티 읽기")
-        public JqlEntity get(@PathVariable("id") String id$) {
-            ID id = getRepository().convertId(id$);
-            JqlEntity entity = getRepository().find(id);
+        public Object get(@PathVariable("id") ID id) {
+            Object entity = getStore().find(id);
             if (entity == null) {
                 throw new HttpServerErrorException("Entity(" + id + ") is not found", HttpStatus.NOT_FOUND, null, null, null, null);
             }
@@ -51,9 +50,9 @@ public interface JqlController<ID> {
         @PostMapping(path = "/", consumes = {MediaType.APPLICATION_JSON_VALUE})
         @ResponseBody
         @Operation(summary = "엔터티 검색")
-        public Object find(@Schema(example = "{ \"select\": \"\", \"sort\": \"\", \"page\": 0, \"limit\": 0, \"filter\": { } }")
+        public JqlQuery.Response find(@Schema(example = "{ \"select\": \"\", \"sort\": \"\", \"page\": 0, \"limit\": 0, \"filter\": { } }")
                            @RequestBody JqlQuery.Request request) {
-            return request.execute(getRepository());
+            return request.buildQuery(getStore()).execute();
         }
 
         @PostMapping(path = "/count")
@@ -61,7 +60,7 @@ public interface JqlController<ID> {
         @Operation(summary = "엔터티 수 조회")
         public long count(@Schema(implementation = Object.class)
                           @RequestBody() HashMap<String, Object> jsFilter) {
-            long count = getRepository().count(getRepository().buildFilter(jsFilter));
+            long count = getStore().count(getStore().createFilter(jsFilter));
             return count;
         }
 
@@ -70,7 +69,7 @@ public interface JqlController<ID> {
         @ResponseBody
         @Operation(summary = "Cache 비우기")
         public void clearCache() {
-            getRepository().clearEntityCache(null);
+            getStore().clearEntityCaches();
         }
     }
 
@@ -80,9 +79,9 @@ public interface JqlController<ID> {
         @ResponseBody
         @Operation(summary = "엔터티 추가")
         @Transactional
-        default JqlEntity add(@RequestBody Map<String, Object> entity) throws Exception {
-            ID id = getRepository().insert(entity);
-            return getRepository().find(id);
+        default Object add(@RequestBody Map<String, Object> entity) throws Exception {
+            ID id = getStore().insert(entity);
+            return getStore().find(id);
         }
     }
 
@@ -92,11 +91,11 @@ public interface JqlController<ID> {
         @ResponseBody
         @Operation(summary = "엔터티 내용 변경")
         @Transactional
-        default List<JqlEntity> update(
+        default List<?> update(
                 @Schema(type = "string", required = true) @PathVariable("idList") Collection<ID> idList,
                 @RequestBody HashMap<String, Object> updateSet) throws Exception {
-            getRepository().update(idList, updateSet);
-            List<JqlEntity> entities = getRepository().list(idList);
+            getStore().update(idList, updateSet);
+            List<?> entities = getStore().find(idList);
             return entities;
         }
     }
@@ -107,10 +106,9 @@ public interface JqlController<ID> {
         @Operation(summary = "엔터티 삭제")
         @Transactional
         default Collection<ID> delete(@PathVariable("idList") Collection<ID> idList) {
-            getRepository().delete(idList);
+            getStore().delete(idList);
             return idList;
         }
-
     }
 
 
@@ -123,19 +121,19 @@ public interface JqlController<ID> {
         @ResponseBody
         @Operation(summary = "엔터티 추가")
         @Transactional
-        default JqlEntity add_form(@ModelAttribute ENTITY entity) throws Exception {
+        default ENTITY add_form(@ModelAttribute ENTITY entity) throws Exception {
             throw new RuntimeException("not implemented!");
 //            ID id = getRepository().insert(entity);
 //            return getRepository().find(id);
         }
     }
 
-    class CRUD<ID> extends Search<ID>
-            implements Insert<ID>, Update<ID>, Delete<ID> {
-        public CRUD(JqlRepository<ID> repository) {
-            super(repository);
+    class CRUD<ID> extends Search<ID> implements Insert<ID>, Update<ID>, Delete<ID> {
+        public CRUD(JqlEntityStore<ID> store) {
+            super(store);
         }
     }
+
 }
 
 
