@@ -20,4 +20,6 @@ public interface QResultMapping {
     boolean hasArrayDescendantNode();
 
     boolean isEmpty();
+
+    QResultMapping getChildMapping(String name);
 }

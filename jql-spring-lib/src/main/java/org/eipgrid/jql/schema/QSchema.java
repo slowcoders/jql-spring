@@ -1,12 +1,8 @@
 package org.eipgrid.jql.schema;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
-import org.eipgrid.jql.JqlEntity;
 import org.eipgrid.jql.util.AttributeNameConverter;
-import org.eipgrid.jql.util.ClassUtils;
 
-import javax.persistence.Column;
-import javax.persistence.JoinColumn;
 import java.lang.reflect.Field;
 import java.util.*;
 
@@ -137,7 +133,7 @@ public abstract class QSchema {
     }
 
     protected void mapColumn(QColumn column, Field f) {
-        column.setMappedField(f);
+        column.setMappedOrmField(f);
     }
 
     protected void initJsonKeys(Class<?> ormType) {

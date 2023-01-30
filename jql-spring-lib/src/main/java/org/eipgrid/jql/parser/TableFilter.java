@@ -48,6 +48,12 @@ class TableFilter extends EntityFilter implements QResultMapping {
         return parent == null ? null : parent.asTableFilter();
     }
 
+
+    @Override
+    public QResultMapping getChildMapping(String name) {
+        return (QResultMapping)this.subFilters.get(name);
+    }
+
     @Override
     public String getMappingAlias() {
         return mappingAlias;

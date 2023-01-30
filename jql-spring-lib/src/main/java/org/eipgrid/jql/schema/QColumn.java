@@ -1,7 +1,5 @@
 package org.eipgrid.jql.schema;
 
-import org.eipgrid.jql.util.ClassUtils;
-
 import java.lang.reflect.Field;
 
 public abstract class QColumn {
@@ -81,5 +79,7 @@ public abstract class QColumn {
 
     public String toString() { return getSchema().getSimpleTableName() + "::" + this.getJsonKey()+ "<" + physicalName + ">"; }
 
-    protected void setMappedField(Field f) {}
+    public Field getMappedOrmField() { return null; }
+
+    protected void setMappedOrmField(Field f) {}
 }

@@ -179,7 +179,7 @@ public class SqlGenerator extends SqlConverter implements QueryGenerator {
         JqlFilter where = query.getFilter();
         String tableName = where.getTableName();
 
-        where.setSelectedProperties(selectPrimaryKeyOnly ? JqlQuery.PrimaryKeys : query.getSelect());
+        where.setSelectedProperties(query.getSelect());//selectPrimaryKeyOnly ? JqlQuery.PrimaryKeys : query.getSelect());
 
         boolean need_complex_pagination = !selectPrimaryKeyOnly && query.getLimit() > 0 && needDistinctPagination(where);
         if (need_complex_pagination) {
@@ -198,6 +198,9 @@ public class SqlGenerator extends SqlConverter implements QueryGenerator {
         sw.write("\nSELECT DISTINCT \n");
         if (selectPrimaryKeyOnly) {
             sw.write('\t');
+            for (QResultMapping mapping : where.getResultMappings()) {
+                mapping.getSelectedColumns();
+            }
             String alias = where.getMappingAlias();
             for (QColumn col : where.getSchema().getPKColumns()) {
                 sw.write(alias).write('.').write(col.getPhysicalName()).write(", ");

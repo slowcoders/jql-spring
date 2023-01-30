@@ -44,6 +44,7 @@ public abstract class JqlService implements AttributeNameConverter {
                       EntityManager entityManager, EntityManagerFactory entityManagerFactory) throws Exception {
         this.jdbc = new JdbcTemplate(dataSource);
         this.objectMapper = new ObjectMapper();
+//        this.objectMapper
         this.transactionTemplate = transactionTemplate;
         this.jsonConverter = jsonConverter;
         this.conversionService = conversionService;

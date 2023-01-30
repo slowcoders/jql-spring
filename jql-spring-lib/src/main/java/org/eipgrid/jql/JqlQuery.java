@@ -1,12 +1,13 @@
 package org.eipgrid.jql;
 
 import com.fasterxml.jackson.annotation.JsonAnyGetter;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.Getter;
 import org.eipgrid.jql.parser.JqlFilter;
+import org.eipgrid.jql.schema.QResultMapping;
 import org.eipgrid.jql.util.KVEntity;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Sort;
 
 import java.util.*;
@@ -66,7 +67,7 @@ public class JqlQuery {
             long count = this.count();
             properties = KVEntity.of("totalElements", count);
         }
-        return new Response(result, properties);
+        return new Response(result, properties, filter);
     }
 
     public long count() {
@@ -94,16 +95,20 @@ public class JqlQuery {
         }
     }
 
-    @Data
+    @Getter
     public static class Response {
 
         @JsonAnyGetter
         private Map<String, Object> properties;
         private Object content;
 
-        public Response(Object content, Map<String, Object> properties) {
+        @JsonIgnore
+        private QResultMapping resultMapping;
+
+        public Response(Object content, Map<String, Object> properties, QResultMapping resultMapping) {
             this.content = content;
             this.properties = properties;
+            this.resultMapping = resultMapping;
         }
     }
 

@@ -50,19 +50,20 @@ public abstract class JPARepositoryBase<ENTITY, ID> extends JDBCRepositoryBase<E
         EntityManager em = getEntityManager();
         Query q = em.createQuery(sw.toString());
         List<ENTITY> res = q.getResultList();
-        // TODO entityManager
+
         return res;
     }
 
     public ID insert(Map<String, Object> dataSet) throws IOException {
-        ID id = super.insert(dataSet);
-        // TODO entityManager
-        return id;
+        ObjectMapper converter = service.getObjectMapper();
+        ENTITY entity = converter.convertValue(dataSet, getEntityType());
+        ENTITY entity2 = this.insertOrUpdate(entity);
+        return getEntityId(entity2);
     }
 
     public List<ID> insert(Collection<Map<String, Object>> entities) {
         List<ID> res = super.insert(entities);
-//        List<ENTITY> res2 = super.find(res);
+//        List<ENTITY> res2 = this.find(res);
 //        EntityManager em = getEntityManager();
 //        em.setProperty();
         return res;

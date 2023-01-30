@@ -74,7 +74,9 @@ public class JdbcColumn extends QColumn {
 
     public boolean isForeignKey() { return fkBinder != null; }
 
-    protected void setMappedField(Field f) {
+    public Field getMappedOrmField() { return this.field; }
+
+    protected void setMappedOrmField(Field f) {
         this.field = f;
         this.fieldName = f.getName();
     }

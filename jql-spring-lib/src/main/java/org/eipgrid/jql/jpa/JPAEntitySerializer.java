@@ -40,8 +40,8 @@ public class JPAEntitySerializer extends StdSerializer<Object> {
             Object value, JsonGenerator gen, SerializerProvider provider)
             throws IOException {
         Stack<Object> stack = getStack(provider);
-        if (stack.contains(value)) {
-            serializeIdentifier(value, gen, provider);
+        if (!stack.isEmpty() || stack.contains(value)) {
+//            serializeIdentifier(value, gen, provider);
             return;
         }
 
