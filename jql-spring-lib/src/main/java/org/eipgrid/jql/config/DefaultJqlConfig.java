@@ -1,21 +1,16 @@
 package org.eipgrid.jql.config;
 
-import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.Version;
+import com.fasterxml.jackson.databind.BeanDescription;
 import com.fasterxml.jackson.databind.Module;
-import com.fasterxml.jackson.databind.*;
-import com.fasterxml.jackson.databind.introspect.BasicBeanDescription;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationConfig;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.ser.BeanPropertyWriter;
-import com.fasterxml.jackson.databind.ser.BeanSerializerFactory;
 import com.fasterxml.jackson.databind.ser.BeanSerializerModifier;
-import com.fasterxml.jackson.datatype.hibernate5.Hibernate5Module;
 import lombok.SneakyThrows;
 import org.eipgrid.jql.JqlQuery;
-import org.eipgrid.jql.jpa.JPAEntitySerializer;
 import org.eipgrid.jql.jpa.JqlPropertyWriter;
-import org.eipgrid.jql.jpa.JqlResponseSerializer;
-import org.eipgrid.jql.util.JJEntity;
 import org.springframework.boot.context.properties.ConfigurationPropertiesBinding;
 import org.springframework.context.annotation.Bean;
 import org.springframework.core.convert.converter.Converter;
@@ -135,9 +130,6 @@ public class DefaultJqlConfig {
     @Bean
     public Module jqlJacksonModule() {
         JPAJacksonModule hm = new JPAJacksonModule();
-
-//        hm.configure(Hibernate5Module.Feature.WRITE_MISSING_ENTITIES_AS_NULL, true);
-//        hm.configure(Hibernate5Module.Feature.SERIALIZE_IDENTIFIER_FOR_LAZY_NOT_LOADED_OBJECTS, true);
         return hm;
     }
 

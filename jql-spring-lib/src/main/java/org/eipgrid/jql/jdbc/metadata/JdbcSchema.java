@@ -1,19 +1,17 @@
 package org.eipgrid.jql.jdbc.metadata;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
-import org.eipgrid.jql.JqlEntity;
 import org.eipgrid.jql.schema.QColumn;
-import org.eipgrid.jql.schema.QSchema;
 import org.eipgrid.jql.schema.QJoin;
+import org.eipgrid.jql.schema.QSchema;
 import org.eipgrid.jql.schema.SchemaLoader;
+import org.eipgrid.jql.util.CaseConverter;
 import org.eipgrid.jql.util.ClassUtils;
 import org.eipgrid.jql.util.SourceWriter;
-import org.eipgrid.jql.util.AttributeNameConverter;
 
-import javax.persistence.*;
-import java.lang.reflect.Array;
+import javax.persistence.Column;
+import javax.persistence.JoinColumn;
 import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
 import java.util.*;
 
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
@@ -28,7 +26,7 @@ public class JdbcSchema extends QSchema {
     }
 
     protected JdbcSchema(SchemaLoader schemaLoader, String tableName) {
-        this(schemaLoader, tableName, JqlEntity.class);
+        this(schemaLoader, tableName, Map.class);
     }
 
     protected void init(ArrayList<? extends QColumn> columns, HashMap<String, ArrayList<String>> uniqueConstraints, Class<?> ormType) {
@@ -159,7 +157,7 @@ public class JdbcSchema extends QSchema {
 
         for (Map.Entry<String, QJoin> entry : this.getEntityJoinMap().entrySet()) {
             QJoin join = entry.getValue();
-            QSchema mappedSchema = join.getAssociatedSchema__22();
+            QSchema mappedSchema = join.getTargetSchema();
             boolean isInverseJoin = join.isInverseMapped();
             boolean isUniqueJoin = join.isUniqueJoin();
             boolean isArrayJoin = isInverseJoin && !isUniqueJoin;
@@ -191,7 +189,7 @@ public class JdbcSchema extends QSchema {
                 sb.write("referencedColumnName = ").writeQuoted(fk.getJoinedPrimaryColumn().resolveJavaFieldName()).write(")\n");
             }
             else if (join.getAssociativeJoin() != null) {
-                sb.write("@JoinTable(name = ").writeQuoted(join.getJoinedSchema().getSimpleTableName()).write(", ");
+                sb.write("@JoinTable(name = ").writeQuoted(join.getLinkedSchema().getSimpleTableName()).write(", ");
                 sb.write("joinColumns = @JoinColumn(name=").writeQuoted(firstFk.getPhysicalName()).write("), ");
                 sb.write("inverseJoinColumns = @JoinColumn(name=").writeQuoted(join.getAssociativeJoin().getForeignKeyColumns().get(0).getPhysicalName()).write("))\n");
             }
@@ -210,7 +208,7 @@ public class JdbcSchema extends QSchema {
     }
 
     private String toJavaTypeName(String name) {
-        return AttributeNameConverter.toCamelCase(name, true);
+        return CaseConverter.toCamelCase(name, true);
     }
 
     private String getJavaFieldName(QJoin join) {
@@ -322,7 +320,7 @@ public class JdbcSchema extends QSchema {
                 }
             }
         }
-        AttributeNameConverter cvt = getSchemaLoader().getNameConverter();
+        CaseConverter cvt = getSchemaLoader().getNameConverter();
         String colName = cvt.toPhysicalColumnName(f.getName());
         return colName;
     }

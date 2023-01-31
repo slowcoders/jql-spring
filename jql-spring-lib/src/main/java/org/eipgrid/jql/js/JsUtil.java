@@ -4,7 +4,7 @@ import org.eipgrid.jql.schema.QColumn;
 import org.eipgrid.jql.schema.QSchema;
 import org.eipgrid.jql.schema.QJoin;
 import org.eipgrid.jql.jdbc.metadata.JdbcColumn;
-import org.eipgrid.jql.util.AttributeNameConverter;
+import org.eipgrid.jql.util.CaseConverter;
 import org.eipgrid.jql.util.ClassUtils;
 
 import java.util.HashMap;
@@ -29,7 +29,7 @@ public class JsUtil {
             }
             for (Map.Entry<String, QJoin> entry : schema.getEntityJoinMap().entrySet()) {
                 sb.append("  jql.externalJoin(\"").append(entry.getKey()).append("\", ");
-                sb.append(entry.getValue().getJoinedSchema().getSimpleTableName()).append("Schema, ");
+                sb.append(entry.getValue().getLinkedSchema().getSimpleTableName()).append("Schema, ");
                 sb.append(entry.getValue().isUniqueJoin() ? "Object" : "Array").append("),\n");
             }
             sb.append("];\n");
@@ -67,7 +67,7 @@ public class JsUtil {
 
             sb.append(schema.getSimpleTableName()).append("Schema.join(\"");
             sb.append(jqlColumn.getJsonKey()).append("\", ");
-            sb.append(joined_pk.getSchema().getEntityClassName()).append("Schema, \"");
+            sb.append(joined_pk.getSchema().getORMType().getSimpleName()).append("Schema, \"");
             sb.append(joined_pk.getJsonKey()).append("\");\n");
         }
         return sb.toString();
@@ -87,7 +87,7 @@ public class JsUtil {
     private static String getColumnType(QColumn column) {
         QColumn joinedPK = column.getJoinedPrimaryColumn();
         if (joinedPK != null) {
-            String columnType = AttributeNameConverter.toCamelCase(joinedPK.getSchema().getSimpleTableName(), true);
+            String columnType = CaseConverter.toCamelCase(joinedPK.getSchema().getSimpleTableName(), true);
             return columnType;
         }
 
@@ -144,10 +144,10 @@ public class JsUtil {
 
             for (Map.Entry<String, QJoin> entry : schema.getEntityJoinMap().entrySet()) {
                 QJoin join = entry.getValue();
-                QSchema refSchema = join.getAssociatedSchema__22();
+                QSchema refSchema = join.getTargetSchema();
                 if (refSchema.hasOnlyForeignKeys()) continue;
                 int start = sb.length();
-                sb.append(join.getAssociatedSchema__22().getSimpleTableName());
+                sb.append(join.getTargetSchema().getSimpleTableName());
                 if (!join.isUniqueJoin()) sb.append("[]");
                 int type_len = sb.length() - start;
                 if (type_len >= filler.length()) {

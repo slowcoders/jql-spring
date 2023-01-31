@@ -1,23 +1,19 @@
 package org.eipgrid.jql.schema;
 
-import org.eipgrid.jql.js.JsUtil;
-import org.eipgrid.jql.util.AttributeNameConverter;
+import org.eipgrid.jql.util.CaseConverter;
 
-import javax.persistence.Table;
-import java.lang.reflect.Field;
 import java.util.HashMap;
-import java.util.concurrent.atomic.AtomicInteger;
 
 public abstract class SchemaLoader {
 
     private final HashMap<Class<?>, QSchema> classToSchemaMap = new HashMap<>();
-    private final AttributeNameConverter nameConverter;
+    private final CaseConverter nameConverter;
 
-    protected SchemaLoader(AttributeNameConverter nameConverter) {
+    protected SchemaLoader(CaseConverter nameConverter) {
         this.nameConverter = nameConverter;
     }
 
-    public final AttributeNameConverter getNameConverter() {
+    public final CaseConverter getNameConverter() {
         return this.nameConverter;
     }
 
@@ -35,11 +31,11 @@ public abstract class SchemaLoader {
     }
 
     public String makeTablePath(String schema, String name) {
-        name = AttributeNameConverter.camelCaseConverter.toPhysicalColumnName(name).toLowerCase();
+        name = CaseConverter.camelCaseConverter.toPhysicalColumnName(name).toLowerCase();
         if (schema == null || schema.length() == 0) {
             schema = getDefaultDBSchema();
         }
-        schema = AttributeNameConverter.camelCaseConverter.toPhysicalColumnName(schema).toLowerCase();
+        schema = CaseConverter.camelCaseConverter.toPhysicalColumnName(schema).toLowerCase();
         name = schema + "." + name;
         return name;
     }

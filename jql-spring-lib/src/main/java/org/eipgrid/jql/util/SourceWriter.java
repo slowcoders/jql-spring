@@ -129,10 +129,9 @@ public class SourceWriter<Self extends SourceWriter> {
 
     public Self replaceTrailingComma(String text) {
         int len = sb.length();
-        while (len > 0) {
-            char ch = sb.charAt(--len);
-            if (ch <= ' ') continue;
-            if (ch == ',') break;
+        for (; len > 0; len --) {
+            char ch = sb.charAt(len - 1);
+            if (ch > ' ' && ch != ',') break;
         }
         sb.setLength(len);
         this.write(text);

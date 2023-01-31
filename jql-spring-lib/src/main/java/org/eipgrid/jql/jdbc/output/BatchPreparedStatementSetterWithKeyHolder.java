@@ -1,4 +1,4 @@
-package org.eipgrid.jql.jdbc;
+package org.eipgrid.jql.jdbc.output;
 
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.*;

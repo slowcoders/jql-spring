@@ -1,13 +1,15 @@
-package org.eipgrid.jql;
+package org.eipgrid.jql.jdbc.output;
 
+import org.eipgrid.jql.JqlController;
+import org.eipgrid.jql.JqlEntityStore;
+import org.eipgrid.jql.JqlService;
 import org.eipgrid.jql.jdbc.JDBCRepositoryBase;
 import org.eipgrid.jql.schema.QSchema;
 import org.eipgrid.jql.util.KVEntity;
 
-import java.util.List;
 import java.util.Map;
 
-public class JqlEntity extends KVEntity implements Map<String, Object> {
+class JqlEntity extends KVEntity implements Map<String, Object> {
 
     public static class SearchController<ID> extends JqlController.Search<ID> {
         public SearchController(JqlEntityStore<ID> store) {

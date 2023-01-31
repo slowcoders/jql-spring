@@ -17,7 +17,7 @@ public abstract class JqlRepository<ENTITY, ID> implements JqlEntityStore<ID> {
     protected JqlRepository(JqlService service, QSchema schema) {
         this.service = service;
         this.schema = schema;
-        this.jqlParser = new JqlParser(service.getConversionService());
+        this.jqlParser = new JqlParser(service.getObjectMapper());
     }
 
 
@@ -31,7 +31,7 @@ public abstract class JqlRepository<ENTITY, ID> implements JqlEntityStore<ID> {
 
     public final QSchema getSchema() { return schema; }
 
-    public final Class<ENTITY> getEntityType() { return (Class<ENTITY>)schema.getJpaType(); }
+    public final Class<ENTITY> getEntityType() { return (Class<ENTITY>)schema.getORMType(); }
 
     public abstract ID convertId(Object id);
 
@@ -43,11 +43,16 @@ public abstract class JqlRepository<ENTITY, ID> implements JqlEntityStore<ID> {
         return schema.hasGeneratedId();
     }
 
+    protected void setGenerateQuery(JqlQuery query, String generatedQuery, Object extraInfo) {
+        query.executedQuery = generatedQuery;
+        query.extraInfo = extraInfo;
+    }
+
     public abstract <T> List<T> find(JqlQuery query, Class<T> entityType);
 
     public List<ENTITY> find(JqlQuery query) { return find(query, getEntityType()); }
 
-    public List<JqlEntity> find_raw(JqlQuery query) { return find(query, JqlEntity.class); }
+    public List<Map> find_raw(JqlQuery query) { return find(query, Map.class); }
 
 
     public <T> T find(ID id, Class<T> entityType) {
@@ -57,7 +62,7 @@ public abstract class JqlRepository<ENTITY, ID> implements JqlEntityStore<ID> {
 
     public ENTITY find(ID id) { return find(id, getEntityType()); }
 
-    public JqlEntity find_raw(ID id) { return find(id, JqlEntity.class); }
+    public Map find_raw(ID id) { return find(id, Map.class); }
 
 
     public <T> T get(ID id, Class<T> entityType) {
@@ -69,7 +74,7 @@ public abstract class JqlRepository<ENTITY, ID> implements JqlEntityStore<ID> {
 
     public ENTITY get(ID id) { return get(id, getEntityType()); }
 
-    public JqlEntity get_raw(ID id) { return get(id, JqlEntity.class); }
+    public Map get_raw(ID id) { return get(id, Map.class); }
 
 
 
@@ -80,7 +85,7 @@ public abstract class JqlRepository<ENTITY, ID> implements JqlEntityStore<ID> {
 
     public List<ENTITY> find(Collection<ID> idList) { return find(idList, getEntityType()); }
 
-    public List<JqlEntity> find_raw(Collection<ID> idList) { return find(idList, JqlEntity.class); }
+    public List<Map> find_raw(Collection<ID> idList) { return find(idList, Map.class); }
 
 
     public abstract long count(JqlFilter filter);

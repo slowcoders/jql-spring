@@ -1,15 +1,11 @@
 package org.eipgrid.jql.jdbc.metadata;
 
-import org.eipgrid.jql.*;
-import org.eipgrid.jql.jdbc.QueryGenerator;
 import org.eipgrid.jql.jdbc.SqlGenerator;
-//import org.eipgrid.jql.jpa.JpaSchema;
-import org.eipgrid.jql.parser.JqlFilter;
 import org.eipgrid.jql.schema.QColumn;
 import org.eipgrid.jql.schema.QJoin;
 import org.eipgrid.jql.schema.QSchema;
 import org.eipgrid.jql.schema.SchemaLoader;
-import org.eipgrid.jql.util.AttributeNameConverter;
+import org.eipgrid.jql.util.CaseConverter;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.ConnectionCallback;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -19,13 +15,13 @@ import javax.sql.DataSource;
 import java.sql.*;
 import java.util.*;
 
-public class JdbcSchemaLoader extends SchemaLoader implements QueryGenerator {
+public class JdbcSchemaLoader extends SchemaLoader {
     private final JdbcTemplate jdbc;
     private final String defaultSchema;
     private String catalog;
     private final HashMap<String, QSchema> metadataMap = new HashMap<>();
 
-    public JdbcSchemaLoader(DataSource dataSource, AttributeNameConverter nameConverter) {
+    public JdbcSchemaLoader(DataSource dataSource, CaseConverter nameConverter) {
         super(nameConverter);
         this.jdbc = new JdbcTemplate(dataSource);
         this.defaultSchema = jdbc.execute(new ConnectionCallback<String>() {
@@ -57,7 +53,7 @@ public class JdbcSchemaLoader extends SchemaLoader implements QueryGenerator {
             tablePath0 = resolveTableName(ormType0);
         }
         else if (ormType0 == null) {
-            ormType0 = JqlEntity.class;
+            ormType0 = Map.class;
         }
 
         final String tablePath = tablePath0.toLowerCase();
@@ -364,37 +360,7 @@ public class JdbcSchemaLoader extends SchemaLoader implements QueryGenerator {
         }
     }
 
-    @Override
-    public String createSelectQuery(JqlQuery query, boolean selectPrimaryKeyOnly) {
-        return createSqlGenerator().createSelectQuery(query, selectPrimaryKeyOnly);
-    }
-
-    @Override
-    public String createCountQuery(JqlFilter where) {
-        return createSqlGenerator().createCountQuery(where);
-    }
-
-    @Override
-    public String createUpdateQuery(JqlFilter where, Map<String, Object> updateSet) {
-        return createSqlGenerator().createUpdateQuery(where, updateSet);
-    }
-
-    @Override
-    public String createDeleteQuery(JqlFilter where) {
-        return createSqlGenerator().createDeleteQuery(where);
-    }
-
-    @Override
-    public String prepareFindByIdStatement(QSchema schema) {
-        return createSqlGenerator().prepareFindByIdStatement(schema);
-    }
-
-    @Override
-    public String createInsertStatement(QSchema schema, Map entity, boolean ignoreConflict) {
-        return createSqlGenerator().createInsertStatement(schema, entity, ignoreConflict);
-    }
-
-    protected SqlGenerator createSqlGenerator() {
-        return new SqlGenerator();
+    public SqlGenerator createSqlGenerator(boolean isNativeQuery) {
+        return new SqlGenerator(isNativeQuery);
     }
 }

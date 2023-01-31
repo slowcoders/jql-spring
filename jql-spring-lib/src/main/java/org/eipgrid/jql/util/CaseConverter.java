@@ -3,13 +3,12 @@ package org.eipgrid.jql.util;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 
-public interface AttributeNameConverter {
+public interface CaseConverter {
 
-    AttributeNameConverter bypassConverter = new BypassConverter();
-    AttributeNameConverter camelCaseConverter = new CamelCaseConverter();
-    AttributeNameConverter defaultConverter = camelCaseConverter;
+    CaseConverter bypassConverter = new BypassConverter();
+    CaseConverter camelCaseConverter = new CamelCaseConverter();
+    CaseConverter defaultConverter = camelCaseConverter;
 
     String toPhysicalColumnName(String fieldName);
 
@@ -78,7 +77,7 @@ public interface AttributeNameConverter {
         return str;
     }
 
-    class BypassConverter implements AttributeNameConverter {
+    class BypassConverter implements CaseConverter {
         @Override
         public String toPhysicalColumnName(String fieldName) {
             return fieldName;
@@ -92,7 +91,7 @@ public interface AttributeNameConverter {
     };
 
 
-    class CamelCaseConverter implements AttributeNameConverter {
+    class CamelCaseConverter implements CaseConverter {
 
         public CamelCaseConverter() {
         }

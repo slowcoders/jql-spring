@@ -1,12 +1,11 @@
 package org.eipgrid.jql.jdbc;
 
-import org.eipgrid.jql.JqlEntity;
 import org.eipgrid.jql.schema.QSchema;
 import org.eipgrid.jql.schema.SchemaLoader;
 import org.eipgrid.jql.jdbc.metadata.JdbcSchemaLoader;
 import org.eipgrid.jql.JqlRepository;
 import org.eipgrid.jql.JqlService;
-import org.eipgrid.jql.util.AttributeNameConverter;
+import org.eipgrid.jql.util.CaseConverter;
 import org.springframework.core.convert.ConversionService;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.transaction.support.TransactionTemplate;
@@ -30,9 +29,9 @@ public class JdbcJqlService extends JqlService {
                           RequestMappingHandlerMapping handlerMapping,
                           EntityManager entityManager,
                           EntityManagerFactory entityManagerFactory) throws Exception {
-        super(dataSource, transactionTemplate, jsonConverter, conversionService,
-                handlerMapping, entityManager, entityManagerFactory);
-        jdbcSchemaLoader = new JdbcSchemaLoader(dataSource, AttributeNameConverter.defaultConverter);
+        super(dataSource, transactionTemplate, conversionService,
+                entityManager);
+        jdbcSchemaLoader = new JdbcSchemaLoader(dataSource, CaseConverter.defaultConverter);
     }
 
     public SchemaLoader getSchemaLoader() {
@@ -44,7 +43,7 @@ public class JdbcJqlService extends JqlService {
         if (repo == null) {
             // TODO ormType
             QSchema schema = jdbcSchemaLoader.loadSchema(tableName, null);
-            repo = new JqlEntity.Repository(this, schema);
+            repo = new JDBCRepositoryBase(this, schema);
             repositories.put(tableName, repo);
         }
         return repo;
@@ -66,7 +65,7 @@ public class JdbcJqlService extends JqlService {
         return jdbcSchemaLoader.getDBSchemas();
     }
 
-    public QueryGenerator getQueryGenerator() {
-        return jdbcSchemaLoader;
+    public QueryGenerator createQueryGenerator(boolean isNativeQuery) {
+        return jdbcSchemaLoader.createSqlGenerator(isNativeQuery);
     }
 }

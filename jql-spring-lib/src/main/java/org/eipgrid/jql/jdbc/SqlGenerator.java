@@ -12,10 +12,12 @@ import java.util.*;
 
 public class SqlGenerator extends SqlConverter implements QueryGenerator {
 
+    private final boolean isNativeQuery;
     private EntityFilter currentNode;
 
-    public SqlGenerator() {
+    public SqlGenerator(boolean isNativeQuery) {
         super(new SourceWriter('\''));
+        this.isNativeQuery = isNativeQuery;
     }
 
     protected String getCommand(SqlConverter.Command command) {
@@ -36,9 +38,10 @@ public class SqlGenerator extends SqlConverter implements QueryGenerator {
         }
     }
 
-    protected void writeQualifiedColumnName(String columnName, Object value) {
+    protected void writeQualifiedColumnName(QColumn column, Object value) {
         if (!currentNode.isJsonNode()) {
-            sw.write(this.currentNode.getMappingAlias()).write('.').write(columnName);
+            String name = isNativeQuery ? column.getPhysicalName() : column.getJsonKey();
+            sw.write(this.currentNode.getMappingAlias()).write('.').write(name);
         }
         else {
             sw.write('(');
@@ -48,7 +51,7 @@ public class SqlGenerator extends SqlConverter implements QueryGenerator {
                 sw.write('>');
                 valueType = null;
             }
-            sw.writeQuoted(columnName);
+            sw.writeQuoted(column.getJsonKey());
             sw.write(')');
             if (valueType != null) {
                 writeTypeCast(valueType);
@@ -111,7 +114,7 @@ public class SqlGenerator extends SqlConverter implements QueryGenerator {
     }
 
     private void writeFrom(JqlFilter where, String tableName, boolean ignoreEmptyFilter) {
-        sw.write("FROM ").write(tableName).write(" as ").write(where.getMappingAlias());
+        sw.write("FROM ").write(tableName).write(isNativeQuery ? " as " : " ").write(where.getMappingAlias());
         for (QResultMapping fetch : where.getResultMappings()) {
             QJoin join = fetch.getEntityJoin();
             if (join == null) continue;
@@ -120,23 +123,29 @@ public class SqlGenerator extends SqlConverter implements QueryGenerator {
 
             String parentAlias = fetch.getParentNode().getMappingAlias();
             String alias = fetch.getMappingAlias();
-            if (true || join.isUniqueJoin()) {
+            if (isNativeQuery) {
                 QJoin associated = join.getAssociativeJoin();
                 writeJoinStatement(join, parentAlias, associated == null ? alias : "p" + alias);
                 if (associated != null) {
                     writeJoinStatement(associated, "p" + alias, alias);
                 }
-            } else {
-
             }
+            else {
+                sw.write(fetch.getSelectedColumns().size() > 0 ? " join fetch " : " join ");
+                sw.write(parentAlias).write('.').write(join.getJsonKey()).write(",\n");
+            }
+        }
+
+        if (!isNativeQuery) {
+            sw.replaceTrailingComma("");
         }
     }
 
 
     private void writeJoinStatement(QJoin join, String baseAlias, String alias) {
         boolean isInverseMapped = join.isInverseMapped();
-        String joinedTable = join.getJoinedSchema().getTableName();
-        sw.write("\nleft join ").write(joinedTable).write(" as ").write(alias).write(" on\n\t");
+        String mediateTable = join.getLinkedSchema().getTableName();
+        sw.write("\nleft join ").write(mediateTable).write(" as ").write(alias).write(" on\n\t");
         for (QColumn fk : join.getForeignKeyColumns()) {
             QColumn anchor, linked;
             if (isInverseMapped) {
@@ -167,21 +176,20 @@ public class SqlGenerator extends SqlConverter implements QueryGenerator {
 
             if (mapping.getSelectedColumns().size() == 0) continue;
 
-            if (mapping.isArrayNode()) {// && mapping.hasFilterPredicates()) {
+            if (mapping.isArrayNode()) {
                 return true;
             }
         }
         return false;
     }
 
-    public String createSelectQuery(JqlQuery query, boolean selectPrimaryKeyOnly) {
+    public String createSelectQuery(JqlQuery query) {
         sw.reset();
         JqlFilter where = query.getFilter();
-        String tableName = where.getTableName();
+        where.setSelectedProperties(query.getSelect());
 
-        where.setSelectedProperties(query.getSelect());//selectPrimaryKeyOnly ? JqlQuery.PrimaryKeys : query.getSelect());
-
-        boolean need_complex_pagination = !selectPrimaryKeyOnly && query.getLimit() > 0 && needDistinctPagination(where);
+        String tableName = isNativeQuery ? where.getTableName() : where.getSchema().getORMType().getSimpleName();
+        boolean need_complex_pagination = isNativeQuery && query.getLimit() > 0 && needDistinctPagination(where);
         if (need_complex_pagination) {
             sw.write("\nWITH _cte AS (\n"); // WITH _cte AS NOT MATERIALIZED
             sw.incTab();
@@ -196,15 +204,8 @@ public class SqlGenerator extends SqlConverter implements QueryGenerator {
         }
 
         sw.write("\nSELECT DISTINCT \n");
-        if (selectPrimaryKeyOnly) {
-            sw.write('\t');
-            for (QResultMapping mapping : where.getResultMappings()) {
-                mapping.getSelectedColumns();
-            }
-            String alias = where.getMappingAlias();
-            for (QColumn col : where.getSchema().getPKColumns()) {
-                sw.write(alias).write('.').write(col.getPhysicalName()).write(", ");
-            }
+        if (!isNativeQuery) {
+            sw.write(where.getMappingAlias()).write(',');
         }
         else {
             for (QResultMapping mapping : where.getResultMappings()) {

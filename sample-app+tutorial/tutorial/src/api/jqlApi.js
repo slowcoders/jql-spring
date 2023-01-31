@@ -37,7 +37,7 @@ async function notifyPageChanged(paginationCallback, res) {
     if (res.pageable) {
         const pageSize = res.pageable.pageSize;
         const pageNumber = res.pageable.pageNumer;
-        const totalElements = res.totalElements;
+        const totalElements = res.metadata.totalElements;
         paginationCallback(pageSize, pageNumber, totalElements);
     } else {
         const pageSize = page.content.length;

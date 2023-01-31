@@ -25,34 +25,34 @@ public abstract class JPARepositoryBase<ENTITY, ID> extends JDBCRepositoryBase<E
         jqlServices.put(this.getEntityType(), this);
     }
 
-    @Override
-    public List<ENTITY> find(JqlQuery query) {
-        List<Object[]> idList = super.listPrimaryKeys(query);
-        SourceWriter sw = new SourceWriter<>('\'');
-        List<QColumn> pkColumns = schema.getPKColumns();
-        boolean isMultiPk = pkColumns.size() > 1;
-
-        sw.write("select t FROM ").write(schema.getEntityClassName()).write(" t WHERE ");
-        if (isMultiPk) sw.write("(");
-        for (QColumn col : pkColumns) {
-            sw.write("t." + col.getJsonKey()).write(", ");
-        }
-        sw.replaceTrailingComma(isMultiPk ? ")" : "");
-        sw.write(" IN (");
-        for (Object[] id : idList) {
-            if (isMultiPk) sw.write("(");
-            for (Object k : id) {
-                sw.writeValue(k).write(", ");
-            }
-            sw.replaceTrailingComma(isMultiPk ? "), " : ", ");
-        }
-        sw.replaceTrailingComma(")");
-        EntityManager em = getEntityManager();
-        Query q = em.createQuery(sw.toString());
-        List<ENTITY> res = q.getResultList();
-
-        return res;
-    }
+//    @Override
+//    public List<ENTITY> find(JqlQuery query) {
+//        List<Object[]> idList = super.listPrimaryKeys(query);
+//        SourceWriter sw = new SourceWriter<>('\'');
+//        List<QColumn> pkColumns = schema.getPKColumns();
+//        boolean isMultiPk = pkColumns.size() > 1;
+//
+//        sw.write("select t FROM ").write(schema.getEntityClassName()).write(" t WHERE ");
+//        if (isMultiPk) sw.write("(");
+//        for (QColumn col : pkColumns) {
+//            sw.write("t." + col.getJsonKey()).write(", ");
+//        }
+//        sw.replaceTrailingComma(isMultiPk ? ")" : "");
+//        sw.write(" IN (");
+//        for (Object[] id : idList) {
+//            if (isMultiPk) sw.write("(");
+//            for (Object k : id) {
+//                sw.writeValue(k).write(", ");
+//            }
+//            sw.replaceTrailingComma(isMultiPk ? "), " : ", ");
+//        }
+//        sw.replaceTrailingComma(")");
+//        EntityManager em = getEntityManager();
+//        Query q = em.createQuery(sw.toString());
+//        List<ENTITY> res = q.getResultList();
+//
+//        return res;
+//    }
 
     public ID insert(Map<String, Object> dataSet) throws IOException {
         ObjectMapper converter = service.getObjectMapper();

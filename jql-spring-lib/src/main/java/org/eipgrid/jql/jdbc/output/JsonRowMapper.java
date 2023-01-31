@@ -1,4 +1,4 @@
-package org.eipgrid.jql.jdbc;
+package org.eipgrid.jql.jdbc.output;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -6,7 +6,6 @@ import org.eipgrid.jql.schema.QResultMapping;
 import org.eipgrid.jql.schema.QColumn;
 import org.eipgrid.jql.schema.QSchema;
 import org.eipgrid.jql.schema.QType;
-import org.eipgrid.jql.JqlEntity;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.support.JdbcUtils;
@@ -16,12 +15,12 @@ import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.*;
 
-public class JsonRowMapper implements ResultSetExtractor<List<JqlEntity>> {
+public class JsonRowMapper implements ResultSetExtractor<List<Map>> {
     private final List<QResultMapping> resultMappings;
     private final ObjectMapper objectMapper;
     private ResultCache resultCacheRoot;
     private CachedEntity baseEntity = null;
-    private ArrayList<JqlEntity> results = new ArrayList<>();
+    private ArrayList<Map> results = new ArrayList<>();
     private MappedColumn[] mappedColumns;
 
     public JsonRowMapper(List<QResultMapping> rowMappings, ObjectMapper objectMapper) {
@@ -30,7 +29,7 @@ public class JsonRowMapper implements ResultSetExtractor<List<JqlEntity>> {
     }
 
     @Override
-    public List<JqlEntity> extractData(ResultSet rs) throws SQLException, DataAccessException {
+    public List<Map> extractData(ResultSet rs) throws SQLException, DataAccessException {
         this.mappedColumns = initMappedColumns(rs);
         this.resultCacheRoot = new ResultCache(0, resultMappings.size());
 

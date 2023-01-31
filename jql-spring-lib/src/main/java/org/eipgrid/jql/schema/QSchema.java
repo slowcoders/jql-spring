@@ -1,7 +1,6 @@
 package org.eipgrid.jql.schema;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
-import org.eipgrid.jql.util.AttributeNameConverter;
 
 import java.lang.reflect.Field;
 import java.util.*;
@@ -11,8 +10,6 @@ public abstract class QSchema {
     private final SchemaLoader schemaLoader;
     private final String tableName;
     private final Class<?> ormType;
-
-    private final String jpaClassName;
 
     private List<QColumn> pkColumns;
     private List<QColumn> allColumns;
@@ -26,16 +23,17 @@ public abstract class QSchema {
         this.tableName = tableName;
         this.schemaLoader = schemaLoader;
         this.ormType = ormType;
-        this.jpaClassName = !Map.class.isAssignableFrom(ormType) ? ormType.getSimpleName() :
-                AttributeNameConverter.camelCaseConverter.toLogicalAttributeName(getSimpleTableName());
     }
+
 
     public final SchemaLoader getSchemaLoader() {
         return schemaLoader;
     }
 
-//    @Override
-    public final Class<?> getJpaType() { return ormType; }
+    public final boolean isJPASchema() { return !Map.class.isAssignableFrom(ormType); }
+
+    public final Class<?> getORMType() { return ormType; }
+
     public String getTableName() {
         return this.tableName;
     }
@@ -83,10 +81,6 @@ public abstract class QSchema {
 
     public boolean hasColumn(String key) {
         return columnMap.get(key) != null;
-    }
-
-    public String getEntityClassName() {
-        return this.jpaClassName;
     }
 
     protected void init(ArrayList<? extends QColumn> columns, Class<?> ormType) {

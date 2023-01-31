@@ -1,6 +1,6 @@
 package org.eipgrid.jql.schema;
 
-import org.eipgrid.jql.util.AttributeNameConverter;
+import org.eipgrid.jql.util.CaseConverter;
 import org.eipgrid.jql.util.ClassUtils;
 
 import javax.persistence.Entity;
@@ -15,7 +15,6 @@ public class QJoin {
     private final boolean inverseMapped;
     private final List<QColumn> fkColumns;
     private final QSchema baseSchema;
-    private final QSchema joinedSchema;
 
     public QJoin(QSchema baseSchema, List<QColumn> fkColumns) {
         this(baseSchema, fkColumns, null);
@@ -28,16 +27,15 @@ public class QJoin {
         this.inverseMapped = baseSchema != fkSchema;
         if (inverseMapped) {
             assert(associatedJoin == null || !associatedJoin.inverseMapped);
-            this.joinedSchema = fkSchema;
             this.isUnique = (associatedJoin == null || associatedJoin.isUnique) &&
                             fkSchema.isUniqueConstrainedColumnSet(fkColumns);
         } else {
             assert(associatedJoin == null);
-            this.joinedSchema = fkColumns.get(0).getJoinedPrimaryColumn().getSchema();
+            QSchema mediateSchema = fkColumns.get(0).getJoinedPrimaryColumn().getSchema();
             List<QColumn> pkColumns = fkColumns.stream()
                     .map(col -> col.getJoinedPrimaryColumn())
                     .collect(Collectors.toList());
-            this.isUnique = joinedSchema.isUniqueConstrainedColumnSet(pkColumns);
+            this.isUnique = mediateSchema.isUniqueConstrainedColumnSet(pkColumns);
         }
         this.associateJoin = associatedJoin;
         this.jsonKey = associatedJoin != null ? associatedJoin.getJsonKey() : initJsonKey();
@@ -74,25 +72,25 @@ public class QJoin {
 
         String name;
         if (inverseMapped) {
-            if (fkColumns.size() == 1) {
-                Class<?> jpaType = baseSchema.getJpaType();
-                Class<?> jpaClass = getAssociatedSchema__22().getJpaType();
-                if (jpaType.getAnnotation(Entity.class) != null) {
-                    for (Field f : ClassUtils.getInstanceFields(jpaType, true)) {
-                        Class<?> itemT = ClassUtils.getElementType(f);
-                        if (jpaClass == itemT) {
-                            // TODO MappedBy 검사 필요.
-                            return f.getName();
-                        };
-                    }
+            Class<?> jpaType = baseSchema.getORMType();
+            Class<?> jpaClass = getTargetSchema().getORMType();
+            if (jpaType.getAnnotation(Entity.class) != null) {
+                for (Field f : ClassUtils.getInstanceFields(jpaType, true)) {
+                    Class<?> itemT = ClassUtils.getElementType(f);
+                    if (jpaClass == itemT) {
+                        // TODO MappedBy 검사 필요(?)
+                        return f.getName();
+                    };
                 }
             }
             // column 이 없으므로 타입을 이용하여 이름을 정한다.
-            name = first_fk.getSchema().getEntityClassName();
+            name = first_fk.getSchema().getSimpleTableName();
         }
         else {
-            name = first_fk.getJoinedPrimaryColumn().getSchema().getEntityClassName();
+            name = first_fk.getJoinedPrimaryColumn().getSchema().getSimpleTableName();
         }
+
+        name = CaseConverter.toCamelCase(name, false);
         return name + '_';
     }
 
@@ -104,16 +102,20 @@ public class QJoin {
         String fk_name = fk.getPhysicalName();
         QColumn joinedPk = fk.getJoinedPrimaryColumn();
         String pk_name = joinedPk.getPhysicalName();
-        String jkey;
+        String js_key;
         if (fk_name.endsWith("_" + pk_name)) {
-            jkey = AttributeNameConverter.toCamelCase(fk_name.substring(0, fk_name.length() - pk_name.length() - 1), false);
+            js_key = CaseConverter.toCamelCase(fk_name.substring(0, fk_name.length() - pk_name.length() - 1), false);
         } else {
-            jkey = joinedPk.getSchema().getSimpleTableName();
+            js_key = joinedPk.getSchema().getSimpleTableName();
         }
-        return jkey + "_";
+        return js_key + "_";
     }
 
-    public QSchema getJoinedSchema() {
+    public QSchema getBaseSchema() {
+        return this.baseSchema;
+    }
+
+    public QSchema getLinkedSchema() {
         QColumn col = fkColumns.get(0);
         if (!inverseMapped) {
             col = col.getJoinedPrimaryColumn();
@@ -121,19 +123,11 @@ public class QJoin {
         return col.getSchema();
     }
 
-    public QSchema getBaseSchema() {
-        return this.baseSchema;
-    }
-
-    public boolean isJoinedBySingleKey() {
-        return fkColumns.size() == 1;
-    }
-
-    public QSchema getAssociatedSchema__22() {
+    public QSchema getTargetSchema() {
         if (associateJoin != null) {
-            return associateJoin.getJoinedSchema();
+            return associateJoin.getLinkedSchema();
         } else {
-            return this.getJoinedSchema();
+            return this.getLinkedSchema();
         }
     }
 }

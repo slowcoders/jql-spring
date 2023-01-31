@@ -13,20 +13,22 @@ public class JqlFilter extends TableFilter {
     private int cntMappingAlias;
 
     private boolean selectAuto;
+    private boolean enableJPQL;
 
     public JqlFilter(QSchema schema) {
         super(schema, "t_0");
+        enableJPQL = schema.isJPASchema();
     }
 
     public static <ID> JqlFilter of(QSchema schema, ID id) {
         JqlFilter filter = new JqlFilter(schema);
-        filter.getPredicateSet().add(PredicateFactory.IS.createPredicate(schema.getPKColumns().get(0).getPhysicalName(), id));
+        filter.getPredicateSet().add(PredicateFactory.IS.createPredicate(schema.getPKColumns().get(0), id));
         return filter;
     }
 
     public static <ID> JqlFilter of(QSchema schema, Collection<ID> idList) {
         JqlFilter filter = new JqlFilter(schema);
-        filter.getPredicateSet().add(PredicateFactory.IS.createPredicate(schema.getPKColumns().get(0).getPhysicalName(), idList));
+        filter.getPredicateSet().add(PredicateFactory.IS.createPredicate(schema.getPKColumns().get(0), idList));
         return filter;
     }
 
@@ -91,9 +93,16 @@ public class JqlFilter extends TableFilter {
         }
     }
 
+    public boolean isJPQLEnabled() {
+        return this.enableJPQL;
+    }
 
     boolean isSelectAuto() {
         return selectAuto;
+    }
+
+    public void disableJPQL() {
+        this.enableJPQL = false;
     }
 //    public List<JQColumn> resolveSelectedColumns(TableFilter tableFilter) {
 //        if (!selectAuto) return Collections.EMPTY_LIST;

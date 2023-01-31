@@ -3,7 +3,7 @@ package org.eipgrid.jql.jdbc.metadata;
 import com.zaxxer.hikari.HikariDataSource;
 import org.eipgrid.jql.schema.QSchema;
 import org.eipgrid.jql.js.JsUtil;
-import org.eipgrid.jql.util.AttributeNameConverter;
+import org.eipgrid.jql.util.CaseConverter;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.jdbc.DataSourceBuilder;
 import org.springframework.stereotype.Component;
@@ -33,7 +33,7 @@ public class CommandProcessor implements CommandLineRunner {
 
 //        Connection conn = ds.getConnection();
 
-        JdbcSchemaLoader mp = new JdbcSchemaLoader(ds, AttributeNameConverter.defaultConverter);
+        JdbcSchemaLoader mp = new JdbcSchemaLoader(ds, CaseConverter.defaultConverter);
         for (String dbSchema : mp.getDBSchemas()) {
             List<String> tableNames = mp.getTableNames(dbSchema);
             ArrayList<QSchema> schemas = new ArrayList<>();

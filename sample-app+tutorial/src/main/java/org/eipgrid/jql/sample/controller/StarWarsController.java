@@ -14,10 +14,4 @@ public class StarWarsController extends JqlStorageController {
         super(service, "starwars");
     }
 
-    @GetMapping(path = "/{table}/last-executed-sql")
-    @ResponseBody
-    @Operation(summary = "마지막 실행 SQL 문 보기")
-    public String last_executed_sql(@PathVariable String table) {
-        return ((JDBCRepositoryBase)super.getRepository(table)).getLastExecutedSql();
-    }
 }

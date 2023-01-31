@@ -1,8 +1,9 @@
 package org.eipgrid.jql.sample.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Schema;
 import org.eipgrid.jql.JqlController;
-import org.eipgrid.jql.JqlEntity;
+import org.eipgrid.jql.JqlQuery;
 import org.eipgrid.jql.jdbc.JdbcJqlService;
 import org.eipgrid.jql.util.KVEntity;
 import org.springframework.http.MediaType;
@@ -15,10 +16,21 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/jql/starwars/character")
-public class ControlApiCustomizingDemoController extends JqlEntity.CRUDController<Object> {
+public class ControlApiCustomizingDemoController extends JqlController.CRUD<Object> {
 
     public ControlApiCustomizingDemoController(JdbcJqlService service) {
         super(service.getRepository("starwars.character"));
+    }
+
+
+
+    @Override
+    public JqlQuery.Response find(@Schema(example = "{ \"select\": \"\", \"sort\": \"\", \"page\": 0, \"limit\": 0, \"filter\": { } }")
+                                  @RequestBody JqlQuery.Request request) {
+        JqlQuery query = request.buildQuery(getStore());
+        JqlQuery.Response resp = query.execute();
+        resp.setProperty("lastExecutedSql", query.getExecutedQuery());
+        return resp;
     }
 
     /**
@@ -52,8 +64,8 @@ public class ControlApiCustomizingDemoController extends JqlEntity.CRUDControlle
     @Operation(summary = "엔터티 추가 API 변경. default 값 설정.")
     @Transactional
     public Object add(@RequestBody Map<String, Object> entity) throws Exception {
-        if (entity.get("note") == null) {
-            entity.put("note", createNote());
+        if (entity.get("metadata") == null) {
+            entity.put("metadata", createNote());
         }
         return super.add(entity);
     }

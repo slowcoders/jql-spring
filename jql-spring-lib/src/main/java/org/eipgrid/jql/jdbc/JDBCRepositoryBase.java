@@ -2,10 +2,12 @@ package org.eipgrid.jql.jdbc;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.eipgrid.jql.*;
+import org.eipgrid.jql.jdbc.output.ArrayRowMapper;
+import org.eipgrid.jql.jdbc.output.IdListMapper;
+import org.eipgrid.jql.jdbc.output.JsonRowMapper;
 import org.eipgrid.jql.parser.JqlFilter;
 import org.eipgrid.jql.schema.QColumn;
 import org.eipgrid.jql.schema.QSchema;
-import org.eipgrid.jql.JqlEntity;
 import org.springframework.core.convert.ConversionService;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.ResultSetExtractor;
@@ -17,35 +19,40 @@ import java.util.Map;
 
 public class JDBCRepositoryBase<ENTITY, ID> extends JqlRepository<ENTITY, ID> {
     private final JdbcTemplate jdbc;
-    private final QueryGenerator sqlGenerator;
     private final IdListMapper<ID> idListMapper = new IdListMapper<>(this);
 
     private static final ArrayRowMapper arrayMapper = new ArrayRowMapper();
-    private String lastExecutedSql;
-
 
     protected JDBCRepositoryBase(JqlService service, QSchema schema) {
         super(service, schema);
-        this.sqlGenerator = service.getQueryGenerator();
         this.jdbc = service.getJdbcTemplate();
     }
 
     //    @Override
-    protected ResultSetExtractor<List<JqlEntity>> getColumnMapRowMapper(JqlFilter filter) {
+    protected ResultSetExtractor<List<Map>> getColumnMapRowMapper(JqlFilter filter) {
         return new JsonRowMapper(filter.getResultMappings(), service.getObjectMapper());
     }
 
     public <T> List<T> find(JqlQuery query, Class<T> entityType) {
-        String sql = sqlGenerator.createSelectQuery(query);
-        lastExecutedSql = sql;
-        List res = jdbc.query(sql, getColumnMapRowMapper(query.getFilter()));
-        if (!Map.class.isAssignableFrom(entityType)) {
-            ObjectMapper converter = service.getObjectMapper();
-            for (int i = res.size(); --i >= 0; ) {
-                T v = (T)converter.convertValue(res.get(i), entityType);
-                res.set(i, v);
+        boolean enableJPA = query.getFilter().isJPQLEnabled() && entityType == this.getEntityType();
+        boolean isRepeat = (query.getExecutedQuery() != null && (Boolean)enableJPA == query.getExtraInfo());
+
+        String sql = isRepeat ? query.getExecutedQuery() : service.createQueryGenerator(!enableJPA).createSelectQuery(query);
+        List res;
+        if (enableJPA) {
+            res = service.getEntityManager().createQuery(sql).getResultList();
+        }
+        else {
+            res = jdbc.query(sql, getColumnMapRowMapper(query.getFilter()));
+            if (!Map.class.isAssignableFrom(entityType)) {
+                ObjectMapper converter = service.getObjectMapper();
+                for (int i = res.size(); --i >= 0; ) {
+                    T v = (T)converter.convertValue(res.get(i), entityType);
+                    res.set(i, v);
+                }
             }
         }
+        super.setGenerateQuery(query, sql, enableJPA);
         return res;
     }
 
@@ -54,16 +61,10 @@ public class JDBCRepositoryBase<ENTITY, ID> extends JqlRepository<ENTITY, ID> {
         return find(query);
     }
 
-    @Override
-    public List<Object[]> listPrimaryKeys(JqlQuery query) {
-        String sql = sqlGenerator.createSelectQuery(query, true);
-        List<Object[]> res = jdbc.query(sql, arrayMapper);
-        return res;
-    }
 
     @Override
     public long count(JqlFilter filter) {
-        String sqlCount = sqlGenerator.createCountQuery(filter);
+        String sqlCount = service.createQueryGenerator().createCountQuery(filter);
         long count = jdbc.queryForObject(sqlCount, Long.class);
         return count;
     }
@@ -82,21 +83,21 @@ public class JDBCRepositoryBase<ENTITY, ID> extends JqlRepository<ENTITY, ID> {
     @Override
     public void update(Collection<ID> idList, Map<String, Object> updateSet) throws IOException {
         JqlFilter filter = JqlFilter.of(schema, idList);
-        String sql = sqlGenerator.createUpdateQuery(filter, updateSet);
+        String sql = service.createQueryGenerator().createUpdateQuery(filter, updateSet);
         jdbc.update(sql);
     }
 
     @Override
     public void delete(ID id) {
         JqlFilter filter = JqlFilter.of(schema, id);
-        String sql = sqlGenerator.createDeleteQuery(filter);
+        String sql = service.createQueryGenerator().createDeleteQuery(filter);
         jdbc.update(sql);
     }
 
     @Override
     public int delete(Collection<ID> idList) {
         JqlFilter filter = JqlFilter.of(schema, idList);
-        String sql = sqlGenerator.createDeleteQuery(filter);
+        String sql = service.createQueryGenerator().createDeleteQuery(filter);
         return jdbc.update(sql);
     }
 
@@ -107,10 +108,15 @@ public class JDBCRepositoryBase<ENTITY, ID> extends JqlRepository<ENTITY, ID> {
 
 
     public ID convertId(Object v) {
+        /** 참고. 2023.01.31
+         * PathVariable 또는 RequestParam 에 사용된 ID 는 ConversionService 를 통해서 parsing 된다.
+         * 해당 ID 는 Jql 검색을 통해 얻은 Json Value 값이므로, ObjectMapper 를 통한 Parsing 또한 가능하나,
+         * StorageController 와 TableController 동작 호환성을 위해 ConversionService 를 사용한다.
+         */
         ConversionService cvtService = service.getConversionService();
         List<QColumn> pkColumns = schema.getPKColumns();
         if (pkColumns.size() == 1) {
-            return (ID)service.getConversionService().convert(v, pkColumns.get(0).getJavaType());
+            return (ID)cvtService.convert(v, pkColumns.get(0).getJavaType());
         }
         String pks[] = ((String)v).split("|");
         if (pks.length != pkColumns.size()) {
@@ -121,9 +127,5 @@ public class JDBCRepositoryBase<ENTITY, ID> extends JqlRepository<ENTITY, ID> {
             ids[i] = cvtService.convert(pks[i], pkColumns.get(i).getJavaType());
         }
         return (ID)ids;
-    }
-
-    public String getLastExecutedSql() {
-        return lastExecutedSql;
     }
 }

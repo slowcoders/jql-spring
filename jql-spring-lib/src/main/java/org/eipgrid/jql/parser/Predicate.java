@@ -1,15 +1,17 @@
 package org.eipgrid.jql.parser;
 
+import org.eipgrid.jql.schema.QColumn;
+
 import java.util.Collection;
 
 interface Predicate extends Expression {
 
     class MatchAny implements Predicate {
-        private final String column;
+        private final QColumn column;
         private final Collection values;
         private final JqlOp operator;
 
-        MatchAny(String column, JqlOp operator, Collection values) {
+        MatchAny(QColumn column, JqlOp operator, Collection values) {
             this.column = column;
             this.operator = operator;
             this.values = values;
@@ -23,11 +25,11 @@ interface Predicate extends Expression {
 
 
     class Compare implements Predicate {
-        private final String column;
+        private final QColumn column;
         private final Object value;
         private final JqlOp operator;
 
-        public Compare(String column, JqlOp operator, Object value) {
+        public Compare(QColumn column, JqlOp operator, Object value) {
             this.column = column;
             this.value = value;
             this.operator = operator;

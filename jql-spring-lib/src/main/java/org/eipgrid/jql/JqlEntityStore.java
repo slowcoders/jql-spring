@@ -9,18 +9,13 @@ public interface JqlEntityStore<ID> {
 
     JqlFilter createFilter(Map<String, Object> filter);
 
-
     List<?> find(JqlQuery query, OutputFormat outputType);
-
 
     List<?> find(Collection<ID> id);
     default Object find(ID id) {
         List<?> res = find(Collections.singletonList(id));
         return res.size() > 0 ? res.get(0) : null;
     }
-
-
-    List<Object[]> listPrimaryKeys(JqlQuery query);
 
 
     long count(JqlFilter filter);

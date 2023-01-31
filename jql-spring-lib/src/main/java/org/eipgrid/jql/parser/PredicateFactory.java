@@ -1,5 +1,6 @@
 package org.eipgrid.jql.parser;
 
+import org.eipgrid.jql.schema.QColumn;
 import org.eipgrid.jql.util.ClassUtils;
 
 import java.util.Collection;
@@ -16,7 +17,7 @@ abstract class PredicateFactory {
 
     public boolean isAttributeNameRequired() { return true; }
 
-    public abstract Predicate createPredicate(String column, Object value);
+    public abstract Predicate createPredicate(QColumn column, Object value);
 
     public static PredicateFactory getFactory(String function) {
         if (function == null) return IS;
@@ -50,7 +51,7 @@ abstract class PredicateFactory {
             this.operator = operator;
         }
 
-        public Predicate createPredicate(String column, Object value) {
+        public Predicate createPredicate(QColumn column, Object value) {
             return new Predicate.Compare(column, operator, value);
         }
     }
@@ -71,7 +72,7 @@ abstract class PredicateFactory {
         }
 
 
-        public Predicate createPredicate(String column, Object value) {
+        public Predicate createPredicate(QColumn column, Object value) {
             Predicate cond;
             Collection values = value == null ? null : ClassUtils.asCollection(value);
             if (values != null) {
@@ -126,7 +127,7 @@ abstract class PredicateFactory {
             return ClassUtils.getArrayType(fieldType);
         }
 
-        public Predicate createPredicate(String column, Object value) {
+        public Predicate createPredicate(QColumn column, Object value) {
             Object[] range = (Object[])value;
             PredicateSet predicates = new PredicateSet(conjunction);
             predicates.add(operator1.createPredicate(column, range[0]));

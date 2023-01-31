@@ -7,7 +7,6 @@ import lombok.Data;
 import lombok.Getter;
 import org.eipgrid.jql.parser.JqlFilter;
 import org.eipgrid.jql.schema.QResultMapping;
-import org.eipgrid.jql.util.KVEntity;
 import org.springframework.data.domain.Sort;
 
 import java.util.*;
@@ -24,9 +23,14 @@ public class JqlQuery {
     private final String[] select;
     private final JqlFilter filter;
 
+
     private Sort sort;
     private int offset;
     private int limit;
+
+
+    /*package*/ String executedQuery;
+    /*package*/ Object extraInfo;
 
     public static String[] All = new String[] { "*" };
 
@@ -40,6 +44,7 @@ public class JqlQuery {
         this.select = select;
         this.filter = filter;
     }
+
     private JqlQuery(JqlEntityStore<?> table, String[] select, Map<String, Object> filter) {
         this(table, select, table.createFilter(filter));
     }
@@ -62,12 +67,11 @@ public class JqlQuery {
 
     public Response execute() {
         List<?> result = table.find(this, null);
-        Map<String, Object> properties = null;
+        Response resp = new Response(result, filter);
         if (needPagination()) {
-            long count = this.count();
-            properties = KVEntity.of("totalElements", count);
+            resp.setProperty("totalElements", this.count());
         }
-        return new Response(result, properties, filter);
+        return resp;
     }
 
     public long count() {
@@ -98,17 +102,22 @@ public class JqlQuery {
     @Getter
     public static class Response {
 
-        @JsonAnyGetter
-        private Map<String, Object> properties;
+        private Map<String, Object> metadata;
         private Object content;
 
         @JsonIgnore
         private QResultMapping resultMapping;
 
-        public Response(Object content, Map<String, Object> properties, QResultMapping resultMapping) {
+        public Response(Object content, QResultMapping resultMapping) {
             this.content = content;
-            this.properties = properties;
             this.resultMapping = resultMapping;
+        }
+
+        public void setProperty(String key, Object value) {
+            if (this.metadata == null) {
+                this.metadata = new HashMap<>();
+            }
+            this.metadata.put(key, value);
         }
     }
 

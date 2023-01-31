@@ -1,8 +1,10 @@
 package org.eipgrid.jql.parser;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.eipgrid.jql.schema.QColumn;
 import org.eipgrid.jql.schema.QSchema;
 import org.eipgrid.jql.JqlQuery;
+import org.eipgrid.jql.schema.QType;
 import org.springframework.core.convert.ConversionService;
 
 import javax.persistence.FetchType;
@@ -13,10 +15,12 @@ import java.util.*;
 
 public class JqlParser {
 
-    private final ConversionService conversionService;
+//    private final ConversionService conversionService;
+    private final ObjectMapper om;
 
-    public JqlParser(ConversionService conversionService) {
-        this.conversionService = conversionService;
+    public JqlParser(ObjectMapper om) {
+//        this.conversionService = conversionService;
+        this.om = om;
     }
 
     public JqlFilter parse(QSchema schema, Map<String, Object> filter) {
@@ -96,16 +100,21 @@ public class JqlParser {
             }
 
             String columnName = subFilter.getColumnName(key);
-            if (value != null) {
-                QSchema schema = subFilter.getSchema();
-                if (schema != null) {
-                    QColumn column = schema.getColumn(columnName);
-                    Class<?> fieldType = column.getJavaType();
-                    Class<?> accessType = op.getAccessType(value, fieldType);
-                    value = conversionService.convert(value, accessType);
+            QColumn column;
+            QSchema schema = subFilter.getSchema();
+            if (schema != null) {
+                column = schema.getColumn(columnName);
+                Class<?> fieldType = column.getJavaType();
+                Class<?> accessType = op.getAccessType(value, fieldType);
+                if (value != null) {
+                    value = om.convertValue(value, accessType);
+//                      value = conversionService.convert(value, accessType);
                 }
             }
-            Expression cond = op.createPredicate(columnName, value);
+            else {
+                column = new JsonColumn(columnName, value == null ? QType.Text : QType.of(value.getClass()));
+            }
+            Expression cond = op.createPredicate(column, value);
             targetPredicates.add(cond);
         }
     }

@@ -30,7 +30,7 @@ class TableFilter extends EntityFilter implements QResultMapping {
 
     TableFilter(TableFilter baseFilter, QJoin join) {
         super(baseFilter);
-        this.schema = join.getAssociatedSchema__22();
+        this.schema = join.getTargetSchema();
         this.join = join;
         this.mappingAlias = baseFilter.getRootNode().createUniqueMappingAlias();
     }
@@ -216,6 +216,8 @@ class TableFilter extends EntityFilter implements QResultMapping {
             if (table != null) {
                 table.gatherColumnMappings(columnGroupMappings);
                 this.hasArrayDescendant |= table.isArrayNode() || table.hasArrayDescendant;
+            } else if (!q.isEmpty()) {
+                getRootNode().disableJPQL();
             }
         }
     }

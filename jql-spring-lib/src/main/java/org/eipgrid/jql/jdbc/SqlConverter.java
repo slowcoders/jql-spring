@@ -1,6 +1,7 @@
 package org.eipgrid.jql.jdbc;
 
 import org.eipgrid.jql.parser.*;
+import org.eipgrid.jql.schema.QColumn;
 import org.eipgrid.jql.util.SourceWriter;
 
 import java.util.*;
@@ -18,10 +19,10 @@ public abstract class SqlConverter implements PredicateVisitor {
     }
 
 
-    protected abstract void writeQualifiedColumnName(String columnName, Object value);
+    protected abstract void writeQualifiedColumnName(QColumn column, Object value);
 
     @Override
-    public void visitPredicate(String column, JqlOp operator, Object value) {
+    public void visitPredicate(QColumn column, JqlOp operator, Object value) {
         writeQualifiedColumnName(column, value);
         String op = "";
         assert (value != null);
@@ -64,7 +65,7 @@ public abstract class SqlConverter implements PredicateVisitor {
     }
 
     @Override
-    public void visitMatchAny(String column, JqlOp operator, Collection values) {
+    public void visitMatchAny(QColumn column, JqlOp operator, Collection values) {
         if (operator == JqlOp.EQ || operator == JqlOp.NE) {
             writeQualifiedColumnName(column, values);
         }
@@ -103,7 +104,7 @@ public abstract class SqlConverter implements PredicateVisitor {
     }
 
     @Override
-    public void visitCompareNull(String column, JqlOp operator) {
+    public void visitCompareNull(QColumn column, JqlOp operator) {
         String value;
         switch (operator) {
             case EQ:

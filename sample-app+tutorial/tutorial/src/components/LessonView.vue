@@ -263,19 +263,14 @@ ${vm.schemaInfo}`
 
     http_post(url, jql) {
       const vm = this;
-      let find_result = null;
       const options = {
         headers: { "Content-Type": `application/json`}
       }
       axios.post(url, jql, options).then(res => {
-        find_result = res;
-        return axios.get(`${baseUrl}/${dbSchema}/${vm.selectedTable}/last-executed-sql`);
-      }).then(last_sql => {
-        console.log(last_sql)
         vm.cntTest ++;
-        const header = "ex " + vm.cntTest + ") result: " + find_result.data.content.length + "\n\n";
-        const results = JSON.stringify(find_result.data, null, 2);
-        const sql = "\n\n---------------\nexecuted sql:\n" + last_sql.data;
+        const header = "ex " + vm.cntTest + ") result: " + res.data.content.length + "\n\n";
+        const results = JSON.stringify(res.data.content, null, 2);
+        const sql = res.data.metadata.lastExecutedSql ? "\n\n---------------\nexecuted sql:\n" + res.data.metadata.lastExecutedSql : "";
         vm.resultView.setValue(header + results + sql);
       }).catch(vm.show_http_error)
     }

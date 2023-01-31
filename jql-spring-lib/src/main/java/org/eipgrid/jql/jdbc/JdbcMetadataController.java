@@ -47,7 +47,7 @@ public abstract class JdbcMetadataController {
             refs.add(column.getJsonKey());
         }
         for (Map.Entry<String, QJoin> entry : schema.getEntityJoinMap().entrySet()) {
-            if (!entry.getValue().getAssociatedSchema__22().hasOnlyForeignKeys()) {
+            if (!entry.getValue().getTargetSchema().hasOnlyForeignKeys()) {
                 refs.add(entry.getKey());
             }
         }

@@ -50,7 +50,7 @@ describe('Listing', () => {
     const res = await jqlApi.find(null, { sort: "-name", limit, page });
     const characters = res.content;
     expect(characters.length).toBeLessThanOrEqual(limit);
-    expect(res.totalElements).toBeGreaterThanOrEqual(limit);
+    expect(res.metadata.totalElements).toBeGreaterThanOrEqual(limit);
     checkSorted(characters, "name", false);
   });
 
