@@ -16,7 +16,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/jql/starwars/character")
-public class ControlApiCustomizingDemoController extends JqlController.CRUD<Object> {
+public class ControlApiCustomizingDemoController extends JqlController.CRUD<Integer> implements JqlController.ListAll<Integer> {
 
     public ControlApiCustomizingDemoController(JdbcJqlService service) {
         super(service.getRepository("starwars.character"));
@@ -38,11 +38,10 @@ public class ControlApiCustomizingDemoController extends JqlController.CRUD<Obje
      * @param idList
      * @return
      */
-    @DeleteMapping("/{idList}")
-    @ResponseBody
+    @Override
     @Operation(summary = "엔터티 삭제 (사용 금지됨. secure-delete API 로 대체)")
     @Transactional
-    public Collection<Object> delete(@PathVariable("idList") Collection<Object> idList) {
+    public Collection<Integer> delete(@PathVariable("idList") Collection<Integer> idList) {
         throw new RuntimeException("Delete is forbidden by custom controller. Use ControlApiCustomizingDemoController.secure-delete api");
     }
 
@@ -50,7 +49,7 @@ public class ControlApiCustomizingDemoController extends JqlController.CRUD<Obje
     @ResponseBody
     @Operation(summary = "엔터티 삭제 방지용 API 변경 (AccessToken 검사 기능 추가. AccessToken 값='1234')")
     @Transactional
-    public Collection<Object> delete(@PathVariable("idList") Collection<Object> idList,
+    public Collection<Integer> delete(@PathVariable("idList") Collection<Integer> idList,
                                      @RequestParam String accessToken) {
         if ("1234".equals(accessToken)) {
             return super.delete(idList);
@@ -59,8 +58,7 @@ public class ControlApiCustomizingDemoController extends JqlController.CRUD<Obje
         }
     }
 
-    @PutMapping(path = "/", consumes = { MediaType.APPLICATION_JSON_VALUE })
-    @ResponseBody
+    @Override
     @Operation(summary = "엔터티 추가 API 변경. default 값 설정.")
     @Transactional
     public Object add(@RequestBody Map<String, Object> entity) throws Exception {

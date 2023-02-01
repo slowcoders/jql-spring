@@ -188,7 +188,7 @@ const jql = {
   ${vm.limit > 0 ? '\n  limit: ' + vm.limit + ', ' : ''}
   filter: jql_filter
 }
-this.http_post(\`\${baseUrl}/\${dbSchema}/\${dbTable}/\`, jql);
+this.http_post(\`\${baseUrl}/\${dbSchema}/\${dbTable}/find\`, jql);
 ${vm.schemaInfo}`
     },
 

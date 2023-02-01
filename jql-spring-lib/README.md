@@ -1,28 +1,53 @@
 # Json Query Language (JQL)
 
 ## what is JQL
-* JSON 기반 계층적 Query 언어
-* Front-end 개발자도 손쉽게 사용할 수 있는 단순한 API
-* SQL 자동 변환 및 처리
-* Java Persistence Api(JPA)를 통한 기능 확장.
+* JSON based hierarchical Query language
+* Simple query language that can be easily used by frond-end developers.
+* GraphQL like automatic property selection 
 
+## what is JQL for JDBC
+* Automatic entity join.
+* GraphQL like automatic property selection.
+* JPA-like query result without ORM layer.
+* Fully customizable via JPA, MyBatis, JDBC.
 
-## Grammar
-JQL 은 JSON 과 문법적으로 동일하다. 단, object member name(=key) 을 다음과 같이 확장하여 사용한다.
+## Examples
+Finding persons from starwars.character table whose height is greater than 1.8m.
+
 ```sh
-jql_key = property_name '@' operator
+curl -X 'POST' 'http://localhost:7007/api/jql/starwars/character/' \
+    -H 'Content-Type: application/json' \   
+    -d '{
+        "filter": { "height@gt": 1.8 }
+    }'
+```
+```js
+const jql = {  
+    filter: {
+      "height@gt": 1.8  
+    }
+}
+const res = axios.post('http://localhost:7007/api/jql/starwars/character/find', jql)
 ```
 
-property_name 은 논리적인 DB Column 명으로, JPA Entity 의 경우엔 필드명에 해당한다.<br>
-다음은 starwars.character table 에서 키가 2m 이상인 character 를 검색하는 예제이다.
+## Grammar
+
+JQL 은 JSON 과 문법적으로 동일하다. 단, object member name(=key) 을 다음과 같이 확장하여 사용한다.
 ```sh
-curl -X 'POST' \
-  'http://localhost:7007/api/jql/starwars/character/find' \
-  -H 'accept: */*' \
-  -H 'Content-Type: application/json' \
-  -d '{
-        "height@ge": 2.0
-      }'
+jql = {
+    select: "<jql_property_selectors>",
+    sort: "<jql_sort_options>",
+    limit: Integer,
+    page: Integer,
+    filter: {
+        "<jql_predicates>" : jql_value
+    }
+}
+property_key = identifier[.identifier]*
+jql_property_selectors = [ '*' | '0' | property_key | property_key< ['*' | '0' | identifier]* > ]*  
+jql_sort_options = [-]property_name [, jql_sort_options]
+jql_predicates = jql_key['@' jql_operator]
+jql_operator = [ "is" | "not" | "like" | "not like" | "lt" | "gt" | "le" | "ge" | "between" | "not between"]
 ```
 
 ## JQL operators
@@ -86,7 +111,7 @@ JQL-JDBC 구현체는 JDBC metadata 를 분석하여 foreign key 로 연결된 T
 ```json
 {
   "name@like": "Luke%",
-  "+friend": {
+  "friend_": {
     "species": "Droid"
   }
 }
@@ -114,21 +139,4 @@ JQL-JDBC 구현체는 JDBC metadata 를 분석하여 foreign key 로 연결된 T
     ]
   }
 ]
-```
-위 쿼리와 관계된 table 구조들 
-```js
-starwars.character = {
-  id: bigint (pk)
-  height: real
-  mass: real
-  name: text
-  species: text
-  metadata: jsonb
-};
-
-// assicative table
-starwars.character_friend_link = {
-  character_id: bigint (fk) -> starwars.character.id
-  friend_id: bigint (fk) -> starwars.character.id
-};
 ```

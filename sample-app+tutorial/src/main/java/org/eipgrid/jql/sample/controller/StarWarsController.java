@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/jql/starwars")
-public class StarWarsController extends JqlStorageController {
+public class StarWarsController extends JqlStorageController.CRUD implements JqlStorageController.ListAll {
 
     public StarWarsController(JdbcJqlService service) {
         super(service, "starwars");

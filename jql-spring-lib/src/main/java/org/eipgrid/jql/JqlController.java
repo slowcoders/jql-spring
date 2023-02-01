@@ -39,7 +39,7 @@ public interface JqlController<ID> {
             return entity;
         }
 
-        @PostMapping(path = "/", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
+        @PostMapping(path = "/find", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
         @ResponseBody
         @Operation(summary = "엔터티 검색")
         public Object find_form(@Schema(example = "{ \"select\": \"\", \"sort\": \"\", \"page\": 0, \"limit\": 0, \"filter\": { } }")
@@ -47,7 +47,7 @@ public interface JqlController<ID> {
             return find(request);
         }
 
-        @PostMapping(path = "/", consumes = {MediaType.APPLICATION_JSON_VALUE})
+        @PostMapping(path = "/find", consumes = {MediaType.APPLICATION_JSON_VALUE})
         @ResponseBody
         @Operation(summary = "엔터티 검색")
         public JqlQuery.Response find(@Schema(example = "{ \"select\": \"\", \"sort\": \"\", \"page\": 0, \"limit\": 0, \"filter\": { } }")
@@ -73,13 +73,25 @@ public interface JqlController<ID> {
         }
     }
 
+    interface ListAll<ID> extends JqlController<ID> {
+
+        @GetMapping(path = "")
+        @ResponseBody
+        @Operation(summary = "전체 목록")
+        default JqlQuery.Response list() throws Exception {
+            return JqlQuery.of(getStore(), null, null).execute();
+        }
+    }
+
+
     interface Insert<ID> extends JqlController<ID> {
 
         @PutMapping(path = "/", consumes = {MediaType.APPLICATION_JSON_VALUE})
         @ResponseBody
         @Operation(summary = "엔터티 추가")
         @Transactional
-        default Object add(@RequestBody Map<String, Object> entity) throws Exception {
+        default Object add(@Schema(implementation = Object.class)
+                           @RequestBody Map<String, Object> entity) throws Exception {
             ID id = getStore().insert(entity);
             return getStore().find(id);
         }

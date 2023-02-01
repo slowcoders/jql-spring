@@ -54,7 +54,7 @@ export const jqlApi = {
     },
 
     async find(filter, options) {
-        return await call_http('post', '', filter, options);
+        return await call_http('post', 'find', filter, options);
     },
 
     async top(filter, options) {
