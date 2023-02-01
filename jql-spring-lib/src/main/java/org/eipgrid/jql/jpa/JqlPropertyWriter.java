@@ -37,12 +37,10 @@ public class JqlPropertyWriter extends BeanPropertyWriter {
     public void serializeAsField(Object bean,
                                  JsonGenerator gen,
                                  SerializerProvider prov) throws Exception {
-        Object value = writer.get(bean);
-        if (value == null) {
-            return;
+        JavaType valueType = writer.getType();
+        if (valueType.getContentType() != null) {
+            valueType = valueType.getContentType();
         }
-        JavaType contentType = writer.getType().getContentType();
-        Class<?> valueType = contentType != null ? contentType.getRawClass() : value.getClass();
 
         QResultMapping stack = (QResultMapping) prov.getAttribute(JQL_STACK_KEY);
         if (stack == null) {
@@ -51,7 +49,7 @@ public class JqlPropertyWriter extends BeanPropertyWriter {
             }
             stack = (QResultMapping) prov.getAttribute(JQL_RESULT_MAPPING_KEY);
             prov.setAttribute(JQL_STACK_KEY, stack);
-        } else if (valueType.getAnnotation(Entity.class) != null) {
+        } else if (valueType.getRawClass().getAnnotation(Entity.class) != null) {
             QResultMapping child = stack.getChildMapping(this.getName());
             if (child == null) return;
             prov.setAttribute(JQL_STACK_KEY, child);
