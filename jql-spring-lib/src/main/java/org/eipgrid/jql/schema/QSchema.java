@@ -102,7 +102,7 @@ public abstract class QSchema {
             }
 
             if (!ci.isForeignKey()) {
-                if (ci.getType().isPrimitive()) {
+                if (ci.getValueType().isPrimitive()) {
                     primitiveColumns.add(ci);
                 }
                 else {
@@ -162,6 +162,16 @@ public abstract class QSchema {
     //==========================================================================
     // Attribute Name Conversion
     //--------------------------------------------------------------------------
+
+    public static String getJavaFieldName(QColumn column) {
+        String name = column.getJsonKey();
+        int idx = name.indexOf('.');
+        if (idx > 0) {
+            name = name.substring(0, idx);
+        }
+        return name;
+    }
+
 
     public String getPhysicalColumnName(String fieldName) {
         return this.columnMap.get(fieldName).getPhysicalName();

@@ -49,7 +49,7 @@ public class BatchUpsert<ID> implements BatchPreparedStatementSetterWithKeyHolde
     static Object convertJsonValueToColumnValue(QColumn col, Object v) {
         if (v == null) return null;
 
-        if (col.getType() == QType.Json) {
+        if (col.getValueType() == QType.Json) {
             if ((v instanceof Map) || (v instanceof Collection)) {
                 try {
                     v = objectMapper.writeValueAsString(v);
@@ -61,7 +61,7 @@ public class BatchUpsert<ID> implements BatchPreparedStatementSetterWithKeyHolde
         }
 
         if (v.getClass().isEnum()) {
-            if (col.getType() == QType.Text) {
+            if (col.getValueType() == QType.Text) {
                 return v.toString();
             } else {
                 return ((Enum) v).ordinal();

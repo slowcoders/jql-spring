@@ -1,6 +1,5 @@
 package org.eipgrid.jql;
 
-import com.fasterxml.jackson.annotation.JsonAnyGetter;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
@@ -19,7 +18,7 @@ import java.util.*;
 @Getter
 public class JqlQuery {
 
-    private final JqlEntityStore<?> table;
+    private final JqlTable<?> table;
     private final String[] select;
     private final JqlFilter filter;
 
@@ -39,17 +38,17 @@ public class JqlQuery {
     public static String[] Auto = new String[0];
 
 
-    protected JqlQuery(JqlEntityStore<?> table, String[] select, JqlFilter filter) {
+    protected JqlQuery(JqlTable<?> table, String[] select, JqlFilter filter) {
         this.table = table;
         this.select = select;
         this.filter = filter;
     }
 
-    private JqlQuery(JqlEntityStore<?> table, String[] select, Map<String, Object> filter) {
+    private JqlQuery(JqlTable<?> table, String[] select, Map<String, Object> filter) {
         this(table, select, table.createFilter(filter));
     }
 
-    public static JqlQuery of(JqlEntityStore<?> table, String[] select, Sort sort, int offset, int limit, Map<String, Object> filter) {
+    public static JqlQuery of(JqlTable<?> table, String[] select, Sort sort, int offset, int limit, Map<String, Object> filter) {
         JqlQuery query = new JqlQuery(table, select, filter);
         query.sort = sort;
         query.offset = offset;
@@ -57,7 +56,7 @@ public class JqlQuery {
         return query;
     }
 
-    public static JqlQuery of(JqlEntityStore<?> table, String[] select, Map<String, Object> filter) {
+    public static JqlQuery of(JqlTable<?> table, String[] select, Map<String, Object> filter) {
         return new JqlQuery(table, select, filter);
     }
     
@@ -88,7 +87,7 @@ public class JqlQuery {
         @Schema(implementation = Object.class)
         private HashMap filter;
 
-        public JqlQuery buildQuery(JqlEntityStore<?> table) {
+        public JqlQuery buildQuery(JqlTable<?> table) {
             String[] _select = select == null ? null : parsePropertySelection(select);
             Sort _sort = parseSort(sort);
             int _limit = limit == null ? 0 : limit;

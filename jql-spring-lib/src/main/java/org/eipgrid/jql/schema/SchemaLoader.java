@@ -30,20 +30,5 @@ public abstract class SchemaLoader {
         return schema;
     }
 
-    public String makeTablePath(String schema, String name) {
-        name = CaseConverter.camelCaseConverter.toPhysicalColumnName(name).toLowerCase();
-        if (schema == null || schema.length() == 0) {
-            schema = getDefaultDBSchema();
-        }
-        schema = CaseConverter.camelCaseConverter.toPhysicalColumnName(schema).toLowerCase();
-        name = schema + "." + name;
-        return name;
-    }
-
-//    public String toColumnType(Class<?> javaType, Field f) {
-//        return JsUtil.getColumnType(javaType, joinedPK);
-//    }
-
-
     protected abstract HashMap<String, QJoin> loadJoinMap(QSchema schema);
 }

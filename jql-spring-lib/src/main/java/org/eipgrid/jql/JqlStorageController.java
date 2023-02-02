@@ -10,35 +10,35 @@ import org.springframework.web.client.HttpServerErrorException;
 import javax.transaction.Transactional;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 public interface JqlStorageController {
 
-    JqlEntityStore getRepository(String tableName);
+    JqlRepository getRepository(String tableName);
 
     class Search implements JqlStorageController {
         private final JqlService service;
-        private final String default_namespace;
+        private final String tableNamePrefix;
 
-        public Search(JqlService service, String default_namespace) {
+        public Search(JqlService service, String tableNamePrefix) {
             this.service = service;
-            this.default_namespace = default_namespace;
+            this.tableNamePrefix = tableNamePrefix;
         }
 
-        public JqlEntityStore getRepository(String tableName) {
-            String tablePath = service.makeTablePath(default_namespace, tableName);
+        public JqlRepository getRepository(String tableName) {
+            String tablePath = tableNamePrefix + tableName;
             return service.getRepository(tablePath);
         }
-        
+
         @GetMapping(path = "/{table}/{id}")
         @Operation(summary = "지정 엔터티 읽기")
         @Transactional
         @ResponseBody
         public Object get(@PathVariable("table") String table,
                           @PathVariable("id") String id$) {
-            JqlEntityStore repository = getRepository(table);
-            Object entity = repository.find(id$);
+            JqlRepository repository = getRepository(table);
+            Object id = repository.convertId(id$);
+            Object entity = repository.find(id);
             if (entity == null) {
                 throw new HttpServerErrorException("Entity(" + id$ + ") is not found", HttpStatus.NOT_FOUND, null, null, null, null);
             }
@@ -62,11 +62,23 @@ public interface JqlStorageController {
         public Object find(@PathVariable("table") String table,
                            @Schema(example = "{ \"select\": \"\", \"sort\": \"\", \"page\": 0, \"limit\": 0, \"filter\": { } }")
                            @RequestBody JqlQuery.Request request) {
-            JqlEntityStore repository = getRepository(table);
+            JqlRepository repository = getRepository(table);
             return request.buildQuery(repository).execute();
         }
+
+        @PostMapping(path = "/count")
+        @Operation(summary = "엔터티 수 조회")
+        @Transactional
+        @ResponseBody
+        public long count(@PathVariable("table") String table,
+                          @Schema(implementation = Object.class)
+                          @RequestBody() HashMap<String, Object> jsFilter) {
+            JqlRepository repository = getRepository(table);
+            long count = repository.count(repository.createFilter(jsFilter));
+            return count;
+        }
     }
-    
+
     interface ListAll extends JqlStorageController {
 
         @GetMapping(path = "/{table}")
@@ -74,59 +86,58 @@ public interface JqlStorageController {
         @Transactional
         @ResponseBody
         default JqlQuery.Response list(@PathVariable("table") String table) throws Exception {
-            JqlEntityStore repository = getRepository(table);
+            JqlRepository repository = getRepository(table);
             return JqlQuery.of(repository, null, null).execute();
         }
     }
 
 
-    interface Insert<ID> extends JqlStorageController {
+    interface Insert extends JqlStorageController {
 
         @PutMapping(path = "/{table}", consumes = {MediaType.APPLICATION_JSON_VALUE})
         @Operation(summary = "엔터티 추가")
         @Transactional
         @ResponseBody
-        default Object add(@PathVariable("table") String table,
+        default <ENTITY> ENTITY add(@PathVariable("table") String table,
                            @Schema(implementation = Object.class)
-                           @RequestBody Map<String, Object> entity) throws Exception {
-            JqlEntityStore repository = getRepository(table);
-            Object id = repository.insert(entity);
-            return repository.find(id);
+                           @RequestBody Map<String, Object> properties) throws Exception {
+            JqlRepository repository = getRepository(table);
+            Object id = repository.insert(properties);
+            return (ENTITY)repository.find(id);
         }
     }
 
-    interface Update<ID> extends JqlStorageController {
+    interface Update extends JqlStorageController {
 
         @PatchMapping(path = "/{table}/{idList}", consumes = {MediaType.APPLICATION_JSON_VALUE})
         @Operation(summary = "엔터티 내용 변경")
         @Transactional
         @ResponseBody
-        default List<?> update(@PathVariable("table") String table,
+        default <ENTITY, ID> Collection<ENTITY> update(@PathVariable("table") String table,
                                @Schema(type = "string", required = true) @PathVariable("idList") Collection<ID> idList,
-                               @RequestBody HashMap<String, Object> updateSet) throws Exception {
-            JqlEntityStore repository = getRepository(table);
-            repository.update(idList, updateSet);
-            List<?> entities = repository.find(idList);
-            return entities;
+                               @RequestBody Map<String, Object> properties) throws Exception {
+            JqlRepository repository = getRepository(table);
+            repository.update(idList, properties);
+            return repository.find(idList);
         }
     }
 
-    interface Delete<ID> extends JqlStorageController {
+    interface Delete extends JqlStorageController {
         @DeleteMapping("/{table}/{idList}")
         @Operation(summary = "엔터티 삭제")
         @Transactional
         @ResponseBody
-        default Collection<ID> delete(@PathVariable("table") String table,
+        default <ID> Collection<ID> delete(@PathVariable("table") String table,
                                       @PathVariable("idList") Collection<ID> idList) {
-            JqlEntityStore repository = getRepository(table);
+            JqlRepository repository = getRepository(table);
             repository.delete(idList);
             return idList;
         }
     }
 
     class CRUD extends JqlStorageController.Search implements Insert, Update, Delete {
-        public CRUD(JqlService service, String defaultNamespace) {
-            super(service, defaultNamespace);
+        public CRUD(JqlService service, String tableNamePrefix) {
+            super(service, tableNamePrefix);
         }
     }
 

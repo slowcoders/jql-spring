@@ -118,10 +118,10 @@ public class JdbcColumn extends QColumn {
 
     public QColumn getJoinedPrimaryColumn() {
         if (this.fkBinder == null) return null;
-        QType valueKind = this.getType();
+        QType valueKind = this.getValueType();
         Class javaType = this.field == null ? null : ClassUtils.getElementType(field);
         if (!valueKind.isPrimitive()) {
-            javaType = getJavaType();
+            javaType = getValueType().toJavaClass();
             if (javaType == Object.class) {
                 javaType = null;
             }
@@ -139,7 +139,7 @@ public class JdbcColumn extends QColumn {
         CharSequence rawFieldName = (col != this) ? sb.append(col.getPhysicalName()) : this.getPhysicalName();
 
         String name = getSchema().getSchemaLoader().getNameConverter().toLogicalAttributeName(rawFieldName.toString());
-        if (this.getType() == QType.Json) {
+        if (this.getValueType() == QType.Json) {
             name += '_';
         }
         return name;

@@ -343,7 +343,7 @@ public class SqlGenerator extends SqlConverter implements QueryGenerator {
         }
         sw.replaceTrailingComma("\n) VALUES (");
         for (QColumn column : schema.getWritableColumns()) {
-            sw.write(column.getType() == QType.Json ? "?::jsonb, " : "?,");
+            sw.write(column.getValueType() == QType.Json ? "?::jsonb, " : "?,");
         }
         sw.replaceTrailingComma(")");
         if (ignoreConflict) {

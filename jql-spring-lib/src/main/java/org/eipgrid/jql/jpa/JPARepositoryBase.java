@@ -3,14 +3,10 @@ package org.eipgrid.jql.jpa;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.eipgrid.jql.jdbc.JDBCRepositoryBase;
 import org.eipgrid.jql.JqlService;
-import org.eipgrid.jql.JqlQuery;
-import org.eipgrid.jql.schema.QColumn;
-import org.eipgrid.jql.util.SourceWriter;
 import org.springframework.data.repository.NoRepositoryBean;
 
 import javax.persistence.Cache;
 import javax.persistence.EntityManager;
-import javax.persistence.Query;
 import java.io.IOException;
 import java.util.*;
 
@@ -20,39 +16,10 @@ public abstract class JPARepositoryBase<ENTITY, ID> extends JDBCRepositoryBase<E
     private final static HashMap<Class<?>, JPARepositoryBase<?,?>>jqlServices = new HashMap<>();
     private final HashMap<ID, Object> associatedCache = new HashMap<>();
 
-    public JPARepositoryBase(JqlService service, Class<ENTITY> entityType, Class<ID> idType) {
+    public JPARepositoryBase(JqlService service, Class<ENTITY> entityType) {
         super(service, service.loadSchema(entityType));
         jqlServices.put(this.getEntityType(), this);
     }
-
-//    @Override
-//    public List<ENTITY> find(JqlQuery query) {
-//        List<Object[]> idList = super.listPrimaryKeys(query);
-//        SourceWriter sw = new SourceWriter<>('\'');
-//        List<QColumn> pkColumns = schema.getPKColumns();
-//        boolean isMultiPk = pkColumns.size() > 1;
-//
-//        sw.write("select t FROM ").write(schema.getEntityClassName()).write(" t WHERE ");
-//        if (isMultiPk) sw.write("(");
-//        for (QColumn col : pkColumns) {
-//            sw.write("t." + col.getJsonKey()).write(", ");
-//        }
-//        sw.replaceTrailingComma(isMultiPk ? ")" : "");
-//        sw.write(" IN (");
-//        for (Object[] id : idList) {
-//            if (isMultiPk) sw.write("(");
-//            for (Object k : id) {
-//                sw.writeValue(k).write(", ");
-//            }
-//            sw.replaceTrailingComma(isMultiPk ? "), " : ", ");
-//        }
-//        sw.replaceTrailingComma(")");
-//        EntityManager em = getEntityManager();
-//        Query q = em.createQuery(sw.toString());
-//        List<ENTITY> res = q.getResultList();
-//
-//        return res;
-//    }
 
     public ID insert(Map<String, Object> dataSet) throws IOException {
         ObjectMapper converter = service.getObjectMapper();
@@ -63,9 +30,6 @@ public abstract class JPARepositoryBase<ENTITY, ID> extends JDBCRepositoryBase<E
 
     public List<ID> insert(Collection<Map<String, Object>> entities) {
         List<ID> res = super.insert(entities);
-//        List<ENTITY> res2 = this.find(res);
-//        EntityManager em = getEntityManager();
-//        em.setProperty();
         return res;
     }
 
@@ -152,8 +116,11 @@ public abstract class JPARepositoryBase<ENTITY, ID> extends JDBCRepositoryBase<E
 
 
     @Override
-    public int delete(Collection<ID> idList) {
-        return super.delete(idList);
+    public void delete(Collection<ID> idList) {
+        super.delete(idList);
+        for (ID id : idList) {
+            removeEntityCache(id);
+        }
     }
 
     public void clearEntityCaches() {
@@ -161,7 +128,7 @@ public abstract class JPARepositoryBase<ENTITY, ID> extends JDBCRepositoryBase<E
         cache.evict(getEntityType());
     }
 
-    public void clearEntityCache(ID id) {
+    public void removeEntityCache(ID id) {
         Cache cache = getEntityManager().getEntityManagerFactory().getCache();
         cache.evict(getEntityType(), id);
         this.associatedCache.remove(id);

@@ -302,6 +302,17 @@ public class JdbcSchemaLoader extends SchemaLoader {
         }
     }
 
+    protected String makeTablePath(String db_schema, String simple_name) {
+        simple_name = CaseConverter.camelCaseConverter.toPhysicalColumnName(simple_name).toLowerCase();
+        if (db_schema == null || db_schema.length() == 0) {
+            db_schema = getDefaultDBSchema();
+        }
+        db_schema = CaseConverter.camelCaseConverter.toPhysicalColumnName(db_schema).toLowerCase();
+        simple_name = db_schema + "." + simple_name;
+        return simple_name;
+    }
+
+
     public String createDDL(QSchema schema) {
 //        SQLWriter sb = new SQLWriter(schema);
 //        sb.write("const " + schema.getTableName() + "Schema = [\n");
@@ -335,7 +346,7 @@ public class JdbcSchemaLoader extends SchemaLoader {
         String pktable_cat;
         String fktable_cat;
 
-        JoinData(ResultSet rs, SchemaLoader loader) throws SQLException {
+        JoinData(ResultSet rs, JdbcSchemaLoader loader) throws SQLException {
             this.pk_name = rs.getString("pk_name");
             this.pktable_schem = rs.getString("pktable_schem");
             this.pktable_name  = rs.getString("pktable_name");

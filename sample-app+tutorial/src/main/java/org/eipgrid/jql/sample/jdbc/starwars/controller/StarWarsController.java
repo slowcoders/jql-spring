@@ -1,4 +1,4 @@
-package org.eipgrid.jql.sample.controller;
+package org.eipgrid.jql.sample.jdbc.starwars.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import org.eipgrid.jql.jdbc.JDBCRepositoryBase;
@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.*;
 public class StarWarsController extends JqlStorageController.CRUD implements JqlStorageController.ListAll {
 
     public StarWarsController(JdbcJqlService service) {
-        super(service, "starwars");
+        super(service, "starwars.");
     }
 
 }

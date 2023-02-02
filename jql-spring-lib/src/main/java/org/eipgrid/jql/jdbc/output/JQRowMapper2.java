@@ -2,6 +2,7 @@ package org.eipgrid.jql.jdbc.output;
 
 import org.eipgrid.jql.schema.QResultMapping;
 import org.eipgrid.jql.schema.QColumn;
+import org.eipgrid.jql.schema.QSchema;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.support.JdbcUtils;
@@ -246,7 +247,7 @@ public class JQRowMapper2 implements ResultSetExtractor<List<JqlEntity>> {
             this.mapping = mapping;
             this.column = column;
             this.mappingPath = path;
-            this.fieldName = column.resolveJavaFieldName();
+            this.fieldName = QSchema.getJavaFieldName(column);
         }
     }
 }

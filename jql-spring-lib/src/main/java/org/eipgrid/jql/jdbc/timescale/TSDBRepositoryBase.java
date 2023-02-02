@@ -16,7 +16,7 @@ public abstract class TSDBRepositoryBase<ENTITY, ID> extends JPARepositoryBase<E
     private final String timeKeyColumnName;
 
     public TSDBRepositoryBase(JqlService service, Class<ENTITY> entityType, Class<ID> idType, String timeKeyColumnName) {
-        super(service, entityType, idType);
+        super(service, entityType);
         this.timeKeyColumnName = timeKeyColumnName;
 
         QSchema schema = getService().loadSchema(getEntityType());
@@ -59,7 +59,7 @@ public abstract class TSDBRepositoryBase<ENTITY, ID> extends JPARepositoryBase<E
             if (c != null) {
                 return c.value();
             }
-            if (col.getType() == QType.Float) {
+            if (col.getValueType() == QType.Float) {
                 return AggregateType.Mean;
             }
             return AggregateType.None;

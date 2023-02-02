@@ -7,7 +7,7 @@ import org.eipgrid.jql.schema.QSchema;
 import java.io.IOException;
 import java.util.*;
 
-public abstract class JqlRepository<ENTITY, ID> implements JqlEntityStore<ID> {
+public abstract class JqlRepository<ENTITY, ID> implements JqlTable<ID> {
 
     protected final JqlService service;
 
@@ -52,7 +52,7 @@ public abstract class JqlRepository<ENTITY, ID> implements JqlEntityStore<ID> {
 
     public List<ENTITY> find(JqlQuery query) { return find(query, getEntityType()); }
 
-    public List<Map> find_raw(JqlQuery query) { return find(query, Map.class); }
+    public List<Map<String, Object>> find_raw(JqlQuery query) { return (List)find(query, Map.class); }
 
 
     public <T> T find(ID id, Class<T> entityType) {
@@ -62,7 +62,7 @@ public abstract class JqlRepository<ENTITY, ID> implements JqlEntityStore<ID> {
 
     public ENTITY find(ID id) { return find(id, getEntityType()); }
 
-    public Map find_raw(ID id) { return find(id, Map.class); }
+    public Map<String, Object> find_raw(ID id) { return find(id, Map.class); }
 
 
     public <T> T get(ID id, Class<T> entityType) {
@@ -74,7 +74,7 @@ public abstract class JqlRepository<ENTITY, ID> implements JqlEntityStore<ID> {
 
     public ENTITY get(ID id) { return get(id, getEntityType()); }
 
-    public Map get_raw(ID id) { return get(id, Map.class); }
+    public Map<String, Object> get_raw(ID id) { return get(id, Map.class); }
 
 
 
@@ -85,7 +85,7 @@ public abstract class JqlRepository<ENTITY, ID> implements JqlEntityStore<ID> {
 
     public List<ENTITY> find(Collection<ID> idList) { return find(idList, getEntityType()); }
 
-    public List<Map> find_raw(Collection<ID> idList) { return find(idList, Map.class); }
+    public List<Map<String, Object>> find_raw(Collection<ID> idList) { return (List)find(idList, Map.class); }
 
 
     public abstract long count(JqlFilter filter);
@@ -96,7 +96,7 @@ public abstract class JqlRepository<ENTITY, ID> implements JqlEntityStore<ID> {
 
     public abstract void update(Collection<ID> idList, Map<String, Object> updateSet) throws IOException;
 
-    public abstract int delete(Collection<ID> idList);
+    public abstract void delete(Collection<ID> idList);
 
     @Override
     public boolean equals(Object o) {

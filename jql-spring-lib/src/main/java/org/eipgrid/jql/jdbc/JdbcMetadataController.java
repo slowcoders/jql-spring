@@ -1,6 +1,7 @@
 package org.eipgrid.jql.jdbc;
 
 import io.swagger.v3.oas.annotations.Operation;
+import org.eipgrid.jql.JqlService;
 import org.eipgrid.jql.jdbc.metadata.JdbcSchema;
 import org.eipgrid.jql.js.JsUtil;
 import org.eipgrid.jql.schema.QColumn;
@@ -18,8 +19,8 @@ public abstract class JdbcMetadataController {
 
     private final JdbcJqlService service;
 
-    public JdbcMetadataController(JdbcJqlService service) {
-        this.service = service;
+    public JdbcMetadataController(JqlService service) {
+        this.service = (JdbcJqlService) service;
     }
 
 

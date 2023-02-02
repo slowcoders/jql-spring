@@ -178,7 +178,7 @@ public class JdbcSchema extends QSchema {
 
             sb.write("(fetch = FetchType.LAZY");
             if (isInverseJoin && join.getAssociativeJoin() == null) {
-                String mappedField = firstFk.resolveJavaFieldName();
+                String mappedField = getJavaFieldName(firstFk);
                 sb.write(", mappedBy = ").writeQuoted(mappedField);
             }
             sb.write(")\n");
@@ -186,7 +186,7 @@ public class JdbcSchema extends QSchema {
             if (!isInverseJoin) {
                 QColumn fk = firstFk;
                 sb.write("@JoinColumn(name = ").writeQuoted(fk.getPhysicalName()).write(", ");
-                sb.write("referencedColumnName = ").writeQuoted(fk.getJoinedPrimaryColumn().resolveJavaFieldName()).write(")\n");
+                sb.write("referencedColumnName = ").writeQuoted(getJavaFieldName(fk.getJoinedPrimaryColumn())).write(")\n");
             }
             else if (join.getAssociativeJoin() != null) {
                 sb.write("@JoinTable(name = ").writeQuoted(join.getLinkedSchema().getSimpleTableName()).write(", ");
@@ -254,9 +254,9 @@ public class JdbcSchema extends QSchema {
 
         sb.replaceTrailingComma(")\n");
 
-        String fieldName = col.resolveJavaFieldName();
+        String fieldName = getJavaFieldName(col);
 
-        sb.write(col.getJavaType().getName()).write(" ").write(fieldName).writeln(";");
+        sb.write(col.getValueType().toJavaClass().getName()).write(" ").write(fieldName).writeln(";");
     }
 
 

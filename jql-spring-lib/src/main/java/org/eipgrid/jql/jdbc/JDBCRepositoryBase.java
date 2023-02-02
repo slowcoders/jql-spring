@@ -95,14 +95,14 @@ public class JDBCRepositoryBase<ENTITY, ID> extends JqlRepository<ENTITY, ID> {
     }
 
     @Override
-    public int delete(Collection<ID> idList) {
+    public void delete(Collection<ID> idList) {
         JqlFilter filter = JqlFilter.of(schema, idList);
         String sql = service.createQueryGenerator().createDeleteQuery(filter);
-        return jdbc.update(sql);
+        jdbc.update(sql);
     }
 
 
-    public void clearEntityCache(ID id) {
+    public void removeEntityCache(ID id) {
         // do nothing.
     }
 
@@ -116,7 +116,7 @@ public class JDBCRepositoryBase<ENTITY, ID> extends JqlRepository<ENTITY, ID> {
         ConversionService cvtService = service.getConversionService();
         List<QColumn> pkColumns = schema.getPKColumns();
         if (pkColumns.size() == 1) {
-            return (ID)cvtService.convert(v, pkColumns.get(0).getJavaType());
+            return (ID)cvtService.convert(v, pkColumns.get(0).getValueType().toJavaClass());
         }
         String pks[] = ((String)v).split("|");
         if (pks.length != pkColumns.size()) {
@@ -124,7 +124,7 @@ public class JDBCRepositoryBase<ENTITY, ID> extends JqlRepository<ENTITY, ID> {
         }
         Object ids[] = new Object[pks.length];
         for (int i = 0; i < pks.length; i++) {
-            ids[i] = cvtService.convert(pks[i], pkColumns.get(i).getJavaType());
+            ids[i] = cvtService.convert(pks[i], pkColumns.get(i).getValueType().toJavaClass());
         }
         return (ID)ids;
     }

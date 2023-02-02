@@ -3,14 +3,8 @@ package org.eipgrid.jql.parser;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.eipgrid.jql.schema.QColumn;
 import org.eipgrid.jql.schema.QSchema;
-import org.eipgrid.jql.JqlQuery;
 import org.eipgrid.jql.schema.QType;
-import org.springframework.core.convert.ConversionService;
 
-import javax.persistence.FetchType;
-import javax.persistence.ManyToOne;
-import javax.persistence.OneToOne;
-import java.lang.reflect.Field;
 import java.util.*;
 
 public class JqlParser {
@@ -104,7 +98,7 @@ public class JqlParser {
             QSchema schema = subFilter.getSchema();
             if (schema != null) {
                 column = schema.getColumn(columnName);
-                Class<?> fieldType = column.getJavaType();
+                Class<?> fieldType = column.getValueType().toJavaClass();
                 Class<?> accessType = op.getAccessType(value, fieldType);
                 if (value != null) {
                     value = om.convertValue(value, accessType);

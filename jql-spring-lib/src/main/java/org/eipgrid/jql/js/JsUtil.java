@@ -41,7 +41,7 @@ public class JsUtil {
     public static String dumpJSONSchema(StringBuilder sb, JdbcColumn col) {
         String jsonType = getColumnType(col);
         if (jsonType == null) {
-            throw new RuntimeException("JsonType not registered: " + col.getJavaType() + " " + col.getPhysicalName());
+            throw new RuntimeException("JsonType not registered: " + col.getValueType().toJavaClass() + " " + col.getPhysicalName());
         }
         sb.append("  jql.").append(jsonType).append("(\"")
                 .append(col.getJsonKey()).append("\"");
@@ -91,7 +91,7 @@ public class JsUtil {
             return columnType;
         }
 
-        Class javaType = column.getJavaType();
+        Class javaType = column.getValueType().toJavaClass();
         String type = ClassUtils.getBoxedType(javaType).getName();
         String colType = mdkTypes.get(type);
         if (colType == null) {
@@ -137,7 +137,7 @@ public class JsUtil {
             sb.append("\n// reference properties //\n");
 
             for (QColumn col : schema.getReadableColumns()) {
-                if (!col.getType().isPrimitive()) {
+                if (!col.getValueType().isPrimitive()) {
                     dumpColumnInfo(col, sb);
                 }
             }

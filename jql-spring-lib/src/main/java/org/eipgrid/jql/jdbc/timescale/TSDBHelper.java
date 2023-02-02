@@ -38,7 +38,7 @@ public abstract class TSDBHelper {
 
     private QColumn resolveTimeKeyColumn() {
         for (QColumn column : this.schema.getPKColumns()) {
-            if (column.getType() == QType.Timestamp) {
+            if (column.getValueType() == QType.Timestamp) {
                 return column;
             }
         }

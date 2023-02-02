@@ -21,12 +21,8 @@ public abstract class QColumn {
         return schema;
     }
 
-    public final QType getType() {
+    public final QType getValueType() {
         return columnType;
-    }
-
-    public final Class<?> getJavaType() {
-        return columnType.toJavaClass();
     }
 
     public final String getPhysicalName() {
@@ -35,14 +31,9 @@ public abstract class QColumn {
 
     public abstract String getJsonKey();
 
-    public String resolveJavaFieldName() {
-        String name = getJsonKey();
-        int idx = name.indexOf('.');
-        if (idx > 0) {
-            name = name.substring(0, idx);
-        }
-        return name;
-    }
+    public Field getMappedOrmField() { return null; }
+
+    protected void setMappedOrmField(Field f) {}
 
     //===========================================================
     // Overridable Properties
@@ -79,7 +70,4 @@ public abstract class QColumn {
 
     public String toString() { return getSchema().getSimpleTableName() + "::" + this.getJsonKey()+ "<" + physicalName + ">"; }
 
-    public Field getMappedOrmField() { return null; }
-
-    protected void setMappedOrmField(Field f) {}
 }

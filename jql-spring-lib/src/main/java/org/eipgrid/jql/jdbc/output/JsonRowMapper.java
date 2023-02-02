@@ -56,7 +56,7 @@ public class JsonRowMapper implements ResultSetExtractor<List<Map>> {
                 List<QColumn> pkColumns = mapping.getSchema().getPKColumns();
                 int pkIndex = idxColumn;
                 for (int pkCount = pkColumns.size(); --pkCount >= 0; pkIndex++) {
-                    Object value = getColumnValue(rs, pkIndex + 1, mappedColumns[pkIndex].column.getType());
+                    Object value = getColumnValue(rs, pkIndex + 1, mappedColumns[pkIndex].column.getValueType());
                     mappedColumns[pkIndex].value = value;
                     if (value == null) {
                         if (isArray && pkIndex > 0) {
@@ -163,7 +163,7 @@ public class JsonRowMapper implements ResultSetExtractor<List<Map>> {
 
         for (; idxColumn < end; ) {
             MappedColumn mappedColumn = mappedColumns[idxColumn++];
-            Object value = getColumnValue(rs, idxColumn, mappedColumn.column.getType());
+            Object value = getColumnValue(rs, idxColumn, mappedColumn.column.getValueType());
             mappedColumn.value = value;
             putValue(currEntity, mappedColumn, value);
         }

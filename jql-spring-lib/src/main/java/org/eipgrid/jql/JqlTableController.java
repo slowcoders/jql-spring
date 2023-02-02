@@ -13,26 +13,27 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public interface JqlController<ID> {
+public interface JqlTableController<ID> {
 
-    JqlEntityStore<ID> getStore();
+    JqlTable<ID> getTable();
 
-    class Search<ID> implements JqlController<ID> {
-        private final JqlEntityStore<ID> store;
+    class Search<ID> implements JqlTableController<ID> {
+        private final JqlTable<ID> table;
 
-        public Search(JqlEntityStore<ID> store) {
-            this.store = store;
+        public Search(JqlTable<ID> table) {
+            this.table = table;
         }
 
-        public JqlEntityStore<ID> getStore() {
-            return store;
+        public JqlTable<ID> getTable() {
+            return table;
         }
 
         @GetMapping(path = "/{id}")
-        @ResponseBody
         @Operation(summary = "지정 엔터티 읽기")
+        @Transactional
+        @ResponseBody
         public Object get(@PathVariable("id") ID id) {
-            Object entity = getStore().find(id);
+            Object entity = getTable().find(id);
             if (entity == null) {
                 throw new HttpServerErrorException("Entity(" + id + ") is not found", HttpStatus.NOT_FOUND, null, null, null, null);
             }
@@ -40,27 +41,30 @@ public interface JqlController<ID> {
         }
 
         @PostMapping(path = "/find", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
-        @ResponseBody
         @Operation(summary = "엔터티 검색")
+        @Transactional
+        @ResponseBody
         public Object find_form(@Schema(example = "{ \"select\": \"\", \"sort\": \"\", \"page\": 0, \"limit\": 0, \"filter\": { } }")
                                 @ModelAttribute JqlQuery.Request request) {
             return find(request);
         }
 
         @PostMapping(path = "/find", consumes = {MediaType.APPLICATION_JSON_VALUE})
-        @ResponseBody
         @Operation(summary = "엔터티 검색")
+        @Transactional
+        @ResponseBody
         public JqlQuery.Response find(@Schema(example = "{ \"select\": \"\", \"sort\": \"\", \"page\": 0, \"limit\": 0, \"filter\": { } }")
-                           @RequestBody JqlQuery.Request request) {
-            return request.buildQuery(getStore()).execute();
+                                      @RequestBody JqlQuery.Request request) {
+            return request.buildQuery(getTable()).execute();
         }
 
         @PostMapping(path = "/count")
-        @ResponseBody
         @Operation(summary = "엔터티 수 조회")
+        @Transactional
+        @ResponseBody
         public long count(@Schema(implementation = Object.class)
                           @RequestBody() HashMap<String, Object> jsFilter) {
-            long count = getStore().count(getStore().createFilter(jsFilter));
+            long count = getTable().count(getTable().createFilter(jsFilter));
             return count;
         }
 
@@ -69,56 +73,58 @@ public interface JqlController<ID> {
         @ResponseBody
         @Operation(summary = "Cache 비우기")
         public void clearCache() {
-            getStore().clearEntityCaches();
+            getTable().clearEntityCaches();
         }
     }
 
-    interface ListAll<ID> extends JqlController<ID> {
+    interface ListAll<ID> extends JqlTableController<ID> {
 
         @GetMapping(path = "")
-        @ResponseBody
         @Operation(summary = "전체 목록")
+        @Transactional
+        @ResponseBody
         default JqlQuery.Response list() throws Exception {
-            return JqlQuery.of(getStore(), null, null).execute();
+            return JqlQuery.of(getTable(), null, null).execute();
         }
     }
 
 
-    interface Insert<ID> extends JqlController<ID> {
+    interface Insert<ID> extends JqlTableController<ID> {
 
         @PutMapping(path = "/", consumes = {MediaType.APPLICATION_JSON_VALUE})
-        @ResponseBody
         @Operation(summary = "엔터티 추가")
         @Transactional
-        default Object add(@Schema(implementation = Object.class)
-                           @RequestBody Map<String, Object> entity) throws Exception {
-            ID id = getStore().insert(entity);
-            return getStore().find(id);
+        @ResponseBody
+        default <ENTITY> ENTITY add(@Schema(implementation = Object.class)
+                       @RequestBody Map<String, Object> properties) throws Exception {
+            JqlTable<ID> table = getTable();
+            ID id = table.insert(properties);
+            return (ENTITY)table.find(id);
         }
     }
 
-    interface Update<ID> extends JqlController<ID> {
+    interface Update<ID> extends JqlTableController<ID> {
 
         @PatchMapping(path = "/{idList}", consumes = {MediaType.APPLICATION_JSON_VALUE})
-        @ResponseBody
         @Operation(summary = "엔터티 내용 변경")
         @Transactional
-        default List<?> update(
+        @ResponseBody
+        default <ENTITY> Collection<ENTITY> update(
                 @Schema(type = "string", required = true) @PathVariable("idList") Collection<ID> idList,
-                @RequestBody HashMap<String, Object> updateSet) throws Exception {
-            getStore().update(idList, updateSet);
-            List<?> entities = getStore().find(idList);
-            return entities;
+                @RequestBody Map<String, Object> properties) throws Exception {
+            JqlTable<ID> table = getTable();
+            table.update(idList, properties);
+            return (Collection<ENTITY>)table.find(idList);
         }
     }
 
-    interface Delete<ID> extends JqlController<ID> {
+    interface Delete<ID> extends JqlTableController<ID> {
         @DeleteMapping("/{idList}")
         @ResponseBody
         @Operation(summary = "엔터티 삭제")
         @Transactional
         default Collection<ID> delete(@PathVariable("idList") Collection<ID> idList) {
-            getStore().delete(idList);
+            getTable().delete(idList);
             return idList;
         }
     }
@@ -127,22 +133,23 @@ public interface JqlController<ID> {
     /****************************************************************
      * Form Control API set
      */
-    interface InsertForm<ENTITY, ID> extends JqlController<ID> {
+    interface InsertForm<FORM, ID> extends JqlTableController<ID> {
 
         @PostMapping(path = "/", consumes = { MediaType.MULTIPART_FORM_DATA_VALUE })
         @ResponseBody
         @Operation(summary = "엔터티 추가")
         @Transactional
-        default ENTITY add_form(@ModelAttribute ENTITY entity) throws Exception {
-            throw new RuntimeException("not implemented!");
-//            ID id = getRepository().insert(entity);
-//            return getRepository().find(id);
+        default ID add_form(@ModelAttribute FORM formData) throws Exception {
+            Map<String, Object> dataSet = convertFormDataToMap(formData);
+            return getTable().insert(dataSet);
         }
+
+        Map<String, Object> convertFormDataToMap(FORM formData);
     }
 
     class CRUD<ID> extends Search<ID> implements Insert<ID>, Update<ID>, Delete<ID> {
-        public CRUD(JqlEntityStore<ID> store) {
-            super(store);
+        public CRUD(JqlTable<ID> table) {
+            super(table);
         }
     }
 

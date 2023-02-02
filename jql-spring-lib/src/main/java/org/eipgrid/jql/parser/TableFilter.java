@@ -125,7 +125,7 @@ class TableFilter extends EntityFilter implements QResultMapping {
         QColumn jsonColumn = null;
         if (join == null) {
             jsonColumn = schema.getColumn(key);
-            if (jsonColumn.getType() != QType.Json) return this;
+            if (jsonColumn.getValueType() != QType.Json) return this;
         }
 
         EntityFilter subQuery = subFilters.get(key);

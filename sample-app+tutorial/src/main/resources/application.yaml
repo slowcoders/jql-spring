@@ -29,13 +29,13 @@ server:
     mime-types: application/json,application/xml,text/html,text/xml,text/plain,application/javascript
 
 
-database: postgres-starwars
-
+database: postgres
+  
 spring:
   sql.init:
       mode: always
-      schema-locations: classpath*:db/${database}/schema.sql
-      data-locations: classpath*:db/${database}/data.sql
+      schema-locations: classpath*:db/${database}/schema.sql, classpath*:db/${database}/petclinic-schema.sql
+      data-locations: classpath*:db/${database}/data.sql, classpath*:db/${database}/petclinic-data.sql
   session:
     store-type: none  # Session 저장 유형 StoreType 참조.
     timeout: 3600     # Session timeout.
