@@ -6,15 +6,23 @@ import org.eipgrid.jql.util.ClassUtils;
 import javax.persistence.Entity;
 import java.lang.reflect.Field;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class QJoin {
+
+    private final Type type;
     private final QJoin associateJoin;
     private final String jsonKey;
-    private final boolean isUnique;
+//    private final boolean hasUniqueTarget;
     private final boolean inverseMapped;
     private final List<QColumn> fkColumns;
     private final QSchema baseSchema;
+
+    public enum Type {
+        OneToOne,
+        ManyToOne,
+        OneToMany,
+        ManyToMany
+    }
 
     public QJoin(QSchema baseSchema, List<QColumn> fkColumns) {
         this(baseSchema, fkColumns, null);
@@ -25,20 +33,29 @@ public class QJoin {
         this.baseSchema = baseSchema;
         QSchema fkSchema = fkColumns.get(0).getSchema();
         this.inverseMapped = baseSchema != fkSchema;
+        boolean uniqueBase;
+        boolean hasUniqueTarget;
         if (inverseMapped) {
             assert(associatedJoin == null || !associatedJoin.inverseMapped);
-            this.isUnique = (associatedJoin == null || associatedJoin.isUnique) &&
+            uniqueBase = true;
+            hasUniqueTarget = (associatedJoin == null || associatedJoin.hasUniqueTarget()) &&
                             fkSchema.isUniqueConstrainedColumnSet(fkColumns);
         } else {
             assert(associatedJoin == null);
-            QSchema mediateSchema = fkColumns.get(0).getJoinedPrimaryColumn().getSchema();
-            List<QColumn> pkColumns = fkColumns.stream()
-                    .map(col -> col.getJoinedPrimaryColumn())
-                    .collect(Collectors.toList());
-            this.isUnique = mediateSchema.isUniqueConstrainedColumnSet(pkColumns);
+            hasUniqueTarget = true;
+            uniqueBase = fkSchema.isUniqueConstrainedColumnSet(fkColumns);
+        }
+        if (hasUniqueTarget) {
+            this.type = uniqueBase ? Type.OneToOne : Type.ManyToOne;
+        } else {
+            this.type = uniqueBase ? Type.OneToMany : Type.ManyToMany;
         }
         this.associateJoin = associatedJoin;
-        this.jsonKey = associatedJoin != null ? associatedJoin.getJsonKey() : initJsonKey();
+        String key = associatedJoin != null ? associatedJoin.getJsonKey() : resolveJsonKey();
+        if (!hasUniqueTarget() && !key.endsWith("_")) {
+            key += '_';
+        }
+        this.jsonKey = key;
     }
 
     public List<QColumn> getForeignKeyColumns() {
@@ -53,21 +70,24 @@ public class QJoin {
         return this.inverseMapped;
     }
 
-    public boolean isUniqueJoin() {
-        return this.isUnique;
+    public boolean hasUniqueTarget() {
+        return this.type.ordinal() < Type.OneToMany.ordinal();
     }
 
+    public Type getType() {
+        return this.type;
+    }
     public String getJsonKey() {
         return jsonKey;
     }
 
-    private String initJsonKey() {
+    private String resolveJsonKey() {
         if (this.jsonKey != null) {
             throw new RuntimeException("already initialized");
         }
         QColumn first_fk = fkColumns.get(0);
         if (!inverseMapped && fkColumns.size() == 1) {
-            return initJsonKey(first_fk);
+            return resolveJsonKey(first_fk);
         }
 
         String name;
@@ -91,10 +111,10 @@ public class QJoin {
         }
 
         name = CaseConverter.toCamelCase(name, false);
-        return name + '_';
+        return name;
     }
 
-    public static String initJsonKey(QColumn fk) {
+    public static String resolveJsonKey(QColumn fk) {
         if (fk.getMappedOrmField() != null) {
             return fk.getJsonKey();
         }
@@ -108,7 +128,7 @@ public class QJoin {
         } else {
             js_key = joinedPk.getSchema().getSimpleTableName();
         }
-        return js_key + "_";
+        return js_key;
     }
 
     public QSchema getBaseSchema() {

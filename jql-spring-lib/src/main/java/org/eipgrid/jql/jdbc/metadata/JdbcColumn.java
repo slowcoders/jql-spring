@@ -133,15 +133,12 @@ public class JdbcColumn extends QColumn {
         StringBuilder sb = new StringBuilder();
         QColumn col = this;
         for (QColumn joinedPk; (joinedPk = col.getJoinedPrimaryColumn()) != null; col = joinedPk) {
-            String token = QJoin.initJsonKey(col);
+            String token = QJoin.resolveJsonKey(col);
             sb.append(token).append('.');
         }
         CharSequence rawFieldName = (col != this) ? sb.append(col.getPhysicalName()) : this.getPhysicalName();
 
         String name = getSchema().getSchemaLoader().getNameConverter().toLogicalAttributeName(rawFieldName.toString());
-        if (this.getValueType() == QType.Json) {
-            name += '_';
-        }
         return name;
     }
 

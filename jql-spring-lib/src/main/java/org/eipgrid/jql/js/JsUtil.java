@@ -30,7 +30,7 @@ public class JsUtil {
             for (Map.Entry<String, QJoin> entry : schema.getEntityJoinMap().entrySet()) {
                 sb.append("  jql.externalJoin(\"").append(entry.getKey()).append("\", ");
                 sb.append(entry.getValue().getLinkedSchema().getSimpleTableName()).append("Schema, ");
-                sb.append(entry.getValue().isUniqueJoin() ? "Object" : "Array").append("),\n");
+                sb.append(entry.getValue().hasUniqueTarget() ? "Object" : "Array").append("),\n");
             }
             sb.append("];\n");
         }
@@ -73,17 +73,17 @@ public class JsUtil {
         return sb.toString();
     }
 
-    private static String getJoinName(String name) {
-        int i = name.lastIndexOf('_');
-        while (i > 0) {
-            if (name.charAt(--i) != '_') {
-                name = name.substring(0, i+1);
-                break;
-            }
-        }
-        return name;
-    }
-
+//    private static String getJoinName(String name) {
+//        int i = name.lastIndexOf('_');
+//        while (i > 0) {
+//            if (name.charAt(--i) != '_') {
+//                name = name.substring(0, i+1);
+//                break;
+//            }
+//        }
+//        return name;
+//    }
+//
     private static String getColumnType(QColumn column) {
         QColumn joinedPK = column.getJoinedPrimaryColumn();
         if (joinedPK != null) {
@@ -148,7 +148,7 @@ public class JsUtil {
                 if (refSchema.hasOnlyForeignKeys()) continue;
                 int start = sb.length();
                 sb.append(join.getTargetSchema().getSimpleTableName());
-                if (!join.isUniqueJoin()) sb.append("[]");
+                if (!join.hasUniqueTarget()) sb.append("[]");
                 int type_len = sb.length() - start;
                 if (type_len >= filler.length()) {
                     type_len = filler.length() - 1;

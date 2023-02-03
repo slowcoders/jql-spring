@@ -200,7 +200,7 @@ class TableFilter extends EntityFilter implements QResultMapping {
 
     @Override
     public boolean isArrayNode() {
-        return !this.join.isUniqueJoin();
+        return !this.join.hasUniqueTarget();
     }
 
     @Override
