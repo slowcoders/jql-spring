@@ -12,7 +12,6 @@ public class QJoin {
     private final Type type;
     private final QJoin associateJoin;
     private final String jsonKey;
-//    private final boolean hasUniqueTarget;
     private final boolean inverseMapped;
     private final List<QColumn> fkColumns;
     private final QSchema baseSchema;
@@ -28,35 +27,41 @@ public class QJoin {
         this(baseSchema, fkColumns, null);
     }
 
-    public QJoin(QSchema baseSchema, List<QColumn> fkColumns, QJoin associatedJoin) {
+    public QJoin(QSchema baseSchema, List<QColumn> fkColumns, QJoin associateJoin) {
         this.fkColumns = fkColumns;
         this.baseSchema = baseSchema;
+        this.associateJoin = associateJoin;
         QSchema fkSchema = fkColumns.get(0).getSchema();
         this.inverseMapped = baseSchema != fkSchema;
         boolean uniqueBase;
         boolean uniqueTarget;
-        if (inverseMapped) {
-            assert(associatedJoin == null || !associatedJoin.inverseMapped);
-            uniqueBase = (associatedJoin == null || fkSchema == associatedJoin.fkColumns.get(0).getSchema()
+        if (inverseMapped) { // PK:FK  mapping (OneToOne or OneToMany) + (ManyToMany:associative)
+            assert(associateJoin == null || !associateJoin.inverseMapped);
+            uniqueBase = (associateJoin == null
+                    || isRecursiveJoin()
                     || fkSchema.isUniqueConstrainedColumnSet(fkColumns));
-            uniqueTarget = (associatedJoin == null || associatedJoin.hasUniqueTarget()) &&
+            uniqueTarget = (associateJoin == null || associateJoin.hasUniqueTarget()) &&
                             fkSchema.isUniqueConstrainedColumnSet(fkColumns);
-        } else {
-            assert(associatedJoin == null);
-            uniqueTarget = true;
+        } else { // FK:PK  mapping (OneToOne or ManyToOne)
+            assert(associateJoin == null);
             uniqueBase = fkSchema.isUniqueConstrainedColumnSet(fkColumns);
+            uniqueTarget = true;
         }
         if (uniqueTarget) {
             this.type = uniqueBase ? Type.OneToOne : Type.ManyToOne;
         } else {
             this.type = uniqueBase ? Type.OneToMany : Type.ManyToMany;
         }
-        this.associateJoin = associatedJoin;
-        String key = associatedJoin != null ? associatedJoin.getJsonKey() : resolveJsonKey();
+        String key = associateJoin != null ? associateJoin.getJsonKey() : resolveJsonKey();
         if (!hasUniqueTarget() && !key.endsWith("_")) {
             key += '_';
         }
         this.jsonKey = key;
+    }
+
+    private boolean isRecursiveJoin() {
+        return associateJoin != null &&
+                baseSchema == associateJoin.fkColumns.get(0).getJoinedPrimaryColumn().getSchema();
     }
 
     public List<QColumn> getForeignKeyColumns() {
