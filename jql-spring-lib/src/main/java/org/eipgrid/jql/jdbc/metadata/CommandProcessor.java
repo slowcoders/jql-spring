@@ -33,12 +33,12 @@ public class CommandProcessor implements CommandLineRunner {
 
 //        Connection conn = ds.getConnection();
 
-        JdbcSchemaLoader mp = new JdbcSchemaLoader(ds, CaseConverter.defaultConverter);
+        JdbcSchemaLoader mp = new JdbcSchemaLoader(null, ds, CaseConverter.defaultConverter);
         for (String dbSchema : mp.getDBSchemas()) {
             List<String> tableNames = mp.getTableNames(dbSchema);
             ArrayList<QSchema> schemas = new ArrayList<>();
             for (String tableName : tableNames) {
-                schemas.add(mp.loadSchema(dbSchema + '.' + tableName, null));
+                schemas.add(mp.loadSchema(dbSchema + '.' + tableName));
             }
 
             for (QSchema schema : schemas) {

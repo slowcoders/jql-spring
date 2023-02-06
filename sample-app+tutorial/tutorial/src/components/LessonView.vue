@@ -3,6 +3,13 @@
     <div>
       <div style="background-color: #F0F0F0">
         <table><tr><td>
+          <label class="form-label">Storage: </label>
+        </td><td class="input-column">
+          <b-form-select v-model="selectedStorage"
+                         :options="storageNames"
+                         @input="onTableChanged()">
+          </b-form-select>
+        </td><td>
           <label class="form-label">Table: </label>
         </td><td class="input-column">
           <b-form-select v-model="selectedTable"
@@ -97,6 +104,10 @@ function count_lines(code) {
   return lines.length;
 }
 
+const sampleStorages = [
+  "starwars",
+  "starwars_jpa",
+]
 
 const sampleTables = [
   "character",
@@ -116,9 +127,11 @@ export default {
   data() {
     return {
       showSchemaInfo: this.enable_table_select,
+      storageNames: sampleStorages,
+      selectedStorage: sampleStorages[0],
+      tableNames: sampleTables,
       selectedTable: sampleTables[0],
       schemaInfo: '',
-      tableNames: sampleTables,
       selectableColumns: [],
       selectedColumns: [],
       allColumnSelected: true,
@@ -126,7 +139,7 @@ export default {
       first_sort: '',
       columns: '*',
       limit: 0,
-      sampleCode: this.make_sample_code(),
+      sampleCode: "--", //this.make_sample_code(),
       source_lines: count_lines(this.js_code),
       test_result: '',
       sortBy: null,
@@ -177,7 +190,7 @@ export default {
       const vm = this;
 
       return ` // JQL Sample
-const dbSchema = '${dbSchema}'
+const dbSchema = '${vm.selectedStorage}'
 const dbTable = '${vm.selectedTable}'
 const AUTO = ""
 

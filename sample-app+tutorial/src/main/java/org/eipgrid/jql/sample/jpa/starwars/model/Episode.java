@@ -24,8 +24,9 @@ public class Episode implements java.io.Serializable {
     java.sql.Timestamp published;
 
     @Getter @Setter
-    @OneToMany(fetch = FetchType.LAZY)
+    @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(name = "character_episode_link", schema = "starwars_jpa",
+            uniqueConstraints = { @UniqueConstraint(name ="character_id__episode_id__uindex", columnNames = {"character_id", "episode_id"})  },
             joinColumns = @JoinColumn(name="episode_id"), inverseJoinColumns = @JoinColumn(name="character_id"))
     List<Character> character_;
 

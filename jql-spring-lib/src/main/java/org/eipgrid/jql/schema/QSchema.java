@@ -9,7 +9,9 @@ import java.util.*;
 public abstract class QSchema {
     private final SchemaLoader schemaLoader;
     private final String tableName;
-    private final Class<?> ormType;
+    private final Class<?> entityType;
+
+    private final boolean isJPASchema;
 
     private List<QColumn> pkColumns;
     private List<QColumn> allColumns;
@@ -19,20 +21,20 @@ public abstract class QSchema {
     private Map<String, QColumn> columnMap = new HashMap<>();
     private HashMap<String, QJoin> entityJoinMap;
 
-    public QSchema(SchemaLoader schemaLoader, String tableName, Class<?> ormType) {
+    public QSchema(SchemaLoader schemaLoader, String tableName, Class<?> entityType) {
         this.tableName = tableName;
         this.schemaLoader = schemaLoader;
-        this.ormType = ormType;
+        this.entityType = entityType;
+        this.isJPASchema = !Map.class.isAssignableFrom(entityType);
     }
-
 
     public final SchemaLoader getSchemaLoader() {
         return schemaLoader;
     }
 
-    public final boolean isJPASchema() { return !Map.class.isAssignableFrom(ormType); }
+    public final boolean isJPARequired() { return this.isJPASchema; }
 
-    public final Class<?> getORMType() { return ormType; }
+    public final Class<?> getEntityType() { return entityType; }
 
     public String getTableName() {
         return this.tableName;
@@ -240,4 +242,5 @@ public abstract class QSchema {
     }
 
 
+    public abstract <ID, ENTITY> ID getEnityId(ENTITY entity);
 }

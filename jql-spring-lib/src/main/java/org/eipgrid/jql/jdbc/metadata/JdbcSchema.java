@@ -7,7 +7,9 @@ import org.eipgrid.jql.util.ClassUtils;
 import org.eipgrid.jql.util.SourceWriter;
 
 import javax.persistence.Column;
+import javax.persistence.IdClass;
 import javax.persistence.JoinColumn;
+import javax.persistence.UniqueConstraint;
 import java.lang.reflect.Field;
 import java.util.*;
 
@@ -17,13 +19,10 @@ public class JdbcSchema extends QSchema {
     private final HashMap<String, List<QColumn>> fkConstraints = new HashMap<>();
 
     private ArrayList<QColumn> unresolvedJpaColumns;
+    private Class<?> idType;
 
     protected JdbcSchema(SchemaLoader schemaLoader, String tableName, Class<?> ormType) {
         super(schemaLoader, tableName, ormType);
-    }
-
-    protected JdbcSchema(SchemaLoader schemaLoader, String tableName) {
-        this(schemaLoader, tableName, Map.class);
     }
 
     protected void init(ArrayList<? extends QColumn> columns, HashMap<String, ArrayList<String>> uniqueConstraints, Class<?> ormType) {
@@ -156,8 +155,8 @@ public class JdbcSchema extends QSchema {
 //        }
         if (col.getJoinedPrimaryColumn() != null) return;
 
-        boolean isJsonObject = false;//col.getValueType() == QType.Json;
-        if (!isJsonObject) {
+        boolean isJsonObject = col.getValueType() == QType.Json;
+        if (true || !isJsonObject) {
             sb.write("@Getter");
             if (!col.isReadOnly()) {
                 sb.write(" @Setter");
@@ -177,6 +176,9 @@ public class JdbcSchema extends QSchema {
             sb.write(isUnique ? "@One" : "@Many").writeln("ToOne(fetch = FetchType.LAZY)");
         }
         sb.write(pk != null ? "@Join" : "@").write("Column(name = ").writeQuoted(col.getPhysicalName()).write(", ");
+        if (isJsonObject) {
+            sb.write("columnDefinition = \"jsonb\", ");
+        }
         if (pk != null) {
             sb.write("referencedColumnName = ").writeQuoted(pk.getPhysicalName()).write(", ");
         }
@@ -186,6 +188,9 @@ public class JdbcSchema extends QSchema {
 
         sb.replaceTrailingComma(")\n");
 
+        if (isJsonObject) {
+            sb.writeln("@org.hibernate.annotations.Type(\"jsonb\")");
+        }
         String fieldName = getJavaFieldName(col);
 
 //        if (isJsonObject) {
@@ -234,8 +239,13 @@ public class JdbcSchema extends QSchema {
                 sb.write("schema = ").writeQuoted(dbSchema).write(",");
             }
             sb.writeln();
+            sb.incTab();
+            if (firstFk.getSchema().hasOnlyForeignKeys()) {
+                ((JdbcSchema)firstFk.getSchema()).dumpUniqueConstraints(sb);
+            }
             sb.write("joinColumns = @JoinColumn(name=").writeQuoted(firstFk.getPhysicalName()).write("), ");
             sb.write("inverseJoinColumns = @JoinColumn(name=").writeQuoted(join.getAssociativeJoin().getForeignKeyColumns().get(0).getPhysicalName()).write("))\n");
+            sb.decTab();
         }
 
         String mappedType = toJavaTypeName(mappedSchema.getSimpleTableName());
@@ -248,12 +258,22 @@ public class JdbcSchema extends QSchema {
     }
 
 
+
     private void dumpTableDefinition(SourceWriter sb) {
         sb.write("@Table(name = ").writeQuoted(this.getSimpleTableName()).
-                write(", schema = ").writeQuoted(this.getNamespace()).write(", ");
+                write(", schema = ").writeQuoted(this.getNamespace()).write(",\n");
+        sb.incTab();
+        dumpUniqueConstraints(sb);
+        sb.decTab();
+        sb.replaceTrailingComma("\n)\n");
+        if (this.getObjectColumns().size() > 0) {
+            sb.writeln("@org.hibernate.annotations.TypeDef(name = \"jsonb\", typeClass = com.vladmihalcea.hibernate.type.json.JsonBinaryType.class)");
+        }
+    }
+
+    private void dumpUniqueConstraints(SourceWriter sb) {
         if (!this.uniqueConstraints.isEmpty()) {
-            sb.incTab();
-            sb.write("\nuniqueConstraints = {");
+            sb.write("uniqueConstraints = {");
             sb.incTab();
             for (Map.Entry<String, ArrayList<String>> entry: this.uniqueConstraints.entrySet()) {
                 sb.write("\n@UniqueConstraint(name =\"" + entry.getKey() + "\", columnNames = {");
@@ -266,11 +286,6 @@ public class JdbcSchema extends QSchema {
             }
             sb.decTab();
             sb.replaceTrailingComma("\n},\n");
-            sb.decTab();
-        }
-        sb.replaceTrailingComma("\n)\n");
-        if (this.getObjectColumns().size() > 0) {
-            sb.writeln("@org.hibernate.annotations.TypeDef(name = \"jsonb\", typeClass = com.vladmihalcea.hibernate.type.json.JsonBinaryType.class)");
         }
     }
 
@@ -369,5 +384,62 @@ public class JdbcSchema extends QSchema {
         CaseConverter cvt = getSchemaLoader().getNameConverter();
         String colName = cvt.toPhysicalColumnName(f.getName());
         return colName;
+    }
+
+    protected Class<?> getIdType() {
+        if (this.idType == null) {
+            List<QColumn> pkColumns = this.getPKColumns();
+            if (pkColumns.size() == 1) {
+                this.idType = pkColumns.get(0).getValueType().toJavaClass();
+            }
+            else if (!isJPARequired()) {
+                this.idType = JdbcArrayID.class;
+            }
+            else {
+                IdClass idClass = getEntityType().getAnnotation(IdClass.class);
+                this.idType = idClass.value();
+            }
+        }
+        return this.idType;
+    }
+    public <ID, ENTITY> ID getEnityId(ENTITY entity) {
+        if (entity == null) return null;
+        if (!getEntityType().isAssignableFrom(entity.getClass())) {
+            throw new RuntimeException("Entity type mismatch: " +
+                    getEntityType().getSimpleName() + " != " + entity.getClass().getSimpleName());
+        }
+
+        try {
+            List<QColumn> pkColumns = this.getPKColumns();
+            if (pkColumns.size() == 1) {
+                QColumn pk = pkColumns.get(0);
+                if (this.isJPARequired()) {
+                    return (ID)pk.getMappedOrmField().get(entity);
+                } else {
+                    return (ID)((Map)entity).get(pk.getJsonKey());
+                }
+            }
+            else {
+                if (this.isJPARequired()) {
+                    Object id = getIdType().getConstructor().newInstance();
+                    for (QColumn column : pkColumns) {
+                        Object k = column.getMappedOrmField().get(entity);
+                        column.getMappedOrmField().set(id, k);
+                    }
+                    return (ID)id;
+                }
+                else {
+                    Object[] keys = new Object[pkColumns.size()];
+                    int i = 0;
+                    for (QColumn column : pkColumns) {
+                        keys[i++] = ((Map)entity).get(column.getJsonKey());
+                    }
+                    return (ID)new JdbcArrayID(keys);
+                }
+            }
+
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 }

@@ -3,6 +3,7 @@ package org.eipgrid.jql.sample.config;
 import org.eipgrid.jql.JqlService;
 import org.eipgrid.jql.jdbc.JdbcJqlService;
 import org.eipgrid.jql.config.DefaultJqlConfig;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.convert.ConversionService;
@@ -19,13 +20,10 @@ public class JdbcJqlConfig extends DefaultJqlConfig {
 
     @Bean
     public JqlService jdbcJqlService(DataSource dataSource, TransactionTemplate transactionTemplate,
-                                     MappingJackson2HttpMessageConverter jsonConverter,
                                      ConversionService conversionService,
-                                     RequestMappingHandlerMapping handlerMapping,
-                                     EntityManager entityManager,
-                                     EntityManagerFactory entityManagerFactory) throws Exception {
-        JdbcJqlService service = new JdbcJqlService(dataSource, transactionTemplate, jsonConverter,
-                conversionService, handlerMapping, entityManager, entityManagerFactory);
+                                     EntityManager entityManager) throws Exception {
+        JdbcJqlService service = new JdbcJqlService(dataSource, transactionTemplate,
+                conversionService, entityManager);
         return service;
     }
 }

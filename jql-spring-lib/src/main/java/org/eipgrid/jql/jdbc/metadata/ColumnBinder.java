@@ -15,9 +15,9 @@ class ColumnBinder {
         this.columnName = columnName;
     }
 
-    public QColumn getJoinedColumn(Class<?> javaType) {
+    public QColumn getJoinedColumn() {
         if (pk == null) {
-            pk = schemaLoader.loadSchema(tableName, javaType).getColumn(columnName);
+            pk = schemaLoader.loadSchema(tableName).getColumn(columnName);
             assert (pk != null);
         }
         return pk;

@@ -6,7 +6,6 @@ import java.util.HashMap;
 
 public abstract class SchemaLoader {
 
-    private final HashMap<Class<?>, QSchema> classToSchemaMap = new HashMap<>();
     private final CaseConverter nameConverter;
 
     protected SchemaLoader(CaseConverter nameConverter) {
@@ -17,18 +16,9 @@ public abstract class SchemaLoader {
         return this.nameConverter;
     }
 
-    public String getDefaultDBSchema() { return "public"; }
+    public abstract QSchema loadSchema(String tablePath);
 
-    public abstract QSchema loadSchema(String tablePath, Class<?> ormType);
-
-    public QSchema loadSchema(Class<?> entityType) {
-        QSchema schema = classToSchemaMap.get(entityType);
-        if (schema == null) {
-            schema = loadSchema(null, entityType);
-            classToSchemaMap.put(entityType, schema);
-        }
-        return schema;
-    }
+    public abstract QSchema loadSchema(Class<?> entityType);
 
     protected abstract HashMap<String, QJoin> loadJoinMap(QSchema schema);
 }

@@ -34,18 +34,19 @@ public class QJoin {
         QSchema fkSchema = fkColumns.get(0).getSchema();
         this.inverseMapped = baseSchema != fkSchema;
         boolean uniqueBase;
-        boolean hasUniqueTarget;
+        boolean uniqueTarget;
         if (inverseMapped) {
             assert(associatedJoin == null || !associatedJoin.inverseMapped);
-            uniqueBase = true;
-            hasUniqueTarget = (associatedJoin == null || associatedJoin.hasUniqueTarget()) &&
+            uniqueBase = (associatedJoin == null || fkSchema == associatedJoin.fkColumns.get(0).getSchema()
+                    || fkSchema.isUniqueConstrainedColumnSet(fkColumns));
+            uniqueTarget = (associatedJoin == null || associatedJoin.hasUniqueTarget()) &&
                             fkSchema.isUniqueConstrainedColumnSet(fkColumns);
         } else {
             assert(associatedJoin == null);
-            hasUniqueTarget = true;
+            uniqueTarget = true;
             uniqueBase = fkSchema.isUniqueConstrainedColumnSet(fkColumns);
         }
-        if (hasUniqueTarget) {
+        if (uniqueTarget) {
             this.type = uniqueBase ? Type.OneToOne : Type.ManyToOne;
         } else {
             this.type = uniqueBase ? Type.OneToMany : Type.ManyToMany;
@@ -92,8 +93,8 @@ public class QJoin {
 
         String name;
         if (inverseMapped) {
-            Class<?> jpaType = baseSchema.getORMType();
-            Class<?> jpaClass = getTargetSchema().getORMType();
+            Class<?> jpaType = baseSchema.getEntityType();
+            Class<?> jpaClass = getTargetSchema().getEntityType();
             if (jpaType.getAnnotation(Entity.class) != null) {
                 for (Field f : ClassUtils.getInstanceFields(jpaType, true)) {
                     Class<?> itemT = ClassUtils.getElementType(f);

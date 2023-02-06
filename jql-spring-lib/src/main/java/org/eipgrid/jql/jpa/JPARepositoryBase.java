@@ -24,8 +24,8 @@ public abstract class JPARepositoryBase<ENTITY, ID> extends JDBCRepositoryBase<E
     public ID insert(Map<String, Object> dataSet) throws IOException {
         ObjectMapper converter = service.getObjectMapper();
         ENTITY entity = converter.convertValue(dataSet, getEntityType());
-        ENTITY entity2 = this.insertOrUpdate(entity);
-        return getEntityId(entity2);
+        ENTITY newEntity = this.insertOrUpdate(entity);
+        return getEntityId(newEntity);
     }
 
     public List<ID> insert(Collection<Map<String, Object>> entities) {
@@ -45,7 +45,9 @@ public abstract class JPARepositoryBase<ENTITY, ID> extends JDBCRepositoryBase<E
         return getEntityId(entity);
     }
 
-    public abstract ID getEntityId(ENTITY entity);
+    public ID getEntityId(ENTITY entity) {
+        return getSchema().getEnityId(entity);
+    }
 
     // Insert Or Update Entity
     // @Override

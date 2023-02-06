@@ -10,7 +10,9 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.ConnectionCallback;
 import org.springframework.jdbc.core.JdbcTemplate;
 
+import javax.persistence.EntityManager;
 import javax.persistence.Table;
+import javax.persistence.metamodel.EntityType;
 import javax.sql.DataSource;
 import java.sql.*;
 import java.util.*;
@@ -19,11 +21,18 @@ public class JdbcSchemaLoader extends SchemaLoader {
     private final JdbcTemplate jdbc;
     private final String defaultSchema;
     private String catalog;
+
+    private HashMap<String, Class<?>> ormTypeMap;
+
+    private final HashMap<Class<?>, QSchema> classToSchemaMap = new HashMap<>();
     private final HashMap<String, QSchema> metadataMap = new HashMap<>();
 
-    public JdbcSchemaLoader(DataSource dataSource, CaseConverter nameConverter) {
+    private final EntityManager entityManager;
+
+    public JdbcSchemaLoader(EntityManager entityManager, DataSource dataSource, CaseConverter nameConverter) {
         super(nameConverter);
         this.jdbc = new JdbcTemplate(dataSource);
+        this.entityManager = entityManager;
         this.defaultSchema = jdbc.execute(new ConnectionCallback<String>() {
             @Override
             public String doInConnection(Connection conn) throws SQLException, DataAccessException {
@@ -31,6 +40,24 @@ public class JdbcSchemaLoader extends SchemaLoader {
             }
         });
     }
+
+    private void initialize() {
+        if (ormTypeMap != null) return;
+        synchronized (this) {
+            if (ormTypeMap != null) return;
+            ormTypeMap = new HashMap<>();
+
+            Set<EntityType<?>> types = entityManager.getEntityManagerFactory().getMetamodel().getEntities();
+            for (EntityType<?> type : types) {
+                Class<?> clazz = type.getJavaType();
+                if (clazz.getAnnotation(Table.class) != null) {
+                    String tablePath = resolveTableName(clazz);
+                    ormTypeMap.put(tablePath, clazz);
+                }
+            }
+        }
+    }
+
 
     public String getDefaultDBSchema() { return this.defaultSchema; }
 
@@ -48,13 +75,30 @@ public class JdbcSchemaLoader extends SchemaLoader {
         return makeTablePath(schema, name);
     }
 
-    public QSchema loadSchema(String tablePath0, Class<?> ormType0) {
-        if (tablePath0 == null) {
-            tablePath0 = resolveTableName(ormType0);
+    public QSchema loadSchema(Class<?> entityType) {
+        initialize();
+        QSchema schema = classToSchemaMap.get(entityType);
+        if (schema == null) {
+            String tablePath = resolveTableName(entityType);
+            schema = loadSchema(tablePath, entityType);
         }
-        else if (ormType0 == null) {
-            ormType0 = Map.class;
+        return schema;
+    }
+
+    public QSchema loadSchema(String tablePath) {
+        initialize();
+        QSchema schema = metadataMap.get(tablePath);
+        if (schema == null) {
+            Class<?> ormType = ormTypeMap.get(tablePath);
+            if (ormType == null) {
+                ormType = Map.class;
+            }
+            schema = loadSchema(tablePath, ormType);
         }
+        return schema;
+    }
+
+    private QSchema loadSchema(String tablePath0, Class<?> ormType0) {
 
         final String tablePath = tablePath0.toLowerCase();
         final Class<?> ormType = ormType0;
@@ -68,6 +112,7 @@ public class JdbcSchemaLoader extends SchemaLoader {
                     }
                 });
             }
+
             return schema;
         }
     }
@@ -75,6 +120,9 @@ public class JdbcSchemaLoader extends SchemaLoader {
     private QSchema loadSchema(Connection conn, String tablePath, Class<?> ormType) throws SQLException {
         JdbcSchema schema = new JdbcSchema(JdbcSchemaLoader.this, tablePath, ormType);
         metadataMap.put(tablePath, schema);
+        if (schema.isJPARequired()) {
+            classToSchemaMap.put(ormType, schema);
+        }
 
         int dot_p = tablePath.indexOf('.');
         String dbSchema = dot_p <= 0 ? defaultSchema : tablePath.substring(0, dot_p);
@@ -190,6 +238,9 @@ public class JdbcSchemaLoader extends SchemaLoader {
 
         DatabaseMetaData md = conn.getMetaData();
         ResultSet rs = md.getIndexInfo(catalog, dbSchema, tableName, true, false);
+        if (tableName.contains("episode")) {
+            System.out.println("");
+        }
         while (rs.next()) {
             String table_schem = rs.getString("table_schem");
             String table_name = rs.getString("table_name");
@@ -246,7 +297,7 @@ public class JdbcSchemaLoader extends SchemaLoader {
         while (rs.next()) {
             JoinData join = new JoinData(rs, this);
             // @TODO loadSchema with ORM type
-            JdbcSchema fkSchema = (JdbcSchema) loadSchema(join.fkTableQName, null);
+            JdbcSchema fkSchema = (JdbcSchema) loadSchema(join.fkTableQName);
             QJoin fkJoin = fkSchema.getJoinByForeignKeyConstraints(join.fk_name);
             assert(fkJoin != null);
             joins.put(fkSchema, fkJoin);

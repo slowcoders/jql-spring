@@ -1,12 +1,10 @@
 package org.eipgrid.jql.parser;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.eipgrid.jql.schema.QColumn;
 import org.eipgrid.jql.schema.QSchema;
 import org.eipgrid.jql.schema.QResultMapping;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
 public class JqlFilter extends TableFilter {
@@ -19,7 +17,7 @@ public class JqlFilter extends TableFilter {
 
     public JqlFilter(QSchema schema) {
         super(schema, "t_0");
-        enableJPQL = schema.isJPASchema();
+        enableJPQL = schema.isJPARequired();
     }
 
     public static <ID> JqlFilter of(QSchema schema, ID id) {

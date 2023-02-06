@@ -49,7 +49,7 @@ public interface JqlStorageController {
         @Operation(summary = "엔터티 검색")
         @Transactional
         @ResponseBody
-        public Object find_form(@PathVariable("table") String table,
+        public JqlQuery.Response find_form(@PathVariable("table") String table,
                                 @Schema(example = "{ \"select\": \"\", \"sort\": \"\", \"page\": 0, \"limit\": 0, \"filter\": { } }")
                                 @ModelAttribute JqlQuery.Request request) {
             return find(table, request);
@@ -59,7 +59,7 @@ public interface JqlStorageController {
         @Operation(summary = "엔터티 검색")
         @Transactional
         @ResponseBody
-        public Object find(@PathVariable("table") String table,
+        public JqlQuery.Response find(@PathVariable("table") String table,
                            @Schema(example = "{ \"select\": \"\", \"sort\": \"\", \"page\": 0, \"limit\": 0, \"filter\": { } }")
                            @RequestBody JqlQuery.Request request) {
             JqlRepository repository = getRepository(table);

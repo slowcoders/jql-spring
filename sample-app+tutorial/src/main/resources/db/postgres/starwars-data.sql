@@ -3,7 +3,7 @@ INSERT INTO starwars.episode (title) values
 on conflict DO NOTHING;
 
 
-INSERT INTO starwars.character (species, name, height, mass, metadata) values
+INSERT INTO starwars.character (species, id, name, height, mass, metadata) values
 ('Human', 1000, 'Luke Skywalker', 1.72, 77, '{ "homePlanet": "Tatooine", "memo": { "favoriteFood": "kimchi", "shoeSize": 260 } }'),
 ('Human', 1001, 'Darth Vader', 2.02, 136, '{ "homePlanet": "Tatooine", "memo": { "favoriteFood": "pork", "shoeSize": 370 } }'),
 ('Human', 1002, 'Han Solo', 1.8, 80, '{ "memo": { "favoriteFood": "apple", "shoeSize": 270 } }'),

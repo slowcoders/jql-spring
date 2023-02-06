@@ -67,7 +67,7 @@ public class JsUtil {
 
             sb.append(schema.getSimpleTableName()).append("Schema.join(\"");
             sb.append(jqlColumn.getJsonKey()).append("\", ");
-            sb.append(joined_pk.getSchema().getORMType().getSimpleName()).append("Schema, \"");
+            sb.append(joined_pk.getSchema().getEntityType().getSimpleName()).append("Schema, \"");
             sb.append(joined_pk.getJsonKey()).append("\");\n");
         }
         return sb.toString();

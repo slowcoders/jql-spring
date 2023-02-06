@@ -8,7 +8,9 @@ import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.ser.BeanPropertyWriter;
 import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 import org.eipgrid.jql.JqlQuery;
+import org.eipgrid.jql.schema.QColumn;
 import org.eipgrid.jql.schema.QResultMapping;
+import org.eipgrid.jql.schema.QType;
 
 import javax.persistence.Entity;
 import java.io.IOException;
@@ -33,36 +35,6 @@ public class JqlPropertyWriter extends BeanPropertyWriter {
         super.serializeAsElement(bean, gen, prov);
     }
 
-    @Override
-    public void serializeAsField(Object bean,
-                                 JsonGenerator gen,
-                                 SerializerProvider prov) throws Exception {
-        JavaType valueType = writer.getType();
-        if (valueType.getContentType() != null) {
-            valueType = valueType.getContentType();
-        }
-
-        QResultMapping stack = (QResultMapping) prov.getAttribute(JQL_STACK_KEY);
-        if (stack == null) {
-            if (bean instanceof JqlQuery.Response) {
-                prov.setAttribute(JQL_RESULT_MAPPING_KEY, ((JqlQuery.Response)bean).getResultMapping());
-            }
-            stack = (QResultMapping) prov.getAttribute(JQL_RESULT_MAPPING_KEY);
-            prov.setAttribute(JQL_STACK_KEY, stack);
-        } else if (valueType.getRawClass().getAnnotation(Entity.class) != null) {
-            QResultMapping child = stack.getChildMapping(this.getName());
-            if (child == null) return;
-            prov.setAttribute(JQL_STACK_KEY, child);
-            super.serializeAsField(bean, gen, prov);
-            prov.setAttribute(JQL_STACK_KEY, stack);
-            return;
-        }
-        super.serializeAsField(bean, gen, prov);
-    }
-
-    public boolean isEmpty(SerializerProvider provider, Object value) {
-        return value == null || getStack(provider).contains(value);
-    }
 
     private Stack<Object> getStack(SerializerProvider provider) {
         Stack<Object> stack = (Stack<Object>) provider.getAttribute(JQL_STACK_KEY);
@@ -72,5 +44,50 @@ public class JqlPropertyWriter extends BeanPropertyWriter {
         }
         return stack;
     }
+
+    @Override
+    public void serializeAsField(Object bean,
+                                 JsonGenerator gen,
+                                 SerializerProvider prov) throws Exception {
+        JavaType valueType = writer.getType();
+        if (valueType.getContentType() != null) {
+            valueType = valueType.getContentType();
+        }
+
+        QResultMapping mapping = (QResultMapping) prov.getAttribute(JQL_RESULT_MAPPING_KEY);
+        if (mapping == null) {
+            if (bean instanceof JqlQuery.Response) {
+                prov.setAttribute(JQL_RESULT_MAPPING_KEY, ((JqlQuery.Response)bean).getResultMapping());
+            }
+            mapping = (QResultMapping) prov.getAttribute(JQL_RESULT_MAPPING_KEY);
+            prov.setAttribute(JQL_RESULT_MAPPING_KEY, mapping);
+        } else {
+            String pname = this.getName();
+            QColumn column = mapping.getSchema().findColumn(pname);
+            boolean isRef = (column != null && column.getValueType() == QType.Json);
+            if (!isRef) {
+                isRef = mapping.getSchema().getEntityJoinBy(pname) != null;
+            }
+            if (isRef) {
+                QResultMapping child = mapping.getChildMapping(this.getName());
+                if (child == null) {
+                    return;
+                }
+                prov.setAttribute(JQL_RESULT_MAPPING_KEY, child);
+                super.serializeAsField(bean, gen, prov);
+                prov.setAttribute(JQL_RESULT_MAPPING_KEY, mapping);
+                return;
+            }
+        }
+        Object value = gen.getCurrentValue();
+        Stack stack = getStack(prov);
+        if (stack.contains(value)) {
+            return;
+        }
+        stack.push(value);
+        super.serializeAsField(bean, gen, prov);
+        stack.pop();
+    }
+
 
 }

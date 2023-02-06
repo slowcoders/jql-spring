@@ -6,6 +6,7 @@ import org.eipgrid.jql.jdbc.metadata.JdbcSchemaLoader;
 import org.eipgrid.jql.JqlRepository;
 import org.eipgrid.jql.JqlService;
 import org.eipgrid.jql.util.CaseConverter;
+import org.springframework.context.ApplicationContext;
 import org.springframework.core.convert.ConversionService;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.transaction.support.TransactionTemplate;
@@ -24,14 +25,11 @@ public class JdbcJqlService extends JqlService {
 
     public JdbcJqlService(DataSource dataSource,
                           TransactionTemplate transactionTemplate,
-                          MappingJackson2HttpMessageConverter jsonConverter,
                           ConversionService conversionService,
-                          RequestMappingHandlerMapping handlerMapping,
-                          EntityManager entityManager,
-                          EntityManagerFactory entityManagerFactory) throws Exception {
+                          EntityManager entityManager) throws Exception {
         super(dataSource, transactionTemplate, conversionService,
                 entityManager);
-        jdbcSchemaLoader = new JdbcSchemaLoader(dataSource, CaseConverter.defaultConverter);
+        jdbcSchemaLoader = new JdbcSchemaLoader(entityManager, dataSource, CaseConverter.defaultConverter);
     }
 
     public SchemaLoader getSchemaLoader() {
@@ -42,15 +40,15 @@ public class JdbcJqlService extends JqlService {
         JqlRepository repo = repositories.get(tableName);
         if (repo == null) {
             // TODO ormType
-            QSchema schema = jdbcSchemaLoader.loadSchema(tableName, null);
+            QSchema schema = jdbcSchemaLoader.loadSchema(tableName);
             repo = new JDBCRepositoryBase(this, schema);
             repositories.put(tableName, repo);
         }
         return repo;
     }
 
-    public QSchema loadSchema(String tablePath, Class entityType) {
-        return jdbcSchemaLoader.loadSchema(tablePath, entityType);
+    public QSchema loadSchema(String tablePath) {
+        return jdbcSchemaLoader.loadSchema(tablePath);
     }
 
     public QSchema loadSchema(Class entityType) {

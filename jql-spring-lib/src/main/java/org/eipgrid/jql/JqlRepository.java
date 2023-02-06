@@ -31,7 +31,7 @@ public abstract class JqlRepository<ENTITY, ID> implements JqlTable<ID> {
 
     public final QSchema getSchema() { return schema; }
 
-    public final Class<ENTITY> getEntityType() { return (Class<ENTITY>)schema.getORMType(); }
+    public final Class<ENTITY> getEntityType() { return (Class<ENTITY>)schema.getEntityType(); }
 
     public abstract ID convertId(Object id);
 

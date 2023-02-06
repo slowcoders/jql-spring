@@ -118,15 +118,7 @@ public class JdbcColumn extends QColumn {
 
     public QColumn getJoinedPrimaryColumn() {
         if (this.fkBinder == null) return null;
-        QType valueKind = this.getValueType();
-        Class javaType = this.field == null ? null : ClassUtils.getElementType(field);
-        if (!valueKind.isPrimitive()) {
-            javaType = getValueType().toJavaClass();
-            if (javaType == Object.class) {
-                javaType = null;
-            }
-        }
-        return fkBinder.getJoinedColumn(javaType);
+        return fkBinder.getJoinedColumn();
     }
 
     private String resolveFieldName() {

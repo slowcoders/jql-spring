@@ -30,7 +30,7 @@ public abstract class JdbcMetadataController {
 //        if (repo.getEntityType() != JqlEntity.class) {
 //            return service.loadSchema(repo.getEntityType());
 //        }
-        return service.loadSchema(tablePath, null);
+        return service.loadSchema(tablePath);
     }
 
     @GetMapping("/{schema}/{table}")

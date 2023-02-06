@@ -326,7 +326,7 @@ public abstract class TSDBHelper {
                         execute(sql);
                     }
 
-                    QSchema schema = service.loadSchema(tableName, null);
+                    QSchema schema = service.loadSchema(tableName);
                     initializeTSDB(schema);
                     return service.getRepository(tableName);
                 }

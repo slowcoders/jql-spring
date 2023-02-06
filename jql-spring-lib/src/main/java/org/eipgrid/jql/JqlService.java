@@ -64,7 +64,7 @@ public abstract class JqlService implements CaseConverter {
 
     public abstract JqlRepository getRepository(String tableName);
 
-    public abstract QSchema loadSchema(String tableName, Class ormType);
+    public abstract QSchema loadSchema(String tableName);
 
     public abstract QSchema loadSchema(Class ormType);
 
