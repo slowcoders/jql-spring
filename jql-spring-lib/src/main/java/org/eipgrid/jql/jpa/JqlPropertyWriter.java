@@ -70,12 +70,11 @@ public class JqlPropertyWriter extends BeanPropertyWriter {
             }
             if (isRef) {
                 QResultMapping child = mapping.getChildMapping(this.getName());
-                if (child == null) {
-                    return;
+                if (child != null) {
+                    prov.setAttribute(JQL_RESULT_MAPPING_KEY, child);
+                    super.serializeAsField(bean, gen, prov);
+                    prov.setAttribute(JQL_RESULT_MAPPING_KEY, mapping);
                 }
-                prov.setAttribute(JQL_RESULT_MAPPING_KEY, child);
-                super.serializeAsField(bean, gen, prov);
-                prov.setAttribute(JQL_RESULT_MAPPING_KEY, mapping);
                 return;
             }
         }

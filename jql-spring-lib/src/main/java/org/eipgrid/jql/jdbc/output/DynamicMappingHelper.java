@@ -86,7 +86,7 @@
 //        static Class<?> makeSubClass(String packageName, String name) {
 //            Class<?> bean = new ByteBuddy()
 //                    .subclass(DynamicController.class, ConstructorStrategy.Default.IMITATE_SUPER_CLASS)
-//                    .name(packageName + '.' + toClassName(name) + "JqlController")
+//                    .name(packageName + '.' + toClassName(name) + "JqlTableController")
 //                    .annotateType(AnnotationDescription.Builder
 //                            .ofType(RestController.class)
 //                            .build())

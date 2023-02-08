@@ -40,7 +40,7 @@ public class Character implements java.io.Serializable {
     Float mass;
 
     @Getter @Setter
-    @Column(name = "metadata", columnDefinition = "jsonb")
+    @Column(name = "metadata", columnDefinition = "json")
     @Type(type = "jsonb")
     ObjectNode metadata_;
 

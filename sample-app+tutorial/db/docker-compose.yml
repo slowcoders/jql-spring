@@ -12,4 +12,23 @@ services:
       POSTGRES_DB: jql_demo
     volumes:
       - ./postgres_data:/var/lib/postgresql/data
+  mariadb:
+    image: mariadb:10
+    ports:
+      - 3306:3306
+    volumes:
+      - ./mysql/conf.d:/etc/mysql/conf.d
+      - ./mysql/data:/var/lib/mysql
+#      - ./mysql/initdb.d:/docker-entrypoint-initdb.d
+    environment:
+      MYSQL_HOST: localhost
+      MYSQL_PORT: 3306
+      MYSQL_ROOT_PASSWORD: sw_board
+      MYSQL_DATABASE: sw_board
+      MYSQL_USER: sw_board
+      MYSQL_PASSWORD: sw_board
+      TZ: Asia/Seoul
+#    networks:
+#      - backend
+#    restart: always
     

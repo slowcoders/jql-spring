@@ -70,7 +70,11 @@ public abstract class QSchema {
     }
 
     public QColumn findColumn(String key) throws IllegalArgumentException {
-        return columnMap.get(key);
+        QColumn ci = columnMap.get(key);
+        if (ci == null) {
+            ci = columnMap.get(key.toLowerCase());
+        }
+        return ci;
     }
 
     public QColumn getColumn(String key) throws IllegalArgumentException {

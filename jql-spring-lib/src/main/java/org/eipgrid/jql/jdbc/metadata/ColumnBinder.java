@@ -12,7 +12,7 @@ class ColumnBinder {
     ColumnBinder(SchemaLoader schemaLoader, String tableName, String columnName) {
         this.schemaLoader = schemaLoader;
         this.tableName = tableName;
-        this.columnName = columnName;
+        this.columnName = columnName.toLowerCase();
     }
 
     public QColumn getJoinedColumn() {

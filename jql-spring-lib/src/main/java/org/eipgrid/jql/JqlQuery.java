@@ -101,13 +101,14 @@ public class JqlQuery {
     @Getter
     public static class Response {
 
+        @Schema(implementation = Object.class)
         private Map<String, Object> metadata;
         private Object content;
 
         @JsonIgnore
         private QResultMapping resultMapping;
 
-        public Response(Object content, QResultMapping resultMapping) {
+        private Response(Object content, QResultMapping resultMapping) {
             this.content = content;
             this.resultMapping = resultMapping;
         }
