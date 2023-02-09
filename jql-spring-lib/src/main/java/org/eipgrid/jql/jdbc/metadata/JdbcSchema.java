@@ -5,11 +5,11 @@ import org.eipgrid.jql.schema.*;
 import org.eipgrid.jql.util.CaseConverter;
 import org.eipgrid.jql.util.ClassUtils;
 import org.eipgrid.jql.util.SourceWriter;
+import org.hibernate.annotations.Type;
 
 import javax.persistence.Column;
 import javax.persistence.IdClass;
 import javax.persistence.JoinColumn;
-import javax.persistence.UniqueConstraint;
 import java.lang.reflect.Field;
 import java.util.*;
 
@@ -106,6 +106,7 @@ public class JdbcSchema extends QSchema {
         sb.writeln("import java.util.List;");
         sb.writeln("import javax.persistence.*;");
         if (!this.getObjectColumns().isEmpty()) {
+            sb.writeln("import io.hypersistence.utils.hibernate.type.json.JsonType;");
             sb.writeln("import com.fasterxml.jackson.databind.node.ObjectNode;");
         }
         sb.writeln();
@@ -177,7 +178,7 @@ public class JdbcSchema extends QSchema {
         }
         sb.write(pk != null ? "@Join" : "@").write("Column(name = ").writeQuoted(col.getPhysicalName()).write(", ");
         if (isJsonObject) {
-            sb.write("columnDefinition = \"jsonb\", ");
+            sb.write("columnDefinition = \"").write(((JdbcColumn)col).getStoredType()).write("\", ");
         }
         if (pk != null) {
             sb.write("referencedColumnName = ").writeQuoted(pk.getPhysicalName()).write(", ");
@@ -189,7 +190,7 @@ public class JdbcSchema extends QSchema {
         sb.replaceTrailingComma(")\n");
 
         if (isJsonObject) {
-            sb.writeln("@org.hibernate.annotations.Type(\"jsonb\")");
+            sb.writeln("@org.hibernate.annotations.Type(type = \"io.hypersistence.utils.hibernate.type.json.JsonType\")");
         }
         String fieldName = getJavaFieldName(col);
 
@@ -234,9 +235,10 @@ public class JdbcSchema extends QSchema {
         }
         else if (join.getAssociativeJoin() != null) {
             sb.write("@JoinTable(name = ").writeQuoted(join.getLinkedSchema().getSimpleTableName()).write(", ");
-            String dbSchema = getDBSchema(join.getLinkedSchema());
-            if (dbSchema != null) {
-                sb.write("schema = ").writeQuoted(dbSchema).write(",");
+            String namespace = join.getLinkedSchema().getNamespace();
+            if (namespace != null) {
+                sb.write("schema = ").writeQuoted(namespace).write(", ");
+                sb.write("catalog = ").writeQuoted(namespace).write(",");
             }
             sb.writeln();
             sb.incTab();
@@ -260,15 +262,17 @@ public class JdbcSchema extends QSchema {
 
 
     private void dumpTableDefinition(SourceWriter sb) {
-        sb.write("@Table(name = ").writeQuoted(this.getSimpleTableName()).
-                write(", schema = ").writeQuoted(this.getNamespace()).write(",\n");
+        sb.write("@Table(name = ").writeQuoted(this.getSimpleTableName()).write(", ");
+        String namespace = this.getNamespace();
+        if (namespace != null) {
+            sb.write("schema = ").writeQuoted(namespace).write(", ");
+            sb.write("catalog = ").writeQuoted(namespace).write(",");
+        }
+        sb.writeln();
         sb.incTab();
         dumpUniqueConstraints(sb);
         sb.decTab();
         sb.replaceTrailingComma("\n)\n");
-        if (this.getObjectColumns().size() > 0) {
-            sb.writeln("@org.hibernate.annotations.TypeDef(name = \"jsonb\", typeClass = com.vladmihalcea.hibernate.type.json.JsonBinaryType.class)");
-        }
     }
 
     private void dumpUniqueConstraints(SourceWriter sb) {
@@ -289,13 +293,6 @@ public class JdbcSchema extends QSchema {
         }
     }
 
-    private String getDBSchema(QSchema schema) {
-        String tableName = schema.getTableName();
-        int p = tableName.lastIndexOf('.');
-        if (p <= 0) return null;
-        return tableName.substring(0, p);
-    }
-
     private String toJavaTypeName(String name) {
         return CaseConverter.toCamelCase(name, true);
     }
@@ -312,7 +309,7 @@ public class JdbcSchema extends QSchema {
 
     private String getJavaFieldType(QColumn col) {
         QType type = col.getValueType();
-        if (type == QType.Json) return "ObjectNode";
+        if (type == QType.Json) return "Map<String, Object>";
         String name = type.toJavaClass().getName();
         if (name.startsWith("java.lang.")) {
             name = name.substring(10);

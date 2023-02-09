@@ -23,29 +23,29 @@ public class JDBCRepositoryBase<ENTITY, ID> extends JqlRepository<ENTITY, ID> {
 
     private static final ArrayRowMapper arrayMapper = new ArrayRowMapper();
 
-    protected JDBCRepositoryBase(JqlService service, QSchema schema) {
-        super(service, schema);
-        this.jdbc = service.getJdbcTemplate();
+    protected JDBCRepositoryBase(JqlStorage storage, QSchema schema) {
+        super(storage, schema);
+        this.jdbc = storage.getJdbcTemplate();
     }
 
     //    @Override
     protected ResultSetExtractor<List<Map>> getColumnMapRowMapper(JqlFilter filter) {
-        return new JsonRowMapper(filter.getResultMappings(), service.getObjectMapper());
+        return new JsonRowMapper(filter.getResultMappings(), storage.getObjectMapper());
     }
 
     public <T> List<T> find(JqlQuery query, Class<T> entityType) {
         boolean enableJPA = query.getFilter().isJPQLEnabled() && entityType == this.getEntityType();
         boolean isRepeat = (query.getExecutedQuery() != null && (Boolean)enableJPA == query.getExtraInfo());
 
-        String sql = isRepeat ? query.getExecutedQuery() : service.createQueryGenerator(!enableJPA).createSelectQuery(query);
+        String sql = isRepeat ? query.getExecutedQuery() : storage.createQueryGenerator(!enableJPA).createSelectQuery(query);
         List res;
         if (enableJPA) {
-            res = service.getEntityManager().createQuery(sql).getResultList();
+            res = storage.getEntityManager().createQuery(sql).getResultList();
         }
         else {
             res = jdbc.query(sql, getColumnMapRowMapper(query.getFilter()));
             if (!Map.class.isAssignableFrom(entityType)) {
-                ObjectMapper converter = service.getObjectMapper();
+                ObjectMapper converter = storage.getObjectMapper();
                 for (int i = res.size(); --i >= 0; ) {
                     T v = (T)converter.convertValue(res.get(i), entityType);
                     res.set(i, v);
@@ -64,7 +64,7 @@ public class JDBCRepositoryBase<ENTITY, ID> extends JqlRepository<ENTITY, ID> {
 
     @Override
     public long count(JqlFilter filter) {
-        String sqlCount = service.createQueryGenerator().createCountQuery(filter);
+        String sqlCount = storage.createQueryGenerator().createCountQuery(filter);
         long count = jdbc.queryForObject(sqlCount, Long.class);
         return count;
     }
@@ -83,21 +83,21 @@ public class JDBCRepositoryBase<ENTITY, ID> extends JqlRepository<ENTITY, ID> {
     @Override
     public void update(Collection<ID> idList, Map<String, Object> updateSet) throws IOException {
         JqlFilter filter = JqlFilter.of(schema, idList);
-        String sql = service.createQueryGenerator().createUpdateQuery(filter, updateSet);
+        String sql = storage.createQueryGenerator().createUpdateQuery(filter, updateSet);
         jdbc.update(sql);
     }
 
     @Override
     public void delete(ID id) {
         JqlFilter filter = JqlFilter.of(schema, id);
-        String sql = service.createQueryGenerator().createDeleteQuery(filter);
+        String sql = storage.createQueryGenerator().createDeleteQuery(filter);
         jdbc.update(sql);
     }
 
     @Override
     public void delete(Collection<ID> idList) {
         JqlFilter filter = JqlFilter.of(schema, idList);
-        String sql = service.createQueryGenerator().createDeleteQuery(filter);
+        String sql = storage.createQueryGenerator().createDeleteQuery(filter);
         jdbc.update(sql);
     }
 
@@ -113,7 +113,7 @@ public class JDBCRepositoryBase<ENTITY, ID> extends JqlRepository<ENTITY, ID> {
          * 해당 ID 는 Jql 검색을 통해 얻은 Json Value 값이므로, ObjectMapper 를 통한 Parsing 또한 가능하나,
          * StorageController 와 TableController 동작 호환성을 위해 ConversionService 를 사용한다.
          */
-        ConversionService cvtService = service.getConversionService();
+        ConversionService cvtService = storage.getConversionService();
         List<QColumn> pkColumns = schema.getPKColumns();
         if (pkColumns.size() == 1) {
             return (ID)cvtService.convert(v, pkColumns.get(0).getValueType().toJavaClass());

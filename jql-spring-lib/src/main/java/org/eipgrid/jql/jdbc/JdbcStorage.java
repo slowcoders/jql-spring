@@ -4,29 +4,25 @@ import org.eipgrid.jql.schema.QSchema;
 import org.eipgrid.jql.schema.SchemaLoader;
 import org.eipgrid.jql.jdbc.metadata.JdbcSchemaLoader;
 import org.eipgrid.jql.JqlRepository;
-import org.eipgrid.jql.JqlService;
+import org.eipgrid.jql.JqlStorage;
 import org.eipgrid.jql.util.CaseConverter;
-import org.springframework.context.ApplicationContext;
 import org.springframework.core.convert.ConversionService;
-import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.transaction.support.TransactionTemplate;
-import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
 
 import javax.persistence.EntityManager;
-import javax.persistence.EntityManagerFactory;
 import javax.sql.DataSource;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.List;
 
-public class JdbcJqlService extends JqlService {
+public class JdbcStorage extends JqlStorage {
     JdbcSchemaLoader jdbcSchemaLoader;
     private HashMap<String, JqlRepository> repositories = new HashMap<>();
 
-    public JdbcJqlService(DataSource dataSource,
-                          TransactionTemplate transactionTemplate,
-                          ConversionService conversionService,
-                          EntityManager entityManager) throws Exception {
+    public JdbcStorage(DataSource dataSource,
+                       TransactionTemplate transactionTemplate,
+                       ConversionService conversionService,
+                       EntityManager entityManager) throws Exception {
         super(dataSource, transactionTemplate, conversionService,
                 entityManager);
         jdbcSchemaLoader = new JdbcSchemaLoader(entityManager, dataSource, CaseConverter.defaultConverter);

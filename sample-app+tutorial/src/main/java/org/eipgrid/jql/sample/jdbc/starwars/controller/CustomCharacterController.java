@@ -2,10 +2,9 @@ package org.eipgrid.jql.sample.jdbc.starwars.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Schema;
-import org.eipgrid.jql.JqlService;
+import org.eipgrid.jql.JqlStorage;
 import org.eipgrid.jql.JqlTableController;
 import org.eipgrid.jql.JqlQuery;
-import org.eipgrid.jql.jdbc.JdbcJqlService;
 import org.eipgrid.jql.util.KVEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -19,8 +18,8 @@ import java.util.Map;
 @RequestMapping("/api/jql/starwars/character")
 public class CustomCharacterController extends JqlTableController.CRUD<Integer> implements JqlTableController.ListAll<Integer> {
 
-    public CustomCharacterController(JqlService service) {
-        super(service.getRepository("starwars.character"));
+    public CustomCharacterController(JqlStorage storage) {
+        super(storage.getRepository("starwars.character"));
     }
 
 

@@ -1,6 +1,6 @@
 buildscript {
     ext {
-        springBootVersion = '2.5.4'
+        springBootVersion = '2.7.8'
     }
     repositories {
         mavenCentral()
@@ -43,11 +43,29 @@ dependencies {
 
     implementation 'commons-io:commons-io:2.11.0'
 
-    implementation 'org.apache.tomcat:tomcat-jdbc'
+//    implementation 'org.apache.tomcat:tomcat-jdbc'
 
-    implementation 'org.mariadb.jdbc:mariadb-java-client'
-    implementation 'org.postgresql:postgresql:42.3.6'
-    implementation 'com.vladmihalcea:hibernate-types-52:2.3.4'
+    /*--------------------------------------------*/
+    /** select database driver */
+    /*--------------------------------------------*/
+    /* for MySql */
+     implementation 'com.mysql:mysql-connector-j'
+    /* for MariaDB */
+    // implementation 'org.mariadb.jdbc:mariadb-java-client'
+    /* for Postgres */
+//    implementation 'org.postgresql:postgresql:42.3.6'
+
+    /*--------------------------------------------*/
+    /** select hibernate-type for JPA orm mapping */
+    /*--------------------------------------------*/
+    /* for hibernate 6.0, 6.1 */
+    // implementation 'io.hypersistence:hypersistence-utils-hibernate-60:3.1.2'
+    /* for hibernate 5.5, 5.6 */
+    implementation 'io.hypersistence:hypersistence-utils-hibernate-55:3.1.2'
+    /* for hibernate 5.2 ~ 5.4 */
+    // implementation 'io.hypersistence:hypersistence-utils-hibernate-52:3.1.2'
+    /* for hibernate 5.0, 5.1 */
+    // implementation 'io.hypersistence:hypersistence-utils-hibernate-5:3.1.2'
 
     // jpa cache
     implementation 'org.hibernate:hibernate-jcache'

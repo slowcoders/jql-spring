@@ -2,7 +2,7 @@ package org.eipgrid.jql.jpa;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.eipgrid.jql.jdbc.JDBCRepositoryBase;
-import org.eipgrid.jql.JqlService;
+import org.eipgrid.jql.JqlStorage;
 import org.springframework.data.repository.NoRepositoryBean;
 
 import javax.persistence.Cache;
@@ -16,13 +16,13 @@ public abstract class JPARepositoryBase<ENTITY, ID> extends JDBCRepositoryBase<E
     private final static HashMap<Class<?>, JPARepositoryBase<?,?>>jqlServices = new HashMap<>();
     private final HashMap<ID, Object> associatedCache = new HashMap<>();
 
-    public JPARepositoryBase(JqlService service, Class<ENTITY> entityType) {
-        super(service, service.loadSchema(entityType));
+    public JPARepositoryBase(JqlStorage storage, Class<ENTITY> entityType) {
+        super(storage, storage.loadSchema(entityType));
         jqlServices.put(this.getEntityType(), this);
     }
 
     public ID insert(Map<String, Object> dataSet) throws IOException {
-        ObjectMapper converter = service.getObjectMapper();
+        ObjectMapper converter = storage.getObjectMapper();
         ENTITY entity = converter.convertValue(dataSet, getEntityType());
         ENTITY newEntity = this.insertOrUpdate(entity);
         return getEntityId(newEntity);
@@ -57,7 +57,7 @@ public abstract class JPARepositoryBase<ENTITY, ID> extends JDBCRepositoryBase<E
     }
 
     private EntityManager getEntityManager() {
-        return getService().getEntityManager();
+        return getStorage().getEntityManager();
     }
 
     public ENTITY update(ENTITY entity) {
@@ -75,7 +75,7 @@ public abstract class JPARepositoryBase<ENTITY, ID> extends JDBCRepositoryBase<E
     }
 
     private ObjectMapper getObjectMapper() {
-        return service.getObjectMapper();
+        return storage.getObjectMapper();
     }
 
 

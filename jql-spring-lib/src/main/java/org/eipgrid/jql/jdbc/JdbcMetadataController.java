@@ -1,7 +1,7 @@
 package org.eipgrid.jql.jdbc;
 
 import io.swagger.v3.oas.annotations.Operation;
-import org.eipgrid.jql.JqlService;
+import org.eipgrid.jql.JqlStorage;
 import org.eipgrid.jql.jdbc.metadata.JdbcSchema;
 import org.eipgrid.jql.js.JsUtil;
 import org.eipgrid.jql.schema.QColumn;
@@ -17,28 +17,24 @@ import java.util.Map;
 
 public abstract class JdbcMetadataController {
 
-    private final JdbcJqlService service;
+    private final JdbcStorage storage;
 
-    public JdbcMetadataController(JqlService service) {
-        this.service = (JdbcJqlService) service;
+    public JdbcMetadataController(JqlStorage storage) {
+        this.storage = (JdbcStorage) storage;
     }
 
 
-    private QSchema getSchema(String db_schema, String tableName) throws Exception {
-        String tablePath = service.makeTablePath(db_schema, tableName);
-//        JqlRepository repo = service.getRepository(tablePath);
-//        if (repo.getEntityType() != JqlEntity.class) {
-//            return service.loadSchema(repo.getEntityType());
-//        }
-        return service.loadSchema(tablePath);
+    private QSchema getSchema(String namespace, String tableName) throws Exception {
+        String tablePath = storage.makeTablePath(namespace, tableName);
+        return storage.loadSchema(tablePath);
     }
 
-    @GetMapping("/{schema}/{table}")
+    @GetMapping("/{namespace}/{table}")
     @ResponseBody
     @Operation(summary = "table column 목록")
-    public Map columns(@PathVariable("schema") String db_schema,
+    public Map columns(@PathVariable("namespace") String namespace,
                                 @PathVariable("table") String tableName) throws Exception {
-        QSchema schema = getSchema(db_schema, tableName);
+        QSchema schema = getSchema(namespace, tableName);
         ArrayList<String> columns = new ArrayList<>();
         for (QColumn column : schema.getPrimitiveColumns()) {
             columns.add(column.getJsonKey());
@@ -60,19 +56,17 @@ public abstract class JdbcMetadataController {
     }
 
 
-
-
-    @GetMapping("/{schema}/{table}/{type}")
+    @GetMapping("/{namespace}/{table}/{type}")
     @ResponseBody
     @Operation(summary = "Schema 소스 생성")
-    public String jsonSchema(@PathVariable("schema") String db_schema,
+    public String jsonSchema(@PathVariable("namespace") String namespace,
                              @PathVariable("table") String tableName,
                              @PathVariable("type") SchemaType type) throws Exception {
         if ("*".equals(tableName)) {
-            return jpaSchemas(db_schema, type);
+            return jpaSchemas(namespace, type);
         }
 
-        QSchema schema = getSchema(db_schema, tableName);
+        QSchema schema = getSchema(namespace, tableName);
         String source;
         if (type == SchemaType.Simple) {
             source = JsUtil.getSimpleSchema(schema);
@@ -95,11 +89,11 @@ public abstract class JdbcMetadataController {
         return source;
     }
 
-    private String jpaSchemas(@PathVariable("schema") String db_schema,
+    private String jpaSchemas(@PathVariable("schema") String namespace,
                              @PathVariable("type") SchemaType type) throws Exception {
         StringBuilder sb = new StringBuilder();
-        for (String tableName : service.getTableNames(db_schema)) {
-            QSchema schema = getSchema(db_schema, tableName);
+        for (String tableName : storage.getTableNames(namespace)) {
+            QSchema schema = getSchema(namespace, tableName);
             if (type == SchemaType.Javascript) {
                 String source = JsUtil.createDDL(schema);
                 String join = JsUtil.createJoinJQL(schema);
@@ -115,12 +109,12 @@ public abstract class JdbcMetadataController {
         return sb.toString();
     }
 
-    @GetMapping("/{schema}")
+    @GetMapping("/{namespace}")
     @ResponseBody
     @Operation(summary = "Table 목록")
-    public String listTables(@PathVariable("schema") String db_schema) throws Exception {
+    public String listTables(@PathVariable("namespace") String namespace) throws Exception {
         StringBuilder sb = new StringBuilder();
-        for (String tableName : service.getTableNames(db_schema)) {
+        for (String tableName : storage.getTableNames(namespace)) {
             sb.append(tableName).append('\n');
         }
         return sb.toString();
@@ -131,7 +125,7 @@ public abstract class JdbcMetadataController {
     @Operation(summary = "DB schema 목록")
     public String listSchemas() throws Exception {
         StringBuilder sb = new StringBuilder();
-        for (String tableName : service.getDBSchemas()) {
+        for (String tableName : storage.getDBSchemas()) {
             sb.append(tableName).append('\n');
         }
         return sb.toString();

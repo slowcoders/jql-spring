@@ -1,4 +1,5 @@
 create schema if not exists starwars;
+create schema if not exists starwars_jpa;
 
 create table if not exists starwars.character
 (

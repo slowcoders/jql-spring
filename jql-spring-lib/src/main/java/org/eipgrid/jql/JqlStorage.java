@@ -18,7 +18,7 @@ import javax.sql.DataSource;
 import java.util.HashMap;
 
 @Service
-public abstract class JqlService implements CaseConverter {
+public abstract class JqlStorage implements CaseConverter {
     private final JdbcTemplate jdbc;
     private final EntityManager entityManager;
     private final TransactionTemplate transactionTemplate;
@@ -29,7 +29,7 @@ public abstract class JqlService implements CaseConverter {
     private HashMap<String, JqlRepository> repositories = new HashMap<>();
     private HashMap<String, JPARepositoryBase> jpaRepositories = new HashMap<>();
 
-    public JqlService(DataSource dataSource,
+    public JqlStorage(DataSource dataSource,
                       TransactionTemplate transactionTemplate,
                       ConversionService conversionService,
                       EntityManager entityManager) throws Exception {

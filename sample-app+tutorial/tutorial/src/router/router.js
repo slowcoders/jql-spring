@@ -8,10 +8,15 @@ import SimpleJoin from "../views/join/SimpleJoin.vue"
 import RecursiveJoin from "@/views/join/RecursiveJoin";
 import JsonSearch from "@/views/join/JsonSearch";
 import ExternalLinks from "@/views/ExternalLinks";
+import Introduction from "@/views/Introduction";
 
 const router = createRouter({
     history: createWebHashHistory(),
     routes: [
+        {
+            path: '/',
+            component: Introduction,
+        },
         {
             path: '/basic/list',
             component: SimpleList,

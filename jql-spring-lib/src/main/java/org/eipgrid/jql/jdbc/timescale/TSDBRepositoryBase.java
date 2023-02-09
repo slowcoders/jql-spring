@@ -4,7 +4,7 @@ import org.eipgrid.jql.schema.QColumn;
 import org.eipgrid.jql.schema.QSchema;
 import org.eipgrid.jql.schema.QType;
 import org.eipgrid.jql.jpa.JPARepositoryBase;
-import org.eipgrid.jql.JqlService;
+import org.eipgrid.jql.JqlStorage;
 import org.eipgrid.jql.util.ClassUtils;
 
 import java.lang.reflect.Field;
@@ -15,11 +15,11 @@ public abstract class TSDBRepositoryBase<ENTITY, ID> extends JPARepositoryBase<E
 
     private final String timeKeyColumnName;
 
-    public TSDBRepositoryBase(JqlService service, Class<ENTITY> entityType, Class<ID> idType, String timeKeyColumnName) {
-        super(service, entityType);
+    public TSDBRepositoryBase(JqlStorage storage, Class<ENTITY> entityType, Class<ID> idType, String timeKeyColumnName) {
+        super(storage, entityType);
         this.timeKeyColumnName = timeKeyColumnName;
 
-        QSchema schema = getService().loadSchema(getEntityType());
+        QSchema schema = getStorage().loadSchema(getEntityType());
         try {
             new Initializer(schema).initializeTSDB(schema);
         } catch (SQLException e) {
@@ -35,7 +35,7 @@ public abstract class TSDBRepositoryBase<ENTITY, ID> extends JPARepositoryBase<E
         private final QSchema schema;
 
         public Initializer(QSchema schema) {
-            super(getService(), getTableName());
+            super(getStorage(), getTableName());
             this.schema = schema;
         }
 

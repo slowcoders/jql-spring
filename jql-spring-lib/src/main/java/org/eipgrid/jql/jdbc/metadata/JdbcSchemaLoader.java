@@ -19,15 +19,10 @@ import java.util.*;
 
 public class JdbcSchemaLoader extends SchemaLoader {
     private final JdbcTemplate jdbc;
-    private final String defaultSchema;
-    private String catalog;
+    private String defaultNamespace;
+    private boolean schemaSupported;
 
-    private enum DBType {
-        MariaDB,
-        Postgres,
-    }
-
-    private final DBType dbType;
+    private String dbType;
     private HashMap<String, Class<?>> ormTypeMap;
 
     private final HashMap<Class<?>, QSchema> classToSchemaMap = new HashMap<>();
@@ -42,29 +37,17 @@ public class JdbcSchemaLoader extends SchemaLoader {
         Properties dbProperties = jdbc.execute(new ConnectionCallback<Properties>() {
             @Override
             public Properties doInConnection(Connection conn) throws SQLException, DataAccessException {
-                Properties properties = new Properties();
-                DBType dbType = DBType.valueOf(conn.getMetaData().getDatabaseProductName());
-                properties.put("dbType", dbType);
-                String defaultSchema;
-                switch (dbType) {
-                    case Postgres:
-                        defaultSchema = conn.getSchema();
-                        break;
-                    case MariaDB:
-                        defaultSchema = conn.getCatalog();
-                        break;
-                    default:
-                        defaultSchema = "";
+                dbType = conn.getMetaData().getDatabaseProductName();
+                String schema = conn.getSchema();
+                schemaSupported = schema != null;
+                if (schemaSupported) {
+                    defaultNamespace = schema;
+                } else {
+                    defaultNamespace = conn.getCatalog();
                 }
-                if (defaultSchema == null) {
-                    defaultSchema = "";
-                }
-                properties.put("defaultSchema", defaultSchema);
-                return properties;
+                return null;
             }
         });
-        this.dbType = (DBType) dbProperties.get("dbType");
-        this.defaultSchema = dbProperties.getProperty("defaultSchema");
     }
 
     private void initialize() {
@@ -85,21 +68,13 @@ public class JdbcSchemaLoader extends SchemaLoader {
     }
 
 
-    public String getDefaultDBSchema() { return this.defaultSchema; }
+    public String getDefaultDBSchema() { return this.defaultNamespace; }
 
     public TablePath resolveTableName(Class<?> entityType) {
-        String name = "";
         Table table = entityType.getAnnotation(Table.class);
-        String schema = "";
-        String catalog = "";
-        if (table != null) {
-            name = table.name().trim();
-            schema = table.schema().trim();
-            catalog = table.catalog().trim();
-        }
-        if (name.length() == 0) {
-            name = entityType.getSimpleName();
-        }
+        String name = table.name().trim();;
+        String schema = table.schema().trim();
+        String catalog = table.catalog().trim();
         return makeTablePath(catalog, schema, name);
     }
 
@@ -210,20 +185,9 @@ public class JdbcSchemaLoader extends SchemaLoader {
 
     protected TablePath qualifiedNameToTablePath(String qname) {
         int last_dot_p = qname.lastIndexOf('.');
-        String namespace = last_dot_p > 0 ? qname.substring(0, last_dot_p) : getDefaultDBSchema();
+        String namespace = last_dot_p > 0 ? qname.substring(0, last_dot_p) : null;//getDefaultDBSchema();
         String simpleName = qname.substring(last_dot_p + 1);
-        String catalog = "";
-        String schema = "";
-        switch (dbType) {
-            case Postgres:
-                schema = namespace;
-                break;
-            case MariaDB:
-                catalog = namespace;
-                schema = namespace;
-                break;
-        }
-        return new TablePath(catalog, schema, qname, simpleName);
+        return new TablePath(namespace, namespace, qname, simpleName);
     }
     private HashMap<String, QJoin> createJoinMap(JdbcSchema schema, EntityJoinHelper mappedJoins) {
         HashMap<String, QJoin> joinMap = new HashMap<>();
@@ -430,18 +394,9 @@ public class JdbcSchemaLoader extends SchemaLoader {
     }
 
     protected TablePath makeTablePath(String db_catalog, String db_schema, String simple_name) {
-        String namespace;
-        switch (dbType) {
-            case Postgres:
-            default:
-                namespace = db_schema;
-                break;
-            case MariaDB:
-                namespace = db_catalog;
-                break;
-        }
-
+        String namespace = schemaSupported ? db_schema : db_catalog;
         simple_name = CaseConverter.camelCaseConverter.toPhysicalColumnName(simple_name).toLowerCase();
+
         if (namespace == null || namespace.length() == 0) {
             namespace = getDefaultDBSchema();
         }

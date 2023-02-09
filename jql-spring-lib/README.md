@@ -1,14 +1,14 @@
 # Json Query Language (JQL)
 
 ## What is JQL
-* JSON based hierarchical Query language
-* Simple query language that can be easily used by frond-end developers.
-* GraphQL like automatic property selection 
+* GraphQL-like property selection
+* JSON based search filter
+* Rest API for CRUD + Search  
+* Simple query language that frond-end developers can easily use.
 
-## What is JQL for JDBC
-* Automatic table join.
-* JPA-like query result without ORM layer.
-* Fully customizable via JPA, MyBatis, JDBC.
+## JQL for JDBC
+* Automatic repository creation and generate join query on demand.
+* Supports JPA EntityManager.
 
 
 ## JQL Grammar
@@ -22,7 +22,7 @@ jql = {
 }
 jql_key = Identifier['.'jql_key]
 jql_relative_selector = '*' | '0' | jql_key
-jql_relative_selector_set = jql_key '.<' jql_relative_selector { ',' jql_relative_selector } '>'
+jql_relative_selector_set = jql_key '<' jql_relative_selector { ',' jql_relative_selector } '>'
 jql_property_selection = [ (jql_relative_selector | jql_relative_selector_set) [',' jql_property_selection ] ]  
 jql_sort_option = [-]property_name [',' jql_sort_option]
 
@@ -35,40 +35,39 @@ jql_value = jql_primitive | ArrayOf(jql_primitive) | jql_node | ArrayOf(jql_node
 
 
 ## Query Examples
-Finding all person whose first name starts with "Jeff" 
+Finding all person whose first name starts with "Luke" 
 ```js
-const DB_TABLE = "owner"
+const DB_TABLE = "character"
 const jql = {
     filter: {
-        "name@like": "Jeff%"
+        "name@like": "Luke%"
     }
 }
-const res = axios.post(`http://localhost:7007/api/jql/petclinic/${DB_TABLE}/find`, jql)
+const res = axios.post(`http://localhost:7007/api/jql/starwars/${DB_TABLE}/find`, jql)
 ```
 ```sh
-curl -X 'POST' 'http://localhost:7007/api/jql/petclinic/owners/find' \
-     -H 'Content-Type: application/json' \   
-     -d '{  "filter": { "name@like": "Jeff%" } }'
+curl -X 'POST' 'http://localhost:7007/api/jql/starwars/character/find' \
+     -H 'Content-Type: application/json' \
+     -d '{  "filter": { "name@like": "Luke%" } }'
 ```
 
-Finding all cats of the person named "Jeff Black"
+Finding all starships of the person named "Luke Skywalker"
 ```js
-const DB_TABLE = "pets"
+const DB_TABLE = "starship"
 const jql = {
     select: "*",
     filter: {
-        "type": "cat",
-        "owner": {
-            "name": "Jeff Black"
+        "pilot": {
+            "name": "Luke Skywalker"
         }
     }
 }
-const res = axios.post(`http://localhost:7007/api/jql/petclinic/${DB_TABLE}/find`, jql)
+const res = axios.post(`http://localhost:7007/api/jql/starwars/${DB_TABLE}/find`, jql)
 ```
 ```sh
-curl -X 'POST' 'http://localhost:7007/api/jql/petclinic/pets/find' \
-     -H 'Content-Type: application/json' \   
-     -d '{ "filter": { "name": "Jeff Black", "pets": { "type": "cat" } }'
+curl -X 'POST' 'http://localhost:7007/api/jql/starwars/starship/find' \
+     -H 'Content-Type: application/json' \
+     -d '{ "filter": { "pilot": { "name": "Luke Skywalker" } } }' 
 ```
 ## JQL operators vs SQL
 ```

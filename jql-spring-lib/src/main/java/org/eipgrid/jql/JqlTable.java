@@ -12,11 +12,14 @@ public interface JqlTable<ID> {
     List<?> find(JqlQuery query, OutputFormat outputType);
 
     List<?> find(Collection<ID> idList);
-    default Object find(ID id) {
+    default Object find(ID id, JqlSelect select) {
         List<?> res = find(Collections.singletonList(id));
         return res.size() > 0 ? res.get(0) : null;
     }
 
+    default Object find(ID id) {
+        return find(id, null);
+    }
 
     long count(JqlFilter filter);
 

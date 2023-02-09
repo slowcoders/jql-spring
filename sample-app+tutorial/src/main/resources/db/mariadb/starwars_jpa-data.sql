@@ -1,9 +1,10 @@
-INSERT INTO starwars.episode (title) values
+
+INSERT IGNORE INTO starwars_jpa.episode (title) values
 ('NEWHOPE'), ('EMPIRE'), ('JEDI')
-on conflict DO NOTHING;
+;
 
 
-INSERT INTO starwars.character (species, id, name, height, mass, metadata) values
+INSERT IGNORE INTO starwars_jpa.character (species, id, name, height, mass, metadata) values
 ('Human', 1000, 'Luke Skywalker', 1.72, 77, '{ "homePlanet": "Tatooine", "memo": { "favoriteFood": "kimchi", "shoeSize": 260 } }'),
 ('Human', 1001, 'Darth Vader', 2.02, 136, '{ "homePlanet": "Tatooine", "memo": { "favoriteFood": "pork", "shoeSize": 370 } }'),
 ('Human', 1002, 'Han Solo', 1.8, 80, '{ "memo": { "favoriteFood": "apple", "shoeSize": 270 } }'),
@@ -13,18 +14,18 @@ INSERT INTO starwars.character (species, id, name, height, mass, metadata) value
 ('Human', 1006, 'Extra-2', 1.8, 121, null),
 ('Droid', 2000, 'C-3PO', 1.71, 75, '{ "primaryFunction": "protocol" }'),
 ('Droid', 2001, 'R2-D2', 1.09, 32, '{ "primaryFunction": "Astromech" }')
-on conflict DO NOTHING;
+;
 
 
-INSERT INTO starwars.starship (id, name, length, pilot_id) values
+INSERT IGNORE INTO starwars_jpa.starship (id, name, length, pilot_id) values
 (3000, 'Millenium Falcon', 34.37, 1002),
 (3001, 'X-Wing', 12.5, 1000),
 (3002, 'TIE Advanced x1', 9.2, 1001),
 (3003, 'Imperial shuttle', 20, NULL)
-on conflict DO NOTHING;
+;
 
 
-INSERT INTO starwars.character_episode_link (character_id, episode_id) values
+INSERT IGNORE INTO starwars_jpa.character_episode_link (character_id, episode_id) values
 (1000, 'NEWHOPE'),
 (1000, 'EMPIRE'),
 (1000, 'JEDI'),
@@ -44,10 +45,10 @@ INSERT INTO starwars.character_episode_link (character_id, episode_id) values
 (2001, 'NEWHOPE'),
 (2001, 'EMPIRE'),
 (2001, 'JEDI')
-on conflict DO NOTHING;
+;
 
 
-INSERT INTO starwars.character_friend_link (character_id, friend_id)
+INSERT IGNORE INTO starwars_jpa.character_friend_link (character_id, friend_id)
 values
 (1000, 1002),
 (1000, 1003),
@@ -75,4 +76,4 @@ values
 (2001, 1000),
 (2001, 1002),
 (2001, 1003)
-on conflict DO NOTHING;
+;

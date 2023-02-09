@@ -35,15 +35,14 @@ public class JqlFilter extends TableFilter {
     }
 
 
-    public void setSelectedProperties(String[] keys) {
-        selectAuto = (keys == null || keys.length == 0);
+    public void setSelectedProperties(List<String> keys) {
+        selectAuto = (keys == null || keys.size() == 0);
         if (selectAuto) {
             this.addSelection("*");
             return;
         }
 
-        for (int i = 0; i < keys.length; i ++) {
-            String k = keys[i].trim();
+        for (String k : keys) {
             this.addSelection(k.trim());
         }
     }

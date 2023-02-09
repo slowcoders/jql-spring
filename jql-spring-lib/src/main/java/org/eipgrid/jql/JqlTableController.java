@@ -32,8 +32,10 @@ public interface JqlTableController<ID> {
         @Operation(summary = "지정 엔터티 읽기")
         @Transactional
         @ResponseBody
-        public Object get(@PathVariable("id") ID id) {
-            Object entity = getTable().find(id);
+        public Object get(@PathVariable("id") ID id,
+                          @RequestParam(value = "select", required = false) String select$) {
+            JqlSelect select = JqlSelect.of(select$);
+            Object entity = getTable().find(id, select);
             if (entity == null) {
                 throw new HttpServerErrorException("Entity(" + id + ") is not found", HttpStatus.NOT_FOUND, null, null, null, null);
             }
@@ -83,8 +85,9 @@ public interface JqlTableController<ID> {
         @Operation(summary = "전체 목록")
         @Transactional
         @ResponseBody
-        default JqlQuery.Response list() throws Exception {
-            return JqlQuery.of(getTable(), null, null).execute();
+        default JqlQuery.Response list(@RequestParam(value = "select", required = false) String select$) throws Exception {
+            JqlSelect select = JqlSelect.of(select$);
+            return JqlQuery.of(getTable(), select, null).execute();
         }
     }
 

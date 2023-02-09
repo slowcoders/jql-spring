@@ -9,20 +9,20 @@ import java.util.*;
 
 public abstract class JqlRepository<ENTITY, ID> implements JqlTable<ID> {
 
-    protected final JqlService service;
+    protected final JqlStorage storage;
 
     protected final QSchema schema;
     protected JqlParser jqlParser;
 
-    protected JqlRepository(JqlService service, QSchema schema) {
-        this.service = service;
+    protected JqlRepository(JqlStorage storage, QSchema schema) {
+        this.storage = storage;
         this.schema = schema;
-        this.jqlParser = new JqlParser(service.getObjectMapper());
+        this.jqlParser = new JqlParser(storage.getObjectMapper());
     }
 
 
-    public final JqlService getService() {
-        return service;
+    public final JqlStorage getStorage() {
+        return storage;
     }
 
     public final String getTableName() {
@@ -55,37 +55,48 @@ public abstract class JqlRepository<ENTITY, ID> implements JqlTable<ID> {
     public List<Map<String, Object>> find_raw(JqlQuery query) { return (List)find(query, Map.class); }
 
 
-    public <T> T find(ID id, Class<T> entityType) {
-        List<T> res = find(new JqlQuery(this, null, JqlFilter.of(schema, id)), entityType);
+    public <T> T find(ID id, JqlSelect select, Class<T> entityType) {
+        List<T> res = find(new JqlQuery(this, select, JqlFilter.of(schema, id)), entityType);
         return res.size() == 0 ? null : res.get(0);
     }
 
-    public ENTITY find(ID id) { return find(id, getEntityType()); }
+    public ENTITY find(ID id, JqlSelect select) { return find(id, select, getEntityType()); }
 
-    public Map<String, Object> find_raw(ID id) { return find(id, Map.class); }
+    public ENTITY find(ID id) { return find(id, null); }
+
+    public Map<String, Object> find_raw(ID id, JqlSelect select) { return find(id, select, Map.class); }
+
+    public Map<String, Object> find_raw(ID id) { return find_raw(id, null); }
 
 
-    public <T> T get(ID id, Class<T> entityType) {
-        T entity = find(id, entityType);
+    public <T> T get(ID id, JqlSelect select, Class<T> entityType) {
+        T entity = find(id, select, entityType);
         if (entity == null) throw new IllegalArgumentException(getEntityType().getSimpleName() +
                 " not found: " + id);
         return entity;
     }
 
-    public ENTITY get(ID id) { return get(id, getEntityType()); }
+    public ENTITY get(ID id, JqlSelect select) { return get(id, select, getEntityType()); }
 
-    public Map<String, Object> get_raw(ID id) { return get(id, Map.class); }
+    public ENTITY get(ID id) { return get(id, null); }
+
+    public Map<String, Object> get_raw(ID id, JqlSelect select) { return get(id, select, Map.class); }
+    public Map<String, Object> get_raw(ID id) { return get_raw(id, null); }
 
 
 
-    public final <T> List<T> find(Collection<ID> idList, Class<T> entityType) {
-        List<T> res = find(new JqlQuery(this, null, JqlFilter.of(schema, idList)), entityType);
+    public final <T> List<T> find(Collection<ID> idList, JqlSelect select, Class<T> entityType) {
+        List<T> res = find(new JqlQuery(this, select, JqlFilter.of(schema, idList)), entityType);
         return res;
     }
 
-    public List<ENTITY> find(Collection<ID> idList) { return find(idList, getEntityType()); }
+    public List<ENTITY> find(Collection<ID> idList, JqlSelect select) { return find(idList, select, getEntityType()); }
 
-    public List<Map<String, Object>> find_raw(Collection<ID> idList) { return (List)find(idList, Map.class); }
+    public List<ENTITY> find(Collection<ID> idList) { return find(idList, null); }
+
+    public List<Map<String, Object>> find_raw(Collection<ID> idList, JqlSelect select) { return (List)find(idList, select, Map.class); }
+
+    public List<Map<String, Object>> find_raw(Collection<ID> idList) { return (List)find(idList, null); }
 
 
     public abstract long count(JqlFilter filter);

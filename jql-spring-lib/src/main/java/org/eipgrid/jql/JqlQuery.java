@@ -19,7 +19,7 @@ import java.util.*;
 public class JqlQuery {
 
     private final JqlTable<?> table;
-    private final String[] select;
+    private final JqlSelect select;
     private final JqlFilter filter;
 
 
@@ -27,28 +27,23 @@ public class JqlQuery {
     private int offset;
     private int limit;
 
-
     /*package*/ String executedQuery;
     /*package*/ Object extraInfo;
 
-    public static String[] All = new String[] { "*" };
-
-    public static String[] PrimaryKeys = new String[] { "0" };
-
-    public static String[] Auto = new String[0];
-
-
-    protected JqlQuery(JqlTable<?> table, String[] select, JqlFilter filter) {
+    protected JqlQuery(JqlTable<?> table, JqlSelect select, JqlFilter filter) {
         this.table = table;
+        if (select == null) {
+            select = JqlSelect.Auto;
+        }
         this.select = select;
         this.filter = filter;
     }
 
-    private JqlQuery(JqlTable<?> table, String[] select, Map<String, Object> filter) {
+    private JqlQuery(JqlTable<?> table, JqlSelect select, Map<String, Object> filter) {
         this(table, select, table.createFilter(filter));
     }
 
-    public static JqlQuery of(JqlTable<?> table, String[] select, Sort sort, int offset, int limit, Map<String, Object> filter) {
+    public static JqlQuery of(JqlTable<?> table, JqlSelect select, Sort sort, int offset, int limit, Map<String, Object> filter) {
         JqlQuery query = new JqlQuery(table, select, filter);
         query.sort = sort;
         query.offset = offset;
@@ -56,7 +51,7 @@ public class JqlQuery {
         return query;
     }
 
-    public static JqlQuery of(JqlTable<?> table, String[] select, Map<String, Object> filter) {
+    public static JqlQuery of(JqlTable<?> table, JqlSelect select, Map<String, Object> filter) {
         return new JqlQuery(table, select, filter);
     }
     
@@ -88,7 +83,7 @@ public class JqlQuery {
         private HashMap filter;
 
         public JqlQuery buildQuery(JqlTable<?> table) {
-            String[] _select = select == null ? null : parsePropertySelection(select);
+            JqlSelect _select = JqlSelect.of(select);
             Sort _sort = parseSort(sort);
             int _limit = limit == null ? 0 : limit;
             int _page = page == null ? -1 : page;
@@ -121,46 +116,6 @@ public class JqlQuery {
         }
     }
 
-    public static String[] parsePropertySelection(String select) {
-        String[] keys = splitPropertyKeys(select);
-        if (keys != null) {
-            for (int i = 0; i < keys.length; i ++) {
-                String k = keys[i];
-                int p = k.lastIndexOf('.');
-                int last_ch = ']';
-                switch (k.charAt(p + 1)) {
-                    case '<':
-                        last_ch = '>';
-                    case '[':
-                        String base = k.substring(0, p + 1);
-                        k = k.substring(p + 2);
-                        while (true) {
-                            int end = k.indexOf(last_ch);
-                            if (end > 0) {
-                                k = k.substring(0, end);
-                            }
-                            keys[i] = base + k;
-                            if (end > 0) break;
-
-                            k = keys[++i];
-                        }
-                }
-            }
-        }
-        return keys;
-    }
-
-
-    public static String[] splitPropertyKeys(String keys) {
-        if (keys != null) {
-            keys = keys.trim();
-            if (keys.length() > 0) {
-                return keys.split("\\s*,\\s*");
-            }
-        }
-        return null;
-    }
-
     public static Sort.Order createOrder(String column) {
         char first_ch = column.charAt(0);
         boolean ascend = first_ch != '-';
@@ -168,8 +123,14 @@ public class JqlQuery {
         return ascend ? Sort.Order.asc(name) : Sort.Order.desc(name);
     }
 
-    public static Sort parseSort(String commaSeperatedProperties) {
-        String[] properties = splitPropertyKeys(commaSeperatedProperties);
+    public static Sort parseSort(String orders) {
+        String[] properties = null;
+        if (orders != null) {
+            orders = orders.trim();
+            if (orders.length() > 0) {
+                properties = orders.split("\\s*,\\s*");
+            }
+        }
         return buildSort(properties);
     }
 

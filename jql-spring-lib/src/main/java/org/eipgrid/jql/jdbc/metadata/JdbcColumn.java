@@ -49,7 +49,7 @@ public class JdbcColumn extends QColumn {
         if (!isWritable) {
             throw new RuntimeException("!isWritable");
         }
-//        this.colTypeName = md.getColumnTypeName(col);
+        this.colTypeName = md.getColumnTypeName(col);
         this.label = comment != null ? comment : md.getColumnLabel(col);
         this.precision = md.getPrecision(col);
         this.scale = md.getScale(col);
@@ -140,7 +140,7 @@ public class JdbcColumn extends QColumn {
     }
 
     private static Class resolveJavaType(ResultSetMetaData md, int col) throws SQLException {
-        String colTypeName = md.getColumnTypeName(col);
+        String colTypeName = md.getColumnTypeName(col).toLowerCase();
         int colType = md.getColumnType(col);
         try {
             switch (colTypeName) {
@@ -158,4 +158,7 @@ public class JdbcColumn extends QColumn {
     }
 
 
+    public String getStoredType() {
+        return colTypeName;
+    }
 }

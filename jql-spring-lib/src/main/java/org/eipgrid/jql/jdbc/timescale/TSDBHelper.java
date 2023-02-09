@@ -4,7 +4,7 @@ import org.eipgrid.jql.schema.QColumn;
 import org.eipgrid.jql.schema.QSchema;
 import org.eipgrid.jql.schema.QType;
 import org.eipgrid.jql.JqlRepository;
-import org.eipgrid.jql.JqlService;
+import org.eipgrid.jql.JqlStorage;
 import org.eipgrid.jql.util.SourceWriter;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.ConnectionCallback;
@@ -22,7 +22,7 @@ public abstract class TSDBHelper {
     private static final boolean USE_CONN = true;
 
     private final String tableName;
-    private final JqlService service;
+    private final JqlStorage storage;
     private final JdbcTemplate jdbc;
 
     private QColumn timeKeyColumn;
@@ -30,9 +30,9 @@ public abstract class TSDBHelper {
     private QSchema schema;
     private Connection conn;
 
-    public TSDBHelper(JqlService service, String tableName) {
-        this.jdbc = service.getJdbcTemplate();
-        this.service = service;
+    public TSDBHelper(JqlStorage storage, String tableName) {
+        this.jdbc = storage.getJdbcTemplate();
+        this.storage = storage;
         this.tableName = tableName;
     }
 
@@ -312,7 +312,7 @@ public abstract class TSDBHelper {
     }
 
     public JqlRepository getRepository() throws SQLException {
-        Connection con = service.getDataSource().getConnection();
+        Connection con = storage.getDataSource().getConnection();
 //        return jdbc.execute(new ConnectionCallback<JQRepository>() {
 //            @Override
 //            public JQRepository doInConnection(Connection con) throws SQLException, DataAccessException {
@@ -326,9 +326,9 @@ public abstract class TSDBHelper {
                         execute(sql);
                     }
 
-                    QSchema schema = service.loadSchema(tableName);
+                    QSchema schema = storage.loadSchema(tableName);
                     initializeTSDB(schema);
-                    return service.getRepository(tableName);
+                    return storage.getRepository(tableName);
                 }
                 finally {
                     con.setAutoCommit(autoCommitOld);

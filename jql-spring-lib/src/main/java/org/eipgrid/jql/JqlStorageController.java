@@ -17,17 +17,21 @@ public interface JqlStorageController {
     JqlRepository getRepository(String tableName);
 
     class Search implements JqlStorageController {
-        private final JqlService service;
+        private final JqlStorage storage;
         private final String tableNamePrefix;
 
-        public Search(JqlService service, String tableNamePrefix) {
-            this.service = service;
+        public Search(JqlStorage storage, String tableNamePrefix) {
+            this.storage = storage;
             this.tableNamePrefix = tableNamePrefix;
+        }
+
+        public final JqlStorage getStorage() {
+            return storage;
         }
 
         public JqlRepository getRepository(String tableName) {
             String tablePath = tableNamePrefix + tableName;
-            return service.getRepository(tablePath);
+            return storage.getRepository(tablePath);
         }
 
         @GetMapping(path = "/{table}/{id}")
@@ -35,10 +39,12 @@ public interface JqlStorageController {
         @Transactional
         @ResponseBody
         public Object get(@PathVariable("table") String table,
-                          @PathVariable("id") String id$) {
+                          @PathVariable("id") String id$,
+                          @RequestParam(value = "select", required = false) String select$) {
             JqlRepository repository = getRepository(table);
+            JqlSelect select = JqlSelect.of(select$);
             Object id = repository.convertId(id$);
-            Object entity = repository.find(id);
+            Object entity = repository.find(id, select);
             if (entity == null) {
                 throw new HttpServerErrorException("Entity(" + id$ + ") is not found", HttpStatus.NOT_FOUND, null, null, null, null);
             }
@@ -66,7 +72,7 @@ public interface JqlStorageController {
             return request.buildQuery(repository).execute();
         }
 
-        @PostMapping(path = "/count")
+        @PostMapping(path = "/{table}/count")
         @Operation(summary = "엔터티 수 조회")
         @Transactional
         @ResponseBody
@@ -85,9 +91,11 @@ public interface JqlStorageController {
         @Operation(summary = "전체 목록")
         @Transactional
         @ResponseBody
-        default JqlQuery.Response list(@PathVariable("table") String table) throws Exception {
+        default JqlQuery.Response list(@PathVariable("table") String table,
+                                       @RequestParam(value = "select", required = false) String select$) throws Exception {
             JqlRepository repository = getRepository(table);
-            return JqlQuery.of(repository, null, null).execute();
+            JqlSelect select = JqlSelect.of(select$);
+            return JqlQuery.of(repository, select, null).execute();
         }
     }
 
@@ -136,8 +144,8 @@ public interface JqlStorageController {
     }
 
     class CRUD extends JqlStorageController.Search implements Insert, Update, Delete {
-        public CRUD(JqlService service, String tableNamePrefix) {
-            super(service, tableNamePrefix);
+        public CRUD(JqlStorage storage, String tableNamePrefix) {
+            super(storage, tableNamePrefix);
         }
     }
 

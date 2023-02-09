@@ -5,7 +5,7 @@ import org.eipgrid.jql.schema.QColumn;
 import org.postgresql.jdbc.PgConnection;
 import org.eipgrid.jql.schema.AutoClearEntityCache;
 import org.eipgrid.jql.schema.AutoUpdateModifyTimestamp;
-import org.eipgrid.jql.JqlService;
+import org.eipgrid.jql.JqlStorage;
 import org.eipgrid.jql.jpa.JPARepositoryBase;
 import org.springframework.jdbc.datasource.ConnectionHolder;
 import org.springframework.transaction.TransactionStatus;
@@ -17,14 +17,14 @@ import java.sql.Statement;
 import java.util.List;
 
 public class UpdateListener extends Thread {
-    private final JqlService service;
+    private final JqlStorage storage;
     private final JPARepositoryBase repository;
     private final PgConnection conn;
     private final ConnectionHolder connHolder;
 
-    public UpdateListener(JqlService service, String event, JPARepositoryBase repository) throws SQLException {
-        this.service = service;
-        this.conn = service.getDataSource().getConnection().unwrap(PgConnection.class);
+    public UpdateListener(JqlStorage storage, String event, JPARepositoryBase repository) throws SQLException {
+        this.storage = storage;
+        this.conn = storage.getDataSource().getConnection().unwrap(PgConnection.class);
         this.connHolder = new ConnectionHolder(this.conn);
         this.connHolder.requested();
         this.repository = repository;
@@ -33,7 +33,7 @@ public class UpdateListener extends Thread {
         stmt.close();
     }
 
-    public static <ID, ENTITY> void initAutoUpdateTrigger(JqlService service, JPARepositoryBase<ENTITY,ID> repository) {
+    public static <ID, ENTITY> void initAutoUpdateTrigger(JqlStorage storage, JPARepositoryBase<ENTITY,ID> repository) {
         Class<?> entityType = repository.getEntityType();
         AutoUpdateModifyTimestamp autoUpdate = entityType.getAnnotation(AutoUpdateModifyTimestamp.class);
         AutoClearEntityCache autoClearCache = entityType.getAnnotation(AutoClearEntityCache.class);
@@ -69,9 +69,9 @@ public class UpdateListener extends Thread {
                 .replace("${COLUMN}", colName);
 
         try {
-            service.getJdbcTemplate().execute(sql);
+            storage.getJdbcTemplate().execute(sql);
             if (autoClearCache != null) {
-                new UpdateListener(service, tableName + "_updated", repository).start();
+                new UpdateListener(storage, tableName + "_updated", repository).start();
             }
         }
         catch (Exception e) {
@@ -91,7 +91,7 @@ public class UpdateListener extends Thread {
 
                 org.postgresql.PGNotification notifications[] = conn.getNotifications();
                 if (notifications != null) {
-                    service.getTransactionTemplate().execute(new TransactionCallbackWithoutResult() {
+                    storage.getTransactionTemplate().execute(new TransactionCallbackWithoutResult() {
                         @SneakyThrows
                         protected void doInTransactionWithoutResult(TransactionStatus transactionStatus) {
                             for (int i = 0; i < notifications.length; i++) {

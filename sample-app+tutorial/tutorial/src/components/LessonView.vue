@@ -283,7 +283,7 @@ ${vm.schemaInfo}`
         vm.cntTest ++;
         const header = "ex " + vm.cntTest + ") result: " + res.data.content.length + "\n\n";
         const results = JSON.stringify(res.data.content, null, 2);
-        const sql = res.data.metadata.lastExecutedSql ? "\n\n---------------\nexecuted sql:\n" + res.data.metadata.lastExecutedSql : "";
+        const sql = res.data.metadata?.lastExecutedSql ? "\n\n---------------\nexecuted sql:\n" + res.data.metadata.lastExecutedSql : "";
         vm.resultView.setValue(header + results + sql);
       }).catch(vm.show_http_error)
     }

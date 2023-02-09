@@ -37,9 +37,7 @@ public class QJoin {
         boolean uniqueTarget;
         if (inverseMapped) { // PK:FK  mapping (OneToOne or OneToMany) + (ManyToMany:associative)
             assert(associateJoin == null || !associateJoin.inverseMapped);
-            uniqueBase = (associateJoin == null
-                    || isRecursiveJoin()
-                    || fkSchema.isUniqueConstrainedColumnSet(fkColumns));
+            uniqueBase = (associateJoin == null || fkSchema.isUniqueConstrainedColumnSet(fkColumns));
             uniqueTarget = (associateJoin == null || associateJoin.hasUniqueTarget()) &&
                             fkSchema.isUniqueConstrainedColumnSet(fkColumns);
         } else { // FK:PK  mapping (OneToOne or ManyToOne)

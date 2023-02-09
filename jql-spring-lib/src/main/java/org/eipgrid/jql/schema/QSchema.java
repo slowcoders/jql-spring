@@ -80,7 +80,7 @@ public abstract class QSchema {
     public QColumn getColumn(String key) throws IllegalArgumentException {
         QColumn ci = findColumn(key);
         if (ci == null) {
-            throw new IllegalArgumentException("unknown column: " + this.tableName + "." + key);
+            throw new IllegalArgumentException("unknown column [" + this.tableName + "::" + key + "]");
         }
         return ci;
     }
@@ -216,7 +216,7 @@ public abstract class QSchema {
     public String getNamespace() {
         String tableName = this.getTableName();
         int p = tableName.lastIndexOf('.');
-        return p < 0 ? "" : tableName.substring(0, p);
+        return p < 0 ? null : tableName.substring(0, p);
     }
 
     @Override
