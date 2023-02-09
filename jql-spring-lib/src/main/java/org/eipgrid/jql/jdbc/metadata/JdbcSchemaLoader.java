@@ -189,23 +189,34 @@ public class JdbcSchemaLoader extends SchemaLoader {
         String simpleName = qname.substring(last_dot_p + 1);
         return new TablePath(namespace, namespace, qname, simpleName);
     }
+
+    private static class JoinMap extends HashMap<String, QJoin> {
+        void add(QJoin join) {
+            QJoin old = super.get(join.getJsonKey());
+            if (old != null) {
+                join.resolveNameConflict(old);
+            };
+            old = this.put(join.getJsonKey(), join);
+            assert(old == null);
+        }
+    }
     private HashMap<String, QJoin> createJoinMap(JdbcSchema schema, EntityJoinHelper mappedJoins) {
-        HashMap<String, QJoin> joinMap = new HashMap<>();
+        JoinMap joinMap = new JoinMap();
         for (List<QColumn> fkColumns : schema.getForeignKeyConstraints().values()) {
             QJoin fkJoin = new QJoin(schema, fkColumns);
-            joinMap.put(fkJoin.getJsonKey(), new QJoin(schema, fkColumns));
+            joinMap.add(fkJoin);
         }
         for (QJoin fkJoin : mappedJoins.values()) {
             List<QColumn> fkColumns = fkJoin.getForeignKeyColumns();
             QJoin exJoin = new QJoin(schema, fkColumns);
-            joinMap.put(exJoin.getJsonKey(), exJoin);
+            joinMap.add(exJoin);
             JdbcSchema exSchema = (JdbcSchema) fkJoin.getBaseSchema();
             Collection<String> fkConstraints = exSchema.getForeignKeyConstraints().keySet();
             for (String fkConstraint : fkConstraints) {
                 QJoin j2 = exSchema.getJoinByForeignKeyConstraints(fkConstraint);
                 if (j2 != fkJoin) {
                     QJoin associative = new QJoin(schema, fkColumns, j2);
-                    joinMap.put(associative.getJsonKey(), associative);
+                    joinMap.add(associative);
                 }
             }
         }

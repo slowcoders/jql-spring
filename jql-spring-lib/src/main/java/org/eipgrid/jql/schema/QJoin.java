@@ -11,7 +11,7 @@ public class QJoin {
 
     private final Type type;
     private final QJoin associateJoin;
-    private final String jsonKey;
+    private String jsonKey;
     private final boolean inverseMapped;
     private final List<QColumn> fkColumns;
     private final QSchema baseSchema;
@@ -61,6 +61,22 @@ public class QJoin {
         return associateJoin != null &&
                 baseSchema == associateJoin.fkColumns.get(0).getJoinedPrimaryColumn().getSchema();
     }
+
+    public void resolveNameConflict(QJoin old) {
+        String old_name = old.jsonKey;
+        int pos = old_name.lastIndexOf('$');
+        if (pos > 0) {
+            try {
+                int no = Integer.parseInt(old_name.substring(pos + 1));
+                this.jsonKey = old_name.substring(0, pos + 1) + (no + 1);
+                return;
+            } catch (Exception e) {
+                // ignore
+            }
+        }
+        this.jsonKey = old_name + "_2";
+    }
+
 
     public List<QColumn> getForeignKeyColumns() {
         return fkColumns;

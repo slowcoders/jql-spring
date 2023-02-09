@@ -342,7 +342,11 @@ public class JdbcSchema extends QSchema {
                 return join;
             }
         }
-        throw new RuntimeException("fk join not found: " + fkConstraint);
+        for (QJoin join : this.getEntityJoinMap().values()) {
+            QSchema schema = join.getLinkedSchema();// getForeignKeyColumns().get(0).getSchema();
+            System.out.println(schema.getTableName());
+        }
+        throw new Error("fk join not found: " + fkConstraint);
     }
 
     HashMap<String, List<QColumn>> getForeignKeyConstraints() {
