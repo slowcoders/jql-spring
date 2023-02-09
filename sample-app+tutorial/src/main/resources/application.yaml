@@ -29,7 +29,7 @@ server:
     mime-types: application/json,application/xml,text/html,text/xml,text/plain,application/javascript
 
 
-database: postgres
+database: postgresql
   
 spring:
   sql.init:
@@ -43,7 +43,7 @@ spring:
 
   datasource:
     url: ${DB_URL:jdbc:${database}://localhost/jql_demo}
-    username: ${DB_USER:root}
+    username: ${DB_USER:jql_demo}
     password: ${DB_PASS:jql_demo}
 
   jpa:

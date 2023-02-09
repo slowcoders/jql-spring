@@ -33,17 +33,6 @@ async function call_http(method, command, filter, options) {
     return response.data;
 }
 
-async function notifyPageChanged(paginationCallback, res) {
-    if (res.pageable) {
-        const pageSize = res.pageable.pageSize;
-        const pageNumber = res.pageable.pageNumer;
-        const totalElements = res.metadata.totalElements;
-        paginationCallback(pageSize, pageNumber, totalElements);
-    } else {
-        const pageSize = page.content.length;
-        paginationCallback(pageSize, 0, pageSize);
-    }
-}
 
 export const jqlApi = {
     cachedListTs: 0,
@@ -59,7 +48,7 @@ export const jqlApi = {
 
     async top(filter, options) {
         options = { ...options, page: -1, limit: 1 }
-        const res = await call_http('post', '', filter, options);
+        const res = await call_http('post', 'find', filter, options);
         return res.content.length > 0 ? res.content[0] : null;
     },
 }

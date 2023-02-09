@@ -21,10 +21,11 @@ jql = {
     filter: jql_node
 }
 jql_key = Identifier['.'jql_key]
-jql_relative_selector = '*' | '0' | jql_key
-jql_relative_selector_set = jql_key '<' jql_relative_selector { ',' jql_relative_selector } '>'
-jql_property_selection = [ (jql_relative_selector | jql_relative_selector_set) [',' jql_property_selection ] ]  
-jql_sort_option = [-]property_name [',' jql_sort_option]
+jql_selector = '*' | '0' | jql_key
+jql_selector_set = jql_key '.(' jql_selector { ',' jql_selector } ')'
+jql_property_selection = [ (jql_selector | jql_selector_set) [',' jql_property_selection ] ]  
+
+jql_sort_option = [-]jql_key [',' jql_sort_option]
 
 jql_node = '{' jql_predicates [',' jql_node] '}'
 jql_predicates = '"' jql_key ['@' jql_operator] '"' : jql_value

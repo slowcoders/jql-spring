@@ -9,7 +9,7 @@ services:
     volumes:
       - ./data/postgres:/var/lib/postgresql/data
     environment:
-      POSTGRES_USER: root
+      POSTGRES_USER: jql_demo
       POSTGRES_PASSWORD: jql_demo
       POSTGRES_DB: jql_demo
 

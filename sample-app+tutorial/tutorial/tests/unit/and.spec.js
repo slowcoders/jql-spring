@@ -21,7 +21,7 @@ describe('And operation', () => {
     { attr: "height@gt", value: 1.2},
     { attr: "height@lt", value: 2.0},
     { attr: "mass@gt", value: 60 },
-    { attr: "metadata_.homePlanet", value: "Tatooine" }
+    { attr: "metadata.homePlanet", value: "Tatooine" }
   ]) ('And 조건 테스트', async ({attr, value}) => {
     filter[attr] = value;
     const res = await jqlApi.find(filter);
