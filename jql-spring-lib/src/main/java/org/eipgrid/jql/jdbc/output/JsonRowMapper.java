@@ -56,7 +56,7 @@ public class JsonRowMapper implements ResultSetExtractor<List<Map>> {
                 List<QColumn> pkColumns = mapping.getSchema().getPKColumns();
                 int pkIndex = idxColumn;
                 for (int pkCount = pkColumns.size(); --pkCount >= 0; pkIndex++) {
-                    Object value = getColumnValue(rs, pkIndex + 1, mappedColumns[pkIndex].column.getValueType());
+                    Object value = getColumnValue(rs, pkIndex + 1, mappedColumns[pkIndex].column.getStoredType());
                     mappedColumns[pkIndex].value = value;
                     if (value == null) {
                         if (isArray && pkIndex > 0) {
@@ -163,7 +163,7 @@ public class JsonRowMapper implements ResultSetExtractor<List<Map>> {
 
         for (; idxColumn < end; ) {
             MappedColumn mappedColumn = mappedColumns[idxColumn++];
-            Object value = getColumnValue(rs, idxColumn, mappedColumn.column.getValueType());
+            Object value = getColumnValue(rs, idxColumn, mappedColumn.column.getStoredType());
             mappedColumn.value = value;
             putValue(currEntity, mappedColumn, value);
         }
@@ -222,9 +222,9 @@ public class JsonRowMapper implements ResultSetExtractor<List<Map>> {
         return (CachedEntity)subEntity;
     }
 
-    protected Object getColumnValue(ResultSet rs, int index, QType columnType) throws SQLException {
+    protected Object getColumnValue(ResultSet rs, int index, Class columnType) throws SQLException {
         Object value;
-        if (columnType == QType.Json) {
+        if (columnType == Map.class) {
             try {
                 value = rs.getString(index);
                 if (value != null) {

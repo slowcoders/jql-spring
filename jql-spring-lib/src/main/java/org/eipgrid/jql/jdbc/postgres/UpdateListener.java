@@ -43,7 +43,7 @@ public class UpdateListener extends Thread {
         String tablePath = repository.getTableName();
         String tableName = tablePath.replace('.', '_');
         List<QColumn> pkColumns = repository.getSchema().getPKColumns();
-        String firstPrimaryKey = pkColumns.get(0).getPhysicalName();
+        String firstPrimaryKey = pkColumns.get(0).getStoredName();
         if (pkColumns.size() > 1) {
             throw new RuntimeException("can not listen update event on table with multi primary keys. ");
         }

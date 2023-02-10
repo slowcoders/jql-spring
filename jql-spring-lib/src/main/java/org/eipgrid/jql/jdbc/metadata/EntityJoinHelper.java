@@ -4,13 +4,20 @@ import org.eipgrid.jql.schema.QSchema;
 import org.eipgrid.jql.schema.QJoin;
 
 import java.util.HashMap;
+import java.util.HashSet;
 
 class EntityJoinHelper extends HashMap<QSchema, QJoin> {
     private String tableName;
+    private HashSet<QSchema> conflictMappings = new HashSet<>();
     public EntityJoinHelper(QSchema pkSchema) {
-        this.tableName = pkSchema.getSimpleTableName();
+        this.tableName = JdbcSchema.getEntityClassName(pkSchema);
     }
 
+    public void validate() {
+        for (QSchema schema : conflictMappings) {
+            super.remove(schema);
+        }
+    }
     public QJoin put(QSchema schema, QJoin childJoin) {
         QJoin oldJoin = super.put(schema, childJoin);
         if (oldJoin != null && oldJoin != childJoin) {
@@ -21,7 +28,7 @@ class EntityJoinHelper extends HashMap<QSchema, QJoin> {
                 // do nothing;
                 return oldJoin;
             }
-            throw new RuntimeException("Conflict Mapped Schema");
+            conflictMappings.add(schema);
         }
         return oldJoin;
     }

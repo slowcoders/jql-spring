@@ -98,7 +98,7 @@ public class JqlParser {
             QSchema schema = subFilter.getSchema();
             if (schema != null) {
                 column = schema.getColumn(columnName);
-                Class<?> fieldType = column.getValueType().toJavaClass();
+                Class<?> fieldType = column.getStoredType();
                 Class<?> accessType = op.getAccessType(value, fieldType);
                 if (value != null) {
                     value = om.convertValue(value, accessType);
@@ -106,7 +106,7 @@ public class JqlParser {
                 }
             }
             else {
-                column = new JsonColumn(columnName, value == null ? QType.Text : QType.of(value.getClass()));
+                column = new JsonColumn(columnName, value == null ? String.class : value.getClass());
             }
             Expression cond = op.createPredicate(column, value);
             targetPredicates.add(cond);

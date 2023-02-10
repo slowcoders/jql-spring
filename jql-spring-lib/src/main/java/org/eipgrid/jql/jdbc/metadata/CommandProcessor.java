@@ -4,6 +4,7 @@ import com.zaxxer.hikari.HikariDataSource;
 import org.eipgrid.jql.schema.QSchema;
 import org.eipgrid.jql.js.JsUtil;
 import org.eipgrid.jql.util.CaseConverter;
+import org.eipgrid.jql.util.SourceWriter;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.jdbc.DataSourceBuilder;
 import org.springframework.stereotype.Component;
@@ -34,15 +35,16 @@ public class CommandProcessor implements CommandLineRunner {
 //        Connection conn = ds.getConnection();
 
         JdbcSchemaLoader mp = new JdbcSchemaLoader(null, ds, CaseConverter.defaultConverter);
-        for (String dbSchema : mp.getDBSchemas()) {
+        for (String dbSchema : mp.getNamespaces()) {
             List<String> tableNames = mp.getTableNames(dbSchema);
             ArrayList<QSchema> schemas = new ArrayList<>();
             for (String tableName : tableNames) {
                 schemas.add(mp.loadSchema(dbSchema + '.' + tableName));
             }
 
+            SourceWriter sb = new SourceWriter('\"');
             for (QSchema schema : schemas) {
-                ((JdbcSchema)schema).dumpJPAEntitySchema();
+                ((JdbcSchema)schema).dumpJPAEntitySchema(sb, false);
             }
             for (QSchema schema : schemas) {
                 String ddl = "";//schema.generateDDL();

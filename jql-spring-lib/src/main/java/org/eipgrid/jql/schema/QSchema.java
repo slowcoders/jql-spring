@@ -97,7 +97,7 @@ public abstract class QSchema {
         List<QColumn> pkColumns = new ArrayList<>();
 
         for (QColumn ci: columns) {
-            String colName = ci.getPhysicalName().toLowerCase();
+            String colName = ci.getStoredName().toLowerCase();
             this.columnMap.put(colName, ci);
 
             if (ci.isPrimaryKey()) {
@@ -108,7 +108,7 @@ public abstract class QSchema {
             }
 
             if (!ci.isForeignKey()) {
-                if (ci.getValueType().isPrimitive()) {
+                if (!ci.isReference()) {
                     primitiveColumns.add(ci);
                 }
                 else {
@@ -128,8 +128,13 @@ public abstract class QSchema {
         this.initJsonKeys(ormType);
         if (pkColumns.size() == 0) {
             pkColumns = this.allColumns;
+            markAllColumnsToPK(pkColumns);
         }
         this.pkColumns = Collections.unmodifiableList(pkColumns);
+    }
+
+    protected void markAllColumnsToPK(List<QColumn> pkColumns) {
+        throw new RuntimeException("not implemented");
     }
 
     protected void mapColumn(QColumn column, Field f) {
@@ -180,7 +185,7 @@ public abstract class QSchema {
 
 
     public String getPhysicalColumnName(String fieldName) {
-        return this.columnMap.get(fieldName).getPhysicalName();
+        return this.columnMap.get(fieldName).getStoredName();
     }
 
     public String getLogicalAttributeName(String columnName) {
