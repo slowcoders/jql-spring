@@ -1,6 +1,7 @@
 package org.eipgrid.jql.jdbc.metadata;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.databind.JsonNode;
 import org.eipgrid.jql.schema.QColumn;
 import org.eipgrid.jql.schema.QJoin;
 import org.eipgrid.jql.schema.QSchema;
@@ -151,7 +152,7 @@ public class JdbcColumn extends QColumn {
             switch (colTypeName) {
                 case "json":
                 case "jsonb":
-                    return Map.class;
+                    return JsonNode.class;
                 default:
                     String javaClassName = md.getColumnClassName(col);
                     return ClassUtils.getBoxedType(Class.forName(javaClassName));

@@ -3,17 +3,15 @@ package org.eipgrid.jql.parser;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.eipgrid.jql.schema.QColumn;
 import org.eipgrid.jql.schema.QSchema;
-import org.eipgrid.jql.schema.QType;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Map;
 
 public class JqlParser {
 
-//    private final ConversionService conversionService;
     private final ObjectMapper om;
 
     public JqlParser(ObjectMapper om) {
-//        this.conversionService = conversionService;
         this.om = om;
     }
 

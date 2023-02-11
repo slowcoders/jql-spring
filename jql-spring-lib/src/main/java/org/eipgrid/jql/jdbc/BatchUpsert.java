@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.eipgrid.jql.jdbc.output.BatchPreparedStatementSetterWithKeyHolder;
 import org.eipgrid.jql.schema.QColumn;
 import org.eipgrid.jql.schema.QSchema;
-import org.eipgrid.jql.schema.QType;
 
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
@@ -49,7 +48,7 @@ public class BatchUpsert<ID> implements BatchPreparedStatementSetterWithKeyHolde
     static Object convertJsonValueToColumnValue(QColumn col, Object v) {
         if (v == null) return null;
 
-        if (col.getStoredType() == Map.class) {
+        if (col.isJsonNode()) {
             if ((v instanceof Map) || (v instanceof Collection)) {
                 try {
                     v = objectMapper.writeValueAsString(v);

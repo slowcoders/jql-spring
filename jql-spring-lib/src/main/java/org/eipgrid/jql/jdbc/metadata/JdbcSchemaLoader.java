@@ -1,5 +1,6 @@
 package org.eipgrid.jql.jdbc.metadata;
 
+import org.eipgrid.jql.JqlRepository;
 import org.eipgrid.jql.jdbc.SqlGenerator;
 import org.eipgrid.jql.schema.QColumn;
 import org.eipgrid.jql.schema.QJoin;
@@ -94,7 +95,7 @@ public class JdbcSchemaLoader extends SchemaLoader {
         if (schema == null) {
             Class<?> ormType = ormTypeMap.get(tableName);
             if (ormType == null) {
-                ormType = Map.class;
+                ormType = JqlRepository.RawEntityType;
             }
             TablePath tablePath = qualifiedNameToTablePath(tableName);
             schema = loadSchema(tablePath, ormType);

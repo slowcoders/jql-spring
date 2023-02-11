@@ -7,9 +7,7 @@ import com.fasterxml.jackson.databind.ser.BeanPropertyWriter;
 import org.eipgrid.jql.JqlQuery;
 import org.eipgrid.jql.schema.QColumn;
 import org.eipgrid.jql.schema.QResultMapping;
-import org.eipgrid.jql.schema.QType;
 
-import java.util.Map;
 import java.util.Stack;
 
 public class JqlPropertyWriter extends BeanPropertyWriter {
@@ -57,7 +55,7 @@ public class JqlPropertyWriter extends BeanPropertyWriter {
         } else {
             String pname = this.getName();
             QColumn column = mapping.getSchema().findColumn(pname);
-            boolean isRef = (column != null && column.getStoredType() == Map.class);
+            boolean isRef = (column != null && column.isJsonNode());
             if (!isRef) {
                 isRef = mapping.getSchema().getEntityJoinBy(pname) != null;
             }

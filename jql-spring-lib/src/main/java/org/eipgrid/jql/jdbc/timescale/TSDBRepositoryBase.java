@@ -1,10 +1,9 @@
 package org.eipgrid.jql.jdbc.timescale;
 
+import org.eipgrid.jql.JqlStorage;
+import org.eipgrid.jql.jpa.JPARepositoryBase;
 import org.eipgrid.jql.schema.QColumn;
 import org.eipgrid.jql.schema.QSchema;
-import org.eipgrid.jql.schema.QType;
-import org.eipgrid.jql.jpa.JPARepositoryBase;
-import org.eipgrid.jql.JqlStorage;
 import org.eipgrid.jql.util.ClassUtils;
 
 import java.lang.reflect.Field;

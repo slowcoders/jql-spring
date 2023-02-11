@@ -1,10 +1,9 @@
 package org.eipgrid.jql.parser;
 
-import org.eipgrid.jql.schema.QResultMapping;
 import org.eipgrid.jql.schema.QColumn;
 import org.eipgrid.jql.schema.QJoin;
+import org.eipgrid.jql.schema.QResultMapping;
 import org.eipgrid.jql.schema.QSchema;
-import org.eipgrid.jql.schema.QType;
 
 import java.util.*;
 

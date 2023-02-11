@@ -1,6 +1,7 @@
 package org.eipgrid.jql.schema;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import org.eipgrid.jql.JqlRepository;
 
 import java.lang.reflect.Field;
 import java.util.*;
@@ -25,7 +26,7 @@ public abstract class QSchema {
         this.tableName = tableName;
         this.schemaLoader = schemaLoader;
         this.entityType = entityType;
-        this.isJPASchema = !Map.class.isAssignableFrom(entityType);
+        this.isJPASchema = !JqlRepository.RawEntityType.isAssignableFrom(entityType);
     }
 
     public final SchemaLoader getSchemaLoader() {

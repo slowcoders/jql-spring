@@ -1,5 +1,7 @@
 package org.eipgrid.jql.schema;
 
+import com.fasterxml.jackson.databind.JsonNode;
+
 import java.lang.reflect.Field;
 import java.util.Collection;
 import java.util.Map;
@@ -7,15 +9,15 @@ import java.util.Map;
 public abstract class QColumn {
     private final QSchema schema;
     private final String storedName;
-    private Class columnType;
+    private Class storedType;
     private boolean isReference;
 
     protected QColumn(QSchema schema, String storedName, Class storedType) {
         this.schema = schema;
         this.storedName = storedName;
-        this.columnType = storedType;
+        this.storedType = storedType;
         this.isReference = Object.class == storedType ||
-                Map.class.isAssignableFrom(storedType) ||
+                JsonNode.class.isAssignableFrom(storedType) ||
                 Collection.class.isAssignableFrom(storedType);
     }
 
@@ -28,7 +30,7 @@ public abstract class QColumn {
     }
 
     public final Class getStoredType() {
-        return columnType;
+        return storedType;
     }
 
     public final String getStoredName() {
@@ -38,6 +40,11 @@ public abstract class QColumn {
     public boolean isReference() {
         return this.isReference;
     }
+
+    public boolean isJsonNode() {
+        return this.storedType == JsonNode.class;
+    }
+
     public abstract String getJsonKey();
 
     public Field getMappedOrmField() { return null; }

@@ -44,7 +44,7 @@ public class JDBCRepositoryBase<ENTITY, ID> extends JqlRepository<ENTITY, ID> {
         }
         else {
             res = jdbc.query(sql, getColumnMapRowMapper(query.getFilter()));
-            if (!Map.class.isAssignableFrom(entityType)) {
+            if (!RawEntityType.isAssignableFrom(entityType)) {
                 ObjectMapper converter = storage.getObjectMapper();
                 for (int i = res.size(); --i >= 0; ) {
                     T v = (T)converter.convertValue(res.get(i), entityType);

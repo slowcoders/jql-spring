@@ -88,7 +88,7 @@ public abstract class JdbcMetadataController {
         }
         else {
             if (schema instanceof JdbcSchema) {
-                SourceWriter sb = new SourceWriter('\'');
+                SourceWriter sb = new SourceWriter('\"');
                 ((JdbcSchema)schema).dumpJPAEntitySchema(sb,true);
                 source = sb.toString();
             }

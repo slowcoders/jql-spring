@@ -1,11 +1,11 @@
 package org.eipgrid.jql.jdbc.output;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.eipgrid.jql.schema.QResultMapping;
 import org.eipgrid.jql.schema.QColumn;
+import org.eipgrid.jql.schema.QResultMapping;
 import org.eipgrid.jql.schema.QSchema;
-import org.eipgrid.jql.schema.QType;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.support.JdbcUtils;
@@ -224,11 +224,11 @@ public class JsonRowMapper implements ResultSetExtractor<List<Map>> {
 
     protected Object getColumnValue(ResultSet rs, int index, Class columnType) throws SQLException {
         Object value;
-        if (columnType == Map.class) {
+        if (columnType == JsonNode.class) {
             try {
                 value = rs.getString(index);
                 if (value != null) {
-                    value = objectMapper.readValue(value.toString(), HashMap.class);
+                    value = objectMapper.readValue(value.toString(), JsonNode.class);
                 }
             } catch (JsonProcessingException e) {
                 throw new RuntimeException(e);
