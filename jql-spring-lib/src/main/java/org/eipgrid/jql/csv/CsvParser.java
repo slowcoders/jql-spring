@@ -54,6 +54,9 @@ public class CsvParser {
                     }
 
                     switch (format) {
+                        case Boolean:
+                            value = Boolean.parseBoolean(text);
+                            break;
                         case Integer:
                             value = Long.parseLong(text);
                             break;

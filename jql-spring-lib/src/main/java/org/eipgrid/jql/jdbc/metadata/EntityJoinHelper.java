@@ -18,6 +18,7 @@ class EntityJoinHelper extends HashMap<QSchema, QJoin> {
             super.remove(schema);
         }
     }
+    
     public QJoin put(QSchema schema, QJoin childJoin) {
         QJoin oldJoin = super.put(schema, childJoin);
         if (oldJoin != null && oldJoin != childJoin) {

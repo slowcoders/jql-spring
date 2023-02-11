@@ -234,9 +234,6 @@ public class JdbcSchemaLoader extends SchemaLoader {
         ResultSet rs = md.getPrimaryKeys(tablePath.getCatalog(), tablePath.getSchema(), tablePath.getSimpleName());
         ArrayList<String> keys = new ArrayList<>();
         int next_key_seq = 1;
-        if (tablePath.getQualifiedName().endsWith("sbsw_sta")) {
-            System.out.print("");
-        }
         while (rs.next()) {
             String key = rs.getString("column_name");
             int seq = rs.getInt("key_seq");
@@ -294,9 +291,6 @@ public class JdbcSchemaLoader extends SchemaLoader {
 
         DatabaseMetaData md = conn.getMetaData();
         ResultSet rs = md.getIndexInfo(tablePath.getCatalog(), tablePath.getSchema(), tablePath.getSimpleName(), true, false);
-        if (tablePath.getSimpleName().contains("episode")) {
-            System.out.println("");
-        }
         while (rs.next()) {
             String table_schem = rs.getString("table_schem");
             String table_name = rs.getString("table_name");

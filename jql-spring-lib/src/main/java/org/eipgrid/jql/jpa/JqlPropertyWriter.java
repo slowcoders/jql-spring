@@ -55,10 +55,8 @@ public class JqlPropertyWriter extends BeanPropertyWriter {
         } else {
             String pname = this.getName();
             QColumn column = mapping.getSchema().findColumn(pname);
-            boolean isRef = (column != null && column.isJsonNode());
-            if (!isRef) {
-                isRef = mapping.getSchema().getEntityJoinBy(pname) != null;
-            }
+            boolean isRef = (column != null && column.isJsonNode()) ||
+                mapping.getSchema().getEntityJoinBy(pname) != null;
             if (isRef) {
                 QResultMapping child = mapping.getChildMapping(this.getName());
                 if (child != null) {
