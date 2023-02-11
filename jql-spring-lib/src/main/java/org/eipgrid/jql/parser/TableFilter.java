@@ -124,7 +124,7 @@ class TableFilter extends EntityFilter implements QResultMapping {
         QColumn jsonColumn = null;
         if (join == null) {
             jsonColumn = schema.getColumn(key);
-            if (!jsonColumn.isReference()) return this;
+            if (!jsonColumn.isJsonNode()) return this;
         }
 
         EntityFilter subQuery = subFilters.get(key);
@@ -132,7 +132,7 @@ class TableFilter extends EntityFilter implements QResultMapping {
             if (join != null) {
                 subQuery = new TableFilter(this, join);
             } else {
-                subQuery = new JsonFilter(this, jsonColumn.getStoredName());
+                subQuery = new JsonFilter(this, jsonColumn.getPhysicalName());
                 if (this.isArrayNode()) {
                     this.addSelectedColumn("0");
                 }
@@ -190,7 +190,7 @@ class TableFilter extends EntityFilter implements QResultMapping {
             }
             key = key.substring(p + 1);
         }
-        return this.schema.getColumn(key).getStoredName();
+        return this.schema.getColumn(key).getPhysicalName();
     }
 
     public QJoin getEntityJoin() {

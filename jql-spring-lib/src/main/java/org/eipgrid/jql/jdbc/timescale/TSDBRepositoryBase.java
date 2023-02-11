@@ -2,6 +2,7 @@ package org.eipgrid.jql.jdbc.timescale;
 
 import org.eipgrid.jql.JqlStorage;
 import org.eipgrid.jql.jpa.JPARepositoryBase;
+import org.eipgrid.jql.js.JsType;
 import org.eipgrid.jql.schema.QColumn;
 import org.eipgrid.jql.schema.QSchema;
 import org.eipgrid.jql.util.ClassUtils;
@@ -42,7 +43,7 @@ public abstract class TSDBRepositoryBase<ENTITY, ID> extends JPARepositoryBase<E
             HashMap<String, AggregateType> aggTypeMap = new HashMap<>();
             for (QColumn col : schema.getWritableColumns()) {
                 AggregateType aggType = resolveAggregationType(col);
-                String col_name = col.getStoredName();
+                String col_name = col.getPhysicalName();
                 aggTypeMap.put(col_name, aggType);
             }
             return aggTypeMap;
@@ -58,7 +59,7 @@ public abstract class TSDBRepositoryBase<ENTITY, ID> extends JPARepositoryBase<E
             if (c != null) {
                 return c.value();
             }
-            if (col.getStoredType() == Float.class || col.getStoredType() == Field.class) {
+            if (JsType.of(col.getValueType()) == JsType.Float) {
                 return AggregateType.Mean;
             }
             return AggregateType.None;

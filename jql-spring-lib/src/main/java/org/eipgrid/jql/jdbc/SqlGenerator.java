@@ -41,7 +41,7 @@ public class SqlGenerator extends SqlConverter implements QueryGenerator {
 
     protected void writeQualifiedColumnName(QColumn column, Object value) {
         if (!currentNode.isJsonNode()) {
-            String name = isNativeQuery ? column.getStoredName() : column.getJsonKey();
+            String name = isNativeQuery ? column.getPhysicalName() : column.getJsonKey();
             sw.write(this.currentNode.getMappingAlias()).write('.').write(name);
         }
         else {
@@ -156,8 +156,8 @@ public class SqlGenerator extends SqlConverter implements QueryGenerator {
             } else {
                 anchor = fk; linked = fk.getJoinedPrimaryColumn();
             }
-            sw.write(baseAlias).write(".").write(anchor.getStoredName());
-            sw.write(" = ").write(alias).write(".").write(linked.getStoredName()).write(" and\n\t");
+            sw.write(baseAlias).write(".").write(anchor.getPhysicalName());
+            sw.write(" = ").write(alias).write(".").write(linked.getPhysicalName()).write(" and\n\t");
         }
         sw.shrinkLength(6);
     }
@@ -215,7 +215,7 @@ public class SqlGenerator extends SqlConverter implements QueryGenerator {
                 sw.write('\t');
                 String alias = mapping.getMappingAlias();
                 for (QColumn col : mapping.getSelectedColumns()) {
-                    sw.write(alias).write('.').write(col.getStoredName()).write(", ");
+                    sw.write(alias).write('.').write(col.getPhysicalName()).write(", ");
                 }
                 sw.write('\n');
             }
@@ -242,7 +242,7 @@ public class SqlGenerator extends SqlConverter implements QueryGenerator {
             QSchema schema = where.getSchema();
             sort.forEach(order -> {
                 String p = order.getProperty();
-                String qname = where.getMappingAlias() + '.' + schema.getColumn(p).getStoredName();
+                String qname = where.getMappingAlias() + '.' + schema.getColumn(p).getPhysicalName();
                 explicitSortColumns.add(qname);
                 sw.write(qname);
                 sw.write(order.isAscending() ? " asc" : " desc").write(", ");
@@ -254,9 +254,9 @@ public class SqlGenerator extends SqlConverter implements QueryGenerator {
                 if (mapping != where && !mapping.isArrayNode()) continue;
                 String table = mapping.getMappingAlias();
                 for (QColumn column : mapping.getSchema().getPKColumns()) {
-                    String qname = table + '.' + column.getStoredName();
+                    String qname = table + '.' + column.getPhysicalName();
                     if (!explicitSortColumns.contains(qname)) {
-                        sw.write(table).write('.').write(column.getStoredName()).write(", ");
+                        sw.write(table).write('.').write(column.getPhysicalName()).write(", ");
                     }
                 }
             }
@@ -302,7 +302,7 @@ public class SqlGenerator extends SqlConverter implements QueryGenerator {
         sw.write("\nSELECT * FROM ").write(schema.getTableName()).write("\nWHERE ");
         List<QColumn> keys = schema.getPKColumns();
         for (int i = 0; i < keys.size(); ) {
-            String key = keys.get(i).getStoredName();
+            String key = keys.get(i).getPhysicalName();
             sw.write(key).write(" = ? ");
             if (++ i < keys.size()) {
                 sw.write(" AND ");
@@ -342,7 +342,7 @@ public class SqlGenerator extends SqlConverter implements QueryGenerator {
         sw.writeln();
         sw.write(getCommand(SqlConverter.Command.Insert)).write(" INTO ").write(schema.getTableName()).writeln("(");
         for (QColumn col : schema.getWritableColumns()) {
-            sw.write(col.getStoredName()).write(", ");
+            sw.write(col.getPhysicalName()).write(", ");
         }
         sw.replaceTrailingComma("\n) VALUES (");
         for (QColumn column : schema.getWritableColumns()) {

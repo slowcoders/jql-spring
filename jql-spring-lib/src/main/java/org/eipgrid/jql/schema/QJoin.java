@@ -140,8 +140,8 @@ public class QJoin {
         }
 
         QColumn joinedPk = fk.getJoinedPrimaryColumn();
-        String fk_name = fk.getStoredName();
-        String pk_name = joinedPk.getStoredName();
+        String fk_name = fk.getPhysicalName();
+        String pk_name = joinedPk.getPhysicalName();
         String js_key;
         if (fk_name.endsWith("_" + pk_name)) {
             // if (pilot_id -> character.id) { json_key = pilot }

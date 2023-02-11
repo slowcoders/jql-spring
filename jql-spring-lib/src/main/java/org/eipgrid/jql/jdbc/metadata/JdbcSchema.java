@@ -36,7 +36,7 @@ public class JdbcSchema extends QSchema {
 
             for (int i = columns.size(); --i >= 0; ) {
                 QColumn col = columns.get(i);
-                Field f = jpaColumns.get(col.getStoredName());
+                Field f = jpaColumns.get(col.getPhysicalName());
                 if (f == null) {
                     columns.remove(i);
                     if (unresolvedJpaColumns == null) unresolvedJpaColumns = new ArrayList<>();
@@ -144,13 +144,13 @@ public class JdbcSchema extends QSchema {
             boolean isUnique = this.isUniqueConstrainedColumnSet(Collections.singletonList(col));
             sb.write(isUnique ? "@One" : "@Many").writeln("ToOne(fetch = FetchType.LAZY)");
         }
-        sb.write(pk != null ? "@Join" : "@").write("Column(name = ").writeQuoted(col.getStoredName()).write(", ");
+        sb.write(pk != null ? "@Join" : "@").write("Column(name = ").writeQuoted(col.getPhysicalName()).write(", ");
         if (col.isNullable()) sb.write("nullable = true, ");
-        if (!col.getStoredType().getName().startsWith("java.lang.")) {
+        if (!col.getValueType().getName().startsWith("java.lang.")) {
             sb.write("columnDefinition = \"").write(((JdbcColumn)col).getColumnTypeName()).write("\", ");
         }
         if (pk != null) {
-            sb.write("referencedColumnName = ").writeQuoted(pk.getStoredName()).write(", ");
+            sb.write("referencedColumnName = ").writeQuoted(pk.getPhysicalName()).write(", ");
         }
         if (!col.isNullable()) {
             sb.writeln("nullable = false");
@@ -199,9 +199,9 @@ public class JdbcSchema extends QSchema {
 
         if (!isInverseJoin) {
             QColumn fk = firstFk;
-            sb.write("@JoinColumn(name = ").writeQuoted(fk.getStoredName()).write(", ");
+            sb.write("@JoinColumn(name = ").writeQuoted(fk.getPhysicalName()).write(", ");
             if (fk.isNullable()) sb.write("nullable = true, ");
-            sb.write("referencedColumnName = ").writeQuoted(fk.getJoinedPrimaryColumn().getStoredName()).write(", \n");
+            sb.write("referencedColumnName = ").writeQuoted(fk.getJoinedPrimaryColumn().getPhysicalName()).write(", \n");
             sb.incTab();
             sb.write("foreignKey = @ForeignKey(name = ").writeQuoted(this.getFKConstraintName(fk)).write("))\n");
             sb.decTab();
@@ -218,8 +218,8 @@ public class JdbcSchema extends QSchema {
             if (firstFk.getSchema().hasOnlyForeignKeys()) {
                 ((JdbcSchema)firstFk.getSchema()).dumpUniqueConstraints(sb);
             }
-            sb.write("joinColumns = @JoinColumn(name=").writeQuoted(firstFk.getStoredName()).write("), ");
-            sb.write("inverseJoinColumns = @JoinColumn(name=").writeQuoted(join.getAssociativeJoin().getForeignKeyColumns().get(0).getStoredName()).write("))\n");
+            sb.write("joinColumns = @JoinColumn(name=").writeQuoted(firstFk.getPhysicalName()).write("), ");
+            sb.write("inverseJoinColumns = @JoinColumn(name=").writeQuoted(join.getAssociativeJoin().getForeignKeyColumns().get(0).getPhysicalName()).write("))\n");
             sb.decTab();
         }
 
@@ -291,10 +291,7 @@ public class JdbcSchema extends QSchema {
 
 
     private String getJavaFieldType(QColumn col) {
-        if (col.isJsonNode()) {
-            return "JsonNode";
-        }
-        String name = col.getStoredType().getName();
+        String name = col.getValueType().getName();
         if (name.startsWith("java.lang.")) {
             name = name.substring(10);
         }
@@ -308,7 +305,7 @@ public class JdbcSchema extends QSchema {
         for (List<String> uc : this.uniqueConstraints.values()) {
             if (uc.size() != cntColumn) continue;
             for (QColumn col : fkColumns) {
-                String col_name = col.getStoredName();
+                String col_name = col.getPhysicalName();
                 if (!uc.contains(col_name)) {
                     continue compare_constraint;
                 }
@@ -375,7 +372,7 @@ public class JdbcSchema extends QSchema {
         if (this.idType == null) {
             List<QColumn> pkColumns = this.getPKColumns();
             if (pkColumns.size() == 1) {
-                this.idType = pkColumns.get(0).getStoredType();
+                this.idType = pkColumns.get(0).getValueType();
             }
             else if (!isJPARequired()) {
                 this.idType = JdbcArrayID.class;

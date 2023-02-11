@@ -9,6 +9,6 @@ public class JsonColumn extends QColumn {
 
     @Override
     public String getJsonKey() {
-        return super.getStoredName();
+        return super.getPhysicalName();
     }
 }

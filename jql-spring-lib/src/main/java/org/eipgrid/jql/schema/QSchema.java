@@ -98,7 +98,7 @@ public abstract class QSchema {
         List<QColumn> pkColumns = new ArrayList<>();
 
         for (QColumn ci: columns) {
-            String colName = ci.getStoredName().toLowerCase();
+            String colName = ci.getPhysicalName().toLowerCase();
             this.columnMap.put(colName, ci);
 
             if (ci.isPrimaryKey()) {
@@ -109,11 +109,11 @@ public abstract class QSchema {
             }
 
             if (!ci.isForeignKey()) {
-                if (!ci.isReference()) {
-                    primitiveColumns.add(ci);
+                if (ci.isJsonNode()) {
+                    objectColumns.add(ci);
                 }
                 else {
-                    objectColumns.add(ci);
+                    primitiveColumns.add(ci);
                 }
                 if (!ci.isReadOnly()) {
                     writableColumns.add(ci);
@@ -186,7 +186,7 @@ public abstract class QSchema {
 
 
     public String getPhysicalColumnName(String fieldName) {
-        return this.columnMap.get(fieldName).getStoredName();
+        return this.columnMap.get(fieldName).getPhysicalName();
     }
 
     public String getLogicalAttributeName(String columnName) {

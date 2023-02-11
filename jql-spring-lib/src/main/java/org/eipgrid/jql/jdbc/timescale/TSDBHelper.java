@@ -1,5 +1,6 @@
 package org.eipgrid.jql.jdbc.timescale;
 
+import org.eipgrid.jql.js.JsType;
 import org.eipgrid.jql.schema.QColumn;
 import org.eipgrid.jql.schema.QSchema;
 import org.eipgrid.jql.JqlRepository;
@@ -10,8 +11,6 @@ import org.springframework.jdbc.core.ConnectionCallback;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 import java.sql.*;
-import java.time.Instant;
-import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -37,19 +36,9 @@ public abstract class TSDBHelper {
         this.tableName = tableName;
     }
 
-    private boolean isTimestampType(Class javaType) {
-        if (javaType == java.sql.Timestamp.class) {
-            return true;
-        }
-        if (javaType == Instant.class || javaType == ZonedDateTime.class) {
-            return true;
-        }
-        return false;
-    }
     private QColumn resolveTimeKeyColumn() {
         for (QColumn column : this.schema.getPKColumns()) {
-            Class columnType = column.getStoredType();
-            if (isTimestampType(columnType)) {
+            if (JsType.of(column.getValueType()) == JsType.Timestamp) {
                 return column;
             }
         }
@@ -57,14 +46,14 @@ public abstract class TSDBHelper {
     }
 
     public AggregateType getAggregationType(QColumn col) {
-        AggregateType t = aggTypeMap.get(col.getStoredName());
+        AggregateType t = aggTypeMap.get(col.getPhysicalName());
         if (t == null) t = AggregateType.None;
         return t;
     }
 
 
     public String getTimeKeyColumnName() {
-        return timeKeyColumn.getStoredName();
+        return timeKeyColumn.getPhysicalName();
     }
 
     private boolean isTableExists(String tableName) {
@@ -202,13 +191,13 @@ public abstract class TSDBHelper {
 
         for (QColumn col : schema.getPKColumns()) {
             if (col != ts_key) {
-                sb.write(col.getStoredName()).writeln(",");
+                sb.write(col.getPhysicalName()).writeln(",");
             }
         }
 
         ArrayList<QColumn> accColumns = new ArrayList<>();
         for (QColumn col : schema.getWritableColumns()) {
-            String col_name = col.getStoredName();
+            String col_name = col.getPhysicalName();
             switch (getAggregationType(col)) {
                 case Sum: {
                     String ss = "min({0}) as {0}_min,\n" +
@@ -236,7 +225,7 @@ public abstract class TSDBHelper {
                 sb.write("time_h, ");
             }
             else {
-                sb.write(col.getStoredName()).write(", ");
+                sb.write(col.getPhysicalName()).write(", ");
             }
         }
         sb.replaceTrailingComma(";\n\n");
@@ -265,7 +254,7 @@ public abstract class TSDBHelper {
                     sb.write("time_h, ");
                 }
                 else {
-                    sb.write(col.getStoredName()).writeln(",");
+                    sb.write(col.getPhysicalName()).writeln(",");
                 }
             }
             for (QColumn col : schema.getWritableColumns()) {
@@ -276,11 +265,11 @@ public abstract class TSDBHelper {
                                 "           {0}_max - least({0}_min, lag({0}_last) over _w)\n" +
                                 "      else {0}_max - least({0}_first, lag({0}_last) over _w) + ({0}_last - {0}_min)\n" +
                                 " end) as {0},\n";
-                        sb.writeF(fmt, col.getStoredName());
+                        sb.writeF(fmt, col.getPhysicalName());
                         break;
                     }
                     case Mean: {
-                        sb.write(col.getStoredName()).writeln(",");
+                        sb.write(col.getPhysicalName()).writeln(",");
                         break;
                     }
                 }
@@ -289,7 +278,7 @@ public abstract class TSDBHelper {
             sb.replaceTrailingComma("\nFROM ").writeln(aggView);
             sb.write("WINDOW _w AS(partition by ");
             for (QColumn col : schema.getPKColumns()) {
-                if (col != ts_key) sb.write(col.getStoredName()).write(", ");
+                if (col != ts_key) sb.write(col.getPhysicalName()).write(", ");
             }
             sb.replaceTrailingComma(" ORDER BY time_h);");
             sb.writeln();
@@ -299,16 +288,16 @@ public abstract class TSDBHelper {
         sb.writeF("CREATE OR REPLACE VIEW {0} AS\nSELECT\n", tableName + SUFFIX_DAILY_VIEW).incTab();
         sb.writeln("time_bucket('1 day', time_h) AS time_d,");
         for (QColumn col : schema.getPKColumns()) {
-            if (col != ts_key) sb.write(col.getStoredName()).writeln(",");
+            if (col != ts_key) sb.write(col.getPhysicalName()).writeln(",");
         }
         for (QColumn col : schema.getWritableColumns()) {
             switch (getAggregationType(col)) {
                 case Sum: {
-                    sb.writeF("sum({0}) as {0},\n", col.getStoredName());
+                    sb.writeF("sum({0}) as {0},\n", col.getPhysicalName());
                     break;
                 }
                 case Mean: {
-                    sb.writeF("avg({0}) as {0},\n", col.getStoredName());
+                    sb.writeF("avg({0}) as {0},\n", col.getPhysicalName());
                     break;
                 }
             }
@@ -316,7 +305,7 @@ public abstract class TSDBHelper {
         sb.decTab().replaceTrailingComma("\n");
         sb.writeF("FROM {0}\nGROUP BY ", tableName + SUFFIX_HOURLY_VIEW);
         for (QColumn col : schema.getPKColumns()) {
-            if (col != ts_key) sb.write(col.getStoredName()).write(", ");
+            if (col != ts_key) sb.write(col.getPhysicalName()).write(", ");
         }
         sb.writeln("time_d;");
         return sb.toString();

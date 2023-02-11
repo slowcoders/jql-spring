@@ -41,7 +41,7 @@ public class JsUtil {
     public static String dumpJSONSchema(StringBuilder sb, JdbcColumn col) {
         String jsonType = getColumnType(col);
         if (jsonType == null) {
-            throw new RuntimeException("JsonType not registered: " + col.getStoredType() + " " + col.getStoredName());
+            throw new RuntimeException("JsonType not registered: " + col.getValueType() + " " + col.getPhysicalName());
         }
         sb.append("  jql.").append(jsonType).append("(\"")
                 .append(col.getJsonKey()).append("\"");
@@ -91,7 +91,7 @@ public class JsUtil {
             return columnType;
         }
 
-        Class javaType = column.getStoredType();
+        Class javaType = column.getValueType();
         String type = ClassUtils.getBoxedType(javaType).getName();
         String colType = mdkTypes.get(type);
         if (colType == null) {
@@ -108,7 +108,7 @@ public class JsUtil {
             columnType = columnType + '!';
         }
         sb.append(columnType).append(filler.substring(columnType.length()));
-        sb.append(col.getJsonKey()).append('(').append(col.getStoredName()).append(')');
+        sb.append(col.getJsonKey()).append('(').append(col.getPhysicalName()).append(')');
         if (col.isPrimaryKey()) {
             sb.append(" PK");
         }
@@ -137,7 +137,7 @@ public class JsUtil {
             sb.append("\n// reference properties //\n");
 
             for (QColumn col : schema.getReadableColumns()) {
-                if (col.isReference()) {
+                if (JsType.of(col.getValueType()).isPrimitive()) {
                     dumpColumnInfo(col, sb);
                 }
             }

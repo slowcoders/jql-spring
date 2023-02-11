@@ -116,7 +116,7 @@ public class JDBCRepositoryBase<ENTITY, ID> extends JqlRepository<ENTITY, ID> {
         ConversionService cvtService = storage.getConversionService();
         List<QColumn> pkColumns = schema.getPKColumns();
         if (pkColumns.size() == 1) {
-            return (ID)cvtService.convert(v, pkColumns.get(0).getStoredType());
+            return (ID)cvtService.convert(v, pkColumns.get(0).getValueType());
         }
         String pks[] = ((String)v).split("|");
         if (pks.length != pkColumns.size()) {
@@ -124,7 +124,7 @@ public class JDBCRepositoryBase<ENTITY, ID> extends JqlRepository<ENTITY, ID> {
         }
         Object ids[] = new Object[pks.length];
         for (int i = 0; i < pks.length; i++) {
-            ids[i] = cvtService.convert(pks[i], pkColumns.get(i).getStoredType());
+            ids[i] = cvtService.convert(pks[i], pkColumns.get(i).getValueType());
         }
         return (ID)ids;
     }

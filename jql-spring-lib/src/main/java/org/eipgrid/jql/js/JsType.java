@@ -9,6 +9,7 @@ import javax.persistence.Enumerated;
 import javax.persistence.MappedSuperclass;
 import java.lang.reflect.Field;
 import java.time.Instant;
+import java.time.OffsetDateTime;
 import java.time.ZonedDateTime;
 import java.util.Map;
 
@@ -22,6 +23,10 @@ public enum JsType {
     Timestamp,
     Object,
     Array;
+
+    public boolean isPrimitive() {
+        return this.ordinal() < Object.ordinal();
+    }
 
     public static JsType of(Field f) {
         Class javaType = f.getType();
@@ -52,6 +57,12 @@ public enum JsType {
             return JsType.Array;
         }
         if (javaType == java.sql.Timestamp.class) {
+            return JsType.Timestamp;
+        }
+        if (javaType == java.util.Date.class) {
+            return JsType.Timestamp;
+        }
+        if (javaType == OffsetDateTime.class) {
             return JsType.Timestamp;
         }
         if (javaType == Instant.class || javaType == ZonedDateTime.class) {

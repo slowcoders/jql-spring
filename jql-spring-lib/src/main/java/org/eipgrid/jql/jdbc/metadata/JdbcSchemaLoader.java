@@ -211,9 +211,6 @@ public class JdbcSchemaLoader extends SchemaLoader {
         for (List<QColumn> fkColumns : baseSchema.getForeignKeyConstraints().values()) {
             joinMap.add(baseSchema, fkColumns, null);
         }
-        if (baseSchema.getSimpleTableName().equals("cbsw_multisw")) {
-            System.out.print("");
-        }
         for (QJoin fkJoin : mappedJoins.values()) {
             List<QColumn> fkColumns = fkJoin.getForeignKeyColumns();
             joinMap.add(baseSchema, fkColumns, null);
@@ -330,7 +327,7 @@ public class JdbcSchemaLoader extends SchemaLoader {
 
     private JdbcColumn getColumn(ArrayList<QColumn> columns, String columnName) {
         for (QColumn column : columns) {
-            if (columnName.equals(column.getStoredName())) {
+            if (columnName.equals(column.getPhysicalName())) {
                 return (JdbcColumn)column;
             }
         }
@@ -343,7 +340,7 @@ public class JdbcSchemaLoader extends SchemaLoader {
         while (rs.next()) {
             JoinData join = new JoinData(rs, this);
             JdbcColumn fk = getColumn(columns, join.fkColumnName);
-            fk.bindPrimaryKey(new ColumnBinder(this, join.pkTableQName, join.pkColumnName, join.fk_name));
+            fk.bindPrimaryKey(new ColumnBinder(this, join.pkTableQName, join.pkColumnName));
             fkSchema.addForeignKeyConstraint(join.fk_name, fk);
         }
     }

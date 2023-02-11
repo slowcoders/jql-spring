@@ -60,7 +60,7 @@ public class BatchUpsert<ID> implements BatchPreparedStatementSetterWithKeyHolde
         }
 
         if (v.getClass().isEnum()) {
-            if (Number.class.isAssignableFrom(col.getStoredType())) {
+            if (Number.class.isAssignableFrom(col.getValueType())) {
                 return ((Enum) v).ordinal();
             } else {
                 return v.toString();

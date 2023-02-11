@@ -11,7 +11,6 @@ import java.lang.reflect.Field;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Map;
 
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.NONE)
 public class JdbcColumn extends QColumn {
@@ -41,10 +40,7 @@ public class JdbcColumn extends QColumn {
         this.isAutoIncrement = md.isAutoIncrement(col);
         this.isReadOnly = md.isReadOnly(col) | this.isAutoIncrement;
         this.isNullable = md.isNullable(col) != ResultSetMetaData.columnNoNulls;
-        if (primaryKeys.isEmpty() && isAutoIncrement) {
-            System.out.print("");
-        }
-        this.isPk = primaryKeys.contains(this.getStoredName()) || (isAutoIncrement && primaryKeys.isEmpty());
+        this.isPk = primaryKeys.contains(this.getPhysicalName()) || (isAutoIncrement && primaryKeys.isEmpty());
 
         this.fkBinder = fkBinder;
         this.field = null;
@@ -115,7 +111,7 @@ public class JdbcColumn extends QColumn {
             String token = QJoin.resolveJsonKey(col);
             sb.append(token).append('.');
         }
-        String name = getSchema().getSchemaLoader().getNameConverter().toLogicalAttributeName(col.getStoredName());
+        String name = getSchema().getSchemaLoader().getNameConverter().toLogicalAttributeName(col.getPhysicalName());
         if (this != col) {
             sb.append(name);
             name = sb.toString();
@@ -123,23 +119,6 @@ public class JdbcColumn extends QColumn {
         return name;
     }
 
-//    public static String resolveJsonKey(QColumn fk) {
-//        if (fk.getMappedOrmField() != null) {
-//            return fk.getJsonKey();
-//        }
-//
-//        String fk_name = fk.getPhysicalName();
-////        QColumn joinedPk = fk.getJoinedPrimaryColumn();
-////        String pk_name = joinedPk.getPhysicalName();
-////        String js_key;
-////        if (fk_name.endsWith("_" + pk_name)) {
-////            js_key = CaseConverter.toCamelCase(fk_name.substring(0, fk_name.length() - pk_name.length() - 1), false);
-////        } else {
-////            js_key = joinedPk.getSchema().getSimpleTableName();
-////        }
-//        String js_key = CaseConverter.toCamelCase(fk_name, false);
-//        return js_key;
-//    }
 
     protected void bindPrimaryKey(ColumnBinder pkBinder) {
         this.fkBinder = pkBinder;
