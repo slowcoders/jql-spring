@@ -10,8 +10,7 @@ import javax.persistence.EntityManager;
 import java.io.IOException;
 import java.util.*;
 
-@NoRepositoryBean
-public abstract class JPARepositoryBase<ENTITY, ID> extends JDBCRepositoryBase<ENTITY, ID> { // extends JPAQueryBuilder<ENTITY, ID> implements JqlRepository<ID> {
+public class JPARepositoryBase<ENTITY, ID> extends JDBCRepositoryBase<ENTITY, ID> { 
 
     private final static HashMap<Class<?>, JPARepositoryBase<?,?>>jqlServices = new HashMap<>();
     private final HashMap<ID, Object> associatedCache = new HashMap<>();
@@ -34,7 +33,7 @@ public abstract class JPARepositoryBase<ENTITY, ID> extends JDBCRepositoryBase<E
     }
 
 
-    public ID insert(ENTITY entity) {
+    public ENTITY insert(ENTITY entity) {
         if (hasGeneratedId()) {
             ID id = getEntityId(entity);
             if (id != null) {
@@ -42,7 +41,7 @@ public abstract class JPARepositoryBase<ENTITY, ID> extends JDBCRepositoryBase<E
             }
         }
         ENTITY newEntity = insertOrUpdate(entity);
-        return getEntityId(entity);
+        return newEntity;
     }
 
     public ID getEntityId(ENTITY entity) {
@@ -149,11 +148,6 @@ public abstract class JPARepositoryBase<ENTITY, ID> extends JDBCRepositoryBase<E
     public void putAssociatedCache(ENTITY entity, Object value) {
         associatedCache.put(getEntityId(entity), value);
     }
-
-//    @Override
-//    public ID convertId(Object _id) {
-//        return conversionService.convert(_id, this.idType);
-//    }
 
 
     public static class Util {

@@ -2,6 +2,7 @@ package org.eipgrid.jql.jdbc.metadata;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import org.eipgrid.jql.JqlRepository;
+import org.eipgrid.jql.jpa.JPAUtils;
 import org.eipgrid.jql.schema.*;
 import org.eipgrid.jql.util.CaseConverter;
 import org.eipgrid.jql.util.ClassUtils;
@@ -30,13 +31,14 @@ public class JdbcSchema extends QSchema {
 
         if (!JqlRepository.RawEntityType.isAssignableFrom(ormType)) {
             HashMap<String, Field> jpaColumns = new HashMap<>();
-            for (Field f: ClassUtils.getInstanceFields(ormType, true)) {
-                jpaColumns.put(resolvePhysicalName(f), f);
+            for (Field f: JPAUtils.getColumnFields(ormType)) {
+                String name = resolvePhysicalName(f);
+                jpaColumns.put(name.toLowerCase(), f);
             }
 
             for (int i = columns.size(); --i >= 0; ) {
                 QColumn col = columns.get(i);
-                Field f = jpaColumns.get(col.getPhysicalName());
+                Field f = jpaColumns.get(col.getPhysicalName().toLowerCase());
                 if (f == null) {
                     columns.remove(i);
                     if (unresolvedJpaColumns == null) unresolvedJpaColumns = new ArrayList<>();
@@ -117,13 +119,13 @@ public class JdbcSchema extends QSchema {
     }
 
     private void dumpColumnDefinition(QColumn col, SourceWriter sb) {
+        if (col.getJoinedPrimaryColumn() != null) return;
+
         if (col.getLabel() != null) {
             sb.write("/** ");
             sb.write(col.getLabel());
             sb.writeln(" */");
         }
-        if (col.getJoinedPrimaryColumn() != null) return;
-
         boolean isJsonObject = col.isJsonNode();
         if (true || !isJsonObject) {
             sb.write("@Getter");
@@ -183,6 +185,18 @@ public class JdbcSchema extends QSchema {
         QSchema mappedSchema = join.getTargetSchema();
         boolean isUniqueJoin = join.hasUniqueTarget();
         boolean isArrayJoin = isInverseJoin && !isUniqueJoin;
+
+        if (!isInverseJoin && join.getForeignKeyColumns().size() == 1) {
+            QColumn col = firstFk;
+            if (join.getAssociativeJoin() != null && join.getAssociativeJoin().getForeignKeyColumns().size() == 1) {
+                col = join.getAssociativeJoin().getForeignKeyColumns().get(0);
+            }
+            if (col.getLabel() != null) {
+                sb.write("/** ");
+                sb.write(col.getLabel());
+                sb.writeln(" */");
+            }
+        }
 
         sb.write("@Getter @Setter\n");
 

@@ -69,7 +69,7 @@ public class JdbcSchemaLoader extends SchemaLoader {
     }
 
 
-    public String getDefaultDBSchema() { return this.defaultNamespace; }
+    public String getDefaultNamespace() { return this.defaultNamespace; }
 
     public TablePath resolveTableName(Class<?> entityType) {
         Table table = entityType.getAnnotation(Table.class);
@@ -154,7 +154,6 @@ public class JdbcSchemaLoader extends SchemaLoader {
         String qname = tablePath.getQualifiedName();
         JdbcSchema schema = new JdbcSchema(JdbcSchemaLoader.this, qname, ormType);
 
-        int dot_p = qname.indexOf('.');
         ArrayList<String> primaryKeys = getPrimaryKeys(conn, tablePath);
         HashMap<String, ArrayList<String>> uniqueConstraints = getUniqueConstraints(conn, tablePath);
         if (primaryKeys.size() == 0) {
@@ -320,9 +319,10 @@ public class JdbcSchemaLoader extends SchemaLoader {
         return indexMap;
     }
 
-    private JdbcColumn getColumn(ArrayList<QColumn> columns, String columnName) {
+    private JdbcColumn getColumnByPhysicalName(ArrayList<QColumn> columns, String columnName) {
+        columnName = columnName.toLowerCase();
         for (QColumn column : columns) {
-            if (columnName.equals(column.getPhysicalName())) {
+            if (columnName.equals(column.getPhysicalName().toLowerCase())) {
                 return (JdbcColumn)column;
             }
         }
@@ -334,7 +334,7 @@ public class JdbcSchemaLoader extends SchemaLoader {
         ResultSet rs = md.getImportedKeys(tablePath.getCatalog(), tablePath.getSchema(), tablePath.getSimpleName());
         while (rs.next()) {
             JoinData join = new JoinData(rs, this);
-            JdbcColumn fk = getColumn(columns, join.fkColumnName);
+            JdbcColumn fk = getColumnByPhysicalName(columns, join.fkColumnName);
             fk.bindPrimaryKey(new ColumnBinder(this, join.pkTableQName, join.pkColumnName));
             fkSchema.addForeignKeyConstraint(join.fk_name, fk);
         }
@@ -357,7 +357,7 @@ public class JdbcSchemaLoader extends SchemaLoader {
         return joins;
     }
 
-    private ArrayList<QColumn> getColumns(Connection conn, TablePath tablePath, QSchema schema, ArrayList<String> primaryKeys) throws SQLException {
+    private ArrayList<QColumn> getColumns(Connection conn, TablePath tablePath, JdbcSchema schema, ArrayList<String> primaryKeys) throws SQLException {
         //HashMap<String, JqlIndex> indexes = getUniqueConstraints(conn, dbSchema, tableName);
         Map<String, String> comments = getColumnComments(conn, tablePath);
         ArrayList<QColumn> columns = new ArrayList<>();
@@ -448,7 +448,7 @@ public class JdbcSchemaLoader extends SchemaLoader {
         simple_name = CaseConverter.camelCaseConverter.toPhysicalColumnName(simple_name).toLowerCase();
 
         if (namespace == null || namespace.length() == 0) {
-            namespace = getDefaultDBSchema();
+            namespace = getDefaultNamespace();
         }
         namespace = CaseConverter.camelCaseConverter.toPhysicalColumnName(namespace).toLowerCase();
         String qname = namespace + "." + simple_name;
