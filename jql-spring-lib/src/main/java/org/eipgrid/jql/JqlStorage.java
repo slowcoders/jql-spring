@@ -19,7 +19,6 @@ import java.util.HashMap;
 
 @Service
 public abstract class JqlStorage implements CaseConverter {
-    private final JdbcTemplate jdbc;
     private final EntityManager entityManager;
     private final TransactionTemplate transactionTemplate;
     private final ObjectMapper objectMapper;
@@ -29,13 +28,10 @@ public abstract class JqlStorage implements CaseConverter {
     private HashMap<String, JqlRepository> repositories = new HashMap<>();
     private HashMap<String, JPARepositoryBase> jpaRepositories = new HashMap<>();
 
-    public JqlStorage(DataSource dataSource,
-                      TransactionTemplate transactionTemplate,
+    public JqlStorage(TransactionTemplate transactionTemplate,
                       ConversionService conversionService,
                       EntityManager entityManager) throws Exception {
-        this.jdbc = new JdbcTemplate(dataSource);
         this.objectMapper = new ObjectMapper();
-        // objectMapper.registerModule(jqlModule);
         this.transactionTemplate = transactionTemplate;
         this.conversionService = conversionService;
         this.entityManager = entityManager;
@@ -47,10 +43,6 @@ public abstract class JqlStorage implements CaseConverter {
     public abstract QueryGenerator createQueryGenerator(boolean isNativeQuery);
 
     public final QueryGenerator createQueryGenerator() { return createQueryGenerator(true); }
-
-    public JdbcTemplate getJdbcTemplate() {
-        return jdbc;
-    }
 
     public EntityManager getEntityManager() { return entityManager; }
 
@@ -83,10 +75,6 @@ public abstract class JqlStorage implements CaseConverter {
     @Override
     public String toLogicalAttributeName(String columnName) {
         throw new RuntimeException("not implemented");
-    }
-
-    public DataSource getDataSource() {
-        return this.jdbc.getDataSource();
     }
 
     public TransactionTemplate getTransactionTemplate() {
