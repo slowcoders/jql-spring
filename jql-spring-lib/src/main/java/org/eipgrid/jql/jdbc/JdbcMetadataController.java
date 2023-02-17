@@ -1,8 +1,7 @@
 package org.eipgrid.jql.jdbc;
 
 import io.swagger.v3.oas.annotations.Operation;
-import org.eipgrid.jql.JqlStorage;
-import org.eipgrid.jql.jdbc.metadata.JdbcSchema;
+import org.eipgrid.jql.jdbc.storage.JdbcSchema;
 import org.eipgrid.jql.js.JsUtil;
 import org.eipgrid.jql.schema.QColumn;
 import org.eipgrid.jql.schema.QJoin;
@@ -26,7 +25,7 @@ public abstract class JdbcMetadataController {
 
 
     private QSchema getSchema(String namespace, String tableName) throws Exception {
-        String tablePath = storage.makeTablePath(namespace, tableName);
+        String tablePath = namespace + '.' + tableName;
         return storage.loadSchema(tablePath);
     }
 
@@ -37,7 +36,7 @@ public abstract class JdbcMetadataController {
                                 @PathVariable("table") String tableName) throws Exception {
         QSchema schema = getSchema(namespace, tableName);
         ArrayList<String> columns = new ArrayList<>();
-        for (QColumn column : schema.getPrimitiveColumns()) {
+        for (QColumn column : schema.getLeafColumns()) {
             columns.add(column.getJsonKey());
         }
         ArrayList<String> refs = new ArrayList<>();

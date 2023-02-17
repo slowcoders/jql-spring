@@ -1,14 +1,12 @@
 package org.eipgrid.jql.schema;
 
-import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import org.eipgrid.jql.JqlRepository;
+import org.eipgrid.jql.JqlStorage;
 
 import java.lang.reflect.Field;
 import java.util.*;
 
-@JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
 public abstract class QSchema {
-    private final SchemaLoader schemaLoader;
     private final String tableName;
     private final Class<?> entityType;
 
@@ -16,33 +14,35 @@ public abstract class QSchema {
 
     private List<QColumn> pkColumns;
     private List<QColumn> allColumns;
-    private List<QColumn> primitiveColumns;
+    private List<QColumn> leafColumns;
     private List<QColumn> objectColumns;
     private List<QColumn> writableColumns;
     private Map<String, QColumn> columnMap = new HashMap<>();
-    private HashMap<String, QJoin> entityJoinMap;
 
-    public QSchema(SchemaLoader schemaLoader, String tableName, Class<?> entityType) {
+    public QSchema(String tableName, Class<?> entityType) {
         this.tableName = tableName;
-        this.schemaLoader = schemaLoader;
         this.entityType = entityType;
         this.isJPASchema = !JqlRepository.RawEntityType.isAssignableFrom(entityType);
     }
 
-    public final SchemaLoader getSchemaLoader() {
-        return schemaLoader;
-    }
+    public abstract JqlStorage getStorage();
 
     public final boolean isJPARequired() { return this.isJPASchema; }
 
     public final Class<?> getEntityType() { return entityType; }
 
-    public String getTableName() {
+    public Class<?> getIDType() { return Object.class; }
+
+    public final String getTableName() {
         return this.tableName;
     }
 
-    public String getSimpleTableName() {
+    public final String getSimpleName() {
         return this.tableName.substring(this.tableName.indexOf('.') + 1);
+    }
+
+    public final String generateEntityClassName() {
+        return getStorage().toEntityClassName(this.getSimpleName(), true);
     }
 
 
@@ -50,8 +50,8 @@ public abstract class QSchema {
         return this.allColumns;
     }
 
-    public List<QColumn> getPrimitiveColumns() {
-        return this.primitiveColumns;
+    public List<QColumn> getLeafColumns() {
+        return this.leafColumns;
     }
 
     public List<QColumn> getObjectColumns() {
@@ -123,7 +123,7 @@ public abstract class QSchema {
         allColumns.addAll(0, pkColumns);
         this.allColumns = Collections.unmodifiableList(allColumns);
         this.writableColumns = Collections.unmodifiableList(writableColumns);
-        this.primitiveColumns = Collections.unmodifiableList(primitiveColumns);
+        this.leafColumns = Collections.unmodifiableList(primitiveColumns);
         this.objectColumns = objectColumns.size() == 0 ? Collections.EMPTY_LIST : Collections.unmodifiableList(objectColumns);
         this.initJsonKeys(ormType);
         if (pkColumns.size() == 0) {
@@ -164,11 +164,8 @@ public abstract class QSchema {
     }
 
 
-    public HashMap<String, QJoin> getEntityJoinMap() {
-        if (this.entityJoinMap == null) {
-            this.entityJoinMap = schemaLoader.loadJoinMap(this);
-        }
-        return this.entityJoinMap;
+    public Map<String, QJoin> getEntityJoinMap() {
+        return Collections.EMPTY_MAP;
     }
     //==========================================================================
     // Attribute Name Conversion
@@ -226,4 +223,5 @@ public abstract class QSchema {
 
 
     public abstract <ID, ENTITY> ID getEnityId(ENTITY entity);
+
 }

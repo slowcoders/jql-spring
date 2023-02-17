@@ -4,6 +4,7 @@
 * jdk version 11 or later
 * docker-compose
 * node.js version 14 or later
+* npm version 8 or later
 
 ### Build tutorial sample application
 ```
@@ -16,7 +17,7 @@ http://localhost:7007
 
 ## Run test (jest)
 ```
-cd sample-app+tutorial/tutorial
+cd tutorial+test
 npm install
 npm run test
 ```

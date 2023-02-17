@@ -1,7 +1,6 @@
 package org.eipgrid.jql.schema;
 
-import org.eipgrid.jql.jpa.JPAUtils;
-import org.eipgrid.jql.util.CaseConverter;
+import org.eipgrid.jql.jpa.JpaUtils;
 import org.eipgrid.jql.util.ClassUtils;
 
 import javax.persistence.Entity;
@@ -108,7 +107,7 @@ public class QJoin {
         }
         QColumn first_fk = fkColumns.get(0);
         if (!inverseMapped && fkColumns.size() == 1) {
-            return resolveJsonKey(first_fk);
+            return resolveForeignKeyPropertyName(first_fk);
         }
 
         String name;
@@ -116,7 +115,7 @@ public class QJoin {
             Class<?> jpaType = baseSchema.getEntityType();
             Class<?> jpaClass = getTargetSchema().getEntityType();
             if (jpaType.getAnnotation(Entity.class) != null) {
-                for (Field f : JPAUtils.getCacheableFields(jpaType)) {
+                for (Field f : JpaUtils.getCacheableFields(jpaType)) {
                     Class<?> itemT = ClassUtils.getElementType(f);
                     if (jpaClass == itemT) {
                         // TODO MappedBy 검사 필요(?)
@@ -125,32 +124,39 @@ public class QJoin {
                 }
             }
             // column 이 없으므로 타입을 이용하여 이름을 정한다.
-            name = first_fk.getSchema().getSimpleTableName();
+            name = first_fk.getSchema().getSimpleName();
         }
         else {
-            name = first_fk.getJoinedPrimaryColumn().getSchema().getSimpleTableName();
+            name = first_fk.getJoinedPrimaryColumn().getSchema().getSimpleName();
         }
 
-        name = CaseConverter.toCamelCase(name, false);
+        name = baseSchema.getStorage().toEntityClassName(name, false);
         return name;
     }
 
-    public static String resolveJsonKey(QColumn fk) {
+    public static String resolveForeignKeyPropertyName(QColumn fk) {
         if (fk.getMappedOrmField() != null) {
             return fk.getJsonKey();
         }
 
         QColumn joinedPk = fk.getJoinedPrimaryColumn();
-        String fk_name = fk.getPhysicalName();
-        String pk_name = joinedPk.getPhysicalName();
+        String fk_name = fk.getPhysicalName().toLowerCase();
+        String pk_name = joinedPk.getPhysicalName().toLowerCase();
         String js_key;
-        if (fk_name.endsWith("_" + pk_name)) {
-            // if (pilot_id -> character.id) { json_key = pilot }
-            js_key = fk_name.substring(0, fk_name.length() - pk_name.length() - 1);
-        } else {
-            js_key = joinedPk.getSchema().getSimpleTableName();
+        int p = fk_name.lastIndexOf('_') + 1;
+        if (p <= 0 || p == fk_name.length()) {
+            js_key = fk_name;
         }
-        js_key = CaseConverter.toCamelCase(js_key, false);
+        else {
+            String suffix = fk_name.substring(p);
+            if (pk_name.endsWith(suffix) || suffix.equals("id")) { //  && fk.getSchema().findColumn(base = fk_name.substring(0, p - 1)) == null) {
+                js_key = fk_name.substring(0, p - 1); // base;
+            } else {
+                js_key = fk_name;
+            }
+        }
+        QSchema fk_schema = fk.getSchema();
+        js_key = fk_schema.getStorage().toLogicalAttributeName(fk_schema.getSimpleName(), js_key);
         return js_key;
     }
 

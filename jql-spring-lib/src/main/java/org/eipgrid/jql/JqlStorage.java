@@ -1,84 +1,72 @@
 package org.eipgrid.jql;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.eipgrid.jql.jdbc.QueryGenerator;
 import org.eipgrid.jql.schema.QSchema;
-import org.eipgrid.jql.jpa.JPARepositoryBase;
-import org.hibernate.boot.model.naming.Identifier;
-import org.hibernate.boot.model.naming.PhysicalNamingStrategy;
 import org.eipgrid.jql.util.CaseConverter;
-import org.eipgrid.jql.util.ClassUtils;
-import org.springframework.core.convert.ConversionService;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
 
-import javax.persistence.EntityManager;
-import javax.sql.DataSource;
-import java.util.HashMap;
+import java.util.List;
 
 @Service
-public abstract class JqlStorage implements CaseConverter {
-    private final EntityManager entityManager;
+public abstract class JqlStorage {
     private final TransactionTemplate transactionTemplate;
     private final ObjectMapper objectMapper;
-    private final PhysicalNamingStrategy namingStrategy;
-    private final ConversionService conversionService;
-
-    private HashMap<String, JqlRepository> repositories = new HashMap<>();
-    private HashMap<String, JPARepositoryBase> jpaRepositories = new HashMap<>();
-
     public JqlStorage(TransactionTemplate transactionTemplate,
-                      ConversionService conversionService,
-                      EntityManager entityManager) throws Exception {
-        this.objectMapper = new ObjectMapper();
+                      ObjectMapper objectMapper) {
+        this.objectMapper = objectMapper;
         this.transactionTemplate = transactionTemplate;
-        this.conversionService = conversionService;
-        this.entityManager = entityManager;
-        String cname = (String) entityManager.getEntityManagerFactory().getProperties().get("hibernate.physical_naming_strategy");
-        this.namingStrategy = ClassUtils.newInstanceOrNull(cname);
-        System.out.println(cname);
     }
 
-    public abstract QueryGenerator createQueryGenerator(boolean isNativeQuery);
+    public abstract List<String> getNamespaces();
 
-    public final QueryGenerator createQueryGenerator() { return createQueryGenerator(true); }
+    public abstract List<String> getTableNames(String namespace);
 
-    public EntityManager getEntityManager() { return entityManager; }
-
-    public ConversionService getConversionService() {
-        return this.conversionService;
+    public TransactionTemplate getTransactionTemplate() {
+        return this.transactionTemplate;
     }
 
     public ObjectMapper getObjectMapper() {
         return objectMapper;
     }
 
+
     public abstract JqlRepository getRepository(String tableName);
 
-    public abstract <T, ID> JPARepositoryBase<T, ID> getRepository(Class<T> entityType);
+    public abstract <T, ID> JqlRepository<T, ID> getRepository(Class<T> entityType);
 
     public abstract QSchema loadSchema(String tableName);
 
     public abstract QSchema loadSchema(Class entityType);
 
-    public String makeTablePath(String schema, String name) {
-        name = schema + "." + name;
-        return name;
-    }
-
     public String toPhysicalColumnName(String fieldName) {
-        Identifier physicalName = this.namingStrategy.toPhysicalColumnName(Identifier.toIdentifier(fieldName, false), null);
-        return physicalName.getCanonicalName();
+        return CaseConverter.toSnakeCase(fieldName);
     }
 
-    @Override
-    public String toLogicalAttributeName(String columnName) {
-        throw new RuntimeException("not implemented");
+    public String toLogicalAttributeName(String tableName, String columnName) {
+        tableName = tableName.toLowerCase();
+        columnName = columnName.toLowerCase();
+        int name_start = 0;
+        int p = tableName.length();
+        if (columnName.length() > p + 1 && columnName.charAt(p) == '_' && columnName.startsWith(tableName)) {
+            name_start = p + 1;
+        }
+        else if ((p = tableName.indexOf('_') + 1) > 1 && columnName.startsWith(tableName.substring(0, p))) {
+            name_start = p;
+        }
+        if (name_start > 0) {
+            if (name_start >= columnName.length()) {
+                System.out.println("");
+            }
+            columnName = columnName.substring(name_start);
+            if (!Character.isAlphabetic(columnName.charAt(0))) {
+                columnName = '_' + columnName;
+            }
+        }
+        return CaseConverter.toCamelCase(columnName, false);
     }
 
-    public TransactionTemplate getTransactionTemplate() {
-        return this.transactionTemplate;
+    public String toEntityClassName(String tableName, boolean capitalizeFirstLetter) {
+        return CaseConverter.toCamelCase(tableName, capitalizeFirstLetter);
     }
-
 }

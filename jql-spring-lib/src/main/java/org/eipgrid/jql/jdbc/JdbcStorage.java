@@ -1,73 +1,50 @@
 package org.eipgrid.jql.jdbc;
 
-import org.eipgrid.jql.jpa.JPARepositoryBase;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.eipgrid.jql.jdbc.storage.JdbcSchemaLoader;
+import org.eipgrid.jql.jdbc.storage.QueryGenerator;
+import org.eipgrid.jql.jpa.JpaTable;
 import org.eipgrid.jql.schema.QSchema;
-import org.eipgrid.jql.schema.SchemaLoader;
-import org.eipgrid.jql.jdbc.metadata.JdbcSchemaLoader;
-import org.eipgrid.jql.JqlRepository;
-import org.eipgrid.jql.JqlStorage;
-import org.eipgrid.jql.util.CaseConverter;
-import org.springframework.core.convert.ConversionService;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import javax.persistence.EntityManager;
 import javax.sql.DataSource;
-import java.sql.SQLException;
 import java.util.HashMap;
-import java.util.List;
 
-public class JdbcStorage extends JqlStorage {
-    JdbcSchemaLoader jdbcSchemaLoader;
-    private final JdbcTemplate jdbc;
-    private HashMap<String, JqlRepository> repositories = new HashMap<>();
-    private HashMap<Class, JPARepositoryBase> jpaRepositories = new HashMap<>();
+public class JdbcStorage extends JdbcSchemaLoader {
+    private HashMap<String, JdbcTable> repositories = new HashMap<>();
+    private HashMap<Class, JpaTable> jpaRepositories = new HashMap<>();
 
     public JdbcStorage(DataSource dataSource,
                        TransactionTemplate transactionTemplate,
-                       ConversionService conversionService,
-                       EntityManager entityManager) throws Exception {
-        super(transactionTemplate, conversionService,
-                entityManager);
-        this.jdbc = new JdbcTemplate(dataSource);
-        jdbcSchemaLoader = new JdbcSchemaLoader(entityManager, dataSource, CaseConverter.defaultConverter);
+                       ObjectMapper objectMapper,
+                       EntityManager entityManager) {
+        super(dataSource, transactionTemplate, objectMapper, entityManager);
     }
 
-    public SchemaLoader getSchemaLoader() {
-        return jdbcSchemaLoader;
-    }
-
-    public DataSource getDataSource() {
-        return this.jdbc.getDataSource();
-    }
-
-    public JdbcTemplate getJdbcTemplate() {
-        return jdbc;
-    }
-
-    private JqlRepository createRepository(QSchema schema) {
-        JqlRepository repo;
+    private JdbcTable createRepository(QSchema schema) {
+        JdbcTable repo;
         synchronized (repositories) {
             String tableName = schema.getTableName();
             if (schema.isJPARequired()) {
                 Class<?> entityType = schema.getEntityType();
-                repo = new JPARepositoryBase(this, entityType);
-                jpaRepositories.put(entityType, (JPARepositoryBase)repo);
+                repo = new JpaTable(this, entityType);
+                jpaRepositories.put(entityType, (JpaTable)repo);
             } else {
-                repo = new JDBCRepositoryBase(this, schema);
+                repo = new JdbcTable(this, schema);
             }
             repositories.put(tableName, repo);
         }
         return repo;
     }
 
-    public JqlRepository getRepository(String tableName) {
-        JqlRepository repo = repositories.get(tableName);
+    public JdbcTable getRepository(String tableName) {
+        JdbcTable repo = repositories.get(tableName);
         if (repo == null) {
             synchronized (repositories) {
                 repo = repositories.get(tableName);
                 if (repo == null) {
-                    QSchema schema = jdbcSchemaLoader.loadSchema(tableName);
+                    QSchema schema = super.loadSchema(tableName);
                     repo = createRepository(schema);
                 }
             }
@@ -75,37 +52,25 @@ public class JdbcStorage extends JqlStorage {
         return repo;
     }
 
-    public <T,ID> JPARepositoryBase<T,ID> getRepository(Class<T> entityType) {
-        JPARepositoryBase repo = jpaRepositories.get(entityType);
+    public <T,ID> JpaTable<T,ID> getRepository(Class<T> entityType) {
+        JpaTable repo = jpaRepositories.get(entityType);
         if (repo == null) {
             synchronized (repositories) {
                 repo = jpaRepositories.get(entityType);
                 if (repo == null) {
-                    QSchema schema = jdbcSchemaLoader.loadSchema(entityType);
-                    repo = (JPARepositoryBase)createRepository(schema);
+                    QSchema schema = super.loadSchema(entityType);
+                    repo = (JpaTable)createRepository(schema);
                 }
             }
         }
         return repo;
     }
 
-    public QSchema loadSchema(String tablePath) {
-        return jdbcSchemaLoader.loadSchema(tablePath);
-    }
 
-    public QSchema loadSchema(Class entityType) {
-        return jdbcSchemaLoader.loadSchema(entityType);
-    }
+    public final QueryGenerator createQueryGenerator() { return createQueryGenerator(true); }
 
-    public List<String> getTableNames(String dbSchema) throws SQLException {
-        return jdbcSchemaLoader.getTableNames(dbSchema);
-    }
-
-    public List<String> getNamespaces() {
-        return jdbcSchemaLoader.getNamespaces();
-    }
 
     public QueryGenerator createQueryGenerator(boolean isNativeQuery) {
-        return jdbcSchemaLoader.createSqlGenerator(isNativeQuery);
+        return super.createSqlGenerator(isNativeQuery);
     }
 }
