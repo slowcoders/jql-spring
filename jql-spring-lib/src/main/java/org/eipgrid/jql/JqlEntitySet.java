@@ -1,39 +1,36 @@
 package org.eipgrid.jql;
 
-import org.eipgrid.jql.parser.JqlFilter;
+import org.springframework.data.domain.Sort;
 
 import java.io.IOException;
 import java.util.*;
 
 public interface JqlEntitySet<ENTITY, ID> {
 
-    JqlFilter createFilter(Map<String, Object> filter);
+    JqlQuery createQuery(Map<String, Object> filter, JqlSelect select);
 
-    ID getEntityId(ENTITY entity);
+    List<ENTITY> find(JqlQuery query);
 
-    List<ENTITY> find(JqlQuery query, OutputFormat outputType);
-
-    List<ENTITY> find(Collection<ID> idList);
-    default ENTITY find(ID id, JqlSelect select) {
-        List<ENTITY> res = find(Collections.singletonList(id));
-        return res.size() > 0 ? res.get(0) : null;
-    }
-    default ENTITY find(ID id) {
-        return find(id, null);
-    }
-
-    long count(JqlFilter filter);
+    long count(JqlQuery query);
 
 
-    List<ID> insert(Collection<Map<String, Object>> entities) throws IOException;
+    ENTITY find(ID id, JqlSelect select);
+
+    List<ENTITY> find(Iterable<ID> idList, JqlSelect select);
+
+    List<ENTITY> findAll(JqlSelect select, Sort sort);
+
+
+    List<ID> insert(Collection<? extends Map<String, Object>> entities) throws IOException;
+    
     ENTITY insert(Map<String, Object> properties) throws IOException;
 
-    void update(Collection<ID> idList, Map<String, Object> properties) throws IOException;
+    void update(Iterable<ID> idList, Map<String, Object> properties) throws IOException;
     default void update(ID id, Map<String, Object> updateSet) throws IOException {
         update(Collections.singletonList(id), updateSet);
     }
 
-    void delete(Collection<ID> idList);
+    void delete(Iterable<ID> idList);
     default void delete(ID id) {
         delete(Collections.singletonList(id));
     }

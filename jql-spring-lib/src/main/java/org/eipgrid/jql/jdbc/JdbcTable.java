@@ -12,6 +12,7 @@ import org.eipgrid.jql.schema.QSchema;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.ResultSetExtractor;
 
+import javax.persistence.Query;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
@@ -28,6 +29,8 @@ public class JdbcTable<ENTITY, ID> extends JqlRepository<ENTITY, ID> {
 
     protected JdbcTable(JdbcStorage storage, QSchema schema) {
         super(schema, storage.getObjectMapper());
+        storage.registerTable(this);
+
         this.storage = storage;
         this.jdbc = storage.getJdbcTemplate();
     }
@@ -45,10 +48,18 @@ public class JdbcTable<ENTITY, ID> extends JqlRepository<ENTITY, ID> {
         boolean enableJPA = query.getFilter().isJPQLEnabled() && entityType == this.getEntityType();
         boolean isRepeat = (query.getExecutedQuery() != null && (Boolean)enableJPA == query.getExtraInfo());
 
-        String sql = isRepeat ? query.getExecutedQuery() : storage.createQueryGenerator(!enableJPA).createSelectQuery(query);
+        String sql = isRepeat ? query.getExecutedQuery() :
+                storage.createQueryGenerator(!enableJPA).createSelectQuery(query);
         List res;
         if (enableJPA) {
-            res = storage.getEntityManager().createQuery(sql).getResultList();
+            Query jpaQuery = storage.getEntityManager().createQuery(sql);
+            if (query.getLimit() > 1) {
+                jpaQuery = jpaQuery.setMaxResults(query.getLimit());
+            }
+            if (query.getOffset() > 0) {
+                jpaQuery = jpaQuery.setFirstResult(query.getOffset());
+            }
+            res = jpaQuery.getResultList();
         }
         else {
             res = jdbc.query(sql, getColumnMapRowMapper(query.getFilter()));
@@ -64,14 +75,10 @@ public class JdbcTable<ENTITY, ID> extends JqlRepository<ENTITY, ID> {
         return res;
     }
 
-    @Override
-    public List<ENTITY> find(JqlQuery query, OutputFormat outputType) {
-        return find(query);
-    }
-
 
     @Override
-    public long count(JqlFilter filter) {
+    public long count(JqlQuery query) {
+        JqlFilter filter = query == null ? null : query.getFilter();
         if (filter == null) {
             filter = new JqlFilter(this.schema);
         }
@@ -82,8 +89,8 @@ public class JdbcTable<ENTITY, ID> extends JqlRepository<ENTITY, ID> {
 
     // Insert Or Update Entity
     @Override
-    public List<ID> insert(Collection<Map<String, Object>> entities) {
-        if (entities.isEmpty()) return null;
+    public List<ID> insert(Collection<? extends Map<String, Object>> entities) {
+        if (entities.isEmpty()) return Collections.emptyList();
 
         BatchUpsert batch = new BatchUpsert(this.getSchema(), entities, true);
         jdbc.batchUpdate(batch.getSql(), batch);
@@ -96,7 +103,7 @@ public class JdbcTable<ENTITY, ID> extends JqlRepository<ENTITY, ID> {
     }
 
     @Override
-    public void update(Collection<ID> idList, Map<String, Object> updateSet) throws IOException {
+    public void update(Iterable<ID> idList, Map<String, Object> updateSet) throws IOException {
         JqlFilter filter = JqlFilter.of(schema, idList);
         String sql = storage.createQueryGenerator().createUpdateQuery(filter, updateSet);
         jdbc.update(sql);
@@ -110,7 +117,7 @@ public class JdbcTable<ENTITY, ID> extends JqlRepository<ENTITY, ID> {
     }
 
     @Override
-    public void delete(Collection<ID> idList) {
+    public void delete(Iterable<ID> idList) {
         JqlFilter filter = JqlFilter.of(schema, idList);
         String sql = storage.createQueryGenerator().createDeleteQuery(filter);
         jdbc.update(sql);

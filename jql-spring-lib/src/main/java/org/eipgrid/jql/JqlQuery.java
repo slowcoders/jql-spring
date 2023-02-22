@@ -18,7 +18,7 @@ import java.util.*;
 @Getter
 public class JqlQuery {
 
-    private final JqlEntitySet repository;
+    protected static int SingleEntityOffset = -100010001;
     private final JqlSelect select;
     private final JqlFilter filter;
 
@@ -30,8 +30,7 @@ public class JqlQuery {
     /*package*/ String executedQuery;
     /*package*/ Object extraInfo;
 
-    protected JqlQuery(JqlEntitySet repository, JqlSelect select, JqlFilter filter) {
-        this.repository = repository;
+    protected JqlQuery(JqlSelect select, JqlFilter filter) {
         if (select == null) {
             select = JqlSelect.Auto;
         }
@@ -39,37 +38,59 @@ public class JqlQuery {
         this.filter = filter;
     }
 
-    private JqlQuery(JqlEntitySet repository, JqlSelect select, Map<String, Object> filter) {
-        this(repository, select, repository.createFilter(filter));
+
+    protected JqlQuery(JqlSelect select, Sort sort, int offset, int limit, JqlFilter filter) {
+        this(select, filter);
+        this.sort = sort;
+        this.offset = offset;
+        this.limit = limit;
     }
 
-    public static JqlQuery of(JqlEntitySet repository, JqlSelect select, Sort sort, int offset, int limit, Map<String, Object> filter) {
-        JqlQuery query = new JqlQuery(repository, select, filter);
-        query.sort = sort;
-        query.offset = offset;
-        query.limit = limit;
-        return query;
+    public static <ID> Response find(JqlRepository repository, ID id, String select$) {
+        JqlSelect select = JqlSelect.of(select$);
+        Object entity = repository.find(id, JqlSelect.of(select$));
+        return new Response(entity, select.resultMapping);
     }
 
-    public static JqlQuery of(JqlEntitySet repository, JqlSelect select, Map<String, Object> filter) {
-        return new JqlQuery(repository, select, filter);
-    }
-    
     public boolean needPagination() {
         return offset >= 0 && limit > 0;
     }
 
+    protected List<?> executeQuery(OutputFormat outputType) {
+        throw new RuntimeException("not implemented");
+    }
+
+    public long count() {
+        throw new RuntimeException("not implemented");
+    }
+
+
     public Response execute() {
-        List<?> result = repository.find(this, OutputFormat.Object);
-        Response resp = new Response(result, filter);
+        return execute(OutputFormat.Object);
+    }
+
+    public Response execute(OutputFormat outputType) {
+        List<?> result = executeQuery(OutputFormat.Object);
+        Object content = null;
+        if (limit != 1 || offset != SingleEntityOffset) {
+            content = result;
+        }
+        else {
+            content = getTop(result);
+        }
+        Response resp = new Response(content, filter);
         if (needPagination()) {
             resp.setProperty("totalElements", this.count());
         }
         return resp;
     }
 
-    public long count() {
-        return repository.count(filter);
+    private Object getTop(List<?> result) {
+        return result.size() > 0 ? result.get(0) : null;
+    }
+
+    public <T> T getSingleResult() {
+        return (T) getTop(this.executeQuery(OutputFormat.Object));
     }
 
     @Data
@@ -82,16 +103,20 @@ public class JqlQuery {
         @Schema(implementation = Object.class)
         private HashMap filter;
 
-        public JqlQuery buildQuery(JqlEntitySet table) {
+        public Response execute(JqlEntitySet table) {
             JqlSelect _select = JqlSelect.of(select);
             Sort _sort = parseSort(sort);
             int _limit = limit == null ? 0 : limit;
             int _page = page == null ? -1 : page;
 
-            JqlQuery query = JqlQuery.of(table, _select, _sort, _page * _limit, _limit, filter);
-            return query;
+            JqlQuery query = table.createQuery(filter, _select);
+            query.sort = _sort;
+            query.limit = _limit;
+            query.offset = _page * _limit;
+            return query.execute();
         }
     }
+
 
     @Getter
     public static class Response {
@@ -103,9 +128,14 @@ public class JqlQuery {
         @JsonIgnore
         private QResultMapping resultMapping;
 
+
         private Response(Object content, QResultMapping resultMapping) {
             this.content = content;
             this.resultMapping = resultMapping;
+        }
+
+        public static Response of(Object content, JqlSelect select) {
+            return new Response(content, select.resultMapping);
         }
 
         public void setProperty(String key, Object value) {

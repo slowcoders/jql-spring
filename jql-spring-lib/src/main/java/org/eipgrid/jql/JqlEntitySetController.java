@@ -10,6 +10,7 @@ import org.springframework.web.client.HttpServerErrorException;
 import javax.transaction.Transactional;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public interface JqlEntitySetController<ID> {
@@ -31,14 +32,14 @@ public interface JqlEntitySetController<ID> {
         @Operation(summary = "지정 엔터티 읽기")
         @Transactional
         @ResponseBody
-        public Object get(@PathVariable("id") ID id,
+        public JqlQuery.Response get(@PathVariable("id") ID id,
                           @RequestParam(value = "select", required = false) String select$) {
             JqlSelect select = JqlSelect.of(select$);
-            Object entity = getEntitySet().find(id, select);
-            if (entity == null) {
+            Object res = getEntitySet().find(id, select);
+            if (res == null) {
                 throw new HttpServerErrorException("Entity(" + id + ") is not found", HttpStatus.NOT_FOUND, null, null, null, null);
             }
-            return entity;
+            return JqlQuery.Response.of(res, select);
         }
 
         @PostMapping(path = "/find", consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
@@ -56,7 +57,7 @@ public interface JqlEntitySetController<ID> {
         @ResponseBody
         public JqlQuery.Response find(@Schema(example = "{ \"select\": \"\", \"sort\": \"\", \"page\": 0, \"limit\": 0, \"filter\": { } }")
                                       @RequestBody JqlQuery.Request request) {
-            return request.buildQuery(getEntitySet()).execute();
+            return request.execute(getEntitySet());
         }
 
         @PostMapping(path = "/count")
@@ -65,7 +66,7 @@ public interface JqlEntitySetController<ID> {
         @ResponseBody
         public long count(@Schema(implementation = Object.class)
                           @RequestBody() HashMap<String, Object> jsFilter) {
-            long count = getEntitySet().count(getEntitySet().createFilter(jsFilter));
+            long count = getEntitySet().createQuery(jsFilter, null).count();
             return count;
         }
     }
@@ -76,9 +77,11 @@ public interface JqlEntitySetController<ID> {
         @Operation(summary = "전체 목록")
         @Transactional
         @ResponseBody
-        default JqlQuery.Response list(@RequestParam(value = "select", required = false) String select$) throws Exception {
+        default JqlQuery.Response list(@RequestParam(value = "select", required = false) String select$,
+                                       @RequestParam(value = "sort", required = false) String sort$) throws Exception {
             JqlSelect select = JqlSelect.of(select$);
-            return JqlQuery.of(getEntitySet(), select, null).execute();
+            List<?> res = getEntitySet().findAll(select, JqlQuery.parseSort(sort$));
+            return JqlQuery.Response.of(res, select);
         }
     }
 
@@ -103,12 +106,15 @@ public interface JqlEntitySetController<ID> {
         @Operation(summary = "엔터티 내용 변경")
         @Transactional
         @ResponseBody
-        default <ENTITY> Collection<ENTITY> update(
+        default JqlQuery.Response update(
                 @Schema(type = "string", required = true) @PathVariable("idList") Collection<ID> idList,
-                @RequestBody Map<String, Object> properties) throws Exception {
+                @RequestBody Map<String, Object> properties,
+                @RequestParam(value = "select", required = false) String select$) throws Exception {
+            JqlSelect select = JqlSelect.of(select$);
             JqlEntitySet<?, ID> table = getEntitySet();
             table.update(idList, properties);
-            return (Collection<ENTITY>) table.find(idList);
+            List<?> res = table.find(idList, select);
+            return JqlQuery.Response.of(res, select);
         }
     }
 

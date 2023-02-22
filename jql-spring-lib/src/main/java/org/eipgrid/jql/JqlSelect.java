@@ -1,18 +1,19 @@
 package org.eipgrid.jql;
 
+import org.eipgrid.jql.schema.QResultMapping;
+
 import java.util.ArrayList;
 import java.util.List;
 
 public class JqlSelect {
 
-    private final ArrayList<String> propertyNames = new ArrayList<>();
-
     public static char All = '*';
-
     public static char PrimaryKeys = '0';
 
     public static JqlSelect Auto = new JqlSelect();
 
+    private final ArrayList<String> propertyNames = new ArrayList<>();
+    /*package*/ QResultMapping resultMapping;
 
     private JqlSelect() {}
 
@@ -76,4 +77,5 @@ public class JqlSelect {
     public List<String> getPropertyNames() {
         return propertyNames;
     }
+
 }

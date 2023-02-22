@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.eipgrid.jql.parser.JqlFilter;
 import org.eipgrid.jql.parser.JqlParser;
 import org.eipgrid.jql.schema.QSchema;
+import org.springframework.data.domain.Sort;
 
 import java.io.IOException;
 import java.util.*;
@@ -33,10 +34,10 @@ public abstract class JqlRepository<ENTITY, ID> implements JqlEntitySet<ENTITY, 
 
     public abstract ID convertId(Object id);
 
-    public JqlFilter createFilter(Map<String, Object> filter) {
-        return jqlParser.parse(this.schema, filter);
+    public JqlQuery createQuery(Map<String, Object> filter, JqlSelect select) {
+        JqlFilter jqlFilter = jqlParser.parse(schema, (Map)filter);
+        return new JdbcQuery(this, select, jqlFilter);
     }
-
 
     public final boolean hasGeneratedId() {
         return schema.hasGeneratedId();
@@ -48,7 +49,13 @@ public abstract class JqlRepository<ENTITY, ID> implements JqlEntitySet<ENTITY, 
     }
 
 
-    public List<ENTITY> findAll() { return find(JqlQuery.of(this, null, null), getEntityType()); }
+    public List<ENTITY> findAll(JqlSelect select, Sort sort) {
+        return find(new JdbcQuery(this, select, sort, 0, 0, new JqlFilter(schema)), getEntityType());
+    }
+
+    public List<ENTITY> find(JqlQuery query, OutputFormat outputType) {
+        return find(query);
+    }
 
 
     public abstract <T> List<T> find(JqlQuery query, Class<T> entityType);
@@ -58,7 +65,7 @@ public abstract class JqlRepository<ENTITY, ID> implements JqlEntitySet<ENTITY, 
 
 
     public <T> T find(ID id, JqlSelect select, Class<T> entityType) {
-        List<T> res = find(new JqlQuery(this, select, JqlFilter.of(schema, id)), entityType);
+        List<T> res = find(new JdbcQuery(this, select, JqlFilter.of(schema, id)), entityType);
         return res.size() == 0 ? null : res.get(0);
     }
 
@@ -88,29 +95,29 @@ public abstract class JqlRepository<ENTITY, ID> implements JqlEntitySet<ENTITY, 
 
 
 
-    public final <T> List<T> find(Collection<ID> idList, JqlSelect select, Class<T> entityType) {
-        List<T> res = find(new JqlQuery(this, select, JqlFilter.of(schema, idList)), entityType);
+    public final <T> List<T> find(Iterable<ID> idList, JqlSelect select, Class<T> entityType) {
+        List<T> res = find(new JdbcQuery(this, select, JqlFilter.of(schema, idList)), entityType);
         return res;
     }
 
-    public List<ENTITY> find(Collection<ID> idList, JqlSelect select) { return find(idList, select, getEntityType()); }
+    public List<ENTITY> find(Iterable<ID> idList, JqlSelect select) { return find(idList, select, getEntityType()); }
 
-    public List<ENTITY> find(Collection<ID> idList) { return find(idList, null); }
+    public List<ENTITY> find(Iterable<ID> idList) { return find(idList, null); }
 
     public List<Map<String, Object>> find_raw(Collection<ID> idList, JqlSelect select) { return (List)find(idList, select, RawEntityType); }
 
     public List<Map<String, Object>> find_raw(Collection<ID> idList) { return (List)find(idList, null); }
 
 
-    public abstract long count(JqlFilter filter);
+    public abstract long count(JqlQuery query);
 
 
 
-    public abstract List<ID> insert(Collection<Map<String, Object>> entities);
+    public abstract List<ID> insert(Collection<? extends Map<String, Object>> entities);
 
-    public abstract void update(Collection<ID> idList, Map<String, Object> updateSet) throws IOException;
+    public abstract void update(Iterable<ID> idList, Map<String, Object> updateSet) throws IOException;
 
-    public abstract void delete(Collection<ID> idList);
+    public abstract void delete(Iterable<ID> idList);
 
     @Override
     public boolean equals(Object o) {
@@ -124,5 +131,33 @@ public abstract class JqlRepository<ENTITY, ID> implements JqlEntitySet<ENTITY, 
     public int hashCode() {
         return schema.hashCode();
     }
+
+    protected static class JdbcQuery extends JqlQuery {
+
+        protected static int SingleEntityOffset = JqlQuery.SingleEntityOffset;
+        private final JqlRepository repository;
+
+        public JdbcQuery(JqlRepository repository, JqlSelect select, JqlFilter jqlFilter) {
+            super(select, jqlFilter);
+            this.repository = repository;
+            select.resultMapping = jqlFilter;
+        }
+
+        public JdbcQuery(JqlRepository repository, JqlSelect select, Sort sort, int offset, int limit, JqlFilter jqlFilter) {
+            super(select, sort, offset, limit, jqlFilter);
+            this.repository = repository;
+        }
+
+        @Override
+        protected List<?> executeQuery(OutputFormat outputType) {
+            return repository.find(this, outputType);
+        }
+
+        @Override
+        public long count() {
+            return repository.count(this);
+        }
+    }
+
 
 }
