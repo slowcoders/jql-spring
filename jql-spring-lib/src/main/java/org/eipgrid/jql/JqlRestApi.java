@@ -3,10 +3,9 @@ package org.eipgrid.jql;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
-import lombok.Setter;
-import org.eipgrid.jql.schema.QResultMapping;
 import org.springframework.data.domain.Sort;
 
+import javax.persistence.Entity;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -27,19 +26,34 @@ public interface JqlRestApi {
         private Object content;
 
         @JsonIgnore
-        private QResultMapping resultMapping;
+        private Map<String, Object> resultMapping;
 
         @Getter
         @JsonIgnore
         private JqlQuery query;
 
-        private Response(Object content, QResultMapping resultMapping) {
+        private Response(Object content, Map<String, Object> resultMapping) {
             this.content = content;
             this.resultMapping = resultMapping;
         }
 
         public static Response of(Object content, JqlSelect select) {
-            return new Response(content, select.resultMapping);
+            if (isJpaType(content)) {
+                return new JpaFilter(content, select.getResultMappings());
+            } else {
+                return new Response(content, select.getResultMappings());
+            }
+        }
+
+        private static boolean isJpaType(Object content) {
+            if (content == null) return false;
+            Class clazz = content.getClass();
+            if (List.class.isAssignableFrom(clazz)) {
+                List list = (List)content;
+                if (list.size() == 0) return false;
+                clazz = list.get(0).getClass();
+            }
+            return clazz.getAnnotation(Entity.class) != null;
         }
 
         public void setProperty(String key, Object value) {
@@ -47,6 +61,12 @@ public interface JqlRestApi {
                 this.metadata = new HashMap<>();
             }
             this.metadata.put(key, value);
+        }
+
+        private static class JpaFilter extends Response {
+            public JpaFilter(Object content, Map<String, Object> resultMappings) {
+                super(content, resultMappings);
+            }
         }
     }
 

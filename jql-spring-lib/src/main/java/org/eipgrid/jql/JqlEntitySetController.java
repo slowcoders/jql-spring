@@ -32,7 +32,7 @@ public interface JqlEntitySetController<ID> extends JqlRestApi {
         @Operation(summary = "지정 엔터티 읽기")
         @Transactional
         @ResponseBody
-        public Response get(@PathVariable("id") ID id,
+        public Response get(@PathVariable("id") @Schema(implementation = String.class) ID id,
                             @RequestParam(value = "select", required = false) String select$) {
             JqlSelect select = JqlSelect.of(select$);
             Object res = getEntitySet().find(id, select);

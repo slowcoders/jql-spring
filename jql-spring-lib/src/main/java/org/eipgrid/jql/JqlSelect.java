@@ -2,43 +2,62 @@ package org.eipgrid.jql;
 
 import org.eipgrid.jql.schema.QResultMapping;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 public class JqlSelect {
 
     public static char All = '*';
     public static char PrimaryKeys = '0';
 
-    public static JqlSelect Auto = new JqlSelect();
+    public static JqlSelect Auto = new JqlSelect((String) null);
 
     private final ArrayList<String> propertyNames = new ArrayList<>();
     /*package*/ QResultMapping resultMapping;
 
-    private JqlSelect() {}
+    private final HashMap<String, Object> selectionMap = new HashMap<>();
 
+    private JqlSelect(String selectSpec) {
+        parsePropertySelection(selectSpec);
+    }
+
+    private JqlSelect(String[] selectSpec) {
+        for (String s : selectSpec) {
+            parsePropertySelection(s);
+        }
+    }
+
+    private static String trimToNull(String s) {
+        if (s != null) {
+            s = s.trim();
+            if (s.length() == 0) return null;
+        }
+        return s;
+    }
     public static JqlSelect of(String selectSpec) {
-        JqlSelect select = new JqlSelect();
-        select.parsePropertySelection(selectSpec);
+        selectSpec = trimToNull(selectSpec);
+        if (selectSpec == null) return Auto;
+
+        JqlSelect select = new JqlSelect(selectSpec);
         return select;
     }
 
     public static JqlSelect of(String[] selectSpec) {
-        JqlSelect select = new JqlSelect();
-        for (String s : selectSpec) {
-            select.parsePropertySelection(s);
-        }
+        if (selectSpec == null || selectSpec.length == 0) return Auto;
+
+        JqlSelect select = new JqlSelect(selectSpec);
         return select;
     }
 
     private void parsePropertySelection(String selector) {
+        selector = trimToNull(selector);
         if (selector == null) return;
-        int idx = parsePropertySelection("", 0, selector);
+
+        int idx = parsePropertySelection(selectionMap, "", 0, selector);
         if (idx < selector.length()) {
             throw new IllegalArgumentException("Syntax error at " + idx + ": [" + selector  + "]");
         }
     }
-    private int parsePropertySelection(String base, int start, String select) {
+    private int parsePropertySelection(HashMap<String, Object> map, String base, int start, String select) {
         String key;
         int idx;
         scan_key: for (idx = start; idx < select.length(); idx ++) {
@@ -47,10 +66,11 @@ public class JqlSelect {
                 case '(':
                     key = select.substring(start, idx).trim();
                     if (key.charAt(key.length()-1) != '.') {
-                        // key.equals("@to_array")
                         return idx;
                     }
-                    idx = parsePropertySelection(base + key, idx + 1, select);
+                    HashMap<String, Object> subMap = new HashMap<>();
+                    map.put(key, subMap);
+                    idx = parsePropertySelection(subMap, base + key, idx + 1, select);
                     start = idx + 1;
                     break;
 
@@ -59,6 +79,7 @@ public class JqlSelect {
 
                 case ',':
                     key = select.substring(start, idx).trim();
+                    map.put(key, Collections.EMPTY_MAP);
                     propertyNames.add(base + key);
                     start = idx + 1;
                     break;
@@ -67,12 +88,17 @@ public class JqlSelect {
         if (start < idx) {
             key = select.substring(start, idx).trim();
             if (key.length() > 0) {
+                map.put(key, Collections.EMPTY_MAP);
                 propertyNames.add(base + key);
             }
         }
         return idx;
     }
 
+
+    public Map<String, Object> getResultMappings() {
+        return selectionMap;
+    }
 
     public List<String> getPropertyNames() {
         return propertyNames;

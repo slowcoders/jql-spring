@@ -54,7 +54,7 @@ public interface JqlStorageController extends JqlRestApi {
         @Transactional
         @ResponseBody
         public Response get(@PathVariable("table") String table,
-                            @PathVariable("id") Object id,
+                            @PathVariable("id") @Schema(implementation = String.class) Object id,
                             @RequestParam(value = "select", required = false) String select$) {
             JqlRepository repository = getRepository(table);
             JqlSelect select = JqlSelect.of(select$);
