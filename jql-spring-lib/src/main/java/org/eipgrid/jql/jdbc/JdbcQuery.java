@@ -72,4 +72,18 @@ public class JdbcQuery extends JqlQuery {
     public Object getExtraInfo() {
         return extraInfo;
     }
+
+    public String appendPaginationQuery(String sql) {
+        String s = "";
+        if (getOffset() > 0) {
+            s += "\nOFFSET " + getOffset();
+        }
+        if (getLimit() > 0) {
+            s += "\nLIMIT " + getLimit();
+        }
+        if (s.length() > 0) {
+            sql += s;
+        }
+        return sql;
+    }
 }

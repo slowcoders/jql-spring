@@ -68,6 +68,9 @@ public class JdbcTable<ENTITY, ID> extends JqlRepository<ENTITY, ID> {
 
         String sql = isRepeat ? query.getExecutedQuery() :
                 storage.createQueryGenerator(!enableJPA).createSelectQuery(query);
+        query.executedQuery = sql;
+        query.extraInfo = enableJPA;
+
         List res;
         if (enableJPA) {
             Query jpaQuery = storage.getEntityManager().createQuery(sql);
@@ -80,6 +83,8 @@ public class JdbcTable<ENTITY, ID> extends JqlRepository<ENTITY, ID> {
             res = jpaQuery.getResultList();
         }
         else {
+            sql = query.appendPaginationQuery(sql);
+
             res = jdbc.query(sql, getColumnMapRowMapper(query.getFilter()));
             if (!RawEntityType.isAssignableFrom(entityType)) {
                 ObjectMapper converter = storage.getObjectMapper();
@@ -89,8 +94,6 @@ public class JdbcTable<ENTITY, ID> extends JqlRepository<ENTITY, ID> {
                 }
             }
         }
-        query.executedQuery = sql;
-        query.extraInfo = enableJPA;
         return res;
     }
 

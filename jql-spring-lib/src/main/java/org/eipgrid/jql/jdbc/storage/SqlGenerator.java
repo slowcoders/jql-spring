@@ -225,9 +225,9 @@ public class SqlGenerator extends SqlConverter implements QueryGenerator {
         writeFrom(where, tableName, false);
         writeWhere(where);
         writeOrderBy(where, query.getSort(), false);//where.hasArrayDescendantNode());
-        if (!need_complex_pagination && isNativeQuery) {
-            writePagination(query);
-        }
+//        if (!need_complex_pagination && isNativeQuery) {
+//            writePagination(query);
+//        }
         String sql = sw.reset();
         return sql;
     }

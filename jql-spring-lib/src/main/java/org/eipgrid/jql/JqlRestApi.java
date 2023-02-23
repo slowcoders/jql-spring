@@ -61,6 +61,7 @@ public interface JqlRestApi {
             if (page != null) {
                 query.setOffset(page * limit);
             }
+            needPagination = limit > 0 && query.getOffset() > 0;
         }
         List<Object> result = query.getResultList();
         Response resp = Response.of(result, query.getSelection());
