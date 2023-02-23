@@ -4,11 +4,9 @@ import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.ser.BeanPropertyWriter;
-import org.eipgrid.jql.JqlQuery;
+import org.eipgrid.jql.JqlRestApi;
 import org.eipgrid.jql.schema.QColumn;
 import org.eipgrid.jql.schema.QResultMapping;
-
-import java.util.Stack;
 
 public class JqlPropertyWriter extends BeanPropertyWriter {
 //    private static final String JQL_STACK_KEY = "jql-entity-stack";
@@ -60,8 +58,8 @@ public class JqlPropertyWriter extends BeanPropertyWriter {
 
         QResultMapping mapping = (QResultMapping) prov.getAttribute(JQL_RESULT_MAPPING_KEY);
         if (mapping == null) {
-            if (bean instanceof JqlQuery.Response) {
-                prov.setAttribute(JQL_RESULT_MAPPING_KEY, ((JqlQuery.Response)bean).getResultMapping());
+            if (bean instanceof JqlRestApi.Response) {
+                prov.setAttribute(JQL_RESULT_MAPPING_KEY, ((JqlRestApi.Response)bean).getResultMapping());
             }
             mapping = (QResultMapping) prov.getAttribute(JQL_RESULT_MAPPING_KEY);
             prov.setAttribute(JQL_RESULT_MAPPING_KEY, mapping);

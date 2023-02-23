@@ -25,11 +25,13 @@ public class CustomCharacterController extends JqlEntitySetController.CRUD<Integ
 
 
     @Override
-    public JqlQuery.Response find(@Schema(example = "{ \"select\": \"\", \"sort\": \"\", \"page\": 0, \"limit\": 0, \"filter\": { } }")
-                                  @RequestBody JqlQuery.Request request) {
-        JqlQuery query = request.buildQuery(getEntitySet());
-        JqlQuery.Response resp = query.execute();
-        resp.setProperty("lastExecutedSql", query.getExecutedQuery());
+    public Response find(@RequestParam(value = "select", required = false) String select,
+                         @RequestParam(value = "sort", required = false) @Schema(implementation = String.class) String[] orders,
+                         @RequestParam(value = "page", required = false) Integer page,
+                         @RequestParam(value = "limit", required = false) Integer limit,
+                         @RequestBody(required = false) Map<String, Object> filter) {
+        Response resp = super.find(select, orders, page, limit, filter);
+        resp.setProperty("lastExecutedSql", resp.getQuery().getExecutedQuery());
         return resp;
     }
 
@@ -66,12 +68,6 @@ public class CustomCharacterController extends JqlEntitySetController.CRUD<Integ
             properties.put("metadata", createNote());
         }
         return super.add(properties);
-    }
-
-    public <T> Collection<T> update(
-            @Schema(type = "string", required = true) @PathVariable("idList") Collection<Integer> idList,
-            @RequestBody HashMap<String, Object> updateSet) throws Exception {
-        return super.update(idList, updateSet);
     }
 
     private KVEntity createNote() {

@@ -39,14 +39,32 @@ public class JdbcTable<ENTITY, ID> extends JqlRepository<ENTITY, ID> {
         return storage;
     }
 
+    public JqlQuery createQuery(Map<String, Object> filter) {
+        JqlFilter jqlFilter = jqlParser.parse(schema, (Map)filter);
+        return new JdbcQuery(this, null, jqlFilter);
+    }
+
+    public final <T> List<T> find(Iterable<ID> idList, JqlSelect select, Class<T> entityType) {
+        List<T> res = find(new JdbcQuery(this, select, JqlFilter.of(schema, idList)), entityType);
+        return res;
+    }
+
+
+    public <T> T find(ID id, JqlSelect select, Class<T> entityType) {
+        List<T> res = find(new JdbcQuery(this, select, JqlFilter.of(schema, id)), entityType);
+        return res.size() == 0 ? null : res.get(0);
+    }
+
+
     //    @Override
     protected ResultSetExtractor<List<Map>> getColumnMapRowMapper(JqlFilter filter) {
         return new JsonRowMapper(filter.getResultMappings(), storage.getObjectMapper());
     }
 
-    public <T> List<T> find(JqlQuery query, Class<T> entityType) {
+    public <T> List<T> find(JqlQuery query0, Class<T> entityType) {
+        JdbcQuery query = (JdbcQuery) query0;
         boolean enableJPA = query.getFilter().isJPQLEnabled() && entityType == this.getEntityType();
-        boolean isRepeat = (query.getExecutedQuery() != null && (Boolean)enableJPA == query.getExtraInfo());
+        boolean isRepeat = (query.getExecutedQuery() != null && (Boolean) enableJPA == query.getExtraInfo());
 
         String sql = isRepeat ? query.getExecutedQuery() :
                 storage.createQueryGenerator(!enableJPA).createSelectQuery(query);
@@ -71,13 +89,13 @@ public class JdbcTable<ENTITY, ID> extends JqlRepository<ENTITY, ID> {
                 }
             }
         }
-        super.setGenerateQuery(query, sql, enableJPA);
+        query.executedQuery = sql;
+        query.extraInfo = enableJPA;
         return res;
     }
 
 
-    @Override
-    public long count(JqlQuery query) {
+    public long count(JdbcQuery query) {
         JqlFilter filter = query == null ? null : query.getFilter();
         if (filter == null) {
             filter = new JqlFilter(this.schema);
