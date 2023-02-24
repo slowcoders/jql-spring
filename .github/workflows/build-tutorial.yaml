@@ -1,21 +1,36 @@
-# name: JQL CI with Gradle
+ name: JQL CI with Gradle
 
-# on:
-#   push:
-#     branches: [ "ci-jest" ]
+ on:
+   push:
+     branches: [ "main" ]
 
-# jobs:
-#   build:
-#     runs-on: ubuntu-latest
-#     steps:
-#       - uses: actions/checkout@v3
-#       - name: Set up JDK 11
-#         uses: actions/setup-java@v3
-#         with:
-#           java-version: '11'
-#           distribution: 'temurin'
-#       - name: Build Spring Application
-#         working-directory: sample-app+tutorial
-#         run: ./gradlew build
-#       - name: Run Jest
-#         working-directory:
+ jobs:
+   build:
+     runs-on: ubuntu-latest
+     steps:
+       - name: Checkout git
+         uses: actions/checkout@v3
+
+       - name: Set up JDK
+         uses: actions/setup-java@v3
+         with:
+           java-version: 17
+           distribution: temurin
+
+       - name: Set up node
+         uses: actions/setup-node@v3
+         with:
+           node-version: 18
+
+       - name: Build and run application
+         working-directory: sample-app
+         run: | 
+          sh ../db/start_postgres.sh
+          ./gradlew build
+          nohup java -jar build/libs/sample-app.jar &
+          sleep 1
+       - name: Run jest integration tests
+         working-directory: tutorial+test
+         run: |
+          npm install
+          npm run test
