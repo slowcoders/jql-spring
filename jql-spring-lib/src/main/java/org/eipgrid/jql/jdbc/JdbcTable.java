@@ -39,7 +39,7 @@ public class JdbcTable<ENTITY, ID> extends JqlRepository<ENTITY, ID> {
         return storage;
     }
 
-    public JqlQuery createQuery(Map<String, Object> filter) {
+    public JqlQuery<ENTITY> createQuery(Map<String, Object> filter) {
         JqlFilter jqlFilter = jqlParser.parse(schema, (Map)filter);
         return new JdbcQuery(this, null, jqlFilter);
     }

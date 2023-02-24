@@ -10,7 +10,7 @@ import org.springframework.data.domain.Sort;
 import java.util.ArrayList;
 import java.util.List;
 
-public abstract class JqlQuery {
+public abstract class JqlQuery<ENTITY> {
     @Getter
     @JsonIgnore
     @Schema(implementation = String.class)
@@ -21,41 +21,55 @@ public abstract class JqlQuery {
     @Schema(implementation = String.class)
     private Sort sort;
 
-    @Getter @Setter
+    @Getter
     private int offset;
 
-    @Getter @Setter
+    @Getter
     private int limit;
 
-    protected void setSelection(JqlSelect select) {
-        this.selection = select;
+    protected void select(JqlSelect selection) {
+        this.selection = selection;
     }
 
     @JsonProperty()
-    public final void setSelection(String jqlSelectStatement) {
-        setSelection(JqlSelect.of(jqlSelectStatement));
+    public final JqlQuery<ENTITY> select(String jqlSelectStatement) {
+        select(JqlSelect.of(jqlSelectStatement));
+        return this;
     }
 
-    public final void setSelection(String[] selectedPropertyNames) {
-        setSelection(JqlSelect.of(selectedPropertyNames));
+    public final JqlQuery<ENTITY> select(String[] selectedPropertyNames) {
+        select(JqlSelect.of(selectedPropertyNames));
+        return this;
     }
 
-    public void setSort(Sort sort) {
+    public JqlQuery<ENTITY> sort(Sort sort) {
         this.sort = sort;
+        return this;
     }
 
-    public final void setSort(String orders[]) {
-        setSort(JqlRestApi.buildSort(orders));
+    public final JqlQuery<ENTITY> sort(String orders[]) {
+        sort(JqlRestApi.buildSort(orders));
+        return this;
     }
 
-    public abstract <T> List<T> getResultList(OutputFormat outputType);
+    public JqlQuery<ENTITY> offset(int offset) {
+        this.offset = offset;
+        return this;
+    }
 
-    public final <T> List<T> getResultList() { return getResultList(OutputFormat.Object); }
+    public JqlQuery<ENTITY> limit(int limit) {
+        this.limit = limit;
+        return this;
+    }
+
+    public abstract List<ENTITY> getResultList(OutputFormat outputType);
+
+    public final List<ENTITY> getResultList() { return getResultList(OutputFormat.Object); }
 
     public abstract long count();
 
-    public final <T> T getSingleResult() {
-        List<T> res = getResultList();
+    public final ENTITY getSingleResult() {
+        List<ENTITY> res = getResultList();
         return res.size() > 0 ? res.get(0) : null;
     }
 

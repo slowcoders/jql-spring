@@ -7,7 +7,7 @@ import java.util.*;
 
 public interface JqlEntitySet<ENTITY, ID> {
 
-    JqlQuery createQuery(Map<String, Object> filter);
+    JqlQuery<ENTITY> createQuery(Map<String, Object> filter);
 
     ENTITY find(ID id, JqlSelect select);
 

@@ -1,7 +1,6 @@
 package org.eipgrid.jql.jdbc;
 
 import org.eipgrid.jql.JqlQuery;
-import org.eipgrid.jql.JqlRepository;
 import org.eipgrid.jql.JqlSelect;
 import org.eipgrid.jql.OutputFormat;
 import org.eipgrid.jql.parser.JqlFilter;
@@ -9,7 +8,7 @@ import org.springframework.data.domain.Sort;
 
 import java.util.List;
 
-public class JdbcQuery extends JqlQuery {
+public class JdbcQuery<ENTITY> extends JqlQuery<ENTITY> {
 
     //protected static int SingleEntityOffset = JqlQuery.SingleEntityOffset;
     private final JdbcTable table;
@@ -21,29 +20,30 @@ public class JdbcQuery extends JqlQuery {
     public JdbcQuery(JdbcTable table, JqlSelect select, JqlFilter jqlFilter) {
         this.table = table;
         this.filter = jqlFilter;
-        super.setSelection(select);
+        super.select(select);
     }
 
     @Override
     public JqlSelect getSelection() {
         JqlSelect select = super.getSelection();
-        if (select == null) {
+        if (select == null || select == JqlSelect.Auto) {
             select = JqlSelect.of("");
-            super.setSelection(select);
+            super.select(select);
         }
         return select;
     }
 
     @Override
-    protected void setSelection(JqlSelect select) {
-        super.setSelection(select);
+    protected void select(JqlSelect select) {
+        super.select(select);
         invalidateCache(false);
     }
 
     @Override
-    public void setSort(Sort sort) {
-        super.setSort(sort);
+    public JdbcQuery<ENTITY> sort(Sort sort) {
+        super.sort(sort);
         invalidateCache(false);
+        return this;
     }
 
     private void invalidateCache(boolean all) {
@@ -52,7 +52,7 @@ public class JdbcQuery extends JqlQuery {
     }
 
     @Override
-    public List<?> getResultList(OutputFormat outputType) {
+    public List<ENTITY> getResultList(OutputFormat outputType) {
         return table.find(this, outputType);
     }
 

@@ -1,7 +1,5 @@
 package org.eipgrid.jql;
 
-import org.eipgrid.jql.schema.QResultMapping;
-
 import java.util.*;
 
 public class JqlSelect {
@@ -12,9 +10,9 @@ public class JqlSelect {
     public static JqlSelect Auto = new JqlSelect((String) null);
 
     private final ArrayList<String> propertyNames = new ArrayList<>();
-    /*package*/ QResultMapping resultMapping;
 
     private final HashMap<String, Object> selectionMap = new HashMap<>();
+    // QResultMapping resultMapping;
 
     private JqlSelect(String selectSpec) {
         parsePropertySelection(selectSpec);
@@ -66,6 +64,7 @@ public class JqlSelect {
                 case '(':
                     key = select.substring(start, idx).trim();
                     if (key.charAt(key.length()-1) != '.') {
+                        // key.equals("@to_array")
                         return idx;
                     }
                     HashMap<String, Object> subMap = new HashMap<>();

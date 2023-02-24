@@ -73,13 +73,13 @@ public interface JqlRestApi {
 
     default Response search(JqlEntitySet entitySet, String select, String[] orders, Integer page, Integer limit, Map<String, Object> filter) {
         JqlQuery query = entitySet.createQuery(filter);
-        query.setSelection(select);
-        if (orders != null) query.setSort(orders);
+        query.select(select);
+        if (orders != null) query.sort(orders);
         boolean needPagination = false;
         if (limit != null) {
-            query.setLimit(limit);
+            query.limit(limit);
             if (page != null) {
-                query.setOffset(page * limit);
+                query.offset(page * limit);
             }
             needPagination = limit > 0 && query.getOffset() > 0;
         }

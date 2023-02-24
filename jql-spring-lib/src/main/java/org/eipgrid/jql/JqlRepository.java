@@ -1,7 +1,6 @@
 package org.eipgrid.jql;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.eipgrid.jql.parser.JqlFilter;
 import org.eipgrid.jql.parser.JqlParser;
 import org.eipgrid.jql.schema.QSchema;
 import org.springframework.data.domain.Sort;
@@ -45,8 +44,8 @@ public abstract class JqlRepository<ENTITY, ID> implements JqlEntitySet<ENTITY, 
 
     public List<ENTITY> findAll(JqlSelect select, Sort sort) {
         JqlQuery query = createQuery(null);
-        query.setSelection(select);
-        query.setSort(sort);
+        query.select(select);
+        query.sort(sort);
         return find(query, getEntityType());
     }
 
