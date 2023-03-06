@@ -8,7 +8,7 @@
     <br>
 
     <h4>JQL vs GraphQL</h4>
-    JQL 은 <b>select</b> 와 <b>filter</b> 로 구성된다. <br>
+    JQL 은 <b>select</b> 문과 <b>filter</b> 문으로 구성된다. <br>
     <b>select</b> 는 GraphQL 의 query 문에 해당한다. 검색 결과를 계층적으로 구조화하기 위해 사용된다.<br>
     <b>filter</b> 는 SQL 의 where 조건절에 해당한다. Json 기반의 단순한 문법을 통해 기본적인 비교 연산과 Join 처리가 가능하도록 하였다. <br>
     JQL 은 기능상으로 GraphQL 과 유사하나, RDB 환경에 보다 최적화하고 문법을 최대한 단순화하였다.<br>

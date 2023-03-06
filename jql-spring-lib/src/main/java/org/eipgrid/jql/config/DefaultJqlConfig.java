@@ -78,11 +78,5 @@ public class DefaultJqlConfig {
         return hm;
     }
 
-//    @Bean
-//    public ObjectMapper jqlObjectMapper(@Qualifier("jqlJacksonModule") Module module) {
-//        ObjectMapper om = new ObjectMapper();
-//        om.registerModule(module);
-//        return om;
-//    }
 }
 
