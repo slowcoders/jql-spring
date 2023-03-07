@@ -1,5 +1,6 @@
 package org.eipgrid.jql.jpa;
 
+import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.eipgrid.jql.jdbc.JdbcTable;
 import org.eipgrid.jql.jdbc.JdbcStorage;
@@ -17,7 +18,7 @@ public abstract class JpaTable<ENTITY, ID> extends JdbcTable<ENTITY, ID> {
         super(storage, storage.loadSchema(entityType));
     }
 
-    public ENTITY insert(Map<String, Object> dataSet) throws IOException {
+    public ENTITY insert(Map<String, Object> dataSet) {
         ObjectMapper converter = storage.getObjectMapper();
         ENTITY entity = converter.convertValue(dataSet, getEntityType());
         ENTITY newEntity = this.insertOrUpdate(entity);
@@ -69,12 +70,16 @@ public abstract class JpaTable<ENTITY, ID> extends JdbcTable<ENTITY, ID> {
     }
 
     @Override
-    public void update(ID id, Map<String, Object> updateSet) throws IOException {
+    public void update(ID id, Map<String, Object> updateSet) {
         ENTITY entity = find(id);
         if (entity == null) {
             throw new IllegalArgumentException("Entity is not found with ID: " + id);
         }
-        getObjectMapper().updateValue(entity, updateSet);
+        try {
+            getObjectMapper().updateValue(entity, updateSet);
+        } catch (JsonMappingException e) {
+            throw new RuntimeException(e);
+        }
         update(entity);
     }
 
@@ -84,7 +89,7 @@ public abstract class JpaTable<ENTITY, ID> extends JdbcTable<ENTITY, ID> {
 
 
     @Override
-    public void update(Iterable<ID> idList, Map<String, Object> updateSet) throws IOException {
+    public void update(Iterable<ID> idList, Map<String, Object> updateSet) {
         ArrayList<ENTITY> list = new ArrayList<>();
         for (ID id: idList) {
             update(id, updateSet);

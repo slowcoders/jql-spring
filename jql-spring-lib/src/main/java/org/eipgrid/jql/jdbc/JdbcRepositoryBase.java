@@ -19,7 +19,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-public class JdbcTable<ENTITY, ID> extends JqlRepository<ENTITY, ID> {
+public abstract class JdbcTable<ENTITY, ID> extends JqlRepository<ENTITY, ID> {
 
     protected final JdbcStorage storage;
     private final JdbcTemplate jdbc;
@@ -118,13 +118,13 @@ public class JdbcTable<ENTITY, ID> extends JqlRepository<ENTITY, ID> {
         return batch.getEntityIDs();
     }
 
-    public ENTITY insert(Map<String, Object> properties) throws IOException  {
+    public ENTITY insert(Map<String, Object> properties) {
         ID id = insert(Collections.singletonList(properties)).get(0);
         return get(id);
     }
 
     @Override
-    public void update(Iterable<ID> idList, Map<String, Object> updateSet) throws IOException {
+    public void update(Iterable<ID> idList, Map<String, Object> updateSet) {
         JqlFilter filter = JqlFilter.of(schema, idList);
         String sql = storage.createQueryGenerator().createUpdateQuery(filter, updateSet);
         jdbc.update(sql);
