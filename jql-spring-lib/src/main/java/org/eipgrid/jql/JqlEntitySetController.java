@@ -16,16 +16,16 @@ import java.util.Map;
 
 public interface JqlEntitySetController<ID> extends JqlRestApi {
 
-    JqlEntitySet<?, ID> getEntitySet();
+    JqlTable<?, ID> getEntitySet();
 
     class Search<ID> implements JqlEntitySetController<ID> {
-        private final JqlEntitySet<?, ID> entities;
+        private final JqlTable<?, ID> entities;
 
-        public Search(JqlEntitySet<?, ID> entities) {
+        public Search(JqlTable<?, ID> entities) {
             this.entities = entities;
         }
 
-        public JqlEntitySet<?, ID> getEntitySet() {
+        public JqlTable<?, ID> getEntitySet() {
             return entities;
         }
 
@@ -75,7 +75,7 @@ public interface JqlEntitySetController<ID> extends JqlRestApi {
         @ResponseBody
         @Operation(summary = "엔터티 속성 정보 요약")
         public String schema() {
-            JqlEntitySet<?, ID> entitySet = getEntitySet();
+            JqlTable<?, ID> entitySet = getEntitySet();
             String schema = "<<No Schema>>";
             if (entitySet instanceof JqlRepository) {
                 JqlRepository repository = (JqlRepository) entitySet;
@@ -111,8 +111,8 @@ public interface JqlEntitySetController<ID> extends JqlRestApi {
         default <ENTITY> ENTITY add(
                 @Schema(implementation = Object.class)
                 @RequestBody Map<String, Object> properties) throws Exception {
-            JqlEntitySet<?, ID> table = getEntitySet();
-            ENTITY entity = (ENTITY)table.insert(properties);
+            JqlTable<?, ID> table = getEntitySet();
+            ENTITY entity = (ENTITY)table.insertEntity(properties);
             return entity;
         }
     }
@@ -130,7 +130,7 @@ public interface JqlEntitySetController<ID> extends JqlRestApi {
                 @Schema(implementation = Object.class)
                 @RequestBody Map<String, Object> properties) throws Exception {
             JqlSelect select = JqlSelect.of(select$);
-            JqlEntitySet<?, ID> table = getEntitySet();
+            JqlTable<?, ID> table = getEntitySet();
             table.update(idList, properties);
             List<?> res = table.find(idList, select);
             return Response.of(res, select);
@@ -160,14 +160,14 @@ public interface JqlEntitySetController<ID> extends JqlRestApi {
         @Transactional
         default <ENTITY> ENTITY add_form(@ModelAttribute FORM formData) throws Exception {
             Map<String, Object> dataSet = convertFormDataToMap(formData);
-            return (ENTITY) getEntitySet().insert(dataSet);
+            return (ENTITY) getEntitySet().insertEntity(dataSet);
         }
 
         Map<String, Object> convertFormDataToMap(FORM formData);
     }
 
     class CRUD<ID> extends Search<ID> implements Insert<ID>, Update<ID>, Delete<ID> {
-        public CRUD(JqlEntitySet<?, ID> repository) {
+        public CRUD(JqlTable<?, ID> repository) {
             super(repository);
         }
     }

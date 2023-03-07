@@ -4,7 +4,6 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Schema;
 import org.eipgrid.jql.js.JsUtil;
 import org.springframework.core.convert.ConversionService;
-import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
@@ -138,7 +137,7 @@ public interface JqlStorageController extends JqlRestApi {
                 @Schema(implementation = Object.class)
                 @RequestBody Map<String, Object> properties) throws Exception {
             JqlRepository repository = getRepository(table);
-            Object id = repository.insert(properties);
+            Object id = repository.insertEntity(properties);
             return (ENTITY)repository.find(id);
         }
     }

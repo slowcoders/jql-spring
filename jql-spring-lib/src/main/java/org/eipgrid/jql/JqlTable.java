@@ -2,10 +2,9 @@ package org.eipgrid.jql;
 
 import org.springframework.data.domain.Sort;
 
-import java.io.IOException;
 import java.util.*;
 
-public interface JqlEntitySet<ENTITY, ID> {
+public interface JqlTable<ENTITY, ID> {
 
     JqlQuery<ENTITY> createQuery(Map<String, Object> filter);
 
@@ -15,13 +14,14 @@ public interface JqlEntitySet<ENTITY, ID> {
 
     List<ENTITY> findAll(JqlSelect select, Sort sort);
 
+    ID insert(Map<String, Object> properties);
 
-    List<ID> insert(Collection<? extends Map<String, Object>> entities) throws IOException;
+    List<ID> insert(Collection<? extends Map<String, Object>> entities);
     
-    ENTITY insert(Map<String, Object> properties) throws IOException;
+    ENTITY insertEntity(Map<String, Object> properties);
 
-    void update(Iterable<ID> idList, Map<String, Object> properties) throws IOException;
-    default void update(ID id, Map<String, Object> updateSet) throws IOException {
+    void update(Iterable<ID> idList, Map<String, Object> properties);
+    default void update(ID id, Map<String, Object> updateSet) {
         update(Collections.singletonList(id), updateSet);
     }
 

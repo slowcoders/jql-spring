@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.eipgrid.jql.JqlRepository;
 import org.eipgrid.jql.jdbc.storage.JdbcSchemaLoader;
 import org.eipgrid.jql.jdbc.storage.QueryGenerator;
-import org.eipgrid.jql.jpa.JpaTable;
+import org.eipgrid.jql.jpa.JpaRepositoryBase;
 import org.eipgrid.jql.schema.QSchema;
 import org.springframework.transaction.support.TransactionTemplate;
 
@@ -14,8 +14,8 @@ import javax.sql.DataSource;
 import java.util.HashMap;
 
 public class JdbcStorage extends JdbcSchemaLoader {
-    private HashMap<String, JdbcTable> repositories = new HashMap<>();
-    private static HashMap<Class, JpaTable> jpaTables = new HashMap<>();
+    private HashMap<String, JdbcRepositoryBase> repositories = new HashMap<>();
+    private static HashMap<Class, JpaRepositoryBase> jpaTables = new HashMap<>();
 
     public JdbcStorage(DataSource dataSource,
                        TransactionTemplate transactionTemplate,
@@ -24,14 +24,14 @@ public class JdbcStorage extends JdbcSchemaLoader {
         super(dataSource, transactionTemplate, objectMapper, entityManager);
     }
 
-    protected void registerTable(JdbcTable table) {
+    protected void registerTable(JdbcRepositoryBase table) {
 
         synchronized (jpaTables) {
             QSchema schema = table.getSchema();
             JqlRepository old_table;
 
             if (schema.isJPARequired()) {
-                old_table = jpaTables.put(schema.getEntityType(), (JpaTable) table);
+                old_table = jpaTables.put(schema.getEntityType(), (JpaRepositoryBase) table);
                 if (old_table != null) {
                     throw new Error("Duplicated JpaTable on this class " + schema.getEntityType().getName());
                 }
@@ -47,21 +47,21 @@ public class JdbcStorage extends JdbcSchemaLoader {
     }
 
 
-    private JdbcTable createRepository(QSchema schema) {
-        JdbcTable repo;
+    private JdbcRepositoryBase createRepository(QSchema schema) {
+        JdbcRepositoryBase repo;
         synchronized (jpaTables) {
             if (schema.isJPARequired()) {
                 Class<?> entityType = schema.getEntityType();
                 repo = new JpaTableImpl(this, entityType);
             } else {
-                repo = new JdbcTable(this, schema);
+                repo = new JdbcRepositoryImpl(this, schema);
             }
         }
         return repo;
     }
 
-    public JdbcTable getRepository(String tableName) {
-        JdbcTable repo = repositories.get(tableName);
+    public JdbcRepositoryBase getRepository(String tableName) {
+        JdbcRepositoryBase repo = repositories.get(tableName);
         if (repo == null) {
             synchronized (jpaTables) {
                 repo = repositories.get(tableName);
@@ -74,14 +74,14 @@ public class JdbcStorage extends JdbcSchemaLoader {
         return repo;
     }
 
-    public <T,ID> JpaTable<T,ID> getRepository(Class<T> entityType) {
-        JpaTable repo = jpaTables.get(entityType);
+    public <T,ID> JpaRepositoryBase<T,ID> getRepository(Class<T> entityType) {
+        JpaRepositoryBase repo = jpaTables.get(entityType);
         if (repo == null) {
             QSchema schema = this.loadSchema(entityType);
             synchronized (jpaTables) {
                 repo = jpaTables.get(entityType);
                 if (repo == null) {
-                    repo = (JpaTable)createRepository(schema);
+                    repo = (JpaRepositoryBase)createRepository(schema);
                 }
             }
         }
@@ -95,11 +95,11 @@ public class JdbcStorage extends JdbcSchemaLoader {
         return super.createSqlGenerator(isNativeQuery);
     }
 
-    public static <T, ID> JpaTable<T, ID> findTable(Class<T> entityType) {
-        return (JpaTable<T, ID>) jpaTables.get(entityType);
+    public static <T, ID> JpaRepositoryBase<T, ID> findTable(Class<T> entityType) {
+        return (JpaRepositoryBase<T, ID>) jpaTables.get(entityType);
     }
 
-    private class JpaTableImpl<ENTITY, ID> extends JpaTable<ENTITY, ID> {
+    private class JpaTableImpl<ENTITY, ID> extends JpaRepositoryBase<ENTITY, ID> {
         private final PersistenceUnitUtil persistenceUnitUtil;
 
         public JpaTableImpl(JdbcStorage jdbcStorage, Class<ENTITY> entityType) {

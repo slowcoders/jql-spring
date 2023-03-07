@@ -11,13 +11,13 @@ import java.util.List;
 public class JdbcQuery<ENTITY> extends JqlQuery<ENTITY> {
 
     //protected static int SingleEntityOffset = JqlQuery.SingleEntityOffset;
-    private final JdbcTable table;
+    private final JdbcRepositoryBase table;
     private final JqlFilter filter;
 
     /*package*/ String executedQuery;
     /*package*/ Object extraInfo;
 
-    public JdbcQuery(JdbcTable table, JqlSelect select, JqlFilter jqlFilter) {
+    public JdbcQuery(JdbcRepositoryBase table, JqlSelect select, JqlFilter jqlFilter) {
         this.table = table;
         this.filter = jqlFilter;
         super.select(select);

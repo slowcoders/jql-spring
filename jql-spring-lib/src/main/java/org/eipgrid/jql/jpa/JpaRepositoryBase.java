@@ -2,23 +2,33 @@ package org.eipgrid.jql.jpa;
 
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.eipgrid.jql.jdbc.JdbcTable;
+import org.eipgrid.jql.*;
+import org.eipgrid.jql.jdbc.JdbcRepositoryBase;
 import org.eipgrid.jql.jdbc.JdbcStorage;
+import org.eipgrid.jql.util.KVEntity;
+import org.springframework.data.domain.Sort;
 
 import javax.persistence.Cache;
 import javax.persistence.EntityManager;
 import java.io.IOException;
 import java.util.*;
 
-public abstract class JpaTable<ENTITY, ID> extends JdbcTable<ENTITY, ID> {
+public abstract class JpaRepositoryBase<ENTITY, ID> extends JdbcRepositoryBase<ENTITY, ID> {
 
     private final HashMap<ID, Object> associatedCache = new HashMap<>();
+    private final JqlTable<KVEntity, ID> rawRepository;
 
-    protected JpaTable(JdbcStorage storage, Class<ENTITY> entityType) {
+    protected JpaRepositoryBase(JdbcStorage storage, Class<ENTITY> entityType) {
         super(storage, storage.loadSchema(entityType));
+        this.rawRepository = new RawRepository(this);
     }
 
-    public ENTITY insert(Map<String, Object> dataSet) {
+    public ID insert(Map<String, Object> dataSet) {
+        ENTITY entity = insertEntity(dataSet);
+        return getEntityId(entity);
+    }
+
+    public ENTITY insertEntity(Map<String, Object> dataSet) {
         ObjectMapper converter = storage.getObjectMapper();
         ENTITY entity = converter.convertValue(dataSet, getEntityType());
         ENTITY newEntity = this.insertOrUpdate(entity);
@@ -34,14 +44,14 @@ public abstract class JpaTable<ENTITY, ID> extends JdbcTable<ENTITY, ID> {
         List<ENTITY> result = new ArrayList<>();
 
         for (ENTITY entity : entities) {
-            result.add(insert(entity));
+            result.add(insertEntity(entity));
         }
 
         return result;
     }
 
 
-    public ENTITY insert(ENTITY entity) {
+    public ENTITY insertEntity(ENTITY entity) {
         if (hasGeneratedId()) {
             ID id = getEntityId(entity);
             if (id != null) {
@@ -159,5 +169,140 @@ public abstract class JpaTable<ENTITY, ID> extends JdbcTable<ENTITY, ID> {
         associatedCache.put(getEntityId(entity), value);
     }
 
+    public JqlTable<KVEntity, ID> getRawTable() {
+        return this.rawRepository;
+    }
 
+    private static class RawRepository<ID> implements JqlTable<KVEntity, ID> {
+        private final JpaRepositoryBase<KVEntity, ID> repository;
+
+        public RawRepository(JpaRepositoryBase<KVEntity, ID> repository) {
+            this.repository = repository;
+        }
+
+        @Override
+        public JqlQuery<KVEntity> createQuery(Map<String, Object> filter) {
+            return repository.createQuery(filter);
+        }
+
+        @Override
+        public KVEntity find(ID id, JqlSelect select) {
+            return repository.find(id, select, KVEntity.class);
+        }
+
+        @Override
+        public List<KVEntity> find(Iterable<ID> idList, JqlSelect select) {
+            return repository.find(idList, select, KVEntity.class);
+        }
+
+        @Override
+        public List<KVEntity> findAll(JqlSelect select, Sort sort) {
+            return repository.findAll(select, sort, KVEntity.class);
+        }
+
+        @Override
+        public ID insert(Map<String, Object> properties) {
+            return repository.insert(properties);
+        }
+
+        @Override
+        public List<ID> insert(Collection<? extends Map<String, Object>> entities) {
+            return repository.insert(entities);
+        }
+
+        @Override
+        public KVEntity insertEntity(Map<String, Object> properties) {
+            return repository.insertEntity(properties);
+        }
+
+        @Override
+        public void update(Iterable<ID> idList, Map<String, Object> properties) {
+            repository.update(idList, properties);
+        }
+
+        @Override
+        public void update(ID id, Map<String, Object> updateSet) {
+            JqlTable.super.update(id, updateSet);
+        }
+
+        @Override
+        public void delete(Iterable<ID> idList) {
+            repository.delete(idList);
+        }
+
+        @Override
+        public void delete(ID id) {
+            JqlTable.super.delete(id);
+        }
+    }
+
+    private static class RawRepository2<ID> extends JqlRepository<KVEntity, ID> {
+
+        private final JpaRepositoryBase<KVEntity, ID> repository;
+
+        public RawRepository2(JpaRepositoryBase<KVEntity, ID> repository) {
+            super(repository.schema, repository.getObjectMapper());
+            this.repository = repository;
+        }
+
+        @Override
+        public JqlStorage getStorage() {
+            return this.repository.getStorage();
+        }
+
+        @Override
+        public JqlTable<KVEntity, ID> getRawTable() {
+            return this;
+        }
+
+        @Override
+        public ID convertId(Object id) {
+            return null;
+        }
+
+        @Override
+        public <T> List<T> find(Iterable<ID> idList, JqlSelect select, Class<T> entityType) {
+            return repository.find(idList, select, entityType);
+        }
+
+        @Override
+        public <T> T find(ID id, JqlSelect select, Class<T> entityType) {
+            return repository.find(id, select, entityType);
+        }
+
+        @Override
+        public <T> List<T> find(JqlQuery query, Class<T> entityType) {
+            return repository.find(query, entityType);
+        }
+
+        @Override
+        public JqlQuery<KVEntity> createQuery(Map<String, Object> filter) {
+            return repository.createQuery(filter);
+        }
+
+        @Override
+        public ID insert(Map<String, Object> properties) {
+            return repository.insert(properties);
+        }
+
+        @Override
+        public List<ID> insert(Collection<? extends Map<String, Object>> entities) {
+            return repository.insert(entities);
+        }
+
+        @Override
+        public KVEntity insertEntity(Map<String, Object> properties) {
+            return repository.insertEntity(properties);
+        }
+
+        @Override
+        public void update(Iterable<ID> idList, Map<String, Object> updateSet) {
+
+        }
+
+        @Override
+        public void delete(Iterable<ID> idList) {
+
+        }
+    }
 }

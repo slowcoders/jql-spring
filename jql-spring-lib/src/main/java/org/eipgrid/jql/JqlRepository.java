@@ -3,12 +3,12 @@ package org.eipgrid.jql;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.eipgrid.jql.parser.JqlParser;
 import org.eipgrid.jql.schema.QSchema;
+import org.eipgrid.jql.util.KVEntity;
 import org.springframework.data.domain.Sort;
 
-import java.io.IOException;
 import java.util.*;
 
-public abstract class JqlRepository<ENTITY, ID> implements JqlEntitySet<ENTITY, ID> {
+public abstract class JqlRepository<ENTITY, ID> implements JqlTable<ENTITY, ID> {
 
     protected final QSchema schema;
     protected JqlParser jqlParser;
@@ -22,6 +22,8 @@ public abstract class JqlRepository<ENTITY, ID> implements JqlEntitySet<ENTITY, 
 
 
     public abstract JqlStorage getStorage();
+
+    public abstract JqlTable<KVEntity, ID> getRawTable();
 
     public final String getTableName() {
         return schema.getTableName();
@@ -42,11 +44,15 @@ public abstract class JqlRepository<ENTITY, ID> implements JqlEntitySet<ENTITY, 
 
     public abstract <T> T find(ID id, JqlSelect select, Class<T> entityType);
 
-    public List<ENTITY> findAll(JqlSelect select, Sort sort) {
+    public final List<ENTITY> findAll(JqlSelect select, Sort sort) {
+        return findAll(select, sort, getEntityType());
+    }
+
+    protected List<ENTITY> findAll(JqlSelect select, Sort sort, Class<ENTITY> entityType) {
         JqlQuery query = createQuery(null);
         query.select(select);
         query.sort(sort);
-        return find(query, getEntityType());
+        return find(query, entityType);
     }
 
 
@@ -100,7 +106,7 @@ public abstract class JqlRepository<ENTITY, ID> implements JqlEntitySet<ENTITY, 
 
     public abstract List<ID> insert(Collection<? extends Map<String, Object>> entities);
 
-    public abstract void update(Iterable<ID> idList, Map<String, Object> updateSet) throws IOException;
+    public abstract void update(Iterable<ID> idList, Map<String, Object> updateSet);
 
     public abstract void delete(Iterable<ID> idList);
 
@@ -116,6 +122,5 @@ public abstract class JqlRepository<ENTITY, ID> implements JqlEntitySet<ENTITY, 
     public int hashCode() {
         return schema.hashCode();
     }
-
 
 }

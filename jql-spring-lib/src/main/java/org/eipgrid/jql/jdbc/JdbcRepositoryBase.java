@@ -13,13 +13,12 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.ResultSetExtractor;
 
 import javax.persistence.Query;
-import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-public abstract class JdbcTable<ENTITY, ID> extends JqlRepository<ENTITY, ID> {
+public abstract class JdbcRepositoryBase<ENTITY, ID> extends JqlRepository<ENTITY, ID> {
 
     protected final JdbcStorage storage;
     private final JdbcTemplate jdbc;
@@ -27,7 +26,7 @@ public abstract class JdbcTable<ENTITY, ID> extends JqlRepository<ENTITY, ID> {
 
     private static final ArrayRowMapper arrayMapper = new ArrayRowMapper();
 
-    protected JdbcTable(JdbcStorage storage, QSchema schema) {
+    protected JdbcRepositoryBase(JdbcStorage storage, QSchema schema) {
         super(schema, storage.getObjectMapper());
         storage.registerTable(this);
 
@@ -118,8 +117,13 @@ public abstract class JdbcTable<ENTITY, ID> extends JqlRepository<ENTITY, ID> {
         return batch.getEntityIDs();
     }
 
-    public ENTITY insert(Map<String, Object> properties) {
-        ID id = insert(Collections.singletonList(properties)).get(0);
+    public ID insert(Map<String, Object> properties) {
+        ID id = this.insert(Collections.singletonList(properties)).get(0);
+        return id;
+    }
+
+    public ENTITY insertEntity(Map<String, Object> properties) {
+        ID id = insert(properties);
         return get(id);
     }
 
