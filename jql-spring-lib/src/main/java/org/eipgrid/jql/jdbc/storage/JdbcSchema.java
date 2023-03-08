@@ -11,6 +11,7 @@ import org.eipgrid.jql.util.SourceWriter;
 import javax.persistence.Column;
 import javax.persistence.IdClass;
 import javax.persistence.JoinColumn;
+import javax.persistence.JoinTable;
 import java.lang.reflect.Field;
 import java.util.*;
 
@@ -408,6 +409,20 @@ public class JdbcSchema extends QSchema {
                 String colName = c.name();
                 if (colName != null && colName.length() > 0) {
                     return colName;
+                }
+            }
+        }
+        if (true) {
+            JoinTable c = f.getAnnotation(JoinTable.class);
+            if (c != null) {
+                JoinColumn[] joinColumns = c.joinColumns();
+                if (joinColumns.length == 1) {
+                    String colName = joinColumns[0].name();
+                    if (colName != null && colName.length() > 0) {
+                        return colName;
+                    } else {
+                        throw new RuntimeException("MultiKey join not implemented");
+                    }
                 }
             }
         }

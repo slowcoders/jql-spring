@@ -46,6 +46,7 @@ public class JpaPropertyFilter extends BeanPropertyWriter {
                     prov.setAttribute(JQL_RESULT_MAPPING_KEY, column);
                     writer.serializeAsField(bean, gen, prov);
                     prov.setAttribute(JQL_RESULT_MAPPING_KEY, mapping);
+                    return;
                 }
             }
             else if (!isLeaf || (!mapping.isEmpty() && mapping.get("*") == null)) {
