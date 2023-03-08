@@ -10,9 +10,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class IdListMapper<ID> implements ResultSetExtractor<List<ID>> {
-    private final JdbcRepositoryBase<?,ID> repository;
+    private final JdbcRepositoryBase<ID> repository;
 
-    public IdListMapper(JdbcRepositoryBase<?, ID> repository) {
+    public IdListMapper(JdbcRepositoryBase<ID> repository) {
         this.repository = repository;
     }
 

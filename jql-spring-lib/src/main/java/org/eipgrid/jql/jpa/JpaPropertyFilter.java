@@ -48,7 +48,7 @@ public class JpaPropertyFilter extends BeanPropertyWriter {
                     prov.setAttribute(JQL_RESULT_MAPPING_KEY, mapping);
                 }
             }
-            else if (!isLeaf || mapping.get("*") == null) {
+            else if (!isLeaf || (!mapping.isEmpty() && mapping.get("*") == null)) {
                 return;
             }
         }

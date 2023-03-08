@@ -93,7 +93,7 @@ public interface JqlRestApi {
     }
 
 
-    default Response search(JqlTable entitySet, String select, String[] orders, Integer page, Integer limit, Map<String, Object> filter) {
+    default Response search(JqlEntitySet entitySet, String select, String[] orders, Integer page, Integer limit, Map<String, Object> filter) {
         JqlQuery query = entitySet.createQuery(filter);
         query.select(select);
         if (orders != null) query.sort(orders);

@@ -1,6 +1,7 @@
 package org.eipgrid.jql.sample.jdbc.starwars.service;
 
-import org.eipgrid.jql.JqlTable;
+import org.eipgrid.jql.JqlEntitySet;
+import org.eipgrid.jql.JqlRepository;
 import org.eipgrid.jql.JqlStorage;
 import org.eipgrid.jql.util.KVEntity;
 import org.springframework.stereotype.Service;
@@ -12,13 +13,13 @@ import java.util.Map;
 @Service
 public class SecuredCharacterService {
 
-    private final JqlTable<KVEntity, Long> characterEntitySet;
+    private final JqlRepository<Long> characterEntitySet;
 
     SecuredCharacterService(JqlStorage storage) {
-        characterEntitySet = storage.getRawTable("starwars.character");
+        characterEntitySet = storage.getRepository("starwars.character");
     }
 
-    public JqlTable<KVEntity, Long> getCharacterEntitySet() {
+    public JqlRepository<Long> getCharacterEntitySet() {
         return characterEntitySet;
     }
 
@@ -30,11 +31,11 @@ public class SecuredCharacterService {
         }
     }
 
-    public KVEntity addNewCharacter(Map<String, Object> properties) {
+    public Map addNewCharacter(Map<String, Object> properties) {
         if (properties.get("metadata") == null) {
             properties.put("metadata", createNote());
         }
-        return characterEntitySet.insertEntity(properties);
+        return characterEntitySet.insert(properties);
     }
 
     private KVEntity createNote() {

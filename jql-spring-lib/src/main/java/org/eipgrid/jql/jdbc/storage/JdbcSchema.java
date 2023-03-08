@@ -40,7 +40,7 @@ public class JdbcSchema extends QSchema {
     protected void init(ArrayList<? extends QColumn> columns, HashMap<String, ArrayList<String>> uniqueConstraints, Class<?> ormType) {
         this.uniqueConstraints = uniqueConstraints;
 
-        if (!JqlRepository.RawEntityType.isAssignableFrom(ormType)) {
+        if (!JqlRepository.rawEntityType.isAssignableFrom(ormType)) {
             HashMap<String, Field> jpaColumns = new HashMap<>();
             for (Field f: JpaUtils.getColumnFields(ormType)) {
                 String name = resolvePhysicalName(f);
