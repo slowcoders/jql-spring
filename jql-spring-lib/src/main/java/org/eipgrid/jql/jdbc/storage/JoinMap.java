@@ -47,15 +47,21 @@ class JoinMap extends HashMap<String, QJoin> {
     }
 
     private String getMappedFieldName(ArrayList<Field> mappedFields, JoinConstraint p2fJoin, QJoin f2pJoin) {
-        QSchema targetSchema = f2pJoin == null ? p2fJoin.getFkSchema() : f2pJoin.getTargetSchema();
+        QSchema targetSchema;
+        JoinConstraint rightConstraint = null;
+        if (f2pJoin == null) {
+            targetSchema = p2fJoin.getFkSchema();
+            rightConstraint = p2fJoin;
+        }
+        else {
+            targetSchema = f2pJoin.getTargetSchema();
+            rightConstraint = f2pJoin.getJoinConstraint();
+        }
         Class componentType = targetSchema.getEntityType();
 
         for (Field f : mappedFields) {
             if (ClassUtils.getElementType(f) == componentType) {
-                String mappedBy = getMappedBy(f);
-                if (mappedBy == null ||
-                        targetSchema.findColumn(mappedBy) != null ||
-                        targetSchema.getEntityJoinBy(mappedBy) == null) {
+                if (isMappedBy(targetSchema, f, rightConstraint)) {
                     return f.getName();
                 }
             }
@@ -63,21 +69,32 @@ class JoinMap extends HashMap<String, QJoin> {
         return null;
     }
 
-    private String getMappedBy(Field f) {
+    private boolean isMappedBy(QSchema targetSchema, Field f, JoinConstraint joinConstraint) {
         String name;
         OneToMany oneToMany = f.getAnnotation(OneToMany.class);
-        if (oneToMany != null && (name = oneToMany.mappedBy()).length() > 0) return name;
+        if (oneToMany != null && (name = oneToMany.mappedBy()).length() > 0) {
+            return targetSchema.hasProperty(name);
+        }
         OneToOne oneToOne = f.getAnnotation(OneToOne.class);
-        if (oneToOne != null && (name = oneToOne.mappedBy()).length() > 0) return name;
+        if (oneToOne != null && (name = oneToOne.mappedBy()).length() > 0) {
+            return targetSchema.hasProperty(name);
+        }
         ManyToMany manyToMany = f.getAnnotation(ManyToMany.class);
-        if (manyToMany != null && (name = manyToMany.mappedBy()).length() > 0) return name;
-        return null;
-//        JoinTable joinTable = f.getAnnotation(JoinTable.class);
-//        if (joinTable != null) {
-//            if (joinTable.inverseJoinColumns().length == 1) {
-//
-//            }
-//        }
+        if (manyToMany != null && (name = manyToMany.mappedBy()).length() > 0) {
+            return targetSchema.hasProperty(name);
+        }
+        JoinTable joinTable = f.getAnnotation(JoinTable.class);
+        if (joinTable == null) return false;
+
+        JoinColumn[] inverseColumns = joinTable.inverseJoinColumns();
+        if (inverseColumns.length == joinConstraint.size()) {
+            for (JoinColumn col : inverseColumns) {
+                if (joinConstraint.getColumnByPhysicalName(col.name()) == null) {
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 
     static class Builder extends HashMap<QSchema, QJoin> {

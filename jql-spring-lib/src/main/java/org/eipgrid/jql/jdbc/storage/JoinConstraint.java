@@ -51,4 +51,13 @@ public class JoinConstraint extends ArrayList<QColumn> {
         assert(column.getSchema() == fkSchema);
         return super.add(column);
     }
+
+    public QColumn getColumnByPhysicalName(String name) {
+        for (QColumn col : this) {
+            if (col.getPhysicalName().equalsIgnoreCase(name)) {
+                return col;
+            }
+        }
+        return null;
+    }
 }
