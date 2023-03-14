@@ -4,15 +4,15 @@ import java.util.*;
 
 public class JqlSelect {
 
-    public static char All = '*';
+    public static char LeafProperties = '*';
     public static char PrimaryKeys = '0';
 
+    public static class PropertyMap extends HashMap<String, PropertyMap> {}
     public static JqlSelect Auto = new JqlSelect((String) null);
 
     private final ArrayList<String> propertyNames = new ArrayList<>();
 
-    private final HashMap<String, Object> selectionMap = new HashMap<>();
-    // QResultMapping resultMapping;
+    private PropertyMap selectionMap = new PropertyMap();
 
     private JqlSelect(String selectSpec) {
         parsePropertySelection(selectSpec);
@@ -23,6 +23,7 @@ public class JqlSelect {
             parsePropertySelection(s);
         }
     }
+
 
     private static String trimToNull(String s) {
         if (s != null) {
@@ -56,7 +57,7 @@ public class JqlSelect {
         }
     }
 
-    private HashMap<String, Object> makeSubMap(HashMap<String, Object> base, String key) {
+    private PropertyMap makeSubMap(PropertyMap base, String key) {
         int p = key.indexOf('.');
         if (p > 0) {
             String subKey = key.substring(0, p);
@@ -66,15 +67,15 @@ public class JqlSelect {
                 return base;
             }
         }
-        HashMap<String, Object> subMap = (HashMap<String, Object>) base.get(key);
+        PropertyMap subMap = (PropertyMap) base.get(key);
         if (subMap == null) {
-            subMap = new HashMap<>();
+            subMap = new PropertyMap();
             base.put(key, subMap);
         }
         return subMap;
     }
 
-    private int parsePropertySelection(HashMap<String, Object> map, String base, int start, String select) {
+    private int parsePropertySelection(PropertyMap propertyMap, String base, int start, String select) {
         String key;
         int idx;
         scan_key: for (idx = start; idx < select.length(); idx ++) {
@@ -82,7 +83,7 @@ public class JqlSelect {
             switch (ch) {
                 case '(':
                     key = select.substring(start, idx);
-                    HashMap<String, Object> subMap = makeSubMap(map, key);
+                    PropertyMap subMap = makeSubMap(propertyMap, key);
                     idx = parsePropertySelection(subMap, base + key + '.', idx + 1, select);
                     start = idx + 1;
                     break;
@@ -92,7 +93,7 @@ public class JqlSelect {
 
                 case ',':
                     key = select.substring(start, idx).trim();
-                    makeSubMap(map, key);
+                    makeSubMap(propertyMap, key);
                     propertyNames.add(base + key);
                     start = idx + 1;
                     break;
@@ -101,7 +102,7 @@ public class JqlSelect {
         if (start < idx) {
             key = select.substring(start, idx).trim();
             if (key.length() > 0) {
-                makeSubMap(map, key);
+                makeSubMap(propertyMap, key);
                 propertyNames.add(base + key);
             }
         }
@@ -109,7 +110,7 @@ public class JqlSelect {
     }
 
 
-    public Map<String, Object> getResultMappings() {
+    public PropertyMap getPropertyMap() {
         return selectionMap;
     }
 

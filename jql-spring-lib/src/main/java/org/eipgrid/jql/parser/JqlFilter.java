@@ -1,11 +1,14 @@
 package org.eipgrid.jql.parser;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.eipgrid.jql.JqlSelect;
 import org.eipgrid.jql.schema.QColumn;
+import org.eipgrid.jql.schema.QJoin;
 import org.eipgrid.jql.schema.QSchema;
 import org.eipgrid.jql.schema.QResultMapping;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -44,6 +47,10 @@ public class JqlFilter extends TableFilter {
         return filter;
     }
 
+    public static JqlFilter of(QSchema schema) {
+        return new JqlFilter(schema);
+    }
+
 
     public void setSelectedProperties(List<String> keys) {
         selectAuto = (keys == null || keys.size() == 0);
@@ -56,6 +63,7 @@ public class JqlFilter extends TableFilter {
             this.addSelection(k.trim());
         }
     }
+
 
     private void addSelection(String key) {
         EntityFilter scope = this;
@@ -82,6 +90,8 @@ public class JqlFilter extends TableFilter {
         }
         scope.addSelectedColumn(key);
     }
+
+
 
     public JqlFilter getRootNode() {
         return this;
@@ -123,6 +133,7 @@ public class JqlFilter extends TableFilter {
     public Class getJpqlEntityType() {
         return enableJPQL ? getSchema().getEntityType() : null;
     }
+
 //    public List<JQColumn> resolveSelectedColumns(TableFilter tableFilter) {
 //        if (!selectAuto) return Collections.EMPTY_LIST;
 //

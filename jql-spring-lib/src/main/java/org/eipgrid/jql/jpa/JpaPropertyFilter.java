@@ -12,6 +12,7 @@ import java.util.Map;
 
 public class JpaPropertyFilter extends BeanPropertyWriter {
     private static final String JQL_RESULT_MAPPING_KEY = JqlRestApi.Response.JpaFilter.JQL_RESULT_MAPPING_KEY;
+    private static final String JQL_INCLUDE_ID = "jql-include-id";
 
     private final BeanPropertyWriter writer;
     private final boolean isId;
@@ -38,13 +39,24 @@ public class JpaPropertyFilter extends BeanPropertyWriter {
                                  SerializerProvider prov) throws Exception {
 
         Map<String, Object> mapping = (Map<String, Object>) prov.getAttribute(JQL_RESULT_MAPPING_KEY);
-        if (!this.isId && mapping != null) {
+        Boolean include_id = (Boolean) prov.getAttribute(JQL_INCLUDE_ID);
+        if (include_id != Boolean.FALSE && this.isId) {
+            // do-nothing
+        }
+        else if (mapping != null) {
             String pname = this.getName();
             Object column = mapping.get(pname);
             if (column != null) {
                 if (!isLeaf) {
                     prov.setAttribute(JQL_RESULT_MAPPING_KEY, column);
+                    Boolean is_array = (this.getType().getContentType() != null);
+                    if (is_array != include_id) {
+                        prov.setAttribute(JQL_INCLUDE_ID, is_array);
+                    }
                     writer.serializeAsField(bean, gen, prov);
+                    if (is_array != include_id) {
+                        prov.setAttribute(JQL_INCLUDE_ID, include_id);
+                    }
                     prov.setAttribute(JQL_RESULT_MAPPING_KEY, mapping);
                     return;
                 }

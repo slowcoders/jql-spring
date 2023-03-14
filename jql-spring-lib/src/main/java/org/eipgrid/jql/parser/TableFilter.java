@@ -1,5 +1,6 @@
 package org.eipgrid.jql.parser;
 
+import org.eipgrid.jql.JqlSelect;
 import org.eipgrid.jql.schema.QColumn;
 import org.eipgrid.jql.schema.QJoin;
 import org.eipgrid.jql.schema.QResultMapping;
@@ -48,9 +49,13 @@ class TableFilter extends EntityFilter implements QResultMapping {
     }
 
 
-    @Override
-    public QResultMapping getChildMapping(String name) {
-        return (QResultMapping)this.subFilters.get(name);
+    public JqlSelect.PropertyMap getSelectionMap() {
+        JqlSelect.PropertyMap map = super.getSelectionMap();
+        map.put("*", new JqlSelect.PropertyMap());
+        for (Map.Entry<String, EntityFilter> entry : this.subFilters.entrySet()) {
+            map.put(entry.getKey(), entry.getValue().getSelectionMap());
+        }
+        return map;
     }
 
     public boolean hasChildMappings() { return !subFilters.isEmpty(); }
@@ -233,5 +238,16 @@ class TableFilter extends EntityFilter implements QResultMapping {
     @Override
     public String toString() {
         return join != null ? join.getJsonKey() : schema.getTableName();
+    }
+
+    public HashMap<String, Object> getResultMappingMap() {
+        HashMap<String, Object> map = new HashMap<>();
+        for (QColumn column : this.getSelectedColumns()) {
+            map.put(column.getJsonKey(), new HashMap<>());
+        }
+        for (Map.Entry<String, EntityFilter> entry : this.subFilters.entrySet()) {
+            map.put(entry.getKey(), entry.getValue().getResultMappingMap());
+        }
+        return map;
     }
 }

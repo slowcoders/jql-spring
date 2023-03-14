@@ -44,11 +44,6 @@ public abstract class JdbcRepositoryBase<ID> extends JqlRepository<ID> {
         return storage;
     }
 
-//    public JqlQuery createQuery(Map<String, Object> filter) {
-//        JqlFilter jqlFilter = jqlParser.parse(schema, (Map)filter);
-//        return new JdbcQuery(this, null, jqlFilter);
-//    }
-//
     public final List<Map> find(Iterable<ID> idList, JqlSelect select) {
         List<Map> res = find(new JdbcQuery(this, select, JqlFilter.of(schema, idList)));
         return res;
@@ -66,13 +61,13 @@ public abstract class JdbcRepositoryBase<ID> extends JqlRepository<ID> {
 
 
     //    @Override
-    protected ResultSetExtractor<List<Map>> getColumnMapRowMapper(JqlFilter filter) {
-        return new JsonRowMapper(filter.getResultMappings(), storage.getObjectMapper());
+    protected ResultSetExtractor<List<Map>> getColumnMapRowMapper(JdbcQuery query) {
+        return new JsonRowMapper(query.getResultMappings(), storage.getObjectMapper());
     }
 
     @Override
     public List<Map> findAll(JqlSelect select, Sort sort) {
-        return find(new JdbcQuery(this, select, null).sort(sort));
+        return find(new JdbcQuery(this, select, JqlFilter.of(this.schema)).sort(sort));
     }
 
     public List find(JqlQuery query0, OutputFormat outputFormat) {
@@ -104,7 +99,7 @@ public abstract class JdbcRepositoryBase<ID> extends JqlRepository<ID> {
         else {
             sql = query.appendPaginationQuery(sql);
 
-            res = jdbc.query(sql, getColumnMapRowMapper(query.getFilter()));
+            res = jdbc.query(sql, getColumnMapRowMapper(query));
 //            if (!RawEntityType.isAssignableFrom(entityType)) {
 //                ObjectMapper converter = storage.getObjectMapper();
 //                for (int i = res.size(); --i >= 0; ) {
