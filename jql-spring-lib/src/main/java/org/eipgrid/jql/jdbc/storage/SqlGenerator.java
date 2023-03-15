@@ -30,9 +30,7 @@ public class SqlGenerator extends SqlConverter implements QueryGenerator {
 
     protected void writeFilter(EntityFilter jql) {
         currentNode = jql;
-        Expression ps = jql.getPredicates();
-        if (!ps.isEmpty()) {
-            ps.accept(this);
+        if (jql.visitPredicates(this)) {
             sw.write(" AND ");
         }
         for (EntityFilter child : jql.getChildNodes()) {
@@ -108,8 +106,13 @@ public class SqlGenerator extends SqlConverter implements QueryGenerator {
     protected void writeWhere(JqlFilter where) {
         if (!where.isEmpty()) {
             sw.write("\nWHERE ");
+            int len = sw.length();
             writeFilter(where);
-            if (sw.endsWith(" AND ")) {
+            if (sw.length() == len) {
+                // no conditions.
+                sw.shrinkLength(7);
+            }
+            else if (sw.endsWith(" AND ")) {
                 sw.shrinkLength(5);
             }
         }

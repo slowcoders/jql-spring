@@ -3,12 +3,10 @@ package org.eipgrid.jql.parser;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.eipgrid.jql.JqlSelect;
 import org.eipgrid.jql.schema.QColumn;
-import org.eipgrid.jql.schema.QJoin;
 import org.eipgrid.jql.schema.QSchema;
 import org.eipgrid.jql.schema.QResultMapping;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -92,6 +90,16 @@ public class JqlFilter extends TableFilter {
     }
 
 
+    public void setSelectedProperties(JqlSelect.ResultMap resultMap) {
+        selectAuto = (resultMap == null || resultMap.isEmpty());
+        if (selectAuto) {
+            this.addSelection("*");
+            return;
+        }
+
+        this.addSelection(resultMap);
+    }
+
 
     public JqlFilter getRootNode() {
         return this;
@@ -134,22 +142,4 @@ public class JqlFilter extends TableFilter {
         return enableJPQL ? getSchema().getEntityType() : null;
     }
 
-//    public List<JQColumn> resolveSelectedColumns(TableFilter tableFilter) {
-//        if (!selectAuto) return Collections.EMPTY_LIST;
-//
-//        JQSchema schema = tableFilter.getSchema();
-//        List<JQColumn> columns = tableFilter.getSchema().getReadableColumns();
-//
-//        Set<JQColumn> hiddenKeys = tableFilter.getHiddenForeignKeys();
-//        if (!hiddenKeys.isEmpty()) {
-//            ArrayList<JQColumn> columns2 = new ArrayList<>();
-//            for (JQColumn column : tableFilter.getSelectedColumns()) {
-//                if (hiddenKeys.contains(column)) continue;
-//                columns2.add(column);
-//            }
-//            columns = columns2;
-//        }
-//
-//        return columns;
-//    }
 }

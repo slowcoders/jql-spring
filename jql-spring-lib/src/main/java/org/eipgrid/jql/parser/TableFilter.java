@@ -1,5 +1,6 @@
 package org.eipgrid.jql.parser;
 
+import org.eipgrid.jql.JqlSelect;
 import org.eipgrid.jql.schema.QColumn;
 import org.eipgrid.jql.schema.QJoin;
 import org.eipgrid.jql.schema.QResultMapping;
@@ -234,4 +235,27 @@ class TableFilter extends EntityFilter implements QResultMapping {
     public String toString() {
         return join != null ? join.getJsonKey() : schema.getTableName();
     }
+
+    protected void addSelection(JqlSelect.ResultMap resultMap) {
+        QSchema schema = this.getSchema();
+        boolean allLeaf = resultMap.isAllLeafSelected();
+        if (allLeaf) {
+            this.selectedColumns = schema.getLeafColumns();
+        } else if (this.isArrayNode() || resultMap.isIdSelected()) {
+            this.selectedColumns = schema.getPKColumns();
+        }
+
+        for (Map.Entry<String, JqlSelect.ResultMap> entry : resultMap.entrySet()) {
+            String key = entry.getKey();
+
+            if (schema.hasColumn(key)) {
+                if (!allLeaf) this.addSelectedColumn(key);
+            }
+            else {
+                EntityFilter scope = this.makeSubNode(key, JqlParser.NodeType.Entity);
+                scope.addSelection(entry.getValue());
+            }
+        }
+    }
+
 }

@@ -5,10 +5,10 @@ import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.ser.BeanPropertyWriter;
 import org.eipgrid.jql.JqlLeafProperty;
 import org.eipgrid.jql.JqlRestApi;
+import org.eipgrid.jql.JqlSelect;
 import org.eipgrid.jql.js.JsType;
 
 import javax.persistence.Id;
-import java.util.Map;
 
 public class JpaPropertyFilter extends BeanPropertyWriter {
     private static final String JQL_RESULT_MAPPING_KEY = JqlRestApi.Response.JpaFilter.JQL_RESULT_MAPPING_KEY;
@@ -38,30 +38,32 @@ public class JpaPropertyFilter extends BeanPropertyWriter {
                                  JsonGenerator gen,
                                  SerializerProvider prov) throws Exception {
 
-        Map<String, Object> mapping = (Map<String, Object>) prov.getAttribute(JQL_RESULT_MAPPING_KEY);
-        Boolean include_id = (Boolean) prov.getAttribute(JQL_INCLUDE_ID);
-        if (include_id != Boolean.FALSE && this.isId) {
-            // do-nothing
-        }
-        else if (mapping != null) {
-            String pname = this.getName();
-            Object column = mapping.get(pname);
-            if (column != null) {
-                if (!isLeaf) {
-                    prov.setAttribute(JQL_RESULT_MAPPING_KEY, column);
-                    Boolean is_array = (this.getType().getContentType() != null);
-                    if (is_array != include_id) {
-                        prov.setAttribute(JQL_INCLUDE_ID, is_array);
+        JqlSelect.ResultMap mapping = (JqlSelect.ResultMap) prov.getAttribute(JQL_RESULT_MAPPING_KEY);
+        if (mapping != null) {
+            boolean include_id = (Boolean) prov.getAttribute(JQL_INCLUDE_ID);
+            String p_name = this.getName();
+            Object column = mapping.get(p_name);
+            if (column == null) {
+                if (this.isId) {
+                    if (!mapping.isIdSelected() && !include_id) {
+                        return;
                     }
-                    writer.serializeAsField(bean, gen, prov);
-                    if (is_array != include_id) {
-                        prov.setAttribute(JQL_INCLUDE_ID, include_id);
-                    }
-                    prov.setAttribute(JQL_RESULT_MAPPING_KEY, mapping);
+                }
+                else if (!isLeaf || !mapping.isAllLeafSelected()) {
                     return;
                 }
             }
-            else if (!isLeaf || (!mapping.isEmpty() && mapping.get("*") == null)) {
+            else if (!isLeaf) {
+                prov.setAttribute(JQL_RESULT_MAPPING_KEY, column);
+                Boolean is_array = (this.getType().getContentType() != null);
+                if (is_array != include_id) {
+                    prov.setAttribute(JQL_INCLUDE_ID, is_array);
+                }
+                writer.serializeAsField(bean, gen, prov);
+                if (is_array != include_id) {
+                    prov.setAttribute(JQL_INCLUDE_ID, include_id);
+                }
+                prov.setAttribute(JQL_RESULT_MAPPING_KEY, mapping);
                 return;
             }
         }

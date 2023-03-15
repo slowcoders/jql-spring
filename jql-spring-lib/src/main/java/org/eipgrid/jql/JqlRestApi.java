@@ -32,13 +32,13 @@ public interface JqlRestApi {
         private Object content;
 
         @JsonIgnore
-        private JqlSelect.PropertyMap resultMapping;
+        private JqlSelect.ResultMap resultMapping;
 
         @Getter
         @JsonIgnore
         private JqlQuery query;
 
-        private Response(Object content, JqlSelect.PropertyMap resultMapping) {
+        private Response(Object content, JqlSelect.ResultMap resultMapping) {
             this.content = content;
             this.resultMapping = resultMapping;
         }
@@ -73,7 +73,7 @@ public interface JqlRestApi {
         public static class JpaFilter extends Response {
             public static final String JQL_RESULT_MAPPING_KEY = "jql-result-mapping";
 
-            /*internal*/ JpaFilter(Object content, JqlSelect.PropertyMap resultMappings) {
+            /*internal*/ JpaFilter(Object content, JqlSelect.ResultMap resultMappings) {
                 super(content, resultMappings);
             }
 

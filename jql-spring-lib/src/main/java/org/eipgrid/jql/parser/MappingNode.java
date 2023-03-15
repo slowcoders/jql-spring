@@ -1,7 +1,6 @@
-package org.eipgrid.jql.jdbc;
+package org.eipgrid.jql.parser;
 
 import org.eipgrid.jql.JqlSelect;
-import org.eipgrid.jql.parser.JqlFilter;
 import org.eipgrid.jql.schema.QColumn;
 import org.eipgrid.jql.schema.QJoin;
 import org.eipgrid.jql.schema.QResultMapping;
@@ -12,24 +11,24 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-class SelectionMap extends HashMap<String, SelectionMap> implements QResultMapping {
+public class MappingNode implements QResultMapping {
 
-    private final QSchema schema;
-    private final SelectionMap parent;
-    private final QJoin join;
+    private final MappingNode parent;
     private final String[] entityPath;
     private final String alias;
     private List<QColumn> selectedColumns;
     private boolean hasChildMappings;
-    private boolean isArrayNode;
     private boolean hasArrayDescendantNode;
+    private TableFilter filter;
 
+    private HashMap<String, MappingNode> subFilters = new HashMap<>();
 
-    public SelectionMap(QSchema schema, SelectionMap parent, QJoin join, int aliasId) {
-        this.schema = schema;
+    static int aliasId;
+
+    public MappingNode(TableFilter filter, MappingNode parent) {
+        this.filter = filter;
         this.parent = parent;
-        this.join = join;
-        this.alias = "t_" + aliasId;
+        this.alias = "t_" + aliasId ++;
         if (parent == null) {
             entityPath = new String[0];
         }
@@ -37,7 +36,7 @@ class SelectionMap extends HashMap<String, SelectionMap> implements QResultMappi
             String[] basePath = parent.entityPath;
             this.entityPath = new String[basePath.length + 1];
             System.arraycopy(basePath, 0, entityPath, 0, basePath.length);
-            entityPath[basePath.length] = join.getJsonKey();
+            entityPath[basePath.length] = filter.getEntityJoin().getJsonKey();
         }
     }
 
@@ -51,27 +50,27 @@ class SelectionMap extends HashMap<String, SelectionMap> implements QResultMappi
         this.selectedColumns.add(column);
     }
 
-    public void resolveMapping(ArrayList<QResultMapping> mappings, JqlSelect.PropertyMap selection) {
-        this.isArrayNode = join == null || !join.hasUniqueTarget();
-        if (this.isArrayNode) {
-            for (SelectionMap mapping = this.parent; mapping != null && !mapping.isArrayNode; ) {
+    public void resolveMapping(ArrayList<QResultMapping> mappings, JqlSelect.ResultMap selection) {
+        QSchema schema = filter.getSchema();
+        if (filter.isArrayNode()) {
+            for (MappingNode mapping = this.parent; mapping != null && !mapping.filter.isArrayNode(); ) {
                 mapping.hasArrayDescendantNode = true;
             }
         }
 
         if (selection.containsKey("*")) {
             selectedColumns = schema.getLeafColumns();
-        } else if (isArrayNode || selection.containsKey("0")) {
+        } else if (filter.isArrayNode() || selection.containsKey("0")) {
             selectedColumns = schema.getPKColumns();
         } else {
             selectedColumns = new ArrayList<>();
         }
 
-        for (Map.Entry<String, JqlSelect.PropertyMap> entry : selection.entrySet()) {
+        for (Map.Entry<String, JqlSelect.ResultMap> entry : selection.entrySet()) {
             String key = entry.getKey();
-            QJoin join = schema.getEntityJoinBy(key);
-            if (join != null) {
-                SelectionMap subMap = new SelectionMap(join.getTargetSchema(), this, join, mappings.size() + 1);
+            EntityFilter subFilter = filter.getFilterNode(key, JqlParser.NodeType.Entity);
+            if (subFilter != null && subFilter.asTableFilter() != null) {
+                MappingNode subMap = new MappingNode(subFilter.asTableFilter(), this);
                 mappings.add(subMap);
                 subMap.resolveMapping(mappings, entry.getValue());
                 this.hasChildMappings = true;
@@ -86,7 +85,7 @@ class SelectionMap extends HashMap<String, SelectionMap> implements QResultMappi
 
     @Override
     public QSchema getSchema() {
-        return this.schema;
+        return filter.getSchema();
     }
 
     @Override
@@ -106,7 +105,7 @@ class SelectionMap extends HashMap<String, SelectionMap> implements QResultMappi
 
     @Override
     public QJoin getEntityJoin() {
-        return this.join;
+        return filter.getEntityJoin();
     }
 
     @Override
@@ -121,7 +120,7 @@ class SelectionMap extends HashMap<String, SelectionMap> implements QResultMappi
 
     @Override
     public boolean isArrayNode() {
-        return isArrayNode;
+        return filter.isArrayNode();
     }
 
     @Override
@@ -129,8 +128,13 @@ class SelectionMap extends HashMap<String, SelectionMap> implements QResultMappi
         return this.hasArrayDescendantNode;
     }
 
+    @Override
+    public boolean isEmpty() {
+        return false;
+    }
+
     public static List<QResultMapping> resolveResultMappings(JqlFilter filter, JqlSelect select) {
-        filter.setSelectedProperties(select.getPropertyNames());
+        filter.setSelectedProperties(select.getPropertyMap());
         return filter.getResultMappings();
 //        JqlSelect.PropertyMap selectMap;
 //        if (select == null || select == JqlSelect.Auto) {
@@ -146,4 +150,5 @@ class SelectionMap extends HashMap<String, SelectionMap> implements QResultMappi
 //        map.resolveMapping(mappings, selectMap);
 //        return mappings;
     }
+
 }

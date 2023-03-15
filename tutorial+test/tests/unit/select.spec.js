@@ -28,7 +28,7 @@ describe('Top', () => {
   test('Select Name only', async () => {
     const character = await jqlApi.top(null, { select: "name" });
     for (const k in character) {
-      expect(k).toBe('name');
+      expect(k == 'id' || k == 'name').toBeTruthy();
     }
   });
 

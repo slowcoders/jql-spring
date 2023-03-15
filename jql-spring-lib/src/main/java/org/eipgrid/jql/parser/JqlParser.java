@@ -141,7 +141,7 @@ public class JqlParser {
     }
 
 
-    enum NodeType {
+    public enum NodeType {
         Leaf,
         Entity,
         Entities
