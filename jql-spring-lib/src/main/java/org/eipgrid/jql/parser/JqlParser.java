@@ -96,11 +96,10 @@ public class JqlParser {
             QSchema schema = subFilter.getSchema();
             if (schema != null) {
                 column = schema.getColumn(columnName);
-                Class<?> fieldType = column.getValueType();
-                Class<?> accessType = op.getAccessType(value, fieldType);
                 if (value != null) {
+                    Class<?> fieldType = column.getValueType();
+                    Class<?> accessType = op.getAccessType(value, fieldType);
                     value = om.convertValue(value, accessType);
-//                      value = conversionService.convert(value, accessType);
                 }
             }
             else {
@@ -130,7 +129,8 @@ public class JqlParser {
 
     private NodeType getNodeType(Object value) {
         if (value instanceof Collection) {
-            if (((Collection)value).iterator().next() instanceof Map) {
+            Collection values = (Collection) value;
+            if (!values.isEmpty() && values.iterator().next() instanceof Map) {
                 return NodeType.Entities;
             }
         }

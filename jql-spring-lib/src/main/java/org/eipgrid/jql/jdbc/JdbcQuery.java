@@ -4,6 +4,7 @@ import org.eipgrid.jql.JqlQuery;
 import org.eipgrid.jql.JqlSelect;
 import org.eipgrid.jql.OutputFormat;
 import org.eipgrid.jql.parser.JqlFilter;
+import org.eipgrid.jql.schema.QResultMapping;
 import org.springframework.data.domain.Sort;
 
 import java.util.List;
@@ -13,35 +14,29 @@ public class JdbcQuery<ENTITY> extends JqlQuery<ENTITY> {
     //protected static int SingleEntityOffset = JqlQuery.SingleEntityOffset;
     private final JdbcRepositoryBase table;
     private final JqlFilter filter;
-    private Class<ENTITY> jpaEntityType;
-
     /*package*/ String executedQuery;
     /*package*/ Object extraInfo;
 
-    public JdbcQuery(JdbcRepositoryBase table, JqlSelect select, JqlFilter jqlFilter) {
+    public JdbcQuery(JdbcRepositoryBase table, JqlSelect select, JqlFilter filter) {
+        assert (filter != null);
         this.table = table;
-        this.filter = jqlFilter;
+        this.filter = filter;
         super.select(select);
-    }
-
-    public JdbcQuery(JdbcRepositoryBase table, JqlSelect select, JqlFilter jqlFilter, Class<ENTITY> jpaEntityType) {
-        this(table, select, jqlFilter);
-        this.jpaEntityType = jpaEntityType;
     }
 
     public final Class<ENTITY> getJpaEntityType() {
         return filter.getJpqlEntityType();
     }
 
-    @Override
-    public JqlSelect getSelection() {
-        JqlSelect select = super.getSelection();
-        if (select == null || select == JqlSelect.Auto) {
-            select = JqlSelect.of("");
-            super.select(select);
-        }
-        return select;
-    }
+//    @Override
+//    public JqlSelect getSelection() {
+//        JqlSelect select = super.getSelection();
+//        if (select == null || select == JqlSelect.Auto) {
+//            HashMap<String, Object> resultMap = filter.getResultMappingMap();
+//            super.select(JqlSelect.of(resultMap));
+//        }
+//        return select;
+//    }
 
     @Override
     protected void select(JqlSelect select) {
@@ -95,5 +90,10 @@ public class JdbcQuery<ENTITY> extends JqlQuery<ENTITY> {
             sql += s;
         }
         return sql;
+    }
+
+    public List<QResultMapping> getResultMappings() {
+        JqlSelect select = super.getSelection();
+        return SelectionMap.resolveResultMappings(filter, select);
     }
 }

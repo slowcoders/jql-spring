@@ -1,6 +1,7 @@
 import axios from "axios";
 
-const baseUrl = 'http://localhost:7007/api/jql/starwars_jpa/character';
+//const baseUrl = 'http://localhost:7007/api/jql/starwars_jpa/character';
+const baseUrl = 'http://localhost:7007/api/jql/starwars/character';
 
 const default_options = {
     select: "*",
