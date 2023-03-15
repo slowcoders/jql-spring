@@ -130,18 +130,20 @@ class SelectionMap extends HashMap<String, SelectionMap> implements QResultMappi
     }
 
     public static List<QResultMapping> resolveResultMappings(JqlFilter filter, JqlSelect select) {
-        JqlSelect.PropertyMap selectMap;
-        if (select == null || select == JqlSelect.Auto) {
-            selectMap = filter.getSelectionMap();
-        }
-        else {
-            selectMap = select.getPropertyMap();
-        }
-
-        ArrayList<QResultMapping> mappings = new ArrayList<>();
-        SelectionMap map = new SelectionMap(filter.getSchema(), null, null, 0);
-        mappings.add(map);
-        map.resolveMapping(mappings, selectMap);
-        return mappings;
+        filter.setSelectedProperties(select.getPropertyNames());
+        return filter.getResultMappings();
+//        JqlSelect.PropertyMap selectMap;
+//        if (select == null || select == JqlSelect.Auto) {
+//            selectMap = filter.getSelectionMap();
+//        }
+//        else {
+//            selectMap = select.getPropertyMap();
+//        }
+//
+//        ArrayList<QResultMapping> mappings = new ArrayList<>();
+//        SelectionMap map = new SelectionMap(filter.getSchema(), null, null, 0);
+//        mappings.add(map);
+//        map.resolveMapping(mappings, selectMap);
+//        return mappings;
     }
 }
