@@ -2,15 +2,14 @@ package org.eipgrid.jql.parser;
 
 import org.eipgrid.jql.JqlSelect;
 import org.eipgrid.jql.schema.QColumn;
-import org.eipgrid.jql.schema.QJoin;
-import org.eipgrid.jql.schema.QResultMapping;
+import org.eipgrid.jql.jdbc.QJoin;
+import org.eipgrid.jql.jdbc.QResultMapping;
 import org.eipgrid.jql.schema.QSchema;
 
 import java.util.*;
 
 class TableFilter extends EntityFilter implements QResultMapping {
     private final QSchema schema;
-
     private final QJoin join;
     private final String mappingAlias;
 
@@ -48,12 +47,6 @@ class TableFilter extends EntityFilter implements QResultMapping {
         return parent == null ? null : parent.asTableFilter();
     }
 
-
-//    @Override
-//    public QResultMapping getChildMapping(String name) {
-//        return (QResultMapping)this.subFilters.get(name);
-//    }
-
     public boolean hasChildMappings() { return !subFilters.isEmpty(); }
 
     @Override
@@ -66,13 +59,9 @@ class TableFilter extends EntityFilter implements QResultMapping {
         if (jsonPath == null) {
             TableFilter parent = getParentNode();
             String[] basePath = parent.getEntityMappingPath();
-            boolean mergeLast = false && (parent.getSelectedColumns().isEmpty()) && basePath.length > 0;
-            jsonPath = new String[basePath.length + (mergeLast ? 0 : 1)];
+            jsonPath = new String[basePath.length + 1];
             System.arraycopy(basePath, 0, jsonPath, 0, basePath.length);
             String lastPath = join.getJsonKey();
-            if (mergeLast) {
-                lastPath = basePath[basePath.length - 1] + "." + lastPath;
-            }
             jsonPath[jsonPath.length - 1] = lastPath;
             this.entityMappingPath = jsonPath;
         }
@@ -105,22 +94,6 @@ class TableFilter extends EntityFilter implements QResultMapping {
         return selectedColumns;
     }
 
-
-    Set<QColumn> getHiddenForeignKeys() {
-        Set<QColumn> hiddenColumns = (Set<QColumn>) Collections.EMPTY_SET;
-        for (EntityFilter node : this.subFilters.values()) {
-            TableFilter table = node.asTableFilter();
-            if (table == null) continue;
-            if (!table.join.isInverseMapped()) {
-                if (hiddenColumns == Collections.EMPTY_SET) hiddenColumns = new HashSet<>();
-                List<QColumn> fkColumns = table.join.getJoinConstraint();
-                assert (fkColumns.get(0).getSchema() == this.schema);
-                hiddenColumns.addAll(fkColumns);
-            }
-        }
-        return hiddenColumns;
-    }
-
     @Override
     protected EntityFilter makeSubNode(String key, JqlParser.NodeType nodeType) {
         QJoin join = schema.getEntityJoinBy(key);
@@ -136,50 +109,16 @@ class TableFilter extends EntityFilter implements QResultMapping {
                 subQuery = new TableFilter(this, join);
             } else {
                 subQuery = new JsonFilter(this, jsonColumn.getPhysicalName());
-                if (this.isArrayNode()) {
-                    this.addSelectedColumn("0");
-                }
-                this.addSelectedColumn(key);
+                this.addSelectedColumn(jsonColumn);
             }
             subFilters.put(key, subQuery);
         }
         return subQuery;
     }
 
-    protected void addSelectedColumn(String key) {
-        if (key.equals("*")) {
-            if (this.selectedColumns == null) {
-                this.selectedColumns = schema.getLeafColumns();
-            }
-            else {
-                for (QColumn k : schema.getLeafColumns()) {
-                    addSelectedColumn(k);
-                }
-            }
-        }
-        else if (key.equals("0")) {
-            if (this.selectedColumns == null) {
-                this.selectedColumns = schema.getPKColumns();
-            }
-            else {
-                for (QColumn k : schema.getPKColumns()) {
-                    addSelectedColumn(k);
-                }
-            }
-        }
-        else {
-            QColumn column = schema.getColumn(key);
-            addSelectedColumn(column);
-        }
-    }
-
-    private boolean mustSelectPKs() {
-        return this.isArrayNode() && !this.subFilters.isEmpty();
-    }
-
     private void addSelectedColumn(QColumn column) {
         if (this.selectedColumns == null) {
-            this.selectedColumns = mustSelectPKs() ? new ArrayList<>(schema.getPKColumns()) : new ArrayList<>();
+            this.selectedColumns = isArrayNode() ? new ArrayList<>(schema.getPKColumns()) : new ArrayList<>();
         }
 
         if (this.selectedColumns.contains(column)) return;
@@ -231,11 +170,6 @@ class TableFilter extends EntityFilter implements QResultMapping {
         }
     }
 
-    @Override
-    public String toString() {
-        return join != null ? join.getJsonKey() : schema.getTableName();
-    }
-
     protected void addSelection(JqlSelect.ResultMap resultMap) {
         QSchema schema = this.getSchema();
         boolean allLeaf = resultMap.isAllLeafSelected();
@@ -247,15 +181,20 @@ class TableFilter extends EntityFilter implements QResultMapping {
 
         for (Map.Entry<String, JqlSelect.ResultMap> entry : resultMap.entrySet()) {
             String key = entry.getKey();
-
-            if (schema.hasColumn(key)) {
-                if (!allLeaf) this.addSelectedColumn(key);
+            QColumn column = schema.findColumn(key);
+            if (column != null) {
+                if (!allLeaf) this.addSelectedColumn(column);
             }
             else {
                 EntityFilter scope = this.makeSubNode(key, JqlParser.NodeType.Entity);
                 scope.addSelection(entry.getValue());
             }
         }
+    }
+
+    @Override
+    public String toString() {
+        return join != null ? join.getJsonKey() : schema.getTableName();
     }
 
 }

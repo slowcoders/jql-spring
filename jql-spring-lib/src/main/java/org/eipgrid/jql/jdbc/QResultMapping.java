@@ -1,4 +1,7 @@
-package org.eipgrid.jql.schema;
+package org.eipgrid.jql.jdbc;
+
+import org.eipgrid.jql.schema.QColumn;
+import org.eipgrid.jql.schema.QSchema;
 
 import java.util.List;
 

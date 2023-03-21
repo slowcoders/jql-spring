@@ -1,6 +1,6 @@
 package org.eipgrid.jql.jdbc.output;
 
-import org.eipgrid.jql.schema.QResultMapping;
+import org.eipgrid.jql.jdbc.QResultMapping;
 import org.eipgrid.jql.schema.QColumn;
 import org.eipgrid.jql.schema.QSchema;
 import org.springframework.dao.DataAccessException;

@@ -1,7 +1,9 @@
-package org.eipgrid.jql.schema;
+package org.eipgrid.jql.jdbc;
 
 import org.eipgrid.jql.jdbc.storage.JoinConstraint;
 import org.eipgrid.jql.jpa.JpaUtils;
+import org.eipgrid.jql.schema.QColumn;
+import org.eipgrid.jql.schema.QSchema;
 import org.eipgrid.jql.util.ClassUtils;
 
 import javax.persistence.Entity;

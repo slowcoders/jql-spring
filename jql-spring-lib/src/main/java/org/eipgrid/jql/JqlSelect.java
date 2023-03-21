@@ -11,7 +11,7 @@ public class JqlSelect {
 
     private final ArrayList<String> propertyNames = new ArrayList<>();
 
-    private ResultMap selectionMap = new ResultMap();
+    private ResultMap selectionMap = new ResultMap(false);
 
     private JqlSelect(String selectSpec) {
         parsePropertySelection(selectSpec);
@@ -118,11 +118,6 @@ public class JqlSelect {
             return selectAllPrimaryKeys;
         }
 
-        @Override
-        public boolean isEmpty() {
-            return super.isEmpty() && !selectAllLeaf && !selectAllPrimaryKeys;
-        }
-
         final void addProperty(String key) {
             int p = key.lastIndexOf('.');
             ResultMap base = this;
@@ -166,5 +161,6 @@ public class JqlSelect {
             }
             return subMap;
         }
+
     }
 }

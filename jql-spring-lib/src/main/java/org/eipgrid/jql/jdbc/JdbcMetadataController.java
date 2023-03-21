@@ -4,7 +4,6 @@ import io.swagger.v3.oas.annotations.Operation;
 import org.eipgrid.jql.jdbc.storage.JdbcSchema;
 import org.eipgrid.jql.js.JsUtil;
 import org.eipgrid.jql.schema.QColumn;
-import org.eipgrid.jql.schema.QJoin;
 import org.eipgrid.jql.schema.QSchema;
 import org.eipgrid.jql.util.KVEntity;
 import org.eipgrid.jql.util.SourceWriter;

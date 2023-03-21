@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.eipgrid.jql.JqlSelect;
 import org.eipgrid.jql.schema.QColumn;
 import org.eipgrid.jql.schema.QSchema;
-import org.eipgrid.jql.schema.QResultMapping;
+import org.eipgrid.jql.jdbc.QResultMapping;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -91,7 +91,7 @@ public class JqlFilter extends TableFilter {
 
 
     public void setSelectedProperties(JqlSelect.ResultMap resultMap) {
-        selectAuto = (resultMap == null || resultMap.isEmpty());
+        selectAuto = (resultMap == null || (!resultMap.isIdSelected() && !resultMap.isAllLeafSelected() && resultMap.isEmpty()));
         if (selectAuto) {
             this.addSelection("*");
             return;

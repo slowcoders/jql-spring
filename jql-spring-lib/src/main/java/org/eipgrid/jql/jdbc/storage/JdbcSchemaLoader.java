@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.eipgrid.jql.JqlRepository;
 import org.eipgrid.jql.JqlStorage;
 import org.eipgrid.jql.schema.QColumn;
-import org.eipgrid.jql.schema.QJoin;
+import org.eipgrid.jql.jdbc.QJoin;
 import org.eipgrid.jql.schema.QSchema;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.ConnectionCallback;

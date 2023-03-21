@@ -4,8 +4,6 @@ import org.eipgrid.jql.JqlQuery;
 import org.eipgrid.jql.JqlSelect;
 import org.eipgrid.jql.OutputFormat;
 import org.eipgrid.jql.parser.JqlFilter;
-import org.eipgrid.jql.parser.MappingNode;
-import org.eipgrid.jql.schema.QResultMapping;
 import org.springframework.data.domain.Sort;
 
 import java.util.List;
@@ -95,6 +93,7 @@ public class JdbcQuery<ENTITY> extends JqlQuery<ENTITY> {
 
     public List<QResultMapping> getResultMappings() {
         JqlSelect select = super.getSelection();
-        return MappingNode.resolveResultMappings(filter, select);
+        filter.setSelectedProperties(select.getPropertyMap());
+        return filter.getResultMappings();
     }
 }

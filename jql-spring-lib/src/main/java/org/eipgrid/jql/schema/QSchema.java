@@ -2,6 +2,7 @@ package org.eipgrid.jql.schema;
 
 import org.eipgrid.jql.JqlRepository;
 import org.eipgrid.jql.JqlStorage;
+import org.eipgrid.jql.jdbc.QJoin;
 
 import java.lang.reflect.Field;
 import java.util.*;

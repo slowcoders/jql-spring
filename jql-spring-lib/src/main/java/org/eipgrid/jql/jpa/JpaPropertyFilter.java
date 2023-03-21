@@ -45,9 +45,7 @@ public class JpaPropertyFilter extends BeanPropertyWriter {
             Object column = mapping.get(p_name);
             if (column == null) {
                 if (this.isId) {
-                    if (!mapping.isIdSelected() && !include_id) {
-                        return;
-                    }
+                    if (!include_id && !mapping.isIdSelected()) return;
                 }
                 else if (!isLeaf || !mapping.isAllLeafSelected()) {
                     return;
@@ -55,12 +53,12 @@ public class JpaPropertyFilter extends BeanPropertyWriter {
             }
             else if (!isLeaf) {
                 prov.setAttribute(JQL_RESULT_MAPPING_KEY, column);
-                Boolean is_array = (this.getType().getContentType() != null);
-                if (is_array != include_id) {
-                    prov.setAttribute(JQL_INCLUDE_ID, is_array);
+                Boolean id_required = (this.getType().getContentType() != null);
+                if (id_required != include_id) {
+                    prov.setAttribute(JQL_INCLUDE_ID, id_required);
                 }
                 writer.serializeAsField(bean, gen, prov);
-                if (is_array != include_id) {
+                if (id_required != include_id) {
                     prov.setAttribute(JQL_INCLUDE_ID, include_id);
                 }
                 prov.setAttribute(JQL_RESULT_MAPPING_KEY, mapping);
