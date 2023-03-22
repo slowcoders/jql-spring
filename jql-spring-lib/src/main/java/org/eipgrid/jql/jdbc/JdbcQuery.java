@@ -4,6 +4,7 @@ import org.eipgrid.jql.JqlQuery;
 import org.eipgrid.jql.JqlSelect;
 import org.eipgrid.jql.OutputFormat;
 import org.eipgrid.jql.parser.JqlFilter;
+import org.eipgrid.jql.schema.QResultMapping;
 import org.springframework.data.domain.Sort;
 
 import java.util.List;

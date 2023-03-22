@@ -4,7 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.eipgrid.jql.schema.QColumn;
-import org.eipgrid.jql.jdbc.QResultMapping;
+import org.eipgrid.jql.schema.QResultMapping;
 import org.eipgrid.jql.schema.QSchema;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.ResultSetExtractor;

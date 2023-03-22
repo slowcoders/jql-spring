@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import org.eipgrid.jql.JqlRepository;
 import org.eipgrid.jql.jpa.JpaUtils;
 import org.eipgrid.jql.schema.QColumn;
-import org.eipgrid.jql.jdbc.QJoin;
+import org.eipgrid.jql.schema.QJoin;
 import org.eipgrid.jql.schema.QSchema;
 import org.eipgrid.jql.util.SourceWriter;
 

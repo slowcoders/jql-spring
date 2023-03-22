@@ -1,7 +1,7 @@
 package org.eipgrid.jql.jdbc.storage;
 
 import org.eipgrid.jql.jpa.JpaUtils;
-import org.eipgrid.jql.jdbc.QJoin;
+import org.eipgrid.jql.schema.QJoin;
 import org.eipgrid.jql.schema.QSchema;
 import org.eipgrid.jql.util.ClassUtils;
 

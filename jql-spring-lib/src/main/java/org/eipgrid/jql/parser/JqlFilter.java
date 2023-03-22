@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.eipgrid.jql.JqlSelect;
 import org.eipgrid.jql.schema.QColumn;
 import org.eipgrid.jql.schema.QSchema;
-import org.eipgrid.jql.jdbc.QResultMapping;
+import org.eipgrid.jql.schema.QResultMapping;
 
 import java.util.ArrayList;
 import java.util.List;

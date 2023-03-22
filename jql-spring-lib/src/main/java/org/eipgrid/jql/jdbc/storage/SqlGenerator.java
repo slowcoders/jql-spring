@@ -2,8 +2,8 @@ package org.eipgrid.jql.jdbc.storage;
 
 import org.eipgrid.jql.jdbc.JdbcQuery;
 import org.eipgrid.jql.JqlQuery;
-import org.eipgrid.jql.jdbc.QJoin;
-import org.eipgrid.jql.jdbc.QResultMapping;
+import org.eipgrid.jql.schema.QJoin;
+import org.eipgrid.jql.schema.QResultMapping;
 import org.eipgrid.jql.js.JsType;
 import org.eipgrid.jql.schema.*;
 import org.eipgrid.jql.parser.JqlFilter;
