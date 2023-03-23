@@ -1,5 +1,5 @@
 
-database: postgresql
+database: mariadb
 
 spring:
   sql.init:
