@@ -306,6 +306,7 @@ public abstract class SqlGenerator extends SqlConverter implements QueryGenerato
 
     public String createDeleteQuery(JqlFilter where) {
         sw.write("\nDELETE ");
+        this.resultMappings = Collections.emptyList();
         this.writeFrom(where);
         this.writeWhere(where);
         String sql = sw.reset();
@@ -345,10 +346,10 @@ public abstract class SqlGenerator extends SqlConverter implements QueryGenerato
         sw.replaceTrailingComma(")");
     }
 
-    public abstract String createInsertStatement(QSchema schema, Map<String, Object> entity, JqlEntitySet.InsertPolicy insertPolicy);
+    public abstract String createInsertStatement(JdbcSchema schema, Map<String, Object> entity, JqlEntitySet.InsertPolicy insertPolicy);
 
 
-    protected void writePreparedInsertStatementValueSet(List<QColumn> columns) {
+    protected void writePreparedInsertStatementValueSet(List<JdbcColumn> columns) {
         sw.writeln("(");
         for (QColumn col : columns) {
             sw.write(col.getPhysicalName()).write(", ");

@@ -6,6 +6,7 @@ import org.eipgrid.jql.jdbc.storage.SqlGenerator;
 import org.eipgrid.jql.schema.QColumn;
 import org.eipgrid.jql.schema.QSchema;
 
+import java.util.List;
 import java.util.Map;
 
 public class MySqlGenerator extends SqlGenerator {
@@ -20,7 +21,7 @@ public class MySqlGenerator extends SqlGenerator {
         sw.write("INTO ").write(schema.getTableName());
     }
 
-    public String createInsertStatement(QSchema schema, Map<String, Object> entity, JqlEntitySet.InsertPolicy insertPolicy) {
+    public String createInsertStatement(JdbcSchema schema, Map<String, Object> entity, JqlEntitySet.InsertPolicy insertPolicy) {
         this.writeInsertHeader(schema, insertPolicy);
 
         super.writeInsertStatementInternal(schema, entity);
@@ -48,7 +49,7 @@ public class MySqlGenerator extends SqlGenerator {
     public String prepareBatchInsertStatement(JdbcSchema schema, JqlEntitySet.InsertPolicy insertPolicy) {
         this.writeInsertHeader(schema, insertPolicy);
 
-        super.writePreparedInsertStatementValueSet(schema.getWritableColumns());
+        super.writePreparedInsertStatementValueSet((List)schema.getWritableColumns());
 
         switch (insertPolicy) {
             case UpdateOnConflict:
