@@ -1,7 +1,7 @@
 package org.eipgrid.jql.jdbc.mysql;
 
+import org.eipgrid.jql.jdbc.JdbcStorage;
 import org.eipgrid.jql.jdbc.storage.JdbcSchemaLoader;
-import org.eipgrid.jql.jdbc.storage.MetadataLoader;
 import org.eipgrid.jql.jdbc.storage.SqlGenerator;
 import org.eipgrid.jql.schema.QSchema;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -13,12 +13,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class MySqlSchemaLoader extends MetadataLoader {
+public class MySqlSchemaLoader extends JdbcSchemaLoader {
 
 
     private final JdbcTemplate jdbc;
 
-    public MySqlSchemaLoader(JdbcSchemaLoader storage, Connection conn) throws SQLException {
+    public MySqlSchemaLoader(JdbcStorage storage, Connection conn) throws SQLException {
         super(storage, conn.getCatalog(), false);
         this.jdbc = new JdbcTemplate(storage.getDataSource());
     }
@@ -71,7 +71,7 @@ public class MySqlSchemaLoader extends MetadataLoader {
         throw new RuntimeException("not implemented");
     }
 
-    protected SqlGenerator createSqlGenerator(boolean isNativeQuery) {
-        return new SqlGenerator(isNativeQuery);
+    public SqlGenerator createSqlGenerator(boolean isNativeQuery) {
+        return new MySqlGenerator(isNativeQuery);
     }
 }

@@ -1,7 +1,7 @@
 package org.eipgrid.jql.jdbc.postgresql;
 
+import org.eipgrid.jql.jdbc.JdbcStorage;
 import org.eipgrid.jql.jdbc.storage.JdbcSchemaLoader;
-import org.eipgrid.jql.jdbc.storage.MetadataLoader;
 import org.eipgrid.jql.jdbc.storage.SqlGenerator;
 import org.eipgrid.jql.schema.QSchema;
 
@@ -9,10 +9,10 @@ import java.sql.*;
 import java.util.HashMap;
 import java.util.Map;
 
-public class PGSchemaLoader extends MetadataLoader {
+public class PGSchemaLoader extends JdbcSchemaLoader {
 
 
-    public PGSchemaLoader(JdbcSchemaLoader storage, Connection conn) throws SQLException {
+    public PGSchemaLoader(JdbcStorage storage, Connection conn) throws SQLException {
         super(storage, conn.getSchema(), true);
     }
 
@@ -54,7 +54,7 @@ public class PGSchemaLoader extends MetadataLoader {
         throw new RuntimeException("not implemented");
     }
 
-    protected SqlGenerator createSqlGenerator(boolean isNativeQuery) {
-        return new SqlGenerator(isNativeQuery);
+    public SqlGenerator createSqlGenerator(boolean isNativeQuery) {
+        return new PGSqlGenerator(isNativeQuery);
     }
 }

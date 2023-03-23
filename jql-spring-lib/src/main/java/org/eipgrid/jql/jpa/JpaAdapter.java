@@ -3,7 +3,6 @@ package org.eipgrid.jql.jpa;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.eipgrid.jql.JqlQuery;
-import org.eipgrid.jql.JqlStorage;
 import org.eipgrid.jql.jdbc.JdbcRepositoryBase;
 import org.eipgrid.jql.jdbc.JdbcStorage;
 import org.eipgrid.jql.schema.QSchema;
@@ -37,14 +36,14 @@ public abstract class JpaAdapter<ENTITY, ID> extends JqlAdapter<ENTITY, ID> {
         return (JqlQuery<ENTITY>)repository.createQuery(jqlFilter);
     }
 
-    public ENTITY insert(Map<String, Object> dataSet) {
+    public ENTITY insert(Map<String, Object> dataSet, InsertPolicy insertPolicy) {
         ENTITY entity = super.convertToEntity(dataSet);
         ENTITY newEntity = this.insertOrUpdate(entity);
         return newEntity;
     }
 
-    public List<ID> insert(Collection<? extends Map<String, Object>> entities) {
-        List<ID> res = super.insert(entities);
+    public List<ID> insert(Collection<? extends Map<String, Object>> entities, InsertPolicy insertPolicy) {
+        List<ID> res = super.insert(entities, insertPolicy);
         return res;
     }
 

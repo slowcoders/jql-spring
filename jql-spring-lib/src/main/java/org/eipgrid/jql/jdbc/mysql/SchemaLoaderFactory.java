@@ -1,14 +1,14 @@
 package org.eipgrid.jql.jdbc.mysql;
 
+import org.eipgrid.jql.jdbc.JdbcStorage;
 import org.eipgrid.jql.jdbc.storage.JdbcSchemaLoader;
-import org.eipgrid.jql.jdbc.storage.MetadataLoader;
 
 import java.sql.Connection;
 import java.sql.SQLException;
 
-public class SchemaLoaderFactory implements JdbcSchemaLoader.SchemaLoaderFactory {
+public class SchemaLoaderFactory implements org.eipgrid.jql.jdbc.storage.SchemaLoaderFactory {
     @Override
-    public MetadataLoader createSchemaLoader(JdbcSchemaLoader storage, Connection conn) throws SQLException {
+    public JdbcSchemaLoader createSchemaLoader(JdbcStorage storage, Connection conn) throws SQLException {
         return new MySqlSchemaLoader(storage, conn);
     }
 }

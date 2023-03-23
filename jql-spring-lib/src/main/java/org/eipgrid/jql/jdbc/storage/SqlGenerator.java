@@ -1,5 +1,6 @@
 package org.eipgrid.jql.jdbc.storage;
 
+import org.eipgrid.jql.JqlEntitySet;
 import org.eipgrid.jql.jdbc.JdbcQuery;
 import org.eipgrid.jql.JqlQuery;
 import org.eipgrid.jql.schema.QJoin;
@@ -13,7 +14,7 @@ import org.springframework.data.domain.Sort;
 
 import java.util.*;
 
-public class SqlGenerator extends SqlConverter implements QueryGenerator {
+public abstract class SqlGenerator extends SqlConverter implements QueryGenerator {
 
     private final boolean isNativeQuery;
     private EntityFilter currentNode;
@@ -282,19 +283,21 @@ public class SqlGenerator extends SqlConverter implements QueryGenerator {
         if (limit > 0) sw.write("\nLIMIT " + limit);
     }
 
-
-    public String createUpdateQuery(JqlFilter where, Map<String, Object> updateSet) {
-        sw.write("\nUPDATE ").write(where.getTableName()).write(" ").write(where.getMappingAlias()).writeln(" SET");
-
+    protected void writeUpdateValueSet(QSchema schema, Map<String, Object> updateSet) {
         for (Map.Entry<String, Object> entry : updateSet.entrySet()) {
             String key = entry.getKey();
-            QColumn col = where.getSchema().getColumn(key);
+            QColumn col = schema.getColumn(key);
             Object value = BatchUpsert.convertJsonValueToColumnValue(col, entry.getValue());
             sw.write("  ");
             sw.write(key).write(" = ").writeValue(value);
             sw.write(",\n");
         }
         sw.replaceTrailingComma("\n");
+    }
+
+    public String createUpdateQuery(JqlFilter where, Map<String, Object> updateSet) {
+        sw.write("\nUPDATE ").write(where.getTableName()).write(" ").write(where.getMappingAlias()).writeln(" SET");
+        writeUpdateValueSet(where.getSchema(), updateSet);
         this.writeWhere(where);
         String sql = sw.reset();
         return sql;
@@ -323,11 +326,9 @@ public class SqlGenerator extends SqlConverter implements QueryGenerator {
         return sql;
     }
 
-    public String createInsertStatement(QSchema schema, Map entity, boolean ignoreConflict) {
-
+    protected void writeInsertStatementInternal(QSchema schema, Map entity) {
         Set<String> keys = ((Map<String, ?>)entity).keySet();
-        sw.writeln();
-        sw.write(getCommand(SqlConverter.Command.Insert)).write(" INTO ").write(schema.getTableName()).writeln("(");
+        sw.writeln("(");
         sw.incTab();
         for (String name : keys) {
             sw.write(schema.getColumn(name).getPhysicalName());
@@ -342,28 +343,22 @@ public class SqlGenerator extends SqlConverter implements QueryGenerator {
             sw.writeValue(v).write(", ");
         }
         sw.replaceTrailingComma(")");
-        if (ignoreConflict) {
-            sw.write("\nON CONFLICT DO NOTHING");
-        }
-        String sql = sw.reset();
-        return sql;
     }
 
-    public String prepareBatchInsertStatement(QSchema schema, boolean ignoreConflict) {
-        sw.writeln();
-        sw.write(getCommand(SqlConverter.Command.Insert)).write(" INTO ").write(schema.getTableName()).writeln("(");
-        for (QColumn col : schema.getWritableColumns()) {
+    public abstract String createInsertStatement(QSchema schema, Map<String, Object> entity, JqlEntitySet.InsertPolicy insertPolicy);
+
+
+    protected void writePreparedInsertStatementValueSet(List<QColumn> columns) {
+        sw.writeln("(");
+        for (QColumn col : columns) {
             sw.write(col.getPhysicalName()).write(", ");
         }
         sw.replaceTrailingComma("\n) VALUES (");
-        for (QColumn column : schema.getWritableColumns()) {
-            sw.write(column.isJsonNode() ? "?::jsonb, " : "?,");
+        for (QColumn column : columns) {
+            sw.write("?,");
         }
         sw.replaceTrailingComma(")");
-        if (ignoreConflict) {
-            sw.write("\nON CONFLICT DO NOTHING");
-        }
-        String sql = sw.reset();
-        return sql;
     }
+
+    public abstract String prepareBatchInsertStatement(JdbcSchema schema, JqlEntitySet.InsertPolicy insertPolicy);
 }

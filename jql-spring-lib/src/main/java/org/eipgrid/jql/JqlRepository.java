@@ -1,7 +1,6 @@
 package org.eipgrid.jql;
 
 import org.eipgrid.jql.schema.QSchema;
-import org.springframework.data.domain.Sort;
 
 import java.util.*;
 
@@ -30,7 +29,7 @@ public abstract class JqlRepository<ID> implements JqlEntitySet<Map, ID> {
         return schema.hasGeneratedId();
     }
 
-    public abstract List<ID> insert(Collection<? extends Map<String, Object>> entities);
+    public abstract List<ID> insert(Collection<? extends Map<String, Object>> entities, InsertPolicy insertPolicy);
 
     public abstract void update(Iterable<ID> idList, Map<String, Object> updateSet);
 
