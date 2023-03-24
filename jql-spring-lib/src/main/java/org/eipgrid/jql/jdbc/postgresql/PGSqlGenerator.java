@@ -86,6 +86,7 @@ public class PGSqlGenerator extends SqlGenerator {
         sw.write('(');
         writeJsonPath(node);
         if (valueType == JsType.Text) {
+            // -> returns json (or jsonb) and ->> returns text
             sw.write('>');
             valueType = null;
         }
