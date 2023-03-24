@@ -70,26 +70,17 @@ public class MySqlGenerator extends SqlGenerator {
     }
 
     protected void writeJsonPath(EntityFilter node, QColumn column, JsType valueType) {
-        if (use_json_value) sw.write("json_value(");
         writeJsonPath(node);
         sw.write(column.getJsonKey()).write('\'');
-        if (use_json_value) sw.write(')');
     }
 
-    static final boolean use_json_value = true;
     private void writeJsonPath(EntityFilter node) {
         if (node.isJsonNode()) {
             EntityFilter parent = node.getParentNode();
             writeJsonPath(parent);
+            sw.write(node.getMappingAlias());
             if (!parent.isJsonNode()) {
-                if (use_json_value) {
-                    sw.write("`").write(node.getMappingAlias()).write("`, '$");
-                } else {
-                    sw.write(node.getMappingAlias());
-                    sw.write("->'$");
-                }
-            } else {
-                sw.write(node.getMappingAlias());
+                sw.write("->'$");
             }
         } else {
             sw.write(node.getMappingAlias());
