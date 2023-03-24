@@ -21,7 +21,6 @@ services:
       - ./conf.d:/etc/mysql/conf.d
       - ./data/mariadb:/var/lib/mysql
       - ./mysql_init:/docker-entrypoint-initdb.d
-#    command: mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
     environment:
       MYSQL_HOST: localhost
       MYSQL_PORT: 3306
@@ -30,7 +29,6 @@ services:
       MYSQL_DATABASE: jql_demo
       MYSQL_USER: jql_demo
       MYSQL_PASSWORD: jql_demo
-      TZ: Asia/Seoul
 
   mysql:
     image: mysql:8.0
@@ -40,15 +38,13 @@ services:
       - ./conf.d:/etc/mysql/conf.d
       - ./data/mysql:/var/lib/mysql
       - ./mysql_init:/docker-entrypoint-initdb.d
+    command: mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
     environment:
-      MYSQL_HOST: localhost
-      MYSQL_PORT: 3306
       MYSQL_ROOT_PASSWORD:
       MYSQL_ALLOW_EMPTY_PASSWORD: true
       MYSQL_DATABASE: jql_demo
       MYSQL_USER: jql_demo
       MYSQL_PASSWORD: jql_demo
-      TZ: Asia/Seoul
 
   es:
     image: docker.elastic.co/elasticsearch/elasticsearch:8.6.2

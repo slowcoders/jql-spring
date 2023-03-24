@@ -5,6 +5,8 @@ import org.eipgrid.jql.jdbc.storage.JdbcColumn;
 import org.eipgrid.jql.jdbc.storage.JdbcSchema;
 import org.eipgrid.jql.jdbc.storage.SqlConverter;
 import org.eipgrid.jql.jdbc.storage.SqlGenerator;
+import org.eipgrid.jql.js.JsType;
+import org.eipgrid.jql.parser.EntityFilter;
 import org.eipgrid.jql.schema.QColumn;
 
 import java.util.List;
@@ -79,5 +81,62 @@ public class PGSqlGenerator extends SqlGenerator {
         String sql = sw.reset();
         return sql;
     }
+
+    protected void writeJsonPath(EntityFilter node, QColumn column, JsType valueType) {
+        sw.write('(');
+        writeJsonPath(node);
+        if (valueType == JsType.Text) {
+            sw.write('>');
+            valueType = null;
+        }
+        sw.writeQuoted(column.getJsonKey());
+        sw.write(')');
+        if (valueType != null) {
+            writeTypeCast(valueType);
+        }
+    }
+
+    private void writeTypeCast(JsType vf) {
+        switch (vf) {
+            case Boolean:
+                sw.write("::BOOLEAN");
+            case Integer:
+            case Float:
+                sw.write("::NUMERIC");
+                break;
+            case Date:
+                sw.write("::DATE");
+                break;
+            case Time:
+                sw.write("::TIME");
+                break;
+            case Timestamp:
+                sw.write("::TIMESTAMP");
+                break;
+            case Text:
+                sw.write("::TEXT");
+                break;
+            case Object:
+            case Array:
+                sw.write("::JSONB");
+                break;
+        }
+    }
+
+    private void writeJsonPath(EntityFilter node) {
+        if (node.isJsonNode()) {
+            EntityFilter parent = node.getParentNode();
+            writeJsonPath(parent);
+            if (parent.isJsonNode()) {
+                sw.writeQuoted(node.getMappingAlias());
+            } else {
+                sw.write(node.getMappingAlias());
+            }
+            sw.write("->");
+        } else {
+            sw.write(node.getMappingAlias()).write('.');
+        }
+    }
+
 
 }

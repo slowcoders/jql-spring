@@ -4,18 +4,8 @@ import { JqlApi } from '@/api/jqlApi'
 const jqlApi = new JqlApi('http://localhost:7007/api/jql/starwars/episode')
 describe('Insert/Delete test', () => {
 
-  const entities = [
-    {
-      title: "Tester1",
-      published: ("2023-03-23T10:30:00+00:00"),
-    }, {
-      title: "Tester2",
-      published: ("2023-03-23T10:30:00+00:00"),
-    }
-  ];
-  
-  async function clear_garbage() {
-    const garbage = (await jqlApi.find({ 'published@ge' : '2023-03-22'})).content;
+  async function clear_garbage(filter) {
+    const garbage = (await jqlApi.find(filter)).content;
     let ids = '';
     if (garbage.length > 0) {
       for (const episode of garbage) {
@@ -27,15 +17,19 @@ describe('Insert/Delete test', () => {
   }
 
   describe('single entity insert/delete test',  () => {
+    const episode_data = {
+      title: "Test-E1",
+      published: ("2023-03-23 10:30:00"),
+    }
     let episode;
 
     beforeAll(async () => {
-      await clear_garbage();
-      episode = await jqlApi.insert(entities[0]);
+      await clear_garbage({ title: episode_data.title });
+      episode = await jqlApi.insert(episode_data);
     });
 
     test('insert', async () => {
-      expect(episode.title).toBe(entities[0].title);
+      expect(episode.title).toBe(episode_data.title);
       // expect(new Date(episode.published)).toBe(entities[0].published)
     });
 
@@ -54,22 +48,32 @@ describe('Insert/Delete test', () => {
 
   describe('batch insert/delete test', () => {
 
+    const entity_data = [
+      {
+        title: "Test-E2-1",
+        published: ("2023-03-23 10:30:00"),
+      }, {
+        title: "Test-E2-2",
+        published: ("2023-03-23 10:30:00"),
+      }
+    ];
+
     let episode_map = {};
 
     beforeAll(async () => {
-      await clear_garbage();
+      await clear_garbage({ 'title@like': 'Test-E2-%' });
 
-      const idList = await jqlApi.insertAll(entities);
+      const idList = await jqlApi.insertAll(entity_data);
       const res = await jqlApi.find({title: idList})
       const episodes = res.content;
-      expect(episodes.length).toBe(entities.length);
+      expect(episodes.length).toBe(entity_data.length);
       for (const episode of episodes) {
         episode_map[episode.title] = episode;
       }
     })
 
     test('Insert new', async () => {
-      for (const episode of entities) {
+      for (const episode of entity_data) {
         expect(episode.title).toBe(episode_map[episode.title].title);
         // expect(episode.published).toBe(episode_map[idx].published)
       }
@@ -77,12 +81,12 @@ describe('Insert/Delete test', () => {
 
     test('should throw error on conflict', async () => {
       await expect(async () => {
-        const episode = await jqlApi.insertAll(entities);
+        const episode = await jqlApi.insertAll(entity_data);
       }).rejects.toThrowError();
     });
 
     test('Ignore on conflict', async () => {
-      const idList = await jqlApi.insertAll(entities, 'ignore');
+      const idList = await jqlApi.insertAll(entity_data, 'ignore');
       const res = await jqlApi.find({title: idList})
       const episodes = res.content;
       for (const episode of episodes) {
@@ -93,10 +97,10 @@ describe('Insert/Delete test', () => {
     });
 
     test('Insert or Update', async () => {
-      for (const episode of entities) {
+      for (const episode of entity_data) {
         episode.published = "2023-03-31 10:30:00"
       }
-      const idList = await jqlApi.insertAll(entities, 'update');
+      const idList = await jqlApi.insertAll(entity_data, 'update');
       const res = await jqlApi.find({title: idList})
       const episodes = res.content;
       for (const episode of episodes) {

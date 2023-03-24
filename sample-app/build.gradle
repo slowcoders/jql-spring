@@ -33,7 +33,7 @@ dependencies {
     /** select database driver */
     /*--------------------------------------------*/
     /* for MySql */
-    // implementation 'com.mysql:mysql-connector-j'
+     implementation 'com.mysql:mysql-connector-j'
     /* for MariaDB */
     implementation 'org.mariadb.jdbc:mariadb-java-client'
     /* for Postgres */
