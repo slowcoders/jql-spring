@@ -70,10 +70,13 @@ public abstract class JpaTable<ENTITY, ID> extends JqlAdapter<ENTITY, ID> {
 
         if (repository.hasGeneratedId()) {
             ID id = getEntityId(entity);
-            if (id != null && insertPolicy != InsertPolicy.IgnoreOnConflict) {
-                throw new IllegalArgumentException("Entity can not be created with generated id");
+            if (id != null) {
+                if (insertPolicy == InsertPolicy.IgnoreOnConflict) {
+                    return entity;
+                } else {
+                    throw new IllegalArgumentException("Entity can not be created with generated id");
+                }
             }
-            return entity;
         }
 
         newEntity = insertOrUpdate(entity);

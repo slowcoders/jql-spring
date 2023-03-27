@@ -57,7 +57,7 @@ public abstract class JdbcRepositoryBase<ID> extends JqlRepository<ID> {
     @Override
     public JqlQuery<Map> createQuery(Map<String, Object> filter) {
         JqlFilter jqlFilter = jqlParser.parse(schema, filter);
-        return new JdbcQuery(this, null, jqlFilter);
+        return new JdbcQuery(this, JqlSelect.of(filter), jqlFilter);
     }
 
 

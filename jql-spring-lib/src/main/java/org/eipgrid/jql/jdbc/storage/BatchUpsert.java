@@ -34,6 +34,7 @@ public class BatchUpsert<ID> implements BatchPreparedStatementSetterWithKeyHolde
 
     public static <ID> List<ID> execute(JdbcTemplate jdbc, JdbcSchema schema, Collection<? extends Map<String, Object>> entities, JqlEntitySet.InsertPolicy insertPolicy) {
         if (schema.hasGeneratedId()) {
+            // insertPolicy == JqlEntitySet.InsertPolicy.ErrorOnConflict
             for (Map<String, Object> entity : entities) {
                 if (schema.getEnityId(entity) != null) {
                     throw new IllegalArgumentException("Entity can not be created with generated id");
