@@ -2,7 +2,6 @@ package org.eipgrid.jql.util;
 
 import org.eipgrid.jql.jpa.JpaUtils;
 
-import javax.persistence.*;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.*;
 import java.util.*;
@@ -192,4 +191,7 @@ public class ClassUtils {
     }
 
 
+    public static String getPackageName(Class<?> klass) {
+        return klass.getPackage().getName();
+    }
 }

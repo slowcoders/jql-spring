@@ -1,12 +1,7 @@
 package org.eipgrid.jql.js;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import org.eipgrid.jql.util.ClassUtils;
-
-import javax.persistence.Embeddable;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
-import javax.persistence.MappedSuperclass;
 import java.lang.reflect.Field;
 import java.time.Instant;
 import java.time.OffsetDateTime;
@@ -76,7 +71,11 @@ public enum JsType {
         typeMap.put(String.class, JsType.Text);
     }
     
-    public static JsType of(Class javaType) {
+    public static JsType of(Class<?> javaType) {
+        if (javaType.isEnum()) {
+            return JsType.Integer;
+        }
+
         if (javaType.isArray() || java.util.Collection.class.isAssignableFrom(javaType)) {
             return JsType.Array;
         }

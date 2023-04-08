@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.eipgrid.jql.schema.QColumn;
 import org.eipgrid.jql.schema.QSchema;
 
+import java.lang.reflect.Field;
 import java.util.Collection;
 import java.util.Map;
 
@@ -98,7 +99,14 @@ public class JqlParser {
                 column = schema.getColumn(columnName);
                 if (value != null) {
                     Class<?> fieldType = column.getValueType();
+                    Field f = column.getMappedOrmField();
                     Class<?> accessType = op.getAccessType(value, fieldType);
+                    if (f != null && f.getType().isEnum() && Number.class.isAssignableFrom(accessType)) {
+                        // 1차 변경.
+                        value = om.convertValue(value, f.getType());
+                        value = ((Enum)value).ordinal();
+                    }
+//                    Class<?> fieldType = column.getValueType();
                     value = om.convertValue(value, accessType);
                 }
             }

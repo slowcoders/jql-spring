@@ -38,7 +38,7 @@ public abstract class JpaTable<ENTITY, ID> extends JqlAdapter<ENTITY, ID> {
 
     public ENTITY insert(Map<String, Object> dataSet, InsertPolicy insertPolicy) {
         ENTITY entity = super.convertToEntity(dataSet);
-        ENTITY newEntity = this.insertOrUpdate(entity);
+        ENTITY newEntity = this.insertEntity(entity, insertPolicy);
         return newEntity;
     }
 
@@ -70,10 +70,12 @@ public abstract class JpaTable<ENTITY, ID> extends JqlAdapter<ENTITY, ID> {
 
         if (repository.hasGeneratedId()) {
             ID id = getEntityId(entity);
-            if (id != null && insertPolicy != InsertPolicy.IgnoreOnConflict) {
+            if (id != null) {
+                if (insertPolicy != InsertPolicy.IgnoreOnConflict) {
+                    return entity;
+                }
                 throw new IllegalArgumentException("Entity can not be created with generated id");
             }
-            return entity;
         }
 
         newEntity = insertOrUpdate(entity);

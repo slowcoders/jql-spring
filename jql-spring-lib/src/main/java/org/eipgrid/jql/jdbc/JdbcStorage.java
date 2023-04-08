@@ -52,7 +52,7 @@ public class JdbcStorage extends JqlStorage {
             @Override
             public JdbcSchemaLoader doInConnection(Connection conn) throws SQLException, DataAccessException {
                 dbType = conn.getMetaData().getDatabaseProductName().toLowerCase();
-                String factoryName = JdbcStorage.class.getPackageName() + '.' + dbType + '.' + "SchemaLoaderFactory";
+                String factoryName = ClassUtils.getPackageName(JdbcStorage.class) + '.' + dbType + '.' + "SchemaLoaderFactory";
                 SchemaLoaderFactory factory = ClassUtils.newInstanceOrNull(factoryName);
                 return factory.createSchemaLoader(JdbcStorage.this, conn);
             }

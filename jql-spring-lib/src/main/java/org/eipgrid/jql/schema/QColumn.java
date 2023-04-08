@@ -6,15 +6,15 @@ import java.lang.reflect.Field;
 
 public abstract class QColumn {
     private final String physicalName;
-    private final Class valueType;
-    protected QColumn(String physicalName, Class valueType) {
+    private Class<?> valueType;
+    protected QColumn(String physicalName, Class<?> valueType) {
         this.physicalName = physicalName;
         this.valueType = valueType;
     }
 
     public abstract QSchema getSchema();
 
-    public final Class getValueType() {
+    public final Class<?> getValueType() {
         return valueType;
     }
 

@@ -212,7 +212,7 @@ public abstract class JdbcSchemaLoader {
 
     public TablePath getTablePath(Class<?> clazz) {
         Table table = clazz.getAnnotation(Table.class);
-        return table != null ? TablePath.of(table, this.schemaSupported) : null;
+        return table != null ? makeTablePath(table, this.schemaSupported) : null;
     }
 
     static class JoinData {
@@ -269,6 +269,21 @@ public abstract class JdbcSchemaLoader {
         return namespace == null ? table_name : namespace + '.' + table_name;
     }
 
+    public TablePath makeTablePath(Class<?> clazz, boolean useSchema) {
+        Table table = clazz.getAnnotation(Table.class);
+        return table != null ? makeTablePath(table, useSchema) : null;
+    }
+
+    public TablePath makeTablePath(Table table, boolean useSchema) {
+        String name = table.name();
+        String namespace = useSchema ? table.schema() : table.catalog();
+        if (namespace.length() == 0) {
+            namespace = this.defaultNamespace;
+        }
+        return TablePath.of(namespace, name);
+    }
+
+
     public static class TablePath {
         private final String catalog;
         private final String schema;
@@ -298,17 +313,6 @@ public abstract class JdbcSchemaLoader {
             return schema;
         }
 
-
-        public static TablePath of(Class<?> clazz, boolean useSchema) {
-            Table table = clazz.getAnnotation(Table.class);
-            return table != null ? of(table, useSchema) : null;
-        }
-
-        public static TablePath of(Table table, boolean useSchema) {
-            String name = table.name();
-            String namespace = useSchema ? table.schema() : table.catalog();
-            return of(namespace, name);
-        }
 
         public static TablePath of(String namespace, String simpleName) {
             namespace = namespace == null ? "" : namespace.trim();

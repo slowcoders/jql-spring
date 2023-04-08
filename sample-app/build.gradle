@@ -32,10 +32,10 @@ dependencies {
     /*--------------------------------------------*/
     /** select database driver */
     /*--------------------------------------------*/
-    /* for MySql */
-     implementation 'com.mysql:mysql-connector-j'
-    /* for MariaDB */
-    implementation 'org.mariadb.jdbc:mariadb-java-client'
+//    /* for MySql */
+//     implementation 'com.mysql:mysql-connector-j'
+//    /* for MariaDB */
+//    implementation 'org.mariadb.jdbc:mariadb-java-client'
     /* for Postgres */
     implementation 'org.postgresql:postgresql:42.3.6'
 

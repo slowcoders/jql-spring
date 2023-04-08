@@ -5,7 +5,6 @@ import org.eipgrid.jql.config.DefaultJqlConfig;
 import org.eipgrid.jql.jdbc.JdbcStorage;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.convert.ConversionService;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import javax.persistence.EntityManager;

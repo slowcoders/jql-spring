@@ -2,18 +2,12 @@ package org.eipgrid.jql.sample.jdbc.starwars.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Schema;
-import org.eipgrid.jql.JqlQuery;
-import org.eipgrid.jql.JqlStorage;
 import org.eipgrid.jql.JqlEntitySetController;
 import org.eipgrid.jql.sample.jdbc.starwars.service.SecuredCharacterService;
-import org.eipgrid.jql.util.KVEntity;
-import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 
 import javax.transaction.Transactional;
 import java.util.Collection;
-import java.util.Date;
-import java.util.HashMap;
 import java.util.Map;
 
 @RestController

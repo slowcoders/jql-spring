@@ -40,7 +40,7 @@ public class JpaPropertyFilter extends BeanPropertyWriter {
 
         JqlSelect.ResultMap mapping = (JqlSelect.ResultMap) prov.getAttribute(JQL_RESULT_MAPPING_KEY);
         if (mapping != null) {
-            boolean include_id = (Boolean) prov.getAttribute(JQL_INCLUDE_ID);
+            boolean include_id = prov.getAttribute(JQL_INCLUDE_ID) != null && (Boolean) prov.getAttribute(JQL_INCLUDE_ID);
             String p_name = this.getName();
             Object column = mapping.get(p_name);
             if (column == null) {

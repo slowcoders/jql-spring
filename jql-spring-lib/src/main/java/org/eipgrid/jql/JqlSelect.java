@@ -7,12 +7,16 @@ public class JqlSelect {
     public static final char LeafProperties = '*';
     public static final char PrimaryKeys = '0';
 
-    public static JqlSelect Auto = new JqlSelect((String) null);
+    public static JqlSelect Auto = new JqlSelect(true);
 
     private final ArrayList<String> propertyNames = new ArrayList<>();
 
-    private ResultMap resultMap = new ResultMap(false);
+    private final ResultMap resultMap = new ResultMap(false);
 
+    private JqlSelect(boolean selectAllLeaf) {
+        resultMap.selectAllLeaf = selectAllLeaf;
+        resultMap.selectAllPrimaryKeys = selectAllLeaf;
+    }
     private JqlSelect(String selectSpec) {
         parsePropertySelection(selectSpec);
     }
@@ -136,7 +140,7 @@ public class JqlSelect {
         }
 
         public boolean isIdSelected() {
-            return selectAllPrimaryKeys;
+            return selectAllLeaf || selectAllPrimaryKeys;
         }
 
         final void addProperty(String key) {
