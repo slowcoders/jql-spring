@@ -96,6 +96,9 @@ public class JdbcQuery<ENTITY> extends JqlQuery<ENTITY> {
 
     public List<QResultMapping> getResultMappings() {
         JqlSelect select = super.getSelection();
+        if (select == null) {
+            select = JqlSelect.Auto;
+        }
         filter.setSelectedProperties(select.getPropertyMap());
         return filter.getResultMappings();
     }
