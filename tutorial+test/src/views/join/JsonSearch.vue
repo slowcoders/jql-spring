@@ -16,18 +16,18 @@
 import LessonView from "@/components/LessonView";
 
 const sample_code = `
-const jql_select = AUTO;
+const hql_select = AUTO;
 
-const jql_1 = {
+const hql_1 = {
   "metadata": { "memo" : { "favoriteFood" : "kimchi" } }
 }
-const jql_2 = {
+const hql_2 = {
   "metadata": { "memo" : { "shoeSize@ge" : 270 } }
 }
 
 /* 아래의 주석을 한 줄씩 번갈아 해제하면서 검색 결과의 차이를 비교해 보십시오. */
-const jql_filter = jql_1;
-// const jql_filter = jql_2;
+const hql_filter = hql_1;
+// const hql_filter = hql_2;
 `
 
 export default {

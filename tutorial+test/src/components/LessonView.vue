@@ -97,7 +97,7 @@ import { ref } from "vue";
 import axios from "axios";
 
 const dbSchema = 'starwars';
-const baseUrl = 'http://localhost:7007/api/jql'
+const baseUrl = 'http://localhost:7007/api/hql'
 
 function count_lines(code) {
   const lines = code.split("\n");
@@ -200,7 +200,7 @@ export default {
     make_http_param() {
       const vm = this;
       let param = "select=";
-      param += (vm.selectedColumns?.length > 0) ? vm.selectedColumns : '${jql_select}'
+      param += (vm.selectedColumns?.length > 0) ? vm.selectedColumns : '${hql_select}'
       if (vm.first_sort?.length > 0) {
         param += '&sort=' + vm.first_sort
       }
@@ -218,8 +218,8 @@ const dbSchema = '${vm.selectedStorage}'
 const dbTable = '${vm.selectedTable}'
 const AUTO = ""
 ${vm.js_code}
-const jql_param = \`${vm.make_http_param()}\`
-this.http_post(\`\${baseUrl}/\${dbSchema}/\${dbTable}/find?\${jql_param}\`, jql_filter);
+const hql_param = \`${vm.make_http_param()}\`
+this.http_post(\`\${baseUrl}/\${dbSchema}/\${dbTable}/find?\${hql_param}\`, hql_filter);
 ${vm.schemaInfo}`
     },
 
@@ -292,12 +292,12 @@ ${vm.schemaInfo}`
       this.show_error_in_result_view(msg);
     },
 
-    http_post(url, jql) {
+    http_post(url, hql) {
       const vm = this;
       const options = {
         headers: { "Content-Type": `application/json`}
       }
-      axios.post(url, jql, options).then(res => {
+      axios.post(url, hql, options).then(res => {
         vm.cntTest ++;
         const header = "ex " + vm.cntTest + ") result: " + res.data.content.length + "\n\n";
         const results = JSON.stringify(res.data.content, null, 2);

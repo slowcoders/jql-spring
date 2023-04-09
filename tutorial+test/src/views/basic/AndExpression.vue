@@ -16,10 +16,10 @@
 import LessonView from "@/components/LessonView";
 
 const sample_code = `
-const jql_select = AUTO;
+const hql_select = AUTO;
 
 /* 아래의 주석을 한 줄씩 해제하면서 검색 결과의 차이를 비교해 보십시오. */
-const jql_filter = {
+const hql_filter = {
   //  "species": "Human",
   //  "height@gt": 1.2,
   //  "height@lt": 2.0,

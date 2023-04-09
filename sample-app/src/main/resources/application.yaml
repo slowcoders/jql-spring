@@ -32,7 +32,7 @@ springdoc:
 
 spring:
   datasource:
-    url: Enter-JDBC-URL ex) jdbc:postresql://localhost/jql_demo}
+    url: Enter-JDBC-URL ex) jdbc:postresql://localhost/hyper_jdbc}
     username: Enter-DB-UserName
     password: Enter-DB-Password
 

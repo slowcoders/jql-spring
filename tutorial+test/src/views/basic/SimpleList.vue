@@ -37,14 +37,14 @@ import LessonView from "@/components/LessonView";
 
 const sample_code = `
 /* 아래의 주석을 한 줄씩 해제하면서 검색 결과의 차이를 비교해 보십시오. */
-const jql_select = "0"
+const hql_select = "0"
   //             + ", *"
   //             + ", starship_.0"
   //             + ", episode_"
   //             + ", friend_.name"
   //             + ", friend_(name, friend_.name)"
 
-const jql_filter = {}
+const hql_filter = {}
 `
 
 export default {

@@ -11,7 +11,7 @@ create table if not exists starwars.character
     mass real,
     metadata jsonb
 );
-alter table starwars.character owner to jql_demo;
+alter table starwars.character owner to hyper_jdbc;
 
 --------------------------------------------------------
 create table if not exists starwars.character_friend_link
@@ -23,7 +23,7 @@ create table if not exists starwars.character_friend_link
         constraint fk_friend_id_2_pk_character__id
             references starwars.character
 );
-alter table starwars.character_friend_link owner to jql_demo;
+alter table starwars.character_friend_link owner to hyper_jdbc;
 create unique index if not exists character_id__friend_id__uindex
     on starwars.character_friend_link (character_id, friend_id);
 
@@ -36,7 +36,7 @@ create table if not exists starwars.episode
             primary key,
     published timestamp
 );
-alter table starwars.episode owner to jql_demo;
+alter table starwars.episode owner to hyper_jdbc;
 
 --------------------------------------------------------
 create table if not exists starwars.character_episode_link
@@ -48,7 +48,7 @@ create table if not exists starwars.character_episode_link
         constraint fk_episode_id_2_pk_episode__title
             references starwars.episode
 );
-alter table starwars.character_episode_link owner to jql_demo;
+alter table starwars.character_episode_link owner to hyper_jdbc;
 create unique index if not exists character_id__episode_id__uindex
     on starwars.character_episode_link (character_id, episode_id);
 
@@ -65,7 +65,7 @@ create table if not exists starwars.starship
     length real,
     name varchar(255) not null
 );
-alter table starwars.starship owner to jql_demo;
+alter table starwars.starship owner to hyper_jdbc;
 
 --------------------------------------------------------
 

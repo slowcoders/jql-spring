@@ -17,7 +17,7 @@
 import LessonView from "@/components/LessonView";
 
 const sample_code = `
-const jql_select = AUTO;
+const hql_select = AUTO;
 
 const normal_height = {
     "height@gt": 1.2,
@@ -59,11 +59,11 @@ const too_small_or_too_tall__AND__too_light_or_too_heavy__short_expression = {
 }
 
 /* 아래의 주석을 한 줄씩 번갈아 해제하면서 검색 결과의 차이를 비교해 보십시오. */
-const jql_filter = too_small_or_too_tall;
-// const jql_filter = too_light_or_too_heavy;
-// const jql_filter = too_small_or_too_heavy;
-// const jql_filter = too_small_or_too_tall__AND__too_light_or_too_heavy;
-// const jql_filter = too_small_or_too_tall__AND__too_light_or_too_heavy__short_expression;
+const hql_filter = too_small_or_too_tall;
+// const hql_filter = too_light_or_too_heavy;
+// const hql_filter = too_small_or_too_heavy;
+// const hql_filter = too_small_or_too_tall__AND__too_light_or_too_heavy;
+// const hql_filter = too_small_or_too_tall__AND__too_light_or_too_heavy__short_expression;
 
 `
 

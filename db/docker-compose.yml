@@ -9,9 +9,9 @@ services:
     volumes:
       - ./data/postgres:/var/lib/postgresql/data
     environment:
-      POSTGRES_USER: jql_demo
-      POSTGRES_PASSWORD: jql_demo
-      POSTGRES_DB: jql_demo
+      POSTGRES_USER: hyper_jdbc
+      POSTGRES_PASSWORD: hyper_jdbc
+      POSTGRES_DB: hyper_jdbc
 
   mariadb:
     image: mariadb:10
@@ -25,10 +25,10 @@ services:
       MYSQL_HOST: localhost
       MYSQL_PORT: 3306
       MYSQL_ROOT_PASSWORD:
-      MYSQL_ALLOW_EMPTY_PASSWORD: true
-      MYSQL_DATABASE: jql_demo
-      MYSQL_USER: jql_demo
-      MYSQL_PASSWORD: jql_demo
+      MYSQL_ALLOW_EMPTY_PASSWORD: "true"
+      MYSQL_DATABASE: hyper_jdbc
+      MYSQL_USER: hyper_jdbc
+      MYSQL_PASSWORD: hyper_jdbc
 
   mysql:
     image: mysql:8.0
@@ -41,10 +41,10 @@ services:
     command: mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
     environment:
       MYSQL_ROOT_PASSWORD:
-      MYSQL_ALLOW_EMPTY_PASSWORD: true
-      MYSQL_DATABASE: jql_demo
-      MYSQL_USER: jql_demo
-      MYSQL_PASSWORD: jql_demo
+      MYSQL_ALLOW_EMPTY_PASSWORD: "true"
+      MYSQL_DATABASE: hyper_jdbc
+      MYSQL_USER: hyper_jdbc
+      MYSQL_PASSWORD: hyper_jdbc
 
   es:
     image: docker.elastic.co/elasticsearch/elasticsearch:8.6.2
@@ -53,8 +53,8 @@ services:
       - 9300:9300
     environment:
       discovery.type: single-node
-      ELASTIC_PASSWORD: jql_demo
-      KIBANA_PASSWORD: jql_demo
+      ELASTIC_PASSWORD: hyper_jdbc
+      KIBANA_PASSWORD: hyper_jdbc
 
   kibana:
     image: docker.elastic.co/kibana/kibana:8.6.2
@@ -62,4 +62,4 @@ services:
       - 5601:5601
       - 9300:9300
     environment:
-      KIBANA_PASSWORD: jql_demo
+      KIBANA_PASSWORD: hyper_jdbc

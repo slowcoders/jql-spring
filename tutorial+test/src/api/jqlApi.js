@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const g_serviceUrl = 'http://localhost:7007/api/jql/starwars/';
+const g_serviceUrl = 'http://localhost:7007/api/hql/starwars/';
 
 function to_url_param(options) {
     if (!options) return "";
@@ -64,4 +64,4 @@ export class JqlApi {
     }
 }
 
-export const jqlApi = new JqlApi(g_serviceUrl + 'character');
+export const hqlApi = new JqlApi(g_serviceUrl + 'character');

@@ -5,7 +5,7 @@
     <h3>Essential Links</h3>
     <ul>
       <li><a href="http://localhost:7007/swagger-ui.html" target="_blank" rel="noopener">Swagger API</a></li>
-      <li><a href="https://github.com/slowcoders/jql-spring" target="_blank" rel="noopener">Sources</a></li>
+      <li><a href="https://github.com/slowcoders/hql-spring" target="_blank" rel="noopener">Sources</a></li>
     </ul>
   </div>
 </template>

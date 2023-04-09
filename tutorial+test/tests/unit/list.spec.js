@@ -1,5 +1,5 @@
 import {describe, expect, test} from '@jest/globals';
-import { jqlApi } from '@/api/jqlApi'
+import { hqlApi } from '@/api/hqlApi'
 
 function checkSorted(items, key, ascending) {
   let prev = items[0];
@@ -16,21 +16,21 @@ function checkSorted(items, key, ascending) {
 
 describe('Listing', () => {
   test('Find All', async () => {
-    const count = await jqlApi.count();
-    const res = await jqlApi.find();
+    const count = await hqlApi.count();
+    const res = await hqlApi.find();
     const characters = res.content;
     expect(characters.length).toBe(count);
   });
 
   test('Sort by name ascending order', async () => {
-    const res = await jqlApi.find(null, { sort: "name" });
+    const res = await hqlApi.find(null, { sort: "name" });
     const characters = res.content;
     expect(characters.length).toBeGreaterThan(0);
     checkSorted(characters, "name", true);
   });
 
   test('Sort by name descending order', async () => {
-    const res = await jqlApi.find(null, { sort: "-name" });
+    const res = await hqlApi.find(null, { sort: "-name" });
     const characters = res.content;
     expect(characters.length).toBeGreaterThan(0);
     checkSorted(characters, "name", false);
@@ -38,7 +38,7 @@ describe('Listing', () => {
 
   test('Limit & Sort', async () => {
     const limit = 5
-    const res = await jqlApi.find(null, { sort: "-name", limit });
+    const res = await hqlApi.find(null, { sort: "-name", limit });
     const characters = res.content;
     expect(characters.length).toBe(limit);
     checkSorted(characters, "name", false);
@@ -47,7 +47,7 @@ describe('Listing', () => {
   test('Pagination & Sort', async () => {
     const limit = 3;
     const page = 1;
-    const res = await jqlApi.find(null, { sort: "-name", limit, page });
+    const res = await hqlApi.find(null, { sort: "-name", limit, page });
     const characters = res.content;
     expect(characters.length).toBeLessThanOrEqual(limit);
     expect(res.metadata.totalElements).toBeGreaterThanOrEqual(limit);

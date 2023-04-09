@@ -1,5 +1,5 @@
 import {beforeAll, describe, expect, test} from '@jest/globals';
-import { jqlApi } from '@/api/jqlApi'
+import { hqlApi } from '@/api/hqlApi'
 
 describe('Comapre', () => {
   let ref;
@@ -8,14 +8,14 @@ describe('Comapre', () => {
     const filter = {
       "name": "Luke Skywalker"
     }
-    ref = await jqlApi.top(filter);
+    ref = await hqlApi.top(filter);
   })
 
   test('@is (default)', async () => {
     const filter = {
       "id": ref.id
     }
-    const res = await jqlApi.find(filter);
+    const res = await hqlApi.find(filter);
     const characters = res.content;
     expect(characters.length).toBe(1)
   });
@@ -24,7 +24,7 @@ describe('Comapre', () => {
     const filter = {
       "id@is": ref.id
     }
-    const res = await jqlApi.find(filter);
+    const res = await hqlApi.find(filter);
     const characters = res.content;
     expect(characters.length).toBe(1)
   });
@@ -33,8 +33,8 @@ describe('Comapre', () => {
     const filter = {
       "id@not": ref.id
     }
-    const count = await jqlApi.count();
-    const res = await jqlApi.find(filter);
+    const count = await hqlApi.count();
+    const res = await hqlApi.find(filter);
     const characters = res.content;
     expect(characters.length).toBe(count - 1)
   });
@@ -43,7 +43,7 @@ describe('Comapre', () => {
     const filter = {
       "id@le": ref.id
     }
-    const res = await jqlApi.find(filter);
+    const res = await hqlApi.find(filter);
     const characters = res.content;
     for (const character of characters) {
       expect(character.id).toBeLessThanOrEqual(ref.id)
@@ -54,7 +54,7 @@ describe('Comapre', () => {
     const filter = {
       "id@lt": ref.id
     }
-    const res = await jqlApi.find(filter);
+    const res = await hqlApi.find(filter);
     const characters = res.content;
     for (const character of characters) {
       expect(character.id).toBeLessThan(ref.id)
@@ -65,7 +65,7 @@ describe('Comapre', () => {
     const filter = {
       "id@ge": ref.id
     }
-    const res = await jqlApi.find(filter);
+    const res = await hqlApi.find(filter);
     const characters = res.content;
     for (const character of characters) {
       expect(character.id).toBeGreaterThanOrEqual(ref.id)
@@ -76,7 +76,7 @@ describe('Comapre', () => {
     const filter = {
       "id@gt": ref.id
     }
-    const res = await jqlApi.find(filter);
+    const res = await hqlApi.find(filter);
     const characters = res.content;
     for (const character of characters) {
       expect(character.id).toBeGreaterThan(ref.id)
@@ -88,7 +88,7 @@ describe('Comapre', () => {
       "id@ge": ref.id,
       "id@le": ref.id + 1
     }
-    const res = await jqlApi.find(filter);
+    const res = await hqlApi.find(filter);
     const characters = res.content;
     for (const character of characters) {
       expect(character.id).toBeGreaterThanOrEqual(ref.id)
@@ -100,7 +100,7 @@ describe('Comapre', () => {
     const filter = {
       "id@between": [ref.id, ref.id + 1]
     }
-    const res = await jqlApi.find(filter);
+    const res = await hqlApi.find(filter);
     const characters = res.content;
     expect(characters.length).toBeGreaterThanOrEqual(1);
     for (const character of characters) {
@@ -113,7 +113,7 @@ describe('Comapre', () => {
     const filter = {
       "id@not between": [ref.id, ref.id + 1]
     }
-    const res = await jqlApi.find(filter);
+    const res = await hqlApi.find(filter);
     const characters = res.content;
     expect(characters.length).toBeGreaterThanOrEqual(1);
     for (const character of characters) {
@@ -126,7 +126,7 @@ describe('Comapre', () => {
     const filter = {
       "name@like": name_start + "%"
     }
-    const res = await jqlApi.find(filter);
+    const res = await hqlApi.find(filter);
     const characters = res.content;
     expect(characters.length).toBeGreaterThanOrEqual(1);
     for (const character of characters) {
@@ -140,7 +140,7 @@ describe('Comapre', () => {
     const filter = {
       "name@not like": name_start + "%"
     }
-    const res = await jqlApi.find(filter);
+    const res = await hqlApi.find(filter);
     const characters = res.content;
     expect(characters.length).toBeGreaterThanOrEqual(1);
     for (const character of characters) {

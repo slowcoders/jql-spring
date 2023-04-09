@@ -1,18 +1,18 @@
 import {beforeAll, describe, expect, test} from '@jest/globals';
-import { jqlApi } from '@/api/jqlApi'
+import { hqlApi } from '@/api/hqlApi'
 
 describe('And operation', () => {
   let last_count;
   const filter = {}
 
   beforeAll(async () => {
-    const res = await jqlApi.find();
+    const res = await hqlApi.find();
     last_count = res.content.length;
 
-    const res2 = await jqlApi.find(null);
+    const res2 = await hqlApi.find(null);
     expect(res2.content.length).toBe(last_count)
 
-    const res3 = await jqlApi.find(filter);
+    const res3 = await hqlApi.find(filter);
     expect(res3.content.length).toBe(last_count)
   })
 
@@ -25,7 +25,7 @@ describe('And operation', () => {
     { attr: "metadata.homePlanet", value: "Tatooine" }
   ]) ('And 조건 테스트', async ({attr, value}) => {
     filter[attr] = value;
-    const res = await jqlApi.find(filter);
+    const res = await hqlApi.find(filter);
     const characters = res.content;
     expect(characters.length).toBeLessThan(last_count);
     last_count = characters.length;

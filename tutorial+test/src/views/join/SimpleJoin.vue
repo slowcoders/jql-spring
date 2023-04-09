@@ -17,9 +17,9 @@
 import LessonView from "@/components/LessonView";
 
 const sample_code = `
-const jql_select = AUTO;
+const hql_select = AUTO;
 
-const jql_filter = {
+const hql_filter = {
   "species" : "Human",
 
   /* 특정 JEDI 에피소드 출연진을 검색.

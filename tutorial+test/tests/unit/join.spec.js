@@ -1,5 +1,5 @@
 import {describe, expect, test} from '@jest/globals';
-import { jqlApi } from '@/api/jqlApi'
+import { hqlApi } from '@/api/hqlApi'
 
 describe('Join Test', () => {
   describe('Advanced Join', () => {
@@ -8,7 +8,7 @@ describe('Join Test', () => {
         "name" : "Han Solo",
         "friend_": {} 
       }      
-      const res = await jqlApi.find(filter);
+      const res = await hqlApi.find(filter);
       const characters = res.content;
       expect(characters.length).toBe(1);
       expect(characters[0].friend_.length).toBeGreaterThanOrEqual(3);
@@ -19,7 +19,7 @@ describe('Join Test', () => {
         "name" : "Han Solo",
         "friend_": { "starship_": { "length@ge": 10 } }
       }
-      const res = await jqlApi.find(filter);
+      const res = await hqlApi.find(filter);
       const characters = res.content;
       expect(characters.length).toBe(1);
       expect(characters[0].friend_.length).toBe(1);
