@@ -12,7 +12,7 @@ spring:
 
 
   datasource:
-    url: ${DB_URL:jdbc:${database}://localhost/hyper_jdbc}?useSSL=false&allowPublicKeyRetrieval=true
-    username: ${DB_USER:hyper_jdbc}
-    password: ${DB_PASS:hyper_jdbc}
+    url: ${DB_URL:jdbc:${database}://localhost/hql_demo}?useSSL=false&allowPublicKeyRetrieval=true
+    username: ${DB_USER:hql_demo}
+    password: ${DB_PASS:hql_demo}
 

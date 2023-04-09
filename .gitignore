@@ -2,10 +2,10 @@
 .idea
 .gradle
 derby.log
-hyper-jdbc-lib/.gradle
-hyper-jdbc-lib/build
-hyper-jdbc-lib/bin
-hyper-jdbc-lib/out
+hyperql-spring-lib/.gradle
+hyperql-spring-lib/build
+hyperql-spring-lib/bin
+hyperql-spring-lib/out
 sample-app/bin
 sample-app/build
 sample-app/target

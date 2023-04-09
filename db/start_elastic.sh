@@ -12,4 +12,4 @@ docker-compose exec es -it /usr/share/elasticsearch/bin/elasticsearch-reset-pass
 # docker-compose cp es:/usr/share/elasticsearch/config/certs/http_ca.crt $DIR/data/es
 
 # test certification
-# curl --cacert data/es/http_ca.crt -u elastic:hyper_jdbc https://localhost:9200
+# curl --cacert data/es/http_ca.crt -u elastic:hql_demo https://localhost:9200

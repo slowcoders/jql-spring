@@ -1,10 +1,10 @@
 -- create schema if not exists starwars;
 -- create schema if not exists starwars_jpa;
--- create schema if not exists hyper_jdbc;
+-- create schema if not exists hql_demo;
 --
--- GRANT ALL PRIVILEGES ON hyper_jdbc.* TO 'hyper_jdbc'@'%' IDENTIFIED BY 'hyper_jdbc';
--- GRANT ALL PRIVILEGES ON starwars.* TO 'hyper_jdbc'@'%' IDENTIFIED BY 'hyper_jdbc';
--- GRANT ALL PRIVILEGES ON starwars_jpa.* TO 'hyper_jdbc'@'%' IDENTIFIED BY 'hyper_jdbc';
+-- GRANT ALL PRIVILEGES ON hql_demo.* TO 'hql_demo'@'%' IDENTIFIED BY 'hql_demo';
+-- GRANT ALL PRIVILEGES ON starwars.* TO 'hql_demo'@'%' IDENTIFIED BY 'hql_demo';
+-- GRANT ALL PRIVILEGES ON starwars_jpa.* TO 'hql_demo'@'%' IDENTIFIED BY 'hql_demo';
 
 create table if not exists starwars.`character`
 (

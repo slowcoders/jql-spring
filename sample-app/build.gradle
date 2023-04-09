@@ -19,7 +19,7 @@ configurations {
 }
 
 dependencies {
-    implementation project(':hyper-jdbc-lib')
+    implementation project(':hyperql-spring-lib')
 
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-aop'
