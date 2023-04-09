@@ -121,9 +121,15 @@ public class JsUtil {
         sb.append("\n");
     }
     static String filler = "                ";
-    public static String getSimpleSchema(QSchema schema) {
+    public static String getSimpleSchema(QSchema schema, boolean withTableName) {
         StringBuilder sb = new StringBuilder();
-        sb.append("Type").append(filler.substring("Type".length())).append("Key(physical_column_name)\n");
+        if (withTableName) {
+            sb.append("==================================================\n");
+            sb.append("# ").append(schema.getSimpleName()).append("\n");
+        }
+        else {
+            sb.append("Type").append(filler.substring("Type".length())).append("Key(physical_column_name)\n");
+        }
         sb.append("--------------------------------------------------\n");
         sb.append("// Leaf properties //\n");
         List<QColumn> primitiveColumns = schema.getLeafColumns();

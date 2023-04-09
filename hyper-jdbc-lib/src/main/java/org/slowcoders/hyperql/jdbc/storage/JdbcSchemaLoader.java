@@ -148,7 +148,7 @@ public abstract class JdbcSchemaLoader {
             return;
         }
 
-        final TablePath tablePath = TablePath.of(pkSchema.getTableName());
+        final TablePath tablePath = makeTablePath(pkSchema.getTableName());
         DatabaseMetaData md = conn.getMetaData();
         ResultSet rs = md.getExportedKeys(tablePath.getCatalog(), tablePath.getSchema(), tablePath.getSimpleName());
 
@@ -283,6 +283,13 @@ public abstract class JdbcSchemaLoader {
         return TablePath.of(namespace, name);
     }
 
+    public TablePath makeTablePath(String tableName) {
+        tableName = tableName.toLowerCase();
+        int last_dot_p = tableName.lastIndexOf('.');
+        String namespace = last_dot_p > 0 ? tableName.substring(0, last_dot_p) : this.defaultNamespace;
+        String simpleName = tableName.substring(last_dot_p + 1);
+        return new TablePath(namespace, namespace, tableName, simpleName);
+    }
 
     public static class TablePath {
         private final String catalog;
@@ -322,12 +329,5 @@ public abstract class JdbcSchemaLoader {
             return new TablePath(namespace, namespace, qualifiedName, simpleName);
         }
 
-        public static TablePath of(String qualifiedName) {
-            qualifiedName = qualifiedName.toLowerCase();
-            int last_dot_p = qualifiedName.lastIndexOf('.');
-            String namespace = last_dot_p > 0 ? qualifiedName.substring(0, last_dot_p) : null;//getDefaultDBSchema();
-            String simpleName = qualifiedName.substring(last_dot_p + 1);
-            return new TablePath(namespace, namespace, qualifiedName, simpleName);
-        }
     }
 }

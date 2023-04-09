@@ -76,7 +76,7 @@ public abstract class JdbcMetadataController {
         QSchema schema = getSchema(namespace, tableName);
         String source;
         if (type == SchemaType.Simple) {
-            source = JsUtil.getSimpleSchema(schema);
+            source = JsUtil.getSimpleSchema(schema, false);
         }
         else if (type == SchemaType.Javascript) {
             source = JsUtil.createDDL(schema);

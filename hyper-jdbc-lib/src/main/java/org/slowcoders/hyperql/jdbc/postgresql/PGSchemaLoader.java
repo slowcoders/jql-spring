@@ -18,7 +18,7 @@ public class PGSchemaLoader extends JdbcSchemaLoader {
 
 
     public String getTableComment(String tableName) {
-        TablePath tablePath = TablePath.of(tableName);
+        TablePath tablePath = makeTablePath(tableName);
         String comment = null;
         // not implemented yet
         return comment;

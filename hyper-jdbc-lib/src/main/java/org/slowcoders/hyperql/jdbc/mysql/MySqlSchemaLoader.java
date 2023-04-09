@@ -25,7 +25,7 @@ public class MySqlSchemaLoader extends JdbcSchemaLoader {
 
 
     public String getTableComment(String tableName) {
-        TablePath tablePath = TablePath.of(tableName);
+        TablePath tablePath = makeTablePath(tableName);
         String comment = null;
         String sql = "SELECT table_name, table_comment\n" +
                 "FROM information_schema.tables\n" +

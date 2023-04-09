@@ -16,7 +16,7 @@ public class StarWarsJpaController extends HyperStorageController.CRUD implement
     private final StarWarsJpaService service;
 
     public StarWarsJpaController(StarWarsJpaService service, ConversionService conversionService) {
-        super(service.getStorage(), "starwars_jpa.", conversionService);
+        super(service.getStorage(), "starwars_jpa", conversionService);
         this.service = service;
     }
 

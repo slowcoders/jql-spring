@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class StarWarsController extends HyperStorageController.CRUD implements HyperStorageController.ListAll {
 
     public StarWarsController(HyperStorage storage, ConversionService conversionService) {
-        super(storage, "starwars.", conversionService);
+        super(storage, "starwars", conversionService);
     }
 
 }

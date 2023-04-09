@@ -200,13 +200,13 @@ public class JdbcStorage extends HyperStorage {
 
     public JdbcSchema loadSchema(String tableName) {
         initialize();
-        JdbcSchema schema = schemaMap.get(tableName);
+        JdbcSchemaLoader.TablePath tablePath = jdbcSchemaLoader.makeTablePath(tableName);
+        JdbcSchema schema = schemaMap.get(tablePath.getQualifiedName());
         if (schema == null) {
             Class<?> ormType = ormTypeMap.get(tableName);
             if (ormType == null) {
                 ormType = HyperRepository.rawEntityType;
             }
-            JdbcSchemaLoader.TablePath tablePath = JdbcSchemaLoader.TablePath.of(tableName);
             schema = loadSchema(tablePath, ormType);
         }
         return schema;

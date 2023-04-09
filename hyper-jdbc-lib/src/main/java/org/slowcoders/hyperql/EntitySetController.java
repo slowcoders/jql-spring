@@ -79,7 +79,7 @@ public interface EntitySetController<ID> extends RestTemplate {
             String schema = "<<No Schema>>";
             if (entitySet instanceof HyperRepository) {
                 HyperRepository repository = (HyperRepository) entitySet;
-                schema = JsUtil.getSimpleSchema(repository.getSchema());
+                schema = JsUtil.getSimpleSchema(repository.getSchema(), false);
             }
             return schema;
         }

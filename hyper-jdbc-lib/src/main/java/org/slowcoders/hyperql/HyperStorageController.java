@@ -2,6 +2,8 @@ package org.slowcoders.hyperql;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Schema;
+import org.slowcoders.hyperql.js.JsUtil;
+import org.slowcoders.hyperql.schema.QSchema;
 import org.springframework.core.convert.ConversionService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -9,10 +11,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.HttpServerErrorException;
 
 import javax.transaction.Transactional;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public interface HyperStorageController extends RestTemplate {
 
@@ -23,9 +22,9 @@ public interface HyperStorageController extends RestTemplate {
         private final String tableNamePrefix;
         private final ConversionService conversionService;
 
-        public Search(HyperStorage storage, String tableNamePrefix, ConversionService conversionService) {
+        public Search(HyperStorage storage, String namespace, ConversionService conversionService) {
             this.storage = storage;
-            this.tableNamePrefix = tableNamePrefix == null ? "" : tableNamePrefix;
+            this.tableNamePrefix = namespace == null ? "" : namespace + '.';
             this.conversionService = conversionService;
         }
 
@@ -36,6 +35,21 @@ public interface HyperStorageController extends RestTemplate {
         public EntitySet getEntitySet(String tableName) {
             String tablePath = tableNamePrefix + tableName;
             return storage.loadEntitySet(tablePath);
+        }
+
+        @GetMapping(path = "/schemas")
+        @Operation(summary = "전체 Schema")
+        @ResponseBody
+        public String listSchemas() {
+            List<String> tableNames = listTableNames();
+            StringBuilder sb = new StringBuilder();
+            for (String table: tableNames) {
+                QSchema schema1 = storage.loadSchema(tableNamePrefix + table);
+                String simpleSchema = JsUtil.getSimpleSchema(schema1, true);
+                sb.append(simpleSchema);
+                sb.append('\n');
+            }
+            return sb.toString();
         }
 
         @GetMapping(path = "/")
