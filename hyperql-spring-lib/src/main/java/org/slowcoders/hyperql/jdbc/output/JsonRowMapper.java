@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slowcoders.hyperql.schema.QColumn;
 import org.slowcoders.hyperql.schema.QResultMapping;
 import org.slowcoders.hyperql.schema.QSchema;
+import org.slowcoders.hyperql.util.KVEntity;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.support.JdbcUtils;
@@ -15,12 +16,12 @@ import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.*;
 
-public class JsonRowMapper implements ResultSetExtractor<List<Map>> {
+public class JsonRowMapper implements ResultSetExtractor<List<KVEntity>> {
     private final List<QResultMapping> resultMappings;
     private final ObjectMapper objectMapper;
     private ResultCache resultCacheRoot;
     private CachedEntity baseEntity = null;
-    private ArrayList<Map> results = new ArrayList<>();
+    private ArrayList<KVEntity> results = new ArrayList<>();
     private MappedColumn[] mappedColumns;
 
     public JsonRowMapper(List<QResultMapping> rowMappings, ObjectMapper objectMapper) {
@@ -29,7 +30,7 @@ public class JsonRowMapper implements ResultSetExtractor<List<Map>> {
     }
 
     @Override
-    public List<Map> extractData(ResultSet rs) throws SQLException, DataAccessException {
+    public List<KVEntity> extractData(ResultSet rs) throws SQLException, DataAccessException {
         this.mappedColumns = initMappedColumns(rs);
         this.resultCacheRoot = new ResultCache(0, resultMappings.size());
 
@@ -340,7 +341,7 @@ public class JsonRowMapper implements ResultSetExtractor<List<Map>> {
         private static int g_sno;
         private final int id;
 
-        private transient HashSet<CachedEntity> parents = new HashSet<>();
+        private final transient HashSet<CachedEntity> parents = new HashSet<>();
 
         CachedEntity(CachedEntity parent) {
             this.id = ++g_sno;

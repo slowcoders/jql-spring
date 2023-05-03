@@ -12,12 +12,12 @@ import java.util.List;
 public class JdbcQuery<ENTITY> extends HyperQuery<ENTITY> {
 
     //protected static int SingleEntityOffset = JqlQuery.SingleEntityOffset;
-    private final JdbcRepositoryBase table;
+    private final JdbcRepositoryBase<?> table;
     private final HyperFilter filter;
     /*package*/ String executedQuery;
     /*package*/ Object extraInfo;
 
-    public JdbcQuery(JdbcRepositoryBase table, HyperSelect select, HyperFilter filter) {
+    public JdbcQuery(JdbcRepositoryBase<?> table, HyperSelect select, HyperFilter filter) {
         assert (filter != null);
         this.table = table;
         this.filter = filter;

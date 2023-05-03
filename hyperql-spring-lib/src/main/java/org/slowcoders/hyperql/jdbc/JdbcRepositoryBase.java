@@ -2,8 +2,8 @@ package org.slowcoders.hyperql.jdbc;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slowcoders.hyperql.*;
-import org.slowcoders.hyperql.jdbc.storage.BatchUpsert;
 import org.slowcoders.hyperql.jdbc.output.ArrayRowMapper;
+import org.slowcoders.hyperql.jdbc.storage.BatchUpsert;
 import org.slowcoders.hyperql.jdbc.output.IdListMapper;
 import org.slowcoders.hyperql.jdbc.output.JsonRowMapper;
 import org.slowcoders.hyperql.jdbc.storage.JdbcSchema;
@@ -11,6 +11,7 @@ import org.slowcoders.hyperql.parser.HyperFilter;
 import org.slowcoders.hyperql.parser.HqlParser;
 import org.slowcoders.hyperql.schema.QColumn;
 import org.slowcoders.hyperql.schema.QSchema;
+import org.slowcoders.hyperql.util.KVEntity;
 import org.springframework.data.domain.Sort;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.ResultSetExtractor;
@@ -29,8 +30,6 @@ public abstract class JdbcRepositoryBase<ID> extends HyperRepository<ID> {
     protected HqlParser hqlParser;
 
     private final IdListMapper<ID> idListMapper = new IdListMapper<>(this);
-
-    private static final ArrayRowMapper arrayMapper = new ArrayRowMapper();
 
     protected JdbcRepositoryBase(JdbcStorage storage, QSchema schema) {
         super(schema);
@@ -62,8 +61,13 @@ public abstract class JdbcRepositoryBase<ID> extends HyperRepository<ID> {
 
 
     //    @Override
-    protected ResultSetExtractor<List<Map>> getColumnMapRowMapper(JdbcQuery query) {
-        return new JsonRowMapper(query.getResultMappings(), storage.getObjectMapper());
+    protected ResultSetExtractor<List<KVEntity>> getColumnMapRowMapper(JdbcQuery query, OutputFormat outputFormat) {
+        switch (outputFormat) {
+            case Object:
+                return new JsonRowMapper(query.getResultMappings(), storage.getObjectMapper());
+            default:
+                return new ArrayRowMapper(query.getResultMappings());
+        }
     }
 
     @Override
@@ -71,23 +75,26 @@ public abstract class JdbcRepositoryBase<ID> extends HyperRepository<ID> {
         return find(new JdbcQuery(this, select, HyperFilter.of(this.schema)).sort(sort));
     }
 
-    public List find(HyperQuery query0, OutputFormat outputFormat) {
-        return find(query0);
+    public List<Map> find(HyperQuery query0) {
+        return find(query0, OutputFormat.Object);
     }
 
-    //@Override
-    public List<Map> find(HyperQuery query0) {
+    public List find(HyperQuery query0, OutputFormat outputFormat) {
+        if (outputFormat == null) {
+            outputFormat = OutputFormat.Object;
+        }
         JdbcQuery query = (JdbcQuery) query0;
         Class jpaEntityType = query.getJpaEntityType();
-        boolean isRepeat = (query.getExecutedQuery() != null && (Boolean)query.getExtraInfo());
+        boolean isNative = jpaEntityType == null || outputFormat != OutputFormat.Object;
+        boolean isRepeat = (query.getExecutedQuery() != null && query.getExtraInfo() == (Boolean)isNative);
 
         String sql = isRepeat ? query.getExecutedQuery() :
-                storage.createQueryGenerator(jpaEntityType == null).createSelectQuery(query);
+                storage.createQueryGenerator(isNative).createSelectQuery(query);
         query.executedQuery = sql;
-        query.extraInfo = true;
+        query.extraInfo = isNative;
 
         List res;
-        if (jpaEntityType != null) {
+        if (!isNative) {
             Query jpaQuery = storage.getEntityManager().createQuery(sql);
             if (query.getLimit() > 1) {
                 jpaQuery = jpaQuery.setMaxResults(query.getLimit());
@@ -100,14 +107,7 @@ public abstract class JdbcRepositoryBase<ID> extends HyperRepository<ID> {
         else {
             sql = query.appendPaginationQuery(sql);
 
-            res = jdbc.query(sql, getColumnMapRowMapper(query));
-//            if (!RawEntityType.isAssignableFrom(entityType)) {
-//                ObjectMapper converter = storage.getObjectMapper();
-//                for (int i = res.size(); --i >= 0; ) {
-//                    T v = (T)converter.convertValue(res.get(i), entityType);
-//                    res.set(i, v);
-//                }
-//            }
+            res = jdbc.query(sql, getColumnMapRowMapper(query, outputFormat));
         }
         return res;
     }

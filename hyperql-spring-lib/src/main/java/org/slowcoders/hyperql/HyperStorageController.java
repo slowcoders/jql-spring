@@ -24,7 +24,7 @@ public interface HyperStorageController extends RestTemplate {
 
         public Search(HyperStorage storage, String namespace, ConversionService conversionService) {
             this.storage = storage;
-            this.tableNamePrefix = namespace == null ? "" : namespace + '.';
+            this.tableNamePrefix = namespace == null || namespace.length() == 0 ? "" : namespace + '.';
             this.conversionService = conversionService;
         }
 
@@ -86,6 +86,7 @@ public interface HyperStorageController extends RestTemplate {
         @ResponseBody
         public Response find(
                 @PathVariable("table") String table,
+                @RequestParam(value = "output", required = false) OutputFormat output,
                 @RequestParam(value = "select", required = false) String select,
                 @Schema(implementation = String.class)
                 @RequestParam(value = "sort", required = false) String[] orders,
@@ -94,7 +95,7 @@ public interface HyperStorageController extends RestTemplate {
                 @Schema(implementation = Object.class)
                 @RequestBody Map<String, Object> filter) {
             EntitySet enitities = getEntitySet(table);
-            return search(enitities, select, orders, page, limit, filter);
+            return search(enitities, output, select, orders, page, limit, filter);
         }
 
         @PostMapping(path = "/{table}/count")
@@ -128,13 +129,14 @@ public interface HyperStorageController extends RestTemplate {
         @ResponseBody
         default Response list(
                 @PathVariable("table") String table,
+                @RequestParam(value = "output", required = false) OutputFormat output,
                 @RequestParam(value = "select", required = false) String select,
                 @Schema(implementation = String.class)
                 @RequestParam(value = "sort", required = false) String[] orders,
                 @RequestParam(value = "page", required = false) Integer page,
                 @RequestParam(value = "limit", required = false) Integer limit) throws Exception {
             EntitySet enitities = getEntitySet(table);
-            return search(enitities, select, orders, page, limit, null);
+            return search(enitities, output, select, orders, page, limit, null);
         }
     }
 

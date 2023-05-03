@@ -50,6 +50,7 @@ public interface EntitySetController<ID> extends RestTemplate {
         @Transactional
         @ResponseBody
         public Response find(
+                @RequestParam(value = "output", required = false) OutputFormat output,
                 @RequestParam(value = "select", required = false) String select,
                 @Schema(implementation = String.class)
                 @RequestParam(value = "sort", required = false) String[] orders,
@@ -57,7 +58,7 @@ public interface EntitySetController<ID> extends RestTemplate {
                 @RequestParam(value = "limit", required = false) Integer limit,
                 @Schema(implementation = Object.class)
                 @RequestBody Map<String, Object> filter) {
-            return search(getEntitySet(), select, orders, page, limit, filter);
+            return search(getEntitySet(), output, select, orders, page, limit, filter);
         }
 
         @PostMapping(path = "/count")
@@ -92,12 +93,13 @@ public interface EntitySetController<ID> extends RestTemplate {
         @Transactional
         @ResponseBody
         default Response list(
+                @RequestParam(value = "output", required = false) OutputFormat output,
                 @RequestParam(value = "select", required = false) String select,
                 @Schema(implementation = String.class)
                 @RequestParam(value = "sort", required = false) String[] orders,
                 @RequestParam(value = "page", required = false) Integer page,
                 @RequestParam(value = "limit", required = false) Integer limit) throws Exception {
-            return search(getEntitySet(), select, orders, page, limit, null);
+            return search(getEntitySet(), output, select, orders, page, limit, null);
         }
     }
 
