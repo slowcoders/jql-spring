@@ -93,7 +93,7 @@ public interface RestTemplate {
     }
 
 
-    default Response search(EntitySet entitySet, String select, String[] orders, Integer page, Integer limit, Map<String, Object> filter) {
+    default Response search(EntitySet entitySet, OutputFormat outputFormat, String select, String[] orders, Integer page, Integer limit, Map<String, Object> filter) {
         HyperQuery query = entitySet.createQuery(filter);
         query.select(select);
         if (orders != null) query.sort(orders);
@@ -105,7 +105,7 @@ public interface RestTemplate {
             }
             needPagination = limit > 0 && query.getOffset() >= 0;
         }
-        List<Object> result = query.getResultList();
+        List<Object> result = query.getResultList(outputFormat);
         Response resp = Response.of(result, query.getSelection());
         resp.query = query;
         if (needPagination) {
