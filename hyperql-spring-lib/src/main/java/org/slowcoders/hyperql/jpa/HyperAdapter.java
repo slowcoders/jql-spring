@@ -40,8 +40,8 @@ public class HyperAdapter<ENTITY, ID> implements EntitySet<ENTITY, ID> {
     }
 
     @Override
-    public HyperQuery<ENTITY> createQuery(Map<String, Object> hqlFilter) {
-        return (HyperQuery<ENTITY>)repository.createQuery(hqlFilter);
+    public HyperQuery createQuery(Map<String, Object> hqlFilter) {
+        return (HyperQuery)repository.createQuery(hqlFilter);
     }
 
     @Override

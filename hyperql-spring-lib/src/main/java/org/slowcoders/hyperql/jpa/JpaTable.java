@@ -7,8 +7,8 @@ import org.slowcoders.hyperql.jdbc.JdbcRepositoryBase;
 import org.slowcoders.hyperql.jdbc.JdbcStorage;
 import org.slowcoders.hyperql.schema.QSchema;
 
-import javax.persistence.Cache;
-import javax.persistence.EntityManager;
+import jakarta.persistence.Cache;
+import jakarta.persistence.EntityManager;
 import java.io.IOException;
 import java.util.*;
 
@@ -32,8 +32,8 @@ public abstract class JpaTable<ENTITY, ID> extends HyperAdapter<ENTITY, ID> {
     }
 
     @Override
-    public HyperQuery<ENTITY> createQuery(Map<String, Object> hqlFilter) {
-        return (HyperQuery<ENTITY>)repository.createQuery(hqlFilter);
+    public HyperQuery createQuery(Map<String, Object> hqlFilter) {
+        return (HyperQuery)repository.createQuery(hqlFilter);
     }
 
     public ENTITY insert(Map<String, Object> dataSet, InsertPolicy insertPolicy) {

@@ -80,8 +80,8 @@ class TableFilter extends EntityFilter implements QResultMapping {
                 this.selectedColumns = Collections.EMPTY_LIST;
             }
             else {
-                this.selectedColumns = schema.getLeafColumns();
-                if (this.schema.getObjectColumns().size() > 0) {
+                this.selectedColumns = schema.getBaseColumns();
+                if (this.schema.getExtendedColumns().size() > 0) {
                     for (Map.Entry<String, EntityFilter> entry : this.subFilters.entrySet()) {
                         EntityFilter filter = entry.getValue();
                         if (filter.isJsonNode()) {
@@ -174,7 +174,7 @@ class TableFilter extends EntityFilter implements QResultMapping {
         QSchema schema = this.getSchema();
         boolean allLeaf = resultMap.isAllLeafSelected();
         if (allLeaf) {
-            this.selectedColumns = schema.getLeafColumns();
+            this.selectedColumns = schema.getBaseColumns();
         } else if (this.isArrayNode() || resultMap.isIdSelected()) {
             this.selectedColumns = schema.getPKColumns();
         }
@@ -183,7 +183,7 @@ class TableFilter extends EntityFilter implements QResultMapping {
             String key = entry.getKey();
             QColumn column = schema.findColumn(key);
             if (column != null) {
-                if (!allLeaf || column.isForeignKey() || column.isJsonNode()) {
+                if (!allLeaf || schema.getExtendedColumns().contains(column)) {
                     this.addSelectedColumn(column);
                 }
             }

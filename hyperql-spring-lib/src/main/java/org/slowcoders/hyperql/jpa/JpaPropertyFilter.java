@@ -3,12 +3,12 @@ package org.slowcoders.hyperql.jpa;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.ser.BeanPropertyWriter;
-import org.slowcoders.hyperql.LeafProperty;
+import org.slowcoders.hyperql.AutoSelectable;
 import org.slowcoders.hyperql.RestTemplate;
 import org.slowcoders.hyperql.HyperSelect;
 import org.slowcoders.hyperql.js.JsType;
 
-import javax.persistence.Id;
+import jakarta.persistence.Id;
 
 public class JpaPropertyFilter extends BeanPropertyWriter {
     private static final String JQL_RESULT_MAPPING_KEY = RestTemplate.Response.JpaFilter.JQL_RESULT_MAPPING_KEY;
@@ -22,8 +22,10 @@ public class JpaPropertyFilter extends BeanPropertyWriter {
         super(writer);
         this.writer = writer;
         this.isId = writer.getAnnotation(Id.class) != null;
-        this.isLeaf = writer.getAnnotation(LeafProperty.class) != null ||
-                JsType.of(writer.getType().getRawClass()).isPrimitive();
+        AutoSelectable select = writer.getAnnotation(AutoSelectable.class);
+        this.isLeaf = select != null ? select.value() :
+                JsType.of(writer.getType().getRawClass()).isPrimitive()
+                && this.getName().charAt(0) != '_';
     }
 
     @Override

@@ -5,7 +5,7 @@ import org.slowcoders.hyperql.schema.QJoin;
 import org.slowcoders.hyperql.schema.QSchema;
 import org.slowcoders.hyperql.util.ClassUtils;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.lang.reflect.Field;
 import java.util.*;
 

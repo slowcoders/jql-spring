@@ -2,8 +2,8 @@ package org.slowcoders.hyperql.util;
 
 import org.hibernate.transform.ResultTransformer;
 
-import javax.persistence.EntityManager;
-import javax.persistence.Query;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.Query;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;

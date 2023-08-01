@@ -8,7 +8,7 @@ import org.hibernate.annotations.DynamicInsert;
 import org.slowcoders.hyperql.jdbc.JdbcStorage;
 import org.slowcoders.hyperql.jpa.JpaTable;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.time.Duration;
 import java.time.LocalDateTime;
 

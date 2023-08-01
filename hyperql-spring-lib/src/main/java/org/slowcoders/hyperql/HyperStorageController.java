@@ -2,6 +2,7 @@ package org.slowcoders.hyperql;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.transaction.Transactional;
 import org.slowcoders.hyperql.js.JsUtil;
 import org.slowcoders.hyperql.schema.QSchema;
 import org.springframework.core.convert.ConversionService;
@@ -10,7 +11,7 @@ import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.HttpServerErrorException;
 
-import javax.transaction.Transactional;
+//import javax.transaction.Transactional;
 import java.util.*;
 
 public interface HyperStorageController extends RestTemplate {
@@ -190,7 +191,7 @@ public interface HyperStorageController extends RestTemplate {
             EntitySet enitities = getEntitySet(table);
             enitities.update(idList, properties);
             List<ENTITY> res = enitities.find(idList, select);
-            return (Collection<ENTITY>) Response.of(res, select);
+            return res;
         }
     }
 

@@ -16,16 +16,18 @@ public class JsUtil {
     public static String createDDL(QSchema schema) {
         StringBuilder sb = new StringBuilder();
         sb.append("const " + schema.getSimpleName() + "Schema_columns = [\n");
-        for (QColumn col : schema.getLeafColumns()) {
+        for (QColumn col : schema.getBaseColumns()) {
             dumpJSONSchema(sb, (JdbcColumn)col);
             sb.append(",\n");
         }
         sb.append("];\n");
 
-        if (!schema.getEntityJoinMap().isEmpty() || !schema.getObjectColumns().isEmpty()) {
+        if (!schema.getEntityJoinMap().isEmpty() || !schema.getExtendedColumns().isEmpty()) {
             sb.append("\nconst " + schema.getSimpleName() + "Schema_external_entities = [\n");
-            for (QColumn column : schema.getObjectColumns()) {
-                sb.append("  hql.externalJoin(\"").append(column.getJsonKey()).append("\", Object,\n");
+            for (QColumn column : schema.getExtendedColumns()) {
+                if (column.isForeignKey()) {
+                    sb.append("  hql.externalJoin(\"").append(column.getJsonKey()).append("\", Object,\n");
+                }
             }
             for (Map.Entry<String, QJoin> entry : schema.getEntityJoinMap().entrySet()) {
                 sb.append("  hql.externalJoin(\"").append(entry.getKey()).append("\", ");
@@ -132,7 +134,7 @@ public class JsUtil {
         }
         sb.append("--------------------------------------------------\n");
         sb.append("// Leaf properties //\n");
-        List<QColumn> primitiveColumns = schema.getLeafColumns();
+        List<QColumn> primitiveColumns = schema.getBaseColumns();
         for (QColumn col : primitiveColumns) {
             dumpColumnInfo(col, sb);
         }
@@ -143,10 +145,8 @@ public class JsUtil {
         if (hasRef) {
             sb.append("\n// Reference properties //\n");
 
-            for (QColumn col : schema.getReadableColumns()) {
-                if (!JsType.of(col.getValueType()).isPrimitive()) {
-                    dumpColumnInfo(col, sb);
-                }
+            for (QColumn col : schema.getExtendedColumns()) {
+                dumpColumnInfo(col, sb);
             }
 
             for (Map.Entry<String, QJoin> entry : schema.getEntityJoinMap().entrySet()) {

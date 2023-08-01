@@ -1,5 +1,6 @@
 package org.slowcoders.hyperql.schema;
 
+import org.slowcoders.hyperql.AutoSelectable;
 import org.slowcoders.hyperql.HyperRepository;
 import org.slowcoders.hyperql.HyperStorage;
 
@@ -12,8 +13,8 @@ public abstract class QSchema {
 
     private List<QColumn> pkColumns;
     private List<QColumn> allColumns;
-    private List<QColumn> leafColumns;
-    private List<QColumn> objectColumns;
+    private List<QColumn> baseColumns;
+    private List<QColumn> extendedColumns;
     private List<QColumn> writableColumns;
     private Map<String, QColumn> columnMap = new HashMap<>();
     private boolean hasGeneratedId;
@@ -50,12 +51,12 @@ public abstract class QSchema {
         return this.allColumns;
     }
 
-    public List<QColumn> getLeafColumns() {
-        return this.leafColumns;
+    public List<QColumn> getBaseColumns() {
+        return this.baseColumns;
     }
 
-    public List<QColumn> getObjectColumns() {
-        return this.objectColumns;
+    public List<QColumn> getExtendedColumns() {
+        return this.extendedColumns;
     }
 
     public List<QColumn> getWritableColumns() {
@@ -94,7 +95,7 @@ public abstract class QSchema {
         ArrayList<QColumn> writableColumns = new ArrayList<>();
         ArrayList<QColumn> allColumns = new ArrayList<>();
         ArrayList<QColumn> primitiveColumns = new ArrayList<>();
-        ArrayList<QColumn> objectColumns = new ArrayList<>();
+        ArrayList<QColumn> extendedColumns = new ArrayList<>();
         List<QColumn> pkColumns = new ArrayList<>();
 
         boolean hasGeneratedId = false;
@@ -110,8 +111,19 @@ public abstract class QSchema {
             }
 
             if (!ci.isForeignKey()) {
-                if (ci.isJsonNode()) {
-                    objectColumns.add(ci);
+                Field f = ci.getMappedOrmField();
+                AutoSelectable selectable;
+
+                boolean autoSelectable = !ci.isJsonNode();
+                if (f != null && (selectable = f.getAnnotation(AutoSelectable.class)) != null) {
+                    autoSelectable = selectable.value();
+                } else if (autoSelectable) {
+                    String name = (f != null) ? f.getName() : ci.getPhysicalName();
+                    autoSelectable = name.charAt(0) != '_';
+                }
+
+                if (!autoSelectable) {
+                    extendedColumns.add(ci);
                 }
                 else {
                     primitiveColumns.add(ci);
@@ -126,8 +138,8 @@ public abstract class QSchema {
         this.hasGeneratedId = hasGeneratedId;
         this.allColumns = Collections.unmodifiableList(allColumns);
         this.writableColumns = Collections.unmodifiableList(writableColumns);
-        this.leafColumns = Collections.unmodifiableList(primitiveColumns);
-        this.objectColumns = objectColumns.size() == 0 ? Collections.EMPTY_LIST : Collections.unmodifiableList(objectColumns);
+        this.baseColumns = Collections.unmodifiableList(primitiveColumns);
+        this.extendedColumns = extendedColumns.size() == 0 ? Collections.EMPTY_LIST : Collections.unmodifiableList(extendedColumns);
         this.initJsonKeys(ormType);
         if (pkColumns.size() == 0) {
             pkColumns = this.allColumns;

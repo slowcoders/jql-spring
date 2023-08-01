@@ -6,7 +6,7 @@ import org.slowcoders.hyperql.schema.QJoin;
 import org.slowcoders.hyperql.schema.QSchema;
 import org.springframework.dao.DataAccessException;
 
-import javax.persistence.Table;
+import jakarta.persistence.Table;
 import java.sql.*;
 import java.util.*;
 

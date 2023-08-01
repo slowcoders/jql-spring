@@ -16,7 +16,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.ResultSetExtractor;
 
-import javax.persistence.Query;
+import jakarta.persistence.Query;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -54,7 +54,7 @@ public abstract class JdbcRepositoryBase<ID> extends HyperRepository<ID> {
     }
 
     @Override
-    public HyperQuery<Map> createQuery(Map<String, Object> filter) {
+    public HyperQuery createQuery(Map<String, Object> filter) {
         HyperFilter hqlFilter = hqlParser.parse(schema, filter);
         return new JdbcQuery(this, HyperSelect.of(filter), hqlFilter);
     }

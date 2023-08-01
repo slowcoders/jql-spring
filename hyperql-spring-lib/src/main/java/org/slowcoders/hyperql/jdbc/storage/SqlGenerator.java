@@ -247,7 +247,7 @@ public abstract class SqlGenerator extends SqlConverter implements QueryGenerato
             QColumn col = schema.getColumn(key);
             Object value = BatchUpsert.convertJsonValueToColumnValue(col, entry.getValue());
             sw.write("  ");
-            sw.write(key).write(" = ").writeValue(value);
+            sw.write(col.getPhysicalName()).write(" = ").writeValue(value);
             sw.write(",\n");
         }
         sw.replaceTrailingComma("\n");

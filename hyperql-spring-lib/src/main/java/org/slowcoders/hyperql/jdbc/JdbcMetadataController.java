@@ -36,11 +36,11 @@ public abstract class JdbcMetadataController {
                                 @PathVariable("table") String tableName) throws Exception {
         QSchema schema = getSchema(namespace, tableName);
         ArrayList<String> columns = new ArrayList<>();
-        for (QColumn column : schema.getLeafColumns()) {
+        for (QColumn column : schema.getBaseColumns()) {
             columns.add(column.getJsonKey());
         }
         ArrayList<String> refs = new ArrayList<>();
-        for (QColumn column : schema.getObjectColumns()) {
+        for (QColumn column : schema.getExtendedColumns()) {
             refs.add(column.getJsonKey());
         }
         for (Map.Entry<String, QJoin> entry : schema.getEntityJoinMap().entrySet()) {

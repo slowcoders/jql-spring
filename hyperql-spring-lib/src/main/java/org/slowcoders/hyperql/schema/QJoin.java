@@ -4,7 +4,7 @@ import org.slowcoders.hyperql.jdbc.storage.JoinConstraint;
 import org.slowcoders.hyperql.jpa.JpaUtils;
 import org.slowcoders.hyperql.util.ClassUtils;
 
-import javax.persistence.Entity;
+import jakarta.persistence.Entity;
 import java.lang.reflect.Field;
 
 public class QJoin {

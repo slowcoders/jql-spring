@@ -72,4 +72,5 @@ public abstract class HyperQuery<ENTITY> {
     }
 
     public String getExecutedQuery() { return null; }
+
 }

@@ -2,7 +2,7 @@ package org.slowcoders.hyperql.jpa;
 
 import org.slowcoders.hyperql.util.ClassUtils;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;

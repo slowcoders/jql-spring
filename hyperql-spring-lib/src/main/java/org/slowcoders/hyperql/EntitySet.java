@@ -12,7 +12,7 @@ public interface EntitySet<ENTITY, ID> {
         UpdateOnConflict,
     }
 
-    HyperQuery<ENTITY> createQuery(Map<String, Object> hqlFilter);
+    HyperQuery createQuery(Map<String, Object> hqlFilter);
 
     List<ENTITY> findAll(HyperSelect select, Sort sort);
 
