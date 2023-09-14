@@ -110,10 +110,10 @@ class TableFilter extends EntityFilter implements QResultMapping {
         if (subQuery == null) {
             if (join != null) {
                 subQuery = new TableFilter(this, join);
+                this.hasJoinedChildMapping = true;
             } else {
                 subQuery = new JsonFilter(this, jsonColumn.getPhysicalName());
                 this.addSelectedColumn(jsonColumn);
-                this.hasJoinedChildMapping = true;
             }
             subFilters.put(key, subQuery);
         }
