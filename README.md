@@ -1,7 +1,7 @@
 ## How to run tutorials
 
 ### System Requirements
-* jdk version 11 or later
+* jdk version 17 or later
 * docker-compose
 * node.js version 14 or later
 * npm version 8 or later

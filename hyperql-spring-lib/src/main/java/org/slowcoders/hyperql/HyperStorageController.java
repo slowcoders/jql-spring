@@ -11,7 +11,6 @@ import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.HttpServerErrorException;
 
-//import jakarta.transaction.Transactional;
 import java.util.*;
 
 public interface HyperStorageController extends RestTemplate {
