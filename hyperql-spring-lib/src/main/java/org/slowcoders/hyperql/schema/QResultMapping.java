@@ -9,6 +9,9 @@ public interface QResultMapping {
 
     boolean hasChildMappings();
 
+
+    default boolean hasJoinedChildMapping() { return false; }
+
     String getMappingAlias();
 
     QJoin getEntityJoin();

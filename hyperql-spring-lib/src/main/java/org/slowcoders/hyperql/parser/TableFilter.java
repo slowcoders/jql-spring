@@ -18,6 +18,7 @@ class TableFilter extends EntityFilter implements QResultMapping {
     private boolean hasArrayDescendant;
 
     private static final String[] emptyPath = new String[0];
+    private boolean hasJoinedChildMapping;
 
     TableFilter(QSchema schema, String mappingAlias) {
         super(null);
@@ -48,6 +49,8 @@ class TableFilter extends EntityFilter implements QResultMapping {
     }
 
     public boolean hasChildMappings() { return !subFilters.isEmpty(); }
+
+    public boolean hasJoinedChildMapping() { return this.hasJoinedChildMapping; }
 
     @Override
     public String getMappingAlias() {
@@ -110,6 +113,7 @@ class TableFilter extends EntityFilter implements QResultMapping {
             } else {
                 subQuery = new JsonFilter(this, jsonColumn.getPhysicalName());
                 this.addSelectedColumn(jsonColumn);
+                this.hasJoinedChildMapping = true;
             }
             subFilters.put(key, subQuery);
         }
@@ -118,7 +122,7 @@ class TableFilter extends EntityFilter implements QResultMapping {
 
     private void addSelectedColumn(QColumn column) {
         if (this.selectedColumns == null) {
-            this.selectedColumns = isArrayNode() ? new ArrayList<>(schema.getPKColumns()) : new ArrayList<>();
+            this.selectedColumns = isArrayNode() && hasJoinedChildMapping() ? new ArrayList<>(schema.getPKColumns()) : new ArrayList<>();
         }
 
         if (this.selectedColumns.contains(column)) return;
@@ -175,7 +179,7 @@ class TableFilter extends EntityFilter implements QResultMapping {
         boolean allLeaf = resultMap.isAllLeafSelected();
         if (allLeaf) {
             this.selectedColumns = schema.getBaseColumns();
-        } else if (this.isArrayNode() || resultMap.isIdSelected()) {
+        } else if ((this.isArrayNode() && this.hasJoinedChildMapping()) || resultMap.isIdSelected()) {
             this.selectedColumns = schema.getPKColumns();
         }
 

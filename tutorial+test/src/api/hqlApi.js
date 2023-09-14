@@ -19,7 +19,7 @@ const http_options = {
     }
 }
 
-export class JqlApi {
+export class HqlApi {
     constructor(baseUrl) {
         this.baseUrl = baseUrl;
     }
@@ -36,6 +36,13 @@ export class JqlApi {
         filter = filter ? filter : {}
         const response = await axios.post(url, filter, http_options);
         return response.data;
+        // if (!content) {
+        //     return response.data;
+        // }
+        // if (metadata) {
+        //     content.$ = metadata;
+        // }
+        // return content;
     }
 
     async insert(entity, conflictPolicy) {
@@ -64,4 +71,4 @@ export class JqlApi {
     }
 }
 
-export const hqlApi = new JqlApi(g_serviceUrl + 'character');
+export const hqlApi = new HqlApi(g_serviceUrl + 'character');

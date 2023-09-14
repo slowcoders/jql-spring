@@ -98,6 +98,11 @@ public class HyperAdapter<ENTITY, ID> implements EntitySet<ENTITY, ID> {
     }
 
     @Override
+    public void update(Map<String, Object> filter, Map<String, Object> properties) {
+        repository.update(filter, properties);
+    }
+
+    @Override
     public void update(ID id, Map<String, Object> updateSet) {
         EntitySet.super.update(id, updateSet);
     }

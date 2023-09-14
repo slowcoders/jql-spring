@@ -8,7 +8,7 @@
 
 ### Build tutorial sample application
 ```
-sh build_and_run_totorial.sh
+sh build_and_run_tutorial.sh
 ```
 
 ### See tutorial

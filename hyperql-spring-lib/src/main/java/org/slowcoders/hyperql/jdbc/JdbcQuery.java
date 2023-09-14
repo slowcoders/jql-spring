@@ -78,22 +78,6 @@ public class JdbcQuery<ENTITY> extends HyperQuery<ENTITY> {
         return extraInfo;
     }
 
-    public String appendPaginationQuery(String sql) {
-        String s = "";
-        long limit = getLimit();
-        if (limit > 0 || getOffset() > 0) {
-            if (limit <= 0) limit = Long.MAX_VALUE;
-            s += "\nLIMIT " + limit;
-        }
-        if (getOffset() > 0) {
-            s += "\nOFFSET " + getOffset();
-        }
-        if (s.length() > 0) {
-            sql += s;
-        }
-        return sql;
-    }
-
     public List<QResultMapping> getResultMappings() {
         HyperSelect select = super.getSelection();
         if (select == null) {

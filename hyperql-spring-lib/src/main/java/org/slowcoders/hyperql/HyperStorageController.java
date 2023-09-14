@@ -11,7 +11,7 @@ import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.HttpServerErrorException;
 
-//import javax.transaction.Transactional;
+//import jakarta.transaction.Transactional;
 import java.util.*;
 
 public interface HyperStorageController extends RestTemplate {
@@ -93,10 +93,11 @@ public interface HyperStorageController extends RestTemplate {
                 @RequestParam(value = "sort", required = false) String[] orders,
                 @RequestParam(value = "page", required = false) Integer page,
                 @RequestParam(value = "limit", required = false) Integer limit,
+                @RequestParam(value = "distinct", required = false) Boolean distinct,
                 @Schema(implementation = Object.class)
                 @RequestBody Map<String, Object> filter) {
             EntitySet enitities = getEntitySet(table);
-            return search(enitities, output, select, orders, page, limit, filter);
+            return search(enitities, output, select, orders, page, limit, filter, distinct);
         }
 
         @PostMapping(path = "/{table}/count")
@@ -135,9 +136,11 @@ public interface HyperStorageController extends RestTemplate {
                 @Schema(implementation = String.class)
                 @RequestParam(value = "sort", required = false) String[] orders,
                 @RequestParam(value = "page", required = false) Integer page,
-                @RequestParam(value = "limit", required = false) Integer limit) throws Exception {
+                @RequestParam(value = "limit", required = false) Integer limit,
+                @RequestParam(value = "distinct", required = false) Boolean distinct
+        ) throws Exception {
             EntitySet enitities = getEntitySet(table);
-            return search(enitities, output, select, orders, page, limit, null);
+            return search(enitities, output, select, orders, page, limit, null, distinct);
         }
     }
 

@@ -108,33 +108,34 @@ public abstract class QSchema {
             }
             else {
                 allColumns.add(ci);
+                if (!ci.isForeignKey()) {
+                    Field f = ci.getMappedOrmField();
+                    AutoSelectable selectable;
+
+                    boolean autoSelectable = !ci.isJsonNode();
+                    if (f != null && (selectable = f.getAnnotation(AutoSelectable.class)) != null) {
+                        autoSelectable = selectable.value();
+                    } else if (autoSelectable) {
+                        String name = (f != null) ? f.getName() : ci.getPhysicalName();
+                        autoSelectable = name.charAt(0) != '_';
+                    }
+
+                    if (!autoSelectable) {
+                        extendedColumns.add(ci);
+                    }
+                    else {
+                        primitiveColumns.add(ci);
+                    }
+                }
             }
 
-            if (!ci.isForeignKey()) {
-                Field f = ci.getMappedOrmField();
-                AutoSelectable selectable;
-
-                boolean autoSelectable = !ci.isJsonNode();
-                if (f != null && (selectable = f.getAnnotation(AutoSelectable.class)) != null) {
-                    autoSelectable = selectable.value();
-                } else if (autoSelectable) {
-                    String name = (f != null) ? f.getName() : ci.getPhysicalName();
-                    autoSelectable = name.charAt(0) != '_';
-                }
-
-                if (!autoSelectable) {
-                    extendedColumns.add(ci);
-                }
-                else {
-                    primitiveColumns.add(ci);
-                }
-                if (!ci.isReadOnly()) {
-                    writableColumns.add(ci);
-                }
+            if (!ci.isForeignKey() && !ci.isReadOnly()) {
+                writableColumns.add(ci);
             }
         }
 
         allColumns.addAll(0, pkColumns);
+        primitiveColumns.addAll(0, pkColumns);
         this.hasGeneratedId = hasGeneratedId;
         this.allColumns = Collections.unmodifiableList(allColumns);
         this.writableColumns = Collections.unmodifiableList(writableColumns);

@@ -105,13 +105,27 @@ public abstract class JdbcRepositoryBase<ID> extends HyperRepository<ID> {
             res = jpaQuery.getResultList();
         }
         else {
-            sql = query.appendPaginationQuery(sql);
-
+            String s = getPaginationQuery(query);
+            if (s.length() > 0) {
+                sql += s;
+            }
             res = jdbc.query(sql, getColumnMapRowMapper(query, outputFormat));
         }
         return res;
     }
 
+    static String getPaginationQuery(HyperQuery query) {
+        String s = "";
+        long limit = query.getLimit();
+        if (limit > 0 || query.getOffset() > 0) {
+            if (limit <= 0) limit = Long.MAX_VALUE;
+            s += "\nLIMIT " + limit;
+        }
+        if (query.getOffset() > 0) {
+            s += "\nOFFSET " + query.getOffset();
+        }
+        return s;
+    }
 
     public long count(JdbcQuery query) {
         HyperFilter filter = query == null ? null : query.getFilter();
@@ -146,6 +160,13 @@ public abstract class JdbcRepositoryBase<ID> extends HyperRepository<ID> {
     public void update(Iterable<ID> idList, Map<String, Object> updateSet) {
         HyperFilter filter = HyperFilter.of(schema, idList);
         String sql = storage.createQueryGenerator().createUpdateQuery(filter, updateSet);
+        jdbc.update(sql);
+    }
+
+    @Override
+    public void update(Map<String, Object> filter, Map<String, Object> updateSet) {
+        HyperFilter hyperFilter = HyperFilter.of(schema, filter);
+        String sql = storage.createQueryGenerator().createUpdateQuery(hyperFilter, updateSet);
         jdbc.update(sql);
     }
 

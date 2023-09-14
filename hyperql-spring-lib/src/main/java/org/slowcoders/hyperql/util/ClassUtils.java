@@ -8,7 +8,7 @@ import java.util.*;
 
 public class ClassUtils {
     private static HashMap<Class<?>, Object[]> emptyArrays = new HashMap<>();
-    private static Class jpaColumnAnnotationClass = findClassOrNull("javax.persistence.Column");
+    private static Class jpaColumnAnnotationClass = findClassOrNull("jakarta.persistence.Column");
 
     public static Collection asCollection(Object obj) {
         if (obj instanceof Collection) {

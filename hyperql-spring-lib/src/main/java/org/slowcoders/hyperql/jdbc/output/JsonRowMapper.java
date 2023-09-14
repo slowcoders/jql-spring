@@ -67,7 +67,7 @@ public class JsonRowMapper implements ResultSetExtractor<List<KVEntity>> {
                     }
                 }
 
-                if (!isArray) {
+                if (!isArray) { // || !mapping.hasJoinedChildMapping()) {
                     readColumns(rs, idxColumn, cntColumn);
                     continue;
                 }

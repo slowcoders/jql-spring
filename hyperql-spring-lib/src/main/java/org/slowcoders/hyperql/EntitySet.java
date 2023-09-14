@@ -53,9 +53,12 @@ public interface EntitySet<ENTITY, ID> {
         update(Collections.singletonList(id), updateSet);
     }
 
+    default void update(Map<String, Object> hqlFilter, Map<String, Object> properties) { throw new RuntimeException("not impl"); }
+
     void delete(Iterable<ID> idList);
     default void delete(ID id) {
         delete(Collections.singletonList(id));
     }
 
+    default void delete(Map<String, Object> hqlFilter) { throw new RuntimeException("not impl"); }
 }

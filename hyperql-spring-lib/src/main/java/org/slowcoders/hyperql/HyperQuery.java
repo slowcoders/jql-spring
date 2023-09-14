@@ -25,6 +25,9 @@ public abstract class HyperQuery<ENTITY> {
     @Getter
     private int limit;
 
+    @Getter
+    private boolean distinct;
+
     protected void select(HyperSelect selection) {
         this.selection = selection;
     }
@@ -59,6 +62,12 @@ public abstract class HyperQuery<ENTITY> {
         this.limit = limit;
         return this;
     }
+
+    public HyperQuery<ENTITY> distinct(boolean distinct) {
+        this.distinct = distinct;
+        return this;
+    }
+
 
     public abstract List<ENTITY> getResultList(OutputFormat outputType);
 

@@ -10,6 +10,7 @@ describe('Join Test', () => {
       }      
       const res = await hqlApi.find(filter);
       const characters = res.content;
+      console.log(res.content)
       expect(characters.length).toBe(1);
       expect(characters[0].friend_.length).toBeGreaterThanOrEqual(3);
     });

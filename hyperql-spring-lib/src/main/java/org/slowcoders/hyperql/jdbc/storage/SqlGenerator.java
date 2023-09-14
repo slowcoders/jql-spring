@@ -3,13 +3,13 @@ package org.slowcoders.hyperql.jdbc.storage;
 import org.slowcoders.hyperql.EntitySet;
 import org.slowcoders.hyperql.jdbc.JdbcQuery;
 import org.slowcoders.hyperql.HyperQuery;
+import org.slowcoders.hyperql.jdbc.SqlWriter;
 import org.slowcoders.hyperql.schema.QJoin;
 import org.slowcoders.hyperql.schema.QResultMapping;
 import org.slowcoders.hyperql.js.JsType;
 import org.slowcoders.hyperql.schema.*;
 import org.slowcoders.hyperql.parser.HyperFilter;
 import org.slowcoders.hyperql.parser.EntityFilter;
-import org.slowcoders.hyperql.util.SourceWriter;
 import org.springframework.data.domain.Sort;
 
 import java.util.*;
@@ -23,7 +23,7 @@ public abstract class SqlGenerator extends SqlConverter implements QueryGenerato
     private boolean noAliases;
 
     public SqlGenerator(boolean isNativeQuery) {
-        super(new SourceWriter('\''));
+        super(new SqlWriter());
         this.isNativeQuery = isNativeQuery;
     }
 
@@ -158,11 +158,12 @@ public abstract class SqlGenerator extends SqlConverter implements QueryGenerato
         HyperFilter where = query.getFilter();
 
         String tableName = isNativeQuery ? where.getTableName() : where.getSchema().getEntityType().getName();
+        String select_cmd = (isNativeQuery && !query.isDistinct()) ? "SELECT" : "SELECT DISTINCT";
         boolean need_complex_pagination = isNativeQuery && query.getLimit() > 0 && needDistinctPagination(where);
         if (need_complex_pagination) {
             sw.write("\nWITH _cte AS (\n"); // WITH _cte AS NOT MATERIALIZED
             sw.incTab();
-            sw.write("SELECT DISTINCT t_0.* ");
+            sw.write(select_cmd).write(" t_0.* ");
             writeFrom(where, tableName, true);
             writeWhere(where);
             tableName = "_cte";
@@ -172,7 +173,7 @@ public abstract class SqlGenerator extends SqlConverter implements QueryGenerato
             sw.write("\n)");
         }
 
-        sw.write("\nSELECT DISTINCT \n");
+        sw.writeln("").writeln(select_cmd);
         if (!isNativeQuery) {
             sw.write(where.getMappingAlias()).write(',');
         }

@@ -33,6 +33,8 @@ public abstract class HyperRepository<ID> implements EntitySet<Map, ID> {
 
     public abstract void update(Iterable<ID> idList, Map<String, Object> updateSet);
 
+    public abstract void update(Map<String, Object> filter, Map<String, Object> updateSet);
+
     public abstract void delete(Iterable<ID> idList);
 
     @Override

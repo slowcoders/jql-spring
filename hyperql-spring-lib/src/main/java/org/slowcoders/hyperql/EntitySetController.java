@@ -56,9 +56,10 @@ public interface EntitySetController<ID> extends RestTemplate {
                 @RequestParam(value = "sort", required = false) String[] orders,
                 @RequestParam(value = "page", required = false) Integer page,
                 @RequestParam(value = "limit", required = false) Integer limit,
+                @RequestParam(value = "distinct", required = false) Boolean distinct,
                 @Schema(implementation = Object.class)
                 @RequestBody Map<String, Object> filter) {
-            return search(getEntitySet(), output, select, orders, page, limit, filter);
+            return search(getEntitySet(), output, select, orders, page, limit, filter, distinct);
         }
 
         @PostMapping(path = "/count")
@@ -98,8 +99,9 @@ public interface EntitySetController<ID> extends RestTemplate {
                 @Schema(implementation = String.class)
                 @RequestParam(value = "sort", required = false) String[] orders,
                 @RequestParam(value = "page", required = false) Integer page,
-                @RequestParam(value = "limit", required = false) Integer limit) throws Exception {
-            return search(getEntitySet(), output, select, orders, page, limit, null);
+                @RequestParam(value = "limit", required = false) Integer limit,
+                @RequestParam(value = "distinct", required = false) Boolean distinct) throws Exception {
+            return search(getEntitySet(), output, select, orders, page, limit, null, distinct);
         }
     }
 

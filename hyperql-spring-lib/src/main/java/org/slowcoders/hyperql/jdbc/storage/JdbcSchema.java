@@ -191,7 +191,7 @@ public class JdbcSchema extends QSchema {
         sb.replaceTrailingComma(")\n");
 
         if (isJsonObject) {
-            sb.writeln("@org.hibernate.annotations.Type(type = \"io.hypersistence.utils.hibernate.type.json.JsonType\")");
+            sb.writeln("@org.hibernate.annotations.Type(io.hypersistence.utils.hibernate.type.json.JsonType.class)");
         }
         String fieldName = getJavaFieldName(col);
 

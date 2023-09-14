@@ -137,8 +137,12 @@ abstract class PredicateFactory {
     }
 
     static {
-        operators.put("is", new MatchAny(HqlOp.EQ));
-        operators.put("not", new NotMatch(HqlOp.NE));
+        MatchAny EQ = new MatchAny(HqlOp.EQ);
+        MatchAny NE = new NotMatch(HqlOp.NE);
+        operators.put("is", EQ);
+        operators.put("not", NE);
+        operators.put("eq", EQ);
+        operators.put("ne", NE);
 
         operators.put("like", new MatchAny(HqlOp.LIKE));
         operators.put("not like", new NotMatch(HqlOp.NOT_LIKE));

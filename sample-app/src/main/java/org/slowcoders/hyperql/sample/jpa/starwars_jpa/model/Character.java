@@ -3,7 +3,7 @@ package org.slowcoders.hyperql.sample.jpa.starwars_jpa.model;
 import lombok.Getter;
 import lombok.Setter;
 import java.util.*;
-import javax.persistence.*;
+import jakarta.persistence.*;
 
 
 @Entity
@@ -37,7 +37,7 @@ public class Character implements java.io.Serializable {
 
     @Getter @Setter
     @Column(name = "metadata", nullable = true, columnDefinition = "jsonb")
-    @org.hibernate.annotations.Type(type = "io.hypersistence.utils.hibernate.type.json.JsonType")
+    @org.hibernate.annotations.Type(io.hypersistence.utils.hibernate.type.json.JsonType.class)
     private com.fasterxml.jackson.databind.JsonNode metadata;
 
     @Getter @Setter

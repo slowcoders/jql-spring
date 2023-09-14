@@ -1,6 +1,7 @@
 package org.slowcoders.hyperql.jdbc.timescale;
 
 import org.slowcoders.hyperql.jdbc.JdbcStorage;
+import org.slowcoders.hyperql.jdbc.SqlWriter;
 import org.slowcoders.hyperql.js.JsType;
 import org.slowcoders.hyperql.schema.QColumn;
 import org.slowcoders.hyperql.schema.QSchema;
@@ -170,7 +171,7 @@ public abstract class TSDBHelper {
     }
 
     protected String build_init_timescale(int hours) {
-        SourceWriter sb = new SourceWriter('\'');
+        SourceWriter sb = new SqlWriter();
         String ts_column = getTimeKeyColumnName();
         sb.writeF("SELECT create_hypertable('{0}', '{1}',", schema.getTableName(), ts_column)
                 .write("if_not_exists => TRUE, migrate_data => true, ")
@@ -179,7 +180,7 @@ public abstract class TSDBHelper {
     }
 
     protected String build_auto_down_sampling_view(int retention_days) {
-        SourceWriter sb = new SourceWriter('\'');
+        SourceWriter sb = new SqlWriter();
         String tableName = schema.getTableName();
         String aggView = tableName + SUFFIX_CONT_AGG;
         QColumn ts_key = this.timeKeyColumn;

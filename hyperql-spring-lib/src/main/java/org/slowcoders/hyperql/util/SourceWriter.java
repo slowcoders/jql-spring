@@ -1,5 +1,7 @@
 package org.slowcoders.hyperql.util;
 
+import org.slowcoders.hyperql.schema.QColumn;
+
 import java.util.Collection;
 
 public class SourceWriter<Self extends SourceWriter> {
@@ -10,9 +12,13 @@ public class SourceWriter<Self extends SourceWriter> {
     private int tab;
 
     public SourceWriter(char quote) {
+        this(quote, "\\" + quote);
+    }
+
+    public SourceWriter(char quote, String escapedQuote) {
         this.quote = quote;
         this.quoteChar = "" + quote;
-        this.quoteEscape = "\\" + quote;
+        this.quoteEscape = escapedQuote;
     }
 
     public Self writeln(String text) {
@@ -94,6 +100,10 @@ public class SourceWriter<Self extends SourceWriter> {
     }
 
     public Self writeValue(Object v) {
+        if (v instanceof QColumn) {
+            write(((QColumn) v).getPhysicalName());
+            return (Self)this;
+        }
         return isQuotedColumn(v) ? writeQuoted(v) : write(String.valueOf(v));
     }
 

@@ -1,7 +1,7 @@
 import {beforeAll, describe, expect, test} from '@jest/globals';
-import { JqlApi } from '@/api/hqlApi'
+import { HqlApi } from '@/api/hqlApi'
 
-const hqlApi = new JqlApi('http://localhost:7007/api/hql/starwars/episode')
+const hqlApi = new HqlApi('http://localhost:7007/api/hql/starwars/episode')
 describe('Insert/Delete test', () => {
 
   async function clear_garbage(filter) {
