@@ -93,20 +93,22 @@ public interface RestTemplate {
     }
 
 
-    default Response search(EntitySet entitySet, OutputFormat outputFormat, String select, String[] orders, Integer page, Integer limit, Map<String, Object> filter, Boolean distinct) {
+    default Response search(EntitySet entitySet, OutputOptions params, Map<String, Object> filter) {
         HyperQuery query = entitySet.createQuery(filter);
-        query.select(select);
-        if (orders != null) query.sort(orders);
+        query.select(params.select);
+        if (params.sort != null) query.sort(params.sort);
         boolean needPagination = false;
-        if (limit != null) {
+        if (params.limit != null) {
+            int limit = params.limit;
             query.limit(limit);
-            if (page != null) {
-                query.offset(page * limit);
+            if (params.page != null) {
+                query.offset(params.page * limit);
             }
             needPagination = limit > 0 && query.getOffset() >= 0;
         }
-        if (distinct != null) query.distinct((boolean) distinct);
-        List<Object> result = query.getResultList(outputFormat);
+        if (params.distinct != null) query.distinct((boolean) params.distinct);
+
+        List<Object> result = query.getResultList(params.output);
         Response resp = Response.of(result, query.getSelection());
         resp.query = query;
         if (needPagination) {

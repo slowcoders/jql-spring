@@ -49,17 +49,10 @@ public interface EntitySetController<ID> extends RestTemplate {
         @Operation(summary = "엔터티 검색")
         @Transactional
         @ResponseBody
-        public Response find(
-                @RequestParam(value = "output", required = false) OutputFormat output,
-                @RequestParam(value = "select", required = false) String select,
-                @Schema(implementation = String.class)
-                @RequestParam(value = "sort", required = false) String[] orders,
-                @RequestParam(value = "page", required = false) Integer page,
-                @RequestParam(value = "limit", required = false) Integer limit,
-                @RequestParam(value = "distinct", required = false) Boolean distinct,
-                @Schema(implementation = Object.class)
+        public Response find(OutputOptions req,
+                             @Schema(implementation = Object.class)
                 @RequestBody Map<String, Object> filter) {
-            return search(getEntitySet(), output, select, orders, page, limit, filter, distinct);
+            return search(getEntitySet(), req, filter);
         }
 
         @PostMapping(path = "/count")
@@ -93,15 +86,8 @@ public interface EntitySetController<ID> extends RestTemplate {
         @Operation(summary = "전체 목록")
         @Transactional
         @ResponseBody
-        default Response list(
-                @RequestParam(value = "output", required = false) OutputFormat output,
-                @RequestParam(value = "select", required = false) String select,
-                @Schema(implementation = String.class)
-                @RequestParam(value = "sort", required = false) String[] orders,
-                @RequestParam(value = "page", required = false) Integer page,
-                @RequestParam(value = "limit", required = false) Integer limit,
-                @RequestParam(value = "distinct", required = false) Boolean distinct) throws Exception {
-            return search(getEntitySet(), output, select, orders, page, limit, null, distinct);
+        default Response list(OutputOptions params) throws Exception {
+            return search(getEntitySet(), params, null);
         }
     }
 

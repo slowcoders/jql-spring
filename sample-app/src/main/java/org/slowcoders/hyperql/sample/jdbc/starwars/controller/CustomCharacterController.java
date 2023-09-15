@@ -3,7 +3,7 @@ package org.slowcoders.hyperql.sample.jdbc.starwars.controller;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Schema;
 import org.slowcoders.hyperql.EntitySetController;
-import org.slowcoders.hyperql.OutputFormat;
+import org.slowcoders.hyperql.OutputOptions;
 import org.slowcoders.hyperql.sample.jdbc.starwars.service.SecuredCharacterService;
 import org.springframework.web.bind.annotation.*;
 
@@ -25,16 +25,10 @@ public class CustomCharacterController extends EntitySetController.CRUD<Long> im
 
     @Override
     public Response find(
-            @RequestParam(value = "output", required = false) OutputFormat output,
-            @RequestParam(value = "select", required = false) String select,
-            @Schema(implementation = String.class)
-            @RequestParam(value = "sort", required = false) String[] orders,
-            @RequestParam(value = "page", required = false) Integer page,
-            @RequestParam(value = "limit", required = false) Integer limit,
-            @RequestParam(value = "distinct", required = false) Boolean distinct,
+            OutputOptions req,
             @Schema(implementation = Object.class)
             @RequestBody Map<String, Object> filter) {
-        Response resp = super.find(output, select, orders, page, limit, distinct, filter);
+        Response resp = super.find(req, filter);
         resp.setProperty("lastExecutedSql", resp.getQuery().getExecutedQuery());
         return resp;
     }

@@ -86,17 +86,11 @@ public interface HyperStorageController extends RestTemplate {
         @ResponseBody
         public Response find(
                 @PathVariable("table") String table,
-                @RequestParam(value = "output", required = false) OutputFormat output,
-                @RequestParam(value = "select", required = false) String select,
-                @Schema(implementation = String.class)
-                @RequestParam(value = "sort", required = false) String[] orders,
-                @RequestParam(value = "page", required = false) Integer page,
-                @RequestParam(value = "limit", required = false) Integer limit,
-                @RequestParam(value = "distinct", required = false) Boolean distinct,
+                OutputOptions req,
                 @Schema(implementation = Object.class)
                 @RequestBody Map<String, Object> filter) {
             EntitySet enitities = getEntitySet(table);
-            return search(enitities, output, select, orders, page, limit, filter, distinct);
+            return search(enitities, req, filter);
         }
 
         @PostMapping(path = "/{table}/count")
@@ -128,18 +122,10 @@ public interface HyperStorageController extends RestTemplate {
         @Operation(summary = "전체 목록")
         @Transactional
         @ResponseBody
-        default Response list(
-                @PathVariable("table") String table,
-                @RequestParam(value = "output", required = false) OutputFormat output,
-                @RequestParam(value = "select", required = false) String select,
-                @Schema(implementation = String.class)
-                @RequestParam(value = "sort", required = false) String[] orders,
-                @RequestParam(value = "page", required = false) Integer page,
-                @RequestParam(value = "limit", required = false) Integer limit,
-                @RequestParam(value = "distinct", required = false) Boolean distinct
-        ) throws Exception {
+        default Response list(@PathVariable("table") String table,
+                              OutputOptions params) throws Exception {
             EntitySet enitities = getEntitySet(table);
-            return search(enitities, output, select, orders, page, limit, null, distinct);
+            return search(enitities, params, null);
         }
     }
 
