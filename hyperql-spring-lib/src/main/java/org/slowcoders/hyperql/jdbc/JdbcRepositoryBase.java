@@ -61,12 +61,12 @@ public abstract class JdbcRepositoryBase<ID> extends HyperRepository<ID> {
 
 
     //    @Override
-    protected ResultSetExtractor<List<KVEntity>> getColumnMapRowMapper(JdbcQuery query, OutputFormat outputFormat) {
+    protected ResultSetExtractor<List<KVEntity>> createColumnMapRowMapper(JdbcQuery query, OutputFormat outputFormat) {
         switch (outputFormat) {
             case Object:
                 return new JsonRowMapper(query.getResultMappings(), storage.getObjectMapper());
             default:
-                return new ArrayRowMapper(query.getResultMappings());
+                return new ArrayRowMapper(query.getResultMappings(), null);
         }
     }
 
@@ -109,7 +109,7 @@ public abstract class JdbcRepositoryBase<ID> extends HyperRepository<ID> {
             if (s.length() > 0) {
                 sql += s;
             }
-            res = jdbc.query(sql, getColumnMapRowMapper(query, outputFormat));
+            res = jdbc.query(sql, createColumnMapRowMapper(query, outputFormat));
         }
         return res;
     }

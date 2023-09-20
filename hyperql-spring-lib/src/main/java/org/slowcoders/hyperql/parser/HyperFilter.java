@@ -27,8 +27,18 @@ public class HyperFilter extends TableFilter {
 
     public static <ID> HyperFilter of(QSchema schema, ID id) {
         HyperFilter filter = new HyperFilter(schema);
+        PredicateSet ps = filter.getPredicateSet();
+        if (id instanceof Object[]) {
+            Object[] ids = (Object[]) id;
+            int idx = 0;
+            for (QColumn pk : schema.getPKColumns()) {
+                ps.add(PredicateFactory.IS.createPredicate(pk, ids[idx++]));
+            }
+        }
+        else {
         QColumn first_pk = schema.getPKColumns().get(0);
-        filter.getPredicateSet().add(PredicateFactory.IS.createPredicate(first_pk, id));
+            ps.add(PredicateFactory.IS.createPredicate(first_pk, id));
+        }
         return filter;
     }
 

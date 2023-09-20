@@ -44,6 +44,12 @@ public class HyperAdapter<ENTITY, ID> implements EntitySet<ENTITY, ID> {
         return (HyperQuery)repository.createQuery(hqlFilter);
     }
 
+
+    @Override
+    public ID convertId(Object id) {
+        return repository.convertId(id);
+    }
+
     @Override
     public ENTITY find(ID id, HyperSelect select) {
         Map raw_entity = repository.find(id, select);

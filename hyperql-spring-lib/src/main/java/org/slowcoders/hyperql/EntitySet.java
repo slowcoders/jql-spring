@@ -20,6 +20,17 @@ public interface EntitySet<ENTITY, ID> {
         return createQuery(hqlFilter).count();
     }
 
+
+    ID convertId(Object id);
+
+    default List<ID> convertIdList(Iterable<Object> idList) {
+        ArrayList<ID> list = new ArrayList<>();
+        for (Object id : idList) {
+            list.add(convertId(id));
+        }
+        return list;
+    }
+
     ENTITY find(ID id, HyperSelect select);
 
     default ENTITY find(ID id) { return find(id, null); }

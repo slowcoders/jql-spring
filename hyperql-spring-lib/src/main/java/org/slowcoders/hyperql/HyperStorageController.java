@@ -71,9 +71,9 @@ public interface HyperStorageController extends RestTemplate {
                 @Schema(implementation = String.class)
                 @PathVariable("id") Object id,
                 @RequestParam(value = "select", required = false) String select$) {
-            EntitySet enitities = getEntitySet(table);
+            EntitySet entities = getEntitySet(table);
             HyperSelect select = HyperSelect.of(select$);
-            Object res = enitities.find(id, select);
+            Object res = entities.find(id, select);
             if (res == null) {
                 throw new HttpServerErrorException("Entity(" + id + ") is not found", HttpStatus.NOT_FOUND, null, null, null, null);
             }
@@ -89,8 +89,8 @@ public interface HyperStorageController extends RestTemplate {
                 OutputOptions req,
                 @Schema(implementation = Object.class)
                 @RequestBody Map<String, Object> filter) {
-            EntitySet enitities = getEntitySet(table);
-            return search(enitities, req, filter);
+            EntitySet entities = getEntitySet(table);
+            return search(entities, req, filter);
         }
 
         @PostMapping(path = "/{table}/count")
@@ -101,8 +101,8 @@ public interface HyperStorageController extends RestTemplate {
                 @PathVariable("table") String table,
                 @Schema(implementation = Object.class)
                 @RequestBody HashMap<String, Object> jsFilter) {
-            EntitySet enitities = getEntitySet(table);
-            long count = enitities.createQuery(jsFilter).count();
+            EntitySet entities = getEntitySet(table);
+            long count = entities.createQuery(jsFilter).count();
             return count;
         }
 
@@ -110,8 +110,8 @@ public interface HyperStorageController extends RestTemplate {
 //        @ResponseBody
 //        @Operation(summary = "엔터티 속성 정보 요약")
 //        public String schema(@PathVariable("table") String table) {
-//            JqlEntitySet enitities = getRepository(table);
-//            String schema = JsUtil.getSimpleSchema(enitities.getSchema());
+//            JqlEntitySet entities = getRepository(table);
+//            String schema = JsUtil.getSimpleSchema(entities.getSchema());
 //            return schema;
 //        }
     }
@@ -124,8 +124,8 @@ public interface HyperStorageController extends RestTemplate {
         @ResponseBody
         default Response list(@PathVariable("table") String table,
                               OutputOptions params) throws Exception {
-            EntitySet enitities = getEntitySet(table);
-            return search(enitities, params, null);
+            EntitySet entities = getEntitySet(table);
+            return search(entities, params, null);
         }
     }
 
@@ -140,8 +140,8 @@ public interface HyperStorageController extends RestTemplate {
                 @PathVariable("table") String table,
                 @Schema(implementation = Object.class)
                 @RequestBody Map<String, Object> properties) throws Exception {
-            EntitySet enitities = getEntitySet(table);
-            Object created = enitities.insert(properties);
+            EntitySet entities = getEntitySet(table);
+            Object created = entities.insert(properties);
             return (ENTITY) created;
         }
 
@@ -155,8 +155,8 @@ public interface HyperStorageController extends RestTemplate {
                 @Schema(implementation = Object.class)
                 @RequestBody List<Map<String, Object>> entities) throws Exception {
             EntitySet.InsertPolicy insertPolicy = parseInsertPolicy(onConflict);
-            EntitySet enitities = getEntitySet(table);
-            List<ID> res = (List<ID>)enitities.insert(entities, insertPolicy);
+            EntitySet entitySet = getEntitySet(table);
+            List<ID> res = (List<ID>)entitySet.insert(entities, insertPolicy);
             return res;
         }
 
@@ -176,9 +176,10 @@ public interface HyperStorageController extends RestTemplate {
                 @Schema(implementation = Object.class)
                 @RequestBody Map<String, Object> properties) throws Exception {
             HyperSelect select = HyperSelect.of(select$);
-            EntitySet enitities = getEntitySet(table);
-            enitities.update(idList, properties);
-            List<ENTITY> res = enitities.find(idList, select);
+            EntitySet entities = getEntitySet(table);
+            idList = entities.convertIdList(idList);
+            entities.update(idList, properties);
+            List<ENTITY> res = entities.find(idList, select);
             return res;
         }
     }
@@ -192,8 +193,8 @@ public interface HyperStorageController extends RestTemplate {
                 @PathVariable("table") String table,
                 @Schema(implementation = String.class)
                 @PathVariable("idList") Collection<ID> idList) {
-            EntitySet enitities = getEntitySet(table);
-            enitities.delete(idList);
+            EntitySet entities = getEntitySet(table);
+            entities.delete(entities.convertIdList(idList));
             return idList;
         }
     }

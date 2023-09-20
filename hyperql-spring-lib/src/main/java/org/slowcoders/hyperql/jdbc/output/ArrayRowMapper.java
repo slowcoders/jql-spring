@@ -13,9 +13,11 @@ import java.util.*;
 
 public class ArrayRowMapper implements ResultSetExtractor<List<KVEntity>> {
     private final List<QResultMapping> resultMappings;
+    private final Properties properties;
 
-    public ArrayRowMapper(List<QResultMapping> rowMappings) {
+    public ArrayRowMapper(List<QResultMapping> rowMappings, Properties properties) {
         this.resultMappings = rowMappings;
+        this.properties = properties;
     }
 
     @Override
@@ -31,6 +33,9 @@ public class ArrayRowMapper implements ResultSetExtractor<List<KVEntity>> {
                 values[i] = rs.getObject(i+1);
             }
             rows.add(values);
+        }
+        if (this.properties != null) {
+            this.properties.put("columnNames", columnNames);
         }
         KVEntity res = KVEntity.of("columnNames", columnNames);
         res.put("rows", rows);
