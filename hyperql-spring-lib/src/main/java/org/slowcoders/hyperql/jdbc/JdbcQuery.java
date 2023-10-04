@@ -3,6 +3,7 @@ package org.slowcoders.hyperql.jdbc;
 import org.slowcoders.hyperql.HyperQuery;
 import org.slowcoders.hyperql.HyperSelect;
 import org.slowcoders.hyperql.OutputFormat;
+import org.slowcoders.hyperql.RestTemplate;
 import org.slowcoders.hyperql.parser.HyperFilter;
 import org.slowcoders.hyperql.schema.QResultMapping;
 import org.springframework.data.domain.Sort;
@@ -60,6 +61,11 @@ public class JdbcQuery<ENTITY> extends HyperQuery<ENTITY> {
     public List<ENTITY> getResultList(OutputFormat outputType) {
         return table.find(this, outputType);
     }
+
+    public RestTemplate.Response execute(OutputFormat outputType) {
+        return table.execute(this, outputType);
+    }
+
 
     @Override
     public long count() {

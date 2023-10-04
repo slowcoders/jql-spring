@@ -73,6 +73,8 @@ public abstract class HyperQuery<ENTITY> {
 
     public final List<ENTITY> getResultList() { return getResultList(OutputFormat.Object); }
 
+    public abstract RestTemplate.Response execute(OutputFormat outputType);
+
     public abstract long count();
 
     public final ENTITY getSingleResult() {

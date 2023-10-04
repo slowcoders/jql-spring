@@ -3,12 +3,12 @@ package org.slowcoders.hyperql.jdbc.output;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slowcoders.hyperql.RestTemplate;
 import org.slowcoders.hyperql.schema.QColumn;
 import org.slowcoders.hyperql.schema.QResultMapping;
 import org.slowcoders.hyperql.schema.QSchema;
 import org.slowcoders.hyperql.util.KVEntity;
 import org.springframework.dao.DataAccessException;
-import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.support.JdbcUtils;
 
 import java.sql.ResultSet;
@@ -16,7 +16,7 @@ import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.*;
 
-public class JsonRowMapper implements ResultSetExtractor<List<KVEntity>> {
+public class JsonRowMapper implements JdbcResultMapper<KVEntity> {
     private final List<QResultMapping> resultMappings;
     private final ObjectMapper objectMapper;
     private ResultCache resultCacheRoot;
@@ -265,6 +265,11 @@ public class JsonRowMapper implements ResultSetExtractor<List<KVEntity>> {
             throw new RuntimeException("Something wrong!");
         }
         return mappedColumns;
+    }
+
+    @Override
+    public void setOutputMetadata(RestTemplate.Response response) {
+        return;
     }
 
 

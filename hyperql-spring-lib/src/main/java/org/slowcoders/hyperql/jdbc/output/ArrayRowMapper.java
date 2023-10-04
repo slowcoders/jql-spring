@@ -1,19 +1,19 @@
 package org.slowcoders.hyperql.jdbc.output;
 
+import org.slowcoders.hyperql.RestTemplate;
 import org.slowcoders.hyperql.schema.QResultMapping;
 import org.slowcoders.hyperql.schema.QColumn;
-import org.slowcoders.hyperql.util.KVEntity;
 import org.springframework.dao.DataAccessException;
-import org.springframework.jdbc.core.ResultSetExtractor;
 
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.*;
 
-public class ArrayRowMapper implements ResultSetExtractor<List<KVEntity>> {
+public class ArrayRowMapper implements JdbcResultMapper<Object[]> {
     private final List<QResultMapping> resultMappings;
     private final Properties properties;
+    private String[] columnNames;
 
     public ArrayRowMapper(List<QResultMapping> rowMappings, Properties properties) {
         this.resultMappings = rowMappings;
@@ -21,9 +21,10 @@ public class ArrayRowMapper implements ResultSetExtractor<List<KVEntity>> {
     }
 
     @Override
-    public List<KVEntity> extractData(ResultSet rs) throws SQLException, DataAccessException {
+    public List<Object[]> extractData(ResultSet rs) throws SQLException, DataAccessException {
 
         String[] columnNames = initMappedColumns(rs);
+        this.columnNames = columnNames;
         int columnCount = columnNames.length;
 
         ArrayList<Object[]> rows = new ArrayList<>();
@@ -37,10 +38,11 @@ public class ArrayRowMapper implements ResultSetExtractor<List<KVEntity>> {
         if (this.properties != null) {
             this.properties.put("columnNames", columnNames);
         }
-        KVEntity res = KVEntity.of("columnNames", columnNames);
-        res.put("rows", rows);
-        List<KVEntity> results = Collections.singletonList(res);
-        return results;
+        return rows;
+    }
+
+    public String[] getColumnNames() {
+        return this.columnNames;
     }
 
     private String[] initMappedColumns(ResultSet rs) throws SQLException {
@@ -81,4 +83,8 @@ public class ArrayRowMapper implements ResultSetExtractor<List<KVEntity>> {
         return sb.toString();
     }
 
+    @Override
+    public void setOutputMetadata(RestTemplate.Response response) {
+        response.setProperty("columnNames", this.columnNames);
+    }
 }

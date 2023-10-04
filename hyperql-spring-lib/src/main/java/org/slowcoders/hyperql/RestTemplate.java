@@ -12,10 +12,7 @@ import org.springframework.data.domain.Sort;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * 1) select 가 지정되지 않으면, 쿼리 문에 사용된 Entity 들의 Property 들을 검색 결과에 포함시킨다.
@@ -28,7 +25,7 @@ public interface RestTemplate {
     class Response {
 
         @Schema(implementation = Object.class)
-        private Map<String, Object> metadata;
+        private Properties metadata;
         private Object content;
 
         @JsonIgnore
@@ -44,11 +41,13 @@ public interface RestTemplate {
         }
 
         public static Response of(Object content, HyperSelect select) {
+            Response resp;
             if (isJpaType(content)) {
-                return new JpaFilter(content, select.getPropertyMap());
+                resp = new JpaFilter(content, select.getPropertyMap());
             } else {
-                return new Response(content, select.getPropertyMap());
+                resp = new Response(content, select.getPropertyMap());
             }
+            return resp;
         }
 
         private static boolean isJpaType(Object content) {
@@ -64,7 +63,7 @@ public interface RestTemplate {
 
         public void setProperty(String key, Object value) {
             if (this.metadata == null) {
-                this.metadata = new HashMap<>();
+                this.metadata = new Properties();
             }
             this.metadata.put(key, value);
         }
@@ -108,9 +107,10 @@ public interface RestTemplate {
         }
         if (params.distinct != null) query.distinct((boolean) params.distinct);
 
-        List<Object> result = query.getResultList(params.output);
-        Response resp = Response.of(result, query.getSelection());
-        resp.query = query;
+//        List<Object> result = query.getResultList(params.output);
+        Response resp = query.execute(params.output);
+//                Response.of(result, query.getSelection());
+//        resp.query = query;
         if (needPagination) {
             resp.setProperty("totalElements", query.count());
         }

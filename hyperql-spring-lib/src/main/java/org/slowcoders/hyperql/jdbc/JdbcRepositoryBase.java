@@ -3,6 +3,7 @@ package org.slowcoders.hyperql.jdbc;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slowcoders.hyperql.*;
 import org.slowcoders.hyperql.jdbc.output.ArrayRowMapper;
+import org.slowcoders.hyperql.jdbc.output.JdbcResultMapper;
 import org.slowcoders.hyperql.jdbc.storage.BatchUpsert;
 import org.slowcoders.hyperql.jdbc.output.IdListMapper;
 import org.slowcoders.hyperql.jdbc.output.JsonRowMapper;
@@ -11,10 +12,8 @@ import org.slowcoders.hyperql.parser.HyperFilter;
 import org.slowcoders.hyperql.parser.HqlParser;
 import org.slowcoders.hyperql.schema.QColumn;
 import org.slowcoders.hyperql.schema.QSchema;
-import org.slowcoders.hyperql.util.KVEntity;
 import org.springframework.data.domain.Sort;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.ResultSetExtractor;
 
 import jakarta.persistence.Query;
 import java.util.Collection;
@@ -61,7 +60,7 @@ public abstract class JdbcRepositoryBase<ID> extends HyperRepository<ID> {
 
 
     //    @Override
-    protected ResultSetExtractor<List<KVEntity>> createColumnMapRowMapper(JdbcQuery query, OutputFormat outputFormat) {
+    protected JdbcResultMapper<?> createColumnMapRowMapper(JdbcQuery query, OutputFormat outputFormat) {
         switch (outputFormat) {
             case Object:
                 return new JsonRowMapper(query.getResultMappings(), storage.getObjectMapper());
@@ -77,6 +76,13 @@ public abstract class JdbcRepositoryBase<ID> extends HyperRepository<ID> {
 
     public List<Map> find(HyperQuery query0) {
         return find(query0, OutputFormat.Object);
+    }
+
+    public RestTemplate.Response execute(HyperQuery query0, OutputFormat outputFormat) {
+        if (outputFormat == null) {
+            outputFormat = OutputFormat.Object;
+        }
+        return execute(query0, createColumnMapRowMapper((JdbcQuery)query0, outputFormat));
     }
 
     public List find(HyperQuery query0, OutputFormat outputFormat) {
@@ -112,6 +118,40 @@ public abstract class JdbcRepositoryBase<ID> extends HyperRepository<ID> {
             res = jdbc.query(sql, createColumnMapRowMapper(query, outputFormat));
         }
         return res;
+    }
+
+    protected RestTemplate.Response execute(HyperQuery query0, JdbcResultMapper<?> rsExtractor) {
+        JdbcQuery query = (JdbcQuery) query0;
+        Class jpaEntityType = query.getJpaEntityType();
+        boolean isNative = jpaEntityType == null || rsExtractor != null;
+        boolean isRepeat = (query.getExecutedQuery() != null && query.getExtraInfo() == (Boolean)isNative);
+
+        String sql = isRepeat ? query.getExecutedQuery() :
+                storage.createQueryGenerator(isNative).createSelectQuery(query);
+        query.executedQuery = sql;
+        query.extraInfo = isNative;
+
+        List res;
+        if (!isNative) {
+            Query jpaQuery = storage.getEntityManager().createQuery(sql);
+            if (query.getLimit() > 1) {
+                jpaQuery = jpaQuery.setMaxResults(query.getLimit());
+            }
+            if (query.getOffset() > 0) {
+                jpaQuery = jpaQuery.setFirstResult(query.getOffset());
+            }
+            res = jpaQuery.getResultList();
+        }
+        else {
+            String s = getPaginationQuery(query);
+            if (s.length() > 0) {
+                sql += s;
+            }
+            res = jdbc.query(sql, rsExtractor);
+        }
+        RestTemplate.Response resp = RestTemplate.Response.of(res, query.getSelection());
+        if (rsExtractor != null) rsExtractor.setOutputMetadata(resp);
+        return resp;
     }
 
     static String getPaginationQuery(HyperQuery query) {
