@@ -110,7 +110,7 @@ public interface RestTemplate {
 //        List<Object> result = query.getResultList(params.output);
         Response resp = query.execute(params.output);
 //                Response.of(result, query.getSelection());
-//        resp.query = query;
+        resp.query = query;
         if (needPagination) {
             resp.setProperty("totalElements", query.count());
         }
