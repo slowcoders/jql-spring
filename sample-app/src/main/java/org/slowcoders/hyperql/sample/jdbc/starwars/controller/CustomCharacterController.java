@@ -27,7 +27,7 @@ public class CustomCharacterController extends EntitySetController.CRUD<Long> im
     public Response find(
             OutputOptions req,
             @Schema(implementation = Object.class)
-            @RequestBody Map<String, Object> filter) {
+            @RequestBody Map<String, Object> filter) throws Exception {
         Response resp = super.find(req, filter);
         resp.setProperty("lastExecutedSql", resp.getQuery().getExecutedQuery());
         return resp;

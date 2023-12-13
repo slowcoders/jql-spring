@@ -26,7 +26,7 @@ public class StarWarsJpaController extends HyperStorageController.CRUD implement
             @PathVariable("table") String table,
             OutputOptions req,
             @Schema(implementation = Object.class)
-            @RequestBody Map<String, Object> filter) {
+            @RequestBody Map<String, Object> filter) throws Exception {
         Response resp = super.find(table, req, filter);
         resp.setProperty("lastExecutedSql", resp.getQuery().getExecutedQuery());
         return resp;

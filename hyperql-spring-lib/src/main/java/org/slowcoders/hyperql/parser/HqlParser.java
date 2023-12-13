@@ -84,9 +84,9 @@ public class HqlParser {
                 }
                 else {  // ValueNodeType.Entities
                     for (Map<String, Object> map : (Collection<Map<String, Object>>) value) {
-                        PredicateSet and_qs = new PredicateSet(Conjunction.AND, ps.getBaseFilter());
-                        this.parse(and_qs, map, false);
-                        ps.add(and_qs);
+//                        PredicateSet and_qs = new PredicateSet(Conjunction.AND, ps.getBaseFilter());
+                        this.parse(ps, map, false);
+//                        ps.add(and_qs);
                     }
                 }
                 continue;

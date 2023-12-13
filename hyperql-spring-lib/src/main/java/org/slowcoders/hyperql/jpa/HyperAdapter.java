@@ -104,8 +104,8 @@ public class HyperAdapter<ENTITY, ID> implements EntitySet<ENTITY, ID> {
     }
 
     @Override
-    public void update(Map<String, Object> filter, Map<String, Object> properties) {
-        repository.update(filter, properties);
+    public int update(Map<String, Object> filter, Map<String, Object> properties) {
+        return repository.update(filter, properties);
     }
 
     @Override

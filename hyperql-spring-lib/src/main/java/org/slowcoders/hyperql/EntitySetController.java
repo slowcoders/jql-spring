@@ -51,7 +51,7 @@ public interface EntitySetController<ID> extends RestTemplate {
         @ResponseBody
         public Response find(OutputOptions req,
                              @Schema(implementation = Object.class)
-                @RequestBody Map<String, Object> filter) {
+                @RequestBody Map<String, Object> filter) throws Exception {
             return search(getEntitySet(), req, filter);
         }
 
@@ -94,7 +94,7 @@ public interface EntitySetController<ID> extends RestTemplate {
 
     interface Insert<ID> extends EntitySetController<ID> {
 
-        @PutMapping(path = "/", consumes = {MediaType.APPLICATION_JSON_VALUE})
+        @PutMapping(path = "", consumes = {MediaType.APPLICATION_JSON_VALUE})
         @Operation(summary = "엔터티 추가")
         @Transactional
         @ResponseBody
@@ -146,7 +146,7 @@ public interface EntitySetController<ID> extends RestTemplate {
         @ResponseBody
         @Operation(summary = "엔터티 삭제")
         @Transactional
-        default Collection<ID> delete(@PathVariable("id") Collection<ID> idList) {
+        default Collection<ID> delete(@PathVariable("id") Collection<ID> idList) throws Exception {
             getEntitySet().delete(idList);
             return idList;
         }

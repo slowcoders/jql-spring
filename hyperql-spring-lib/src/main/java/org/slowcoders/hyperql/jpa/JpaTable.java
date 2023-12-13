@@ -183,7 +183,7 @@ public abstract class JpaTable<ENTITY, ID> extends HyperAdapter<ENTITY, ID> {
         return cache.contains(getEntityType(), id);
     }
 
-    public Object getAssociatedCached(ENTITY entity) {
+    public Object getAssociatedCache(ENTITY entity) {
         Object cached = associatedCache.get(getEntityId(entity));
         return cached;
     }

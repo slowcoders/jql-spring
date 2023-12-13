@@ -111,6 +111,34 @@ abstract class PredicateFactory {
         }
     }
 
+    static class ExplicitConjunction extends PredicateFactory {
+
+        private final Conjunction conjunction;
+
+        ExplicitConjunction(Conjunction conjunction) { this.conjunction = conjunction; }
+
+        public boolean isAttributeNameRequired() { return false; }
+
+        public PredicateSet getPredicates(EntityFilter node, HqlParser.NodeType nodeType) {
+            PredicateSet baseScope = node.getPredicateSet();
+            switch (nodeType) {
+                case Entity:
+                case Entities: {
+                    PredicateSet qs = new PredicateSet(this.conjunction, baseScope.getBaseFilter());
+                    baseScope.add(qs);
+                    return qs;
+                }
+                default:
+                    throw new RuntimeException("'@and' and '@or' operators take only condition node(s)");
+            }
+        }
+
+        public Predicate createPredicate(QColumn column, Object value) {
+            throw new RuntimeException("'@and' and '@or' operators take only condition node(s)");
+        }
+
+    }
+
     static class PairedPredicate extends PredicateFactory {
         private final PredicateFactory operator1;
         private final PredicateFactory operator2;
@@ -158,5 +186,10 @@ abstract class PredicateFactory {
         operators.put("le", LE);
         operators.put("between", new PairedPredicate(GE, LE, Conjunction.AND));
         operators.put("not between", new PairedPredicate(LT, GT, Conjunction.OR));
+
+        ExplicitConjunction AND = new ExplicitConjunction(Conjunction.AND);
+        ExplicitConjunction  OR = new ExplicitConjunction(Conjunction.OR);
+        operators.put("and", AND);
+        operators.put("or", OR);
     }
 }

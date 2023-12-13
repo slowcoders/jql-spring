@@ -92,7 +92,7 @@ public interface RestTemplate {
     }
 
 
-    default Response search(EntitySet entitySet, OutputOptions params, Map<String, Object> filter) {
+    default Response search(EntitySet entitySet, OutputOptions params, Map<String, Object> filter) throws Exception {
         HyperQuery query = entitySet.createQuery(filter);
         query.select(params.select);
         if (params.sort != null) query.sort(params.sort);

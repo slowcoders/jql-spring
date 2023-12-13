@@ -88,7 +88,7 @@ public interface HyperStorageController extends RestTemplate {
                 @PathVariable("table") String table,
                 OutputOptions req,
                 @Schema(implementation = Object.class)
-                @RequestBody Map<String, Object> filter) {
+                @RequestBody Map<String, Object> filter) throws Exception {
             EntitySet entities = getEntitySet(table);
             return search(entities, req, filter);
         }
@@ -100,7 +100,7 @@ public interface HyperStorageController extends RestTemplate {
         public long count(
                 @PathVariable("table") String table,
                 @Schema(implementation = Object.class)
-                @RequestBody HashMap<String, Object> jsFilter) {
+                @RequestBody HashMap<String, Object> jsFilter) throws Exception {
             EntitySet entities = getEntitySet(table);
             long count = entities.createQuery(jsFilter).count();
             return count;

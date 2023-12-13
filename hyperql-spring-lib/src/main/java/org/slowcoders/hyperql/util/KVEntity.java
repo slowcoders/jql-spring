@@ -10,4 +10,15 @@ public class KVEntity extends LinkedHashMap<String, Object> {
         return entity;
     }
 
+    public String getString(String key) {
+        return (String)super.get(key);
+    }
+
+    public Long getLong(String key) {
+        return (Long)super.get(key);
+    }
+
+    public Integer getInt(String key) {
+        return (Integer) super.get(key);
+    }
 }

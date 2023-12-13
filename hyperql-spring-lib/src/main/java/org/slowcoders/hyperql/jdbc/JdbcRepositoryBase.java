@@ -25,9 +25,7 @@ public abstract class JdbcRepositoryBase<ID> extends HyperRepository<ID> {
 
     protected final JdbcStorage storage;
     private final JdbcTemplate jdbc;
-
     protected HqlParser hqlParser;
-
     private final IdListMapper<ID> idListMapper = new IdListMapper<>(this);
 
     protected JdbcRepositoryBase(JdbcStorage storage, QSchema schema) {
@@ -204,10 +202,10 @@ public abstract class JdbcRepositoryBase<ID> extends HyperRepository<ID> {
     }
 
     @Override
-    public void update(Map<String, Object> filter, Map<String, Object> updateSet) {
+    public int update(Map<String, Object> filter, Map<String, Object> updateSet) {
         HyperFilter hyperFilter = HyperFilter.of(schema, filter);
         String sql = storage.createQueryGenerator().createUpdateQuery(hyperFilter, updateSet);
-        jdbc.update(sql);
+        return jdbc.update(sql);
     }
 
     @Override
@@ -222,6 +220,14 @@ public abstract class JdbcRepositoryBase<ID> extends HyperRepository<ID> {
         HyperFilter filter = HyperFilter.of(schema, idList);
         String sql = storage.createQueryGenerator().createDeleteQuery(filter);
         jdbc.update(sql);
+    }
+
+    @Override
+    public int delete(Map<String, Object> filter) {
+//        beforeDelete(filter);
+        HyperFilter hyperFilter = HyperFilter.of(schema, filter);
+        String sql = storage.createQueryGenerator().createDeleteQuery(hyperFilter);
+        return jdbc.update(sql);
     }
 
 

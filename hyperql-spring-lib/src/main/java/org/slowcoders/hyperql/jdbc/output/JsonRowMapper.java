@@ -53,6 +53,13 @@ public class JsonRowMapper implements JdbcResultMapper<KVEntity> {
                 if (cntColumn == 0) continue;
 
                 boolean isArray = mapping.isArrayNode();// && mapping.hasArrayDescendantNode();
+                if (!isArray || !mapping.hasJoinedChildMapping()) {
+                    if (idxColumn + cntColumn < this.mappedColumns.length) {
+                        throw new RuntimeException("something wrong");
+                    }
+                    readColumns(rs, idxColumn, cntColumn);
+                    continue;
+                }
 
                 List<QColumn> pkColumns = mapping.getSchema().getPKColumns();
                 int pkIndex = idxColumn;
@@ -65,11 +72,6 @@ public class JsonRowMapper implements JdbcResultMapper<KVEntity> {
                         }
                         continue read_mapping;
                     }
-                }
-
-                if (!isArray) { // || !mapping.hasJoinedChildMapping()) {
-                    readColumns(rs, idxColumn, cntColumn);
-                    continue;
                 }
 
                 Object key = makeCacheKey(mapping.getSchema(), idxColumn);
