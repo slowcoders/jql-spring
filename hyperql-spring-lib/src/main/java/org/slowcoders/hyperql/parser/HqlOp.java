@@ -7,5 +7,9 @@ public enum HqlOp {
 
     LT, LE,
 
-    GT, GE;
+    GT, GE,
+
+    RE, NOT_RE,
+
+    RE_ignoreCase, NOT_RE_ignoreCase;
 }

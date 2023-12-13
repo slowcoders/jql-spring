@@ -21,40 +21,25 @@ public abstract class SqlConverter implements PredicateVisitor {
 
     protected abstract void writeQualifiedColumnName(QColumn column, Object value);
 
+    protected String toSqlExpression(HqlOp operator) {
+        switch (operator) {
+            case EQ: return " = ";
+            case NE: return " != ";
+            case GE: return " >= ";
+            case GT: return " > ";
+            case LE: return " <= ";
+            case LT: return " < ";
+            case LIKE: return " LIKE ";
+            case NOT_LIKE: return " NOT LIKE ";
+            default:
+                throw new RuntimeException("not implemented operator: " + operator);
+        }
+    }
     @Override
     public void visitPredicate(QColumn column, HqlOp operator, Object value) {
-        writeQualifiedColumnName(column, value);
-        String op = "";
         assert (value != null);
-        switch (operator) {
-            case EQ:
-                op = " = ";
-                break;
-            case NE:
-                op = " != ";
-                break;
-
-            case GE:
-                op = " >= ";
-                break;
-            case GT:
-                op = " > ";
-                break;
-
-            case LE:
-                op = " <= ";
-                break;
-            case LT:
-                op = " < ";
-                break;
-
-            case LIKE:
-                op = " LIKE ";
-                break;
-            case NOT_LIKE:
-                op = " NOT LIKE ";
-                break;
-        }
+        writeQualifiedColumnName(column, value);
+        String op = toSqlExpression(operator);
         sw.write(op).writeValue(value);
     }
 

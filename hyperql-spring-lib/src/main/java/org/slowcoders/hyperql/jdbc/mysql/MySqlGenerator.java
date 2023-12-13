@@ -5,6 +5,7 @@ import org.slowcoders.hyperql.jdbc.storage.JdbcSchema;
 import org.slowcoders.hyperql.jdbc.storage.SqlGenerator;
 import org.slowcoders.hyperql.js.JsType;
 import org.slowcoders.hyperql.parser.EntityFilter;
+import org.slowcoders.hyperql.parser.HqlOp;
 import org.slowcoders.hyperql.schema.QColumn;
 import org.slowcoders.hyperql.schema.QSchema;
 
@@ -21,6 +22,32 @@ public class MySqlGenerator extends SqlGenerator {
         sw.write("INSERT ");
         if (insertPolicy == EntitySet.InsertPolicy.IgnoreOnConflict) sw.write("IGNORE ");
         sw.write("INTO ").write(schema.getTableName());
+    }
+
+    protected String toSqlExpression(HqlOp operator) {
+        return switch (operator) {
+            case RE_ignoreCase -> " REGEXP ";
+            case NOT_RE_ignoreCase -> " NOT REGEXP ";
+            default -> super.toSqlExpression(operator);
+        };
+    }
+
+    @Override
+    public void visitPredicate(QColumn column, HqlOp operator, Object value) {
+        switch (operator) {
+            case RE:
+            case NOT_RE:
+                assert (value != null);
+                if (operator == HqlOp.NOT_RE) {
+                    sw.write(" NOT");
+                }
+                sw.write(" REGEXP_LIKE(");
+                this.writeQualifiedColumnName(column, value);
+                sw.write(", ").writeQuoted(value).write(", 'c')");
+                break;
+            default:
+                super.visitPredicate(column, operator, value);
+        }
     }
 
     public String createInsertStatement(JdbcSchema schema, Map<String, Object> entity, EntitySet.InsertPolicy insertPolicy) {

@@ -147,6 +147,62 @@ describe('Comapre', () => {
       expect(character.name).not.toMatch(name_start)
       expect(character.name.indexOf(name_start) >= 0).not.toBeTruthy();
     }
-  });    
+  });
+
+  test('@re', async () => {
+    const name_start = ref.name.substring(0, 4);
+    const filter = {
+      "name@re": name_start + ".*"
+    }
+    const res = await hqlApi.find(filter);
+    const characters = res.content;
+    expect(characters.length).toBeGreaterThanOrEqual(1);
+    for (const character of characters) {
+      expect(character.name).toMatch(name_start)
+      expect(character.name.indexOf(name_start) >= 0).toBeTruthy();
+    }
+  });
+
+  test('@not re', async () => {
+    const name_start = ref.name.substring(0, 4);
+    const filter = {
+      "name@not re": name_start + ".*"
+    }
+    const res = await hqlApi.find(filter);
+    const characters = res.content;
+    expect(characters.length).toBeGreaterThanOrEqual(1);
+    for (const character of characters) {
+      expect(character.name).not.toMatch(name_start)
+      expect(character.name.indexOf(name_start) >= 0).not.toBeTruthy();
+    }
+  });
+
+  test('@re/i', async () => {
+    const name_start = ref.name.substring(0, 4);
+    const filter = {
+      "name@re/i": name_start.toUpperCase() + ".*"
+    }
+    const res = await hqlApi.find(filter);
+    const characters = res.content;
+    expect(characters.length).toBeGreaterThanOrEqual(1);
+    for (const character of characters) {
+      expect(character.name).toMatch(name_start)
+      expect(character.name.indexOf(name_start) >= 0).toBeTruthy();
+    }
+  });
+
+  test('@not re/i', async () => {
+    const name_start = ref.name.substring(0, 4);
+    const filter = {
+      "name@not re/i": name_start.toUpperCase() + ".*"
+    }
+    const res = await hqlApi.find(filter);
+    const characters = res.content;
+    expect(characters.length).toBeGreaterThanOrEqual(1);
+    for (const character of characters) {
+      expect(character.name).not.toMatch(name_start)
+      expect(character.name.indexOf(name_start) >= 0).not.toBeTruthy();
+    }
+  });
 });
 

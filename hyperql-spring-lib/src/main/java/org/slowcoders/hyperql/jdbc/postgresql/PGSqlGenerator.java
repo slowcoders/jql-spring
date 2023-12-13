@@ -7,6 +7,7 @@ import org.slowcoders.hyperql.jdbc.storage.SqlConverter;
 import org.slowcoders.hyperql.jdbc.storage.SqlGenerator;
 import org.slowcoders.hyperql.js.JsType;
 import org.slowcoders.hyperql.parser.EntityFilter;
+import org.slowcoders.hyperql.parser.HqlOp;
 import org.slowcoders.hyperql.schema.QColumn;
 
 import java.util.List;
@@ -37,6 +38,15 @@ public class PGSqlGenerator extends SqlGenerator {
         return sql;
     }
 
+    protected String toSqlExpression(HqlOp operator) {
+        return switch (operator) {
+            case RE -> " ~ ";
+            case NOT_RE -> " !~ ";
+            case RE_ignoreCase -> " ~* ";
+            case NOT_RE_ignoreCase -> " !~* ";
+            default -> super.toSqlExpression(operator);
+        };
+    }
 
     protected void writePreparedInsertStatementValueSet(List<JdbcColumn> columns) {
         sw.writeln("(");

@@ -175,6 +175,12 @@ abstract class PredicateFactory {
         operators.put("like", new MatchAny(HqlOp.LIKE));
         operators.put("not like", new NotMatch(HqlOp.NOT_LIKE));
 
+        operators.put("re", new MatchAny(HqlOp.RE));
+        operators.put("not re", new NotMatch(HqlOp.NOT_RE));
+
+        operators.put("re/i", new MatchAny(HqlOp.RE_ignoreCase));
+        operators.put("not re/i", new NotMatch(HqlOp.NOT_RE_ignoreCase));
+
         Compare GT = new Compare(HqlOp.GT);
         Compare LT = new Compare(HqlOp.LT);
         Compare GE = new Compare(HqlOp.GE);
