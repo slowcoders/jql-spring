@@ -103,7 +103,7 @@ class TableFilter extends EntityFilter implements QResultMapping {
         QColumn jsonColumn = null;
         if (join == null) {
             jsonColumn = schema.getColumn(key);
-            if (!jsonColumn.isJsonNode()) return this;
+            if (!jsonColumn.isJsonNode() || nodeType == HqlParser.NodeType.Leaf) return this;
         }
 
         EntityFilter subQuery = subFilters.get(key);

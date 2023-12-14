@@ -97,7 +97,7 @@ public class HqlParser {
             QSchema schema = subFilter.getSchema();
             if (schema != null) {
                 column = schema.getColumn(columnName);
-                if (value != null) {
+                if (value != null && !column.isJsonNode()) {
                     Class<?> fieldType = column.getValueType();
                     Field f = column.getMappedOrmField();
                     Class<?> accessType = op.getAccessType(value, fieldType);
@@ -108,6 +108,8 @@ public class HqlParser {
                     }
 //                    Class<?> fieldType = column.getValueType();
                     value = om.convertValue(value, accessType);
+                } else {
+                    // JsonB column 자체를 문자열로 비교하는 경우에는 별도 conversion 을 실행하지 않는다.
                 }
             }
             else {

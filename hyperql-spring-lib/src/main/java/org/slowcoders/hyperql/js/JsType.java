@@ -69,6 +69,13 @@ public enum JsType {
         typeMap.put(Double.class, JsType.Float);
         
         typeMap.put(String.class, JsType.Text);
+        Class c = null;
+        try {
+            c = Class.forName("com.fasterxml.jackson.databind.node.TextNode");
+            typeMap.put(c, JsType.Text);
+        } catch (ClassNotFoundException e) {
+            // do nothing;
+        }
     }
     
     public static JsType of(Class<?> javaType) {

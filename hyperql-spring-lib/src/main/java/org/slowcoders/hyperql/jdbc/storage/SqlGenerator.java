@@ -50,12 +50,21 @@ public abstract class SqlGenerator extends SqlConverter implements QueryGenerato
                 sw.write(this.currentNode.getMappingAlias()).write('.');
             }
             sw.write(name);
+            if (column.isJsonNode()) {
+                JsType valueType = value == null ? null : JsType.of(value.getClass());
+                writeTypeCast(valueType);
+            }
         }
         else {
             JsType valueType = value == null ? null : JsType.of(value.getClass());
             writeJsonPath(currentNode, column, valueType);
         }
     }
+
+    protected void writeTypeCast(JsType vf) {
+        // do nothing.. postgresql 전용으로 사용되고 있음....
+    }
+
 
     protected abstract void writeJsonPath(EntityFilter node, QColumn column, JsType valueType);
 

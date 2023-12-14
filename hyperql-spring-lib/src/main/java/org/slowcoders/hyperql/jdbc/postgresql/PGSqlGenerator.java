@@ -107,7 +107,7 @@ public class PGSqlGenerator extends SqlGenerator {
         }
     }
 
-    private void writeTypeCast(JsType vf) {
+    protected void writeTypeCast(JsType vf) {
         switch (vf) {
             case Boolean:
                 sw.write("::BOOLEAN");
