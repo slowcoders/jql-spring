@@ -2,6 +2,8 @@ package org.slowcoders.hyperql.parser;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slowcoders.hyperql.qb.Filter;
+import org.slowcoders.hyperql.qb.FilterSet;
+import org.slowcoders.hyperql.qb.JoinedFilter;
 import org.slowcoders.hyperql.schema.QColumn;
 import org.slowcoders.hyperql.schema.QSchema;
 
@@ -23,6 +25,90 @@ public class HqlParser {
             this.parse(where.getPredicateSet(), filter, true);
         }
         return where;
+    }
+
+    public HyperFilter parse(QSchema schema, Filter filter) {
+        HyperFilter where = new HyperFilter(schema);
+        if (filter != null) {
+            this.parse2(where.getPredicateSet(), filter, true);
+        }
+        return where;
+    }
+
+    public void parse2(PredicateSet predicates, Filter filter, boolean excludeConstantAttribute) {
+        // "joinColumn명" : { "id@?EQ" : "joinedColumn2.joinedColumn3.columnName" }; // Fetch 자동 수행.
+        //   --> @?EQ 기능은 넣되, 숨겨진 고급기능으로..
+        // "groupBy@" : ["attr1", "attr2/attr3" ]
+
+        EntityFilter baseFilter = predicates.getBaseFilter();
+
+        for (Filter entry : filter.entries()) {
+            String key = entry.getKey();
+            Object value = entry.getValue();
+            String function = entry.getOperator();
+            PredicateFactory op = function == null ? null : PredicateFactory.getFactory(function.toLowerCase());
+
+            if (!baseFilter.isJsonNode() && !isValidKey(key)) {
+                if (op.isAttributeNameRequired()) {
+                    throw new IllegalArgumentException("invalid JQL key: " + entry.getKey());
+                }
+                key = null;
+            }
+
+
+            NodeType valueNodeType;
+            if (entry instanceof JoinedFilter || entry instanceof FilterSet) {
+                valueNodeType = NodeType.Entity;
+                op = PredicateFactory.IS;
+            } else {
+                valueNodeType = this.getNodeType(value);
+            }
+            EntityFilter subFilter = baseFilter.getFilterNode(key, valueNodeType);
+            PredicateSet targetPredicates = predicates;
+            if (subFilter != baseFilter) {
+                targetPredicates = subFilter.getPredicateSet();
+            }
+
+            if (valueNodeType != NodeType.Leaf) {
+                PredicateSet ps;
+                if ("OR".equals(function)) {
+                    ps = new PredicateSet(Conjunction.OR, targetPredicates.getBaseFilter());
+                    targetPredicates.add(ps);
+                } else {
+                    ps = targetPredicates;
+                }
+                this.parse2(ps, entry, true);
+                continue;
+            }
+
+            String columnName = subFilter.getColumnName(key);
+            QColumn column;
+            QSchema schema = subFilter.getSchema();
+            if (schema != null) {
+                column = schema.getColumn(columnName);
+                if (value != null && !column.isJsonNode()) {
+                    Class<?> fieldType = column.getValueType();
+                    Field f = column.getMappedOrmField();
+                    Class<?> accessType = op.getAccessType(value, fieldType);
+                    if (f != null && f.getType().isEnum() && Number.class.isAssignableFrom(accessType)) {
+                        // 1차 변경.
+                        value = om.convertValue(value, f.getType());
+                        value = ((Enum)value).ordinal();
+                    }
+                    if (accessType != java.sql.Date.class || value.getClass() != String.class) {
+//                    Class<?> fieldType = column.getValueType();
+                        value = om.convertValue(value, accessType);
+                    }
+                } else {
+                    // JsonB column 자체를 문자열로 비교하는 경우에는 별도 conversion 을 실행하지 않는다.
+                }
+            }
+            else {
+                column = new JsonColumn(columnName, value == null ? String.class : value.getClass());
+            }
+            Expression cond = op.createPredicate(column, value);
+            targetPredicates.add(cond);
+        }
     }
 
     public void parse(PredicateSet predicates, Map<String, Object> filter, boolean excludeConstantAttribute) {
@@ -124,6 +210,8 @@ public class HqlParser {
     }
 
     private boolean isValidKey(String key) {
+        if (key == null) return false;
+
         int key_length = key.length();
         if (key_length == 0) return false;
         char ch = key.charAt(0);
