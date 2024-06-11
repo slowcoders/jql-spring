@@ -28,7 +28,7 @@ dependencies {
 //    implementation 'com.vladmihalcea:hibernate-types-62:3.5.1'
 
     // swagger
-    implementation 'org.springdoc:springdoc-openapi-ui:1.6.6'
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.5.0'
 }
 
 
