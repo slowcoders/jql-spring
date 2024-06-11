@@ -62,11 +62,11 @@ public class PGSqlGenerator extends SqlGenerator {
     }
 
     @Override
-    public String prepareBatchInsertStatement(JdbcSchema schema, EntitySet.InsertPolicy insertPolicy) {
+    public String prepareBatchInsertStatement(JdbcSchema schema, List<JdbcColumn> columns, EntitySet.InsertPolicy insertPolicy) {
         sw.writeln();
         sw.write("INSERT INTO ").write(schema.getTableName());
 
-        this.writePreparedInsertStatementValueSet((List)schema.getWritableColumns());
+        this.writePreparedInsertStatementValueSet(columns);
 
         switch (insertPolicy) {
             case IgnoreOnConflict:
@@ -79,7 +79,7 @@ public class PGSqlGenerator extends SqlGenerator {
                         sw.write(col.getPhysicalName()).write(", ");
                     }
                     sw.replaceTrailingComma(") DO UPDATE SET\n");
-                    for (QColumn col : schema.getWritableColumns()) {
+                    for (QColumn col : columns) {
                         if (!col.isPrimaryKey()) {
                             String col_name = col.getPhysicalName();
                             sw.write(col_name).write(" = excluded.").write(col_name).write(",\n");

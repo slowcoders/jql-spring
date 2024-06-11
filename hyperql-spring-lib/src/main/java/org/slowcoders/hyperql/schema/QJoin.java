@@ -138,9 +138,7 @@ public class QJoin {
             return fk.getJsonKey();
         }
 
-        QColumn joinedPk = fk.getJoinedPrimaryColumn();
         String fk_name = fk.getPhysicalName().toLowerCase();
-        String pk_name = joinedPk.getPhysicalName().toLowerCase();
         String js_key;
         int p = fk_name.lastIndexOf('_') + 1;
         if (p <= 0 || p == fk_name.length()) {
@@ -148,6 +146,8 @@ public class QJoin {
         }
         else {
             String suffix = fk_name.substring(p);
+            QColumn joinedPk = fk.getJoinedPrimaryColumn();
+            String pk_name = joinedPk.getPhysicalName().toLowerCase();
             if (pk_name.endsWith(suffix) || suffix.equals("id")) { //  && fk.getSchema().findColumn(base = fk_name.substring(0, p - 1)) == null) {
                 js_key = fk_name.substring(0, p - 1); // base;
             } else {

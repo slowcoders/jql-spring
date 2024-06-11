@@ -1,6 +1,7 @@
 package org.slowcoders.hyperql.jdbc.mysql;
 
 import org.slowcoders.hyperql.EntitySet;
+import org.slowcoders.hyperql.jdbc.storage.JdbcColumn;
 import org.slowcoders.hyperql.jdbc.storage.JdbcSchema;
 import org.slowcoders.hyperql.jdbc.storage.SqlGenerator;
 import org.slowcoders.hyperql.js.JsType;
@@ -75,16 +76,16 @@ public class MySqlGenerator extends SqlGenerator {
     }
 
 
-    public String prepareBatchInsertStatement(JdbcSchema schema, EntitySet.InsertPolicy insertPolicy) {
+    public String prepareBatchInsertStatement(JdbcSchema schema, List<JdbcColumn> columns, EntitySet.InsertPolicy insertPolicy) {
         this.writeInsertHeader(schema, insertPolicy);
 
-        super.writePreparedInsertStatementValueSet((List)schema.getWritableColumns());
+        super.writePreparedInsertStatementValueSet(columns);
 
         switch (insertPolicy) {
             case UpdateOnConflict:
                 if (!schema.hasGeneratedId()) {
                     sw.write("\nON DUPLICATE KEY UPDATE\n"); // SET 포함 안 함? 아래 문장 하나로 해결??
-                    for (QColumn column : schema.getWritableColumns()) {
+                    for (QColumn column : columns) {
                         String col = column.getPhysicalName();
                         sw.write("  ");
                         sw.write(col).write(" = VALUES(").write(col).write("),\n");

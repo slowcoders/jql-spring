@@ -1,6 +1,7 @@
 package org.slowcoders.hyperql.parser;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slowcoders.hyperql.qb.Filter;
 import org.slowcoders.hyperql.schema.QColumn;
 import org.slowcoders.hyperql.schema.QSchema;
 
@@ -106,8 +107,10 @@ public class HqlParser {
                         value = om.convertValue(value, f.getType());
                         value = ((Enum)value).ordinal();
                     }
+                    if (accessType != java.sql.Date.class || value.getClass() != String.class) {
 //                    Class<?> fieldType = column.getValueType();
-                    value = om.convertValue(value, accessType);
+                        value = om.convertValue(value, accessType);
+                    }
                 } else {
                     // JsonB column 자체를 문자열로 비교하는 경우에는 별도 conversion 을 실행하지 않는다.
                 }

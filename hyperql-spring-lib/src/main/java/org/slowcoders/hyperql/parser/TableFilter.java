@@ -72,7 +72,7 @@ class TableFilter extends EntityFilter implements QResultMapping {
     }
 
 
-    public String getTableName() {
+    public String getTableExpression() {
         return schema.getTableName();
     }
 
@@ -193,7 +193,7 @@ class TableFilter extends EntityFilter implements QResultMapping {
             }
             else {
                 EntityFilter scope = this.makeSubNode(key, HqlParser.NodeType.Entity);
-                scope.addSelection(entry.getValue());
+                scope.addSelection((HyperSelect.ResultMap)entry.getValue());
             }
         }
     }

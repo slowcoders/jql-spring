@@ -72,4 +72,8 @@ public abstract class HyperStorage {
     public String toEntityClassName(String tableName, boolean capitalizeFirstLetter) {
         return CaseConverter.toCamelCase(tableName, capitalizeFirstLetter);
     }
+
+    public String getSortCollation() {
+        return "";
+    }
 }

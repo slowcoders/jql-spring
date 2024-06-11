@@ -6,6 +6,7 @@ import org.slowcoders.hyperql.HyperSelect;
 import org.slowcoders.hyperql.EntitySet;
 import org.slowcoders.hyperql.jdbc.JdbcRepositoryBase;
 import org.slowcoders.hyperql.jdbc.JdbcStorage;
+import org.springframework.cglib.beans.BeanMap;
 import org.springframework.data.domain.Sort;
 
 import java.util.Collection;
@@ -26,13 +27,14 @@ public class HyperAdapter<ENTITY, ID> implements EntitySet<ENTITY, ID> {
         this(repository, entityType, repository.getStorage().getObjectMapper());
     }
 
-    public JdbcRepositoryBase<ID> getRepository() {
-        return this.repository;
-    }
     protected HyperAdapter(JdbcStorage storage, Class<ENTITY> entityType) {
         this.entityType = entityType;
         this.repository = storage.registerTable(this, entityType);
         this.objectMapper = storage.getObjectMapper();
+    }
+
+    public JdbcRepositoryBase<ID> getRepository() {
+        return this.repository;
     }
 
     public final Class<ENTITY> getEntityType() {
@@ -40,8 +42,8 @@ public class HyperAdapter<ENTITY, ID> implements EntitySet<ENTITY, ID> {
     }
 
     @Override
-    public HyperQuery createQuery(Map<String, Object> hqlFilter) {
-        return (HyperQuery)repository.createQuery(hqlFilter);
+    public HyperQuery createQuery(HyperSelect select, Map<String, Object> hqlFilter) {
+        return (HyperQuery)repository.createQuery(select, hqlFilter);
     }
 
 
@@ -61,6 +63,11 @@ public class HyperAdapter<ENTITY, ID> implements EntitySet<ENTITY, ID> {
         if (rawEntity == null) return null;
         ENTITY entity = objectMapper.convertValue(rawEntity, entityType);
         return entity;
+    }
+
+    public Map convertToMap(ENTITY entity) {
+        if (entity == null) return null;
+        return BeanMap.create(entity);
     }
 
     private List<ENTITY> replaceContentToEntities(List res) {
@@ -93,9 +100,9 @@ public class HyperAdapter<ENTITY, ID> implements EntitySet<ENTITY, ID> {
     }
 
     @Override
-    public ENTITY insert(Map<String, Object> properties, InsertPolicy insertPolicy) {
-        Map res =  repository.insert(properties, insertPolicy);
-        return convertToEntity(res);
+    public ID insert(Map<String, Object> properties, InsertPolicy insertPolicy) {
+        ID id = repository.insert(properties, insertPolicy);
+        return id;//convertToEntity(res);
     }
 
     @Override

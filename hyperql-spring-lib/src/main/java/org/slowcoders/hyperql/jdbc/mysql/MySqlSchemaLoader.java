@@ -19,7 +19,7 @@ public class MySqlSchemaLoader extends JdbcSchemaLoader {
     private final JdbcTemplate jdbc;
 
     public MySqlSchemaLoader(JdbcStorage storage, Connection conn) throws SQLException {
-        super(storage, conn.getCatalog(), false);
+        super(storage, conn.getCatalog(), conn.getSchema(), false);
         this.jdbc = new JdbcTemplate(storage.getDataSource());
     }
 

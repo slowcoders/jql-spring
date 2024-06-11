@@ -38,7 +38,8 @@ public class JdbcStorage extends HyperStorage {
 
     private String dbType;
     private HashMap<String, JdbcRepositoryBase> repositories = new HashMap<>();
-    private static HashMap<Class, JpaTable> jpaTables = new HashMap<>();
+    private HashMap<Class, JpaTable> jpaTables = new HashMap<>();
+    private String collation = "";
 
     public JdbcStorage(DataSource dataSource,
                        TransactionTemplate transactionTemplate,
@@ -61,6 +62,14 @@ public class JdbcStorage extends HyperStorage {
 
     public String getDbType() {
         return this.dbType;
+    }
+
+    public String getSortCollation() {
+        return this.collation;
+    }
+
+    public void setSortCollation(String collation) {
+        this.collation = collation;
     }
 
     public final EntityManager getEntityManager() { return entityManager; }
@@ -122,12 +131,14 @@ public class JdbcStorage extends HyperStorage {
     }
 
     public JdbcRepositoryBase loadRepository(String tableName) {
-        JdbcRepositoryBase repo = repositories.get(tableName);
+        JdbcSchemaLoader.TablePath path = jdbcSchemaLoader.makeTablePath(tableName);
+        String qname = path.getQualifiedName();
+        JdbcRepositoryBase repo = repositories.get(qname);
         if (repo == null) {
             synchronized (jpaTables) {
-                repo = repositories.get(tableName);
+                repo = repositories.get(qname);
                 if (repo == null) {
-                    QSchema schema = this.loadSchema(tableName);
+                    QSchema schema = this.loadSchema(qname);
                     repo = createRepository(schema);
                 }
             }
@@ -149,10 +160,6 @@ public class JdbcStorage extends HyperStorage {
         return table;
     }
 
-    public static <T,ID> JpaTable<T,ID> findJpaTable(Class<T> entityType) {
-        JpaTable table = jpaTables.get(entityType);
-        return table;
-    }
 
     public final QueryGenerator createQueryGenerator() { return createQueryGenerator(true); }
 
@@ -176,6 +183,7 @@ public class JdbcStorage extends HyperStorage {
             if (ormTypeMap != null) return;
             ormTypeMap = new HashMap<>();
 
+            if (entityManager == null) return;
             Set<EntityType<?>> types = entityManager.getEntityManagerFactory().getMetamodel().getEntities();
             for (EntityType<?> type : types) {
                 Class<?> clazz = type.getJavaType();
@@ -233,7 +241,6 @@ public class JdbcStorage extends HyperStorage {
             return schema;
         }
     }
-
 
     public void loadJoinMap(QSchema schema) {
         synchronized (schemaMap) {

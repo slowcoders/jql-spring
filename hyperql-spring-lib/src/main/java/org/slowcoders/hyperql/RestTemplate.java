@@ -40,6 +40,16 @@ public interface RestTemplate {
             this.resultMapping = resultMapping;
         }
 
+        private Response(Properties metadata) {
+            this.metadata = metadata;
+        }
+
+        public static Response of(String property, Object value) {
+            Properties properties = new Properties();
+            properties.put(property, value);
+            return new Response(properties);
+        }
+
         public static Response of(Object content, HyperSelect select) {
             Response resp;
             if (isJpaType(content)) {
@@ -107,9 +117,7 @@ public interface RestTemplate {
         }
         if (params.distinct != null) query.distinct((boolean) params.distinct);
 
-//        List<Object> result = query.getResultList(params.output);
         Response resp = query.execute(params.output);
-//                Response.of(result, query.getSelection());
         resp.query = query;
         if (needPagination) {
             resp.setProperty("totalElements", query.count());

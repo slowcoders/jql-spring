@@ -3,6 +3,7 @@ package org.slowcoders.hyperql.sample.jdbc.starwars.controller;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Schema;
 import org.slowcoders.hyperql.EntitySetController;
+import org.slowcoders.hyperql.HyperSelect;
 import org.slowcoders.hyperql.OutputOptions;
 import org.slowcoders.hyperql.sample.jdbc.starwars.service.SecuredCharacterService;
 import org.springframework.web.bind.annotation.*;
@@ -58,11 +59,17 @@ public class CustomCharacterController extends EntitySetController.CRUD<Long> im
     @Override
     @Operation(summary = "엔터티 추가 (default 값 설정 기능 추가)")
     @Transactional
-    public <ENTITY> ENTITY add(
+    public Response add(
+            @RequestParam(value = "select", required = false) String select$,
             @Schema(implementation = Object.class)
             @RequestBody Map<String, Object> properties) throws Exception {
-        return (ENTITY) service.addNewCharacter(properties);
+        Long id = service.addNewCharacter(properties);
+        if (select$ != null) {
+            HyperSelect select = HyperSelect.of(select$);
+            Object createdEntity = getEntitySet().find(id, select);
+            return Response.of(createdEntity, select);
+        } else {
+            return Response.of("inserted", id);
+        }
     }
-
-
 }

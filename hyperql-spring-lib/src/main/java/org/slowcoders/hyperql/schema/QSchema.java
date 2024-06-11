@@ -9,6 +9,7 @@ import java.util.*;
 
 public abstract class QSchema {
     private final String tableName;
+    private final String simpleName;
     private final Class<?> entityType;
 
     private List<QColumn> pkColumns;
@@ -21,9 +22,15 @@ public abstract class QSchema {
     private final boolean isJPASchema;
 
     public QSchema(String tableName, Class<?> entityType) {
+        if (entityType == null) entityType = HyperRepository.rawEntityType;
         this.tableName = tableName;
         this.entityType = entityType;
         this.isJPASchema = !HyperRepository.rawEntityType.isAssignableFrom(entityType);
+        String simpleName = tableName.substring(tableName.lastIndexOf('.') + 1);
+        if (simpleName.charAt(0) == '"') {
+            simpleName = simpleName.substring(1, simpleName.length() - 1);
+        }
+        this.simpleName = simpleName;
     }
 
     public abstract HyperStorage getStorage();
@@ -38,9 +45,7 @@ public abstract class QSchema {
         return this.tableName;
     }
 
-    public final String getSimpleName() {
-        return this.tableName.substring(this.tableName.indexOf('.') + 1);
-    }
+    public final String getSimpleName() { return this.simpleName; }
 
     public final String generateEntityClassName() {
         return getStorage().toEntityClassName(this.getSimpleName(), true);

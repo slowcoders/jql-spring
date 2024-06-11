@@ -2,7 +2,7 @@ package org.slowcoders.hyperql.parser;
 
 import java.util.ArrayList;
 
-class PredicateSet extends ArrayList<Expression> implements Predicate {
+public class PredicateSet extends ArrayList<Expression> implements Predicate {
     private final Conjunction conjunction;
     private final EntityFilter baseFilter;
 

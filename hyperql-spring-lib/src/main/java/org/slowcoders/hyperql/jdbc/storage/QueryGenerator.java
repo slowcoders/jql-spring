@@ -4,6 +4,7 @@ import org.slowcoders.hyperql.EntitySet;
 import org.slowcoders.hyperql.jdbc.JdbcQuery;
 import org.slowcoders.hyperql.parser.HyperFilter;
 
+import java.util.List;
 import java.util.Map;
 
 public interface QueryGenerator {
@@ -17,6 +18,6 @@ public interface QueryGenerator {
 
     String createInsertStatement(JdbcSchema schema, Map<String, Object> entity, EntitySet.InsertPolicy insertPolicy);
 
-    String prepareBatchInsertStatement(JdbcSchema schema, EntitySet.InsertPolicy insertPolicy);
+    String prepareBatchInsertStatement(JdbcSchema schema, List<JdbcColumn> columns, EntitySet.InsertPolicy insertPolicy);
 
 }

@@ -2,6 +2,9 @@ package org.slowcoders.hyperql.sample.jdbc.starwars.service;
 
 import org.slowcoders.hyperql.HyperRepository;
 import org.slowcoders.hyperql.HyperStorage;
+import static org.slowcoders.hyperql.qb.Filter.*;
+
+import org.slowcoders.hyperql.qb.Filter;
 import org.slowcoders.hyperql.util.KVEntity;
 import org.springframework.stereotype.Service;
 
@@ -30,10 +33,17 @@ public class SecuredCharacterService {
         }
     }
 
-    public Map addNewCharacter(Map<String, Object> properties) {
+    public Long addNewCharacter(Map<String, Object> properties) {
         if (properties.get("metadata") == null) {
             properties.put("metadata", createNote());
         }
+        Filter filter = _and_(
+                _like_("name", "L%"),
+                _in_("starship_",
+                    _ge_("length", 15)
+                )
+        );
+
         return characterEntitySet.insert(properties);
     }
 

@@ -26,10 +26,17 @@ public class BatchUpsert<ID> implements BatchPreparedStatementSetterWithKeyHolde
 
     private BatchUpsert(JdbcSchema schema, Collection<Map<String, Object>> entities, EntitySet.InsertPolicy insertPolicy) {
         QueryGenerator gen = schema.getStorage().createQueryGenerator();
-        this.sql = gen.prepareBatchInsertStatement(schema, insertPolicy);
-        this.schema = schema;
-        this.columns = schema.getWritableColumns();
+        List<QColumn> columns = schema.getWritableColumns();
         this.entities = entities.toArray(new Map[entities.size()]);
+        if (this.entities.length == 1) {
+            columns = new ArrayList<>();
+            for (String key : this.entities[0].keySet()) {
+                columns.add((JdbcColumn) schema.getColumn(key));
+            }
+        }
+        this.sql = gen.prepareBatchInsertStatement(schema, (List)columns, insertPolicy);
+        this.schema = schema;
+        this.columns = columns;
     }
 
     public static <ID> List<ID> execute(JdbcTemplate jdbc, JdbcSchema schema, Collection<? extends Map<String, Object>> entities, EntitySet.InsertPolicy insertPolicy) {

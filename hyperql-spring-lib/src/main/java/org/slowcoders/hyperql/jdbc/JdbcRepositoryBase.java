@@ -25,8 +25,10 @@ public abstract class JdbcRepositoryBase<ID> extends HyperRepository<ID> {
 
     protected final JdbcStorage storage;
     private final JdbcTemplate jdbc;
+    private Observer<ID> observer;
     protected HqlParser hqlParser;
     private final IdListMapper<ID> idListMapper = new IdListMapper<>(this);
+    private HyperSelect pkSelect;
 
     protected JdbcRepositoryBase(JdbcStorage storage, QSchema schema) {
         super(schema);
@@ -51,9 +53,9 @@ public abstract class JdbcRepositoryBase<ID> extends HyperRepository<ID> {
     }
 
     @Override
-    public HyperQuery createQuery(Map<String, Object> filter) {
+    public HyperQuery createQuery(HyperSelect select, Map<String, Object> filter) {
         HyperFilter hqlFilter = hqlParser.parse(schema, filter);
-        return new JdbcQuery(this, HyperSelect.of(filter), hqlFilter);
+        return new JdbcQuery(this, select, hqlFilter);
     }
 
 
@@ -181,6 +183,9 @@ public abstract class JdbcRepositoryBase<ID> extends HyperRepository<ID> {
         if (entities.isEmpty()) return Collections.emptyList();
 
         List<ID> idList = BatchUpsert.execute(jdbc, (JdbcSchema) this.getSchema(), entities, insertPolicy);
+        if (this.pkSelect != null) {
+            super.getObserver().onInserted(idList);
+        }
         return idList;
     }
 
@@ -189,9 +194,9 @@ public abstract class JdbcRepositoryBase<ID> extends HyperRepository<ID> {
         return id;
     }
 
-    public Map insert(Map<String, Object> properties, InsertPolicy insertPolicy) {
+    public ID insert(Map<String, Object> properties, InsertPolicy insertPolicy) {
         ID id = insert_raw(properties, insertPolicy);
-        return find(id, HyperSelect.of(properties));
+        return id;
     }
 
     @Override
@@ -199,20 +204,28 @@ public abstract class JdbcRepositoryBase<ID> extends HyperRepository<ID> {
         HyperFilter filter = HyperFilter.of(schema, idList);
         String sql = storage.createQueryGenerator().createUpdateQuery(filter, updateSet);
         jdbc.update(sql);
+        if (this.pkSelect != null) {
+            super.getObserver().onUpdated(idList);
+        }
     }
 
     @Override
     public int update(Map<String, Object> filter, Map<String, Object> updateSet) {
-        HyperFilter hyperFilter = HyperFilter.of(schema, filter);
-        String sql = storage.createQueryGenerator().createUpdateQuery(hyperFilter, updateSet);
-        return jdbc.update(sql);
+        if (this.pkSelect != null) {
+            List idList = this.createQuery(this.pkSelect, filter).getResultList();
+            this.update(idList, updateSet);
+            return idList.size();
+        }
+        else {
+            HyperFilter hyperFilter = HyperFilter.of(schema, filter);
+            String sql = storage.createQueryGenerator().createUpdateQuery(hyperFilter, updateSet);
+            return jdbc.update(sql);
+        }
     }
 
     @Override
     public void delete(ID id) {
-        HyperFilter filter = HyperFilter.of(schema, id);
-        String sql = storage.createQueryGenerator().createDeleteQuery(filter);
-        jdbc.update(sql);
+        this.delete(Collections.singletonList(id));
     }
 
     @Override
@@ -220,16 +233,29 @@ public abstract class JdbcRepositoryBase<ID> extends HyperRepository<ID> {
         HyperFilter filter = HyperFilter.of(schema, idList);
         String sql = storage.createQueryGenerator().createDeleteQuery(filter);
         jdbc.update(sql);
+        if (this.pkSelect != null) {
+            this.getObserver().onDeleted(idList);
+        }
     }
 
     @Override
     public int delete(Map<String, Object> filter) {
-//        beforeDelete(filter);
-        HyperFilter hyperFilter = HyperFilter.of(schema, filter);
-        String sql = storage.createQueryGenerator().createDeleteQuery(hyperFilter);
-        return jdbc.update(sql);
+        if (this.pkSelect != null) {
+            List idList = this.createQuery(this.pkSelect, filter).getResultList();
+            this.delete(idList);
+            return idList.size();
+        }
+        else {
+            HyperFilter hyperFilter = HyperFilter.of(schema, filter);
+            String sql = storage.createQueryGenerator().createDeleteQuery(hyperFilter);
+            return jdbc.update(sql);
+        }
     }
 
+    public void setObserver(Observer<ID> observer) {
+        super.setObserver(observer);
+        this.pkSelect = observer == null ? null : HyperSelect.of("" + HyperSelect.PrimaryKeys);
+    }
 
     public void removeEntityCache(ID id) {
         // do nothing.

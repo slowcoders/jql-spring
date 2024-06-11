@@ -24,7 +24,7 @@ public class JdbcColumn extends QColumn {
 
     private String fieldName;
 
-    private String label;
+    private String comment;
     private ColumnBinder fkBinder;
 
     //*
@@ -51,7 +51,7 @@ public class JdbcColumn extends QColumn {
             throw new RuntimeException("!isWritable");
         }
         this.colTypeName = md.getColumnTypeName(col);
-        this.label = comment; // comment!= null ? comment : md.getColumnLabel(col);
+        this.comment = comment; // comment!= null ? comment : md.getColumnLabel(col);
         this.precision = md.getPrecision(col);
         this.scale = md.getScale(col);
         this.displaySize = md.getColumnDisplaySize(col);
@@ -95,8 +95,8 @@ public class JdbcColumn extends QColumn {
     public boolean isPrimaryKey() { return this.isPk; }
 
     @Override
-    public String getLabel() {
-        return this.label;
+    public String getComment() {
+        return this.comment;
     }
 
     public String getDBColumnType() {
@@ -155,5 +155,21 @@ public class JdbcColumn extends QColumn {
 
     /*package*/ final void markPrimaryKey() {
         this.isPk = true;
+    }
+
+    public void setJoinedPrimaryColumn_unsafe(String jsonKey, String pk_table, String pk_column) {
+        JdbcSchema schema1 = this.schema;
+        if (this.fkBinder != null) {
+            throw new RuntimeException("Column is already joined: " + this);
+        }
+        if (schema1.findColumn(jsonKey) != null) {
+            throw new RuntimeException("Key is already used: " + jsonKey);
+        }
+        JoinConstraint jc = new JoinConstraint(schema1, "");
+        jc.add(this);
+        this.fkBinder = new ColumnBinder(schema1.getStorage(), pk_table, pk_column);
+        QJoin join = new QJoin(schema1, jc);
+        join.setJsonKey_unsafe(jsonKey); // jsonKey = mappingKey
+        schema1.getEntityJoinMap().put(jsonKey, join);
     }
 }

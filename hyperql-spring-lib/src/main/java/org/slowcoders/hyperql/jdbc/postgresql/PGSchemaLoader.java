@@ -13,7 +13,7 @@ public class PGSchemaLoader extends JdbcSchemaLoader {
 
 
     public PGSchemaLoader(JdbcStorage storage, Connection conn) throws SQLException {
-        super(storage, conn.getSchema(), true);
+        super(storage, conn.getCatalog(), conn.getSchema(), true);
     }
 
 

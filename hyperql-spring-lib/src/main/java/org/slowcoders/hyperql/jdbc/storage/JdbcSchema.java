@@ -36,7 +36,7 @@ public class JdbcSchema extends QSchema {
     }
 
 
-    protected void init(ArrayList<? extends QColumn> columns, HashMap<String, ArrayList<String>> uniqueConstraints, Class<?> ormType) {
+    protected void init(ArrayList<JdbcColumn> columns, HashMap<String, ArrayList<String>> uniqueConstraints, Class<?> ormType) {
         this.uniqueConstraints = uniqueConstraints;
 
         if (!HyperRepository.rawEntityType.isAssignableFrom(ormType)) {
@@ -47,7 +47,7 @@ public class JdbcSchema extends QSchema {
             }
 
             for (int i = columns.size(); --i >= 0; ) {
-                QColumn col = columns.get(i);
+                JdbcColumn col = columns.get(i);
                 Field f = jpaColumns.get(col.getPhysicalName().toLowerCase());
                 if (f == null) {
                     columns.remove(i);
@@ -151,9 +151,9 @@ public class JdbcSchema extends QSchema {
     private void dumpColumnDefinition(QColumn col, SourceWriter sb) {
         if (col.getJoinedPrimaryColumn() != null) return;
 
-        if (col.getLabel() != null) {
+        if (col.getComment() != null) {
             sb.write("/** ");
-            sb.write(col.getLabel());
+            sb.write(col.getComment());
             sb.writeln(" */");
         }
         boolean isJsonObject = col.isJsonNode();
@@ -221,9 +221,9 @@ public class JdbcSchema extends QSchema {
             if (join.getAssociativeJoin() != null && join.getAssociativeJoin().getJoinConstraint().size() == 1) {
                 col = join.getAssociativeJoin().getJoinConstraint().get(0);
             }
-            if (col.getLabel() != null) {
+            if (col.getComment() != null) {
                 sb.write("/** ");
-                sb.write(col.getLabel());
+                sb.write(col.getComment());
                 sb.writeln(" */");
             }
         }

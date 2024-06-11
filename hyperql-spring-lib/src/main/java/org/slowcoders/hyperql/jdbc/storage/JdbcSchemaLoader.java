@@ -1,7 +1,6 @@
 package org.slowcoders.hyperql.jdbc.storage;
 
 import org.slowcoders.hyperql.jdbc.JdbcStorage;
-import org.slowcoders.hyperql.schema.QColumn;
 import org.slowcoders.hyperql.schema.QJoin;
 import org.slowcoders.hyperql.schema.QSchema;
 import org.springframework.dao.DataAccessException;
@@ -9,22 +8,27 @@ import org.springframework.dao.DataAccessException;
 import jakarta.persistence.Table;
 import java.sql.*;
 import java.util.*;
+import java.util.regex.Pattern;
 
 public abstract class JdbcSchemaLoader {
 
     protected final JdbcStorage storage;
+    private final String defaultCatalog;
 
-    protected final String defaultNamespace;
+    private final String defaultSchema;
 
-    protected final boolean schemaSupported;
+    private final boolean schemaSupported;
 
-    public JdbcSchemaLoader(JdbcStorage storage, String defaultNamespace, boolean schemaSupported) {
+    public JdbcSchemaLoader(JdbcStorage storage, String defaultCatalog, String defaultSchema, boolean schemaSupported) {
         this.storage = storage;
         this.schemaSupported = schemaSupported;
-        if (defaultNamespace != null && defaultNamespace.trim().length() == 0) {
-            defaultNamespace = null;
-        }
-        this.defaultNamespace = defaultNamespace;
+        this.defaultCatalog = defaultCatalog;
+        this.defaultSchema = defaultSchema;
+//        == null ? ""
+//        if (defaultSchema != null && defaultSchema.trim().length() == 0) {
+//            defaultSchema = null;
+//        }
+//        this.defaultSchema = defaultSchema;
     }
 
     public abstract SqlGenerator createSqlGenerator(boolean isNativeQuery);
@@ -42,7 +46,7 @@ public abstract class JdbcSchemaLoader {
                 }
             }
         }
-        ArrayList<QColumn> columns = getColumns(conn, tablePath, schema, primaryKeys);
+        ArrayList<JdbcColumn> columns = getColumns(conn, tablePath, schema, primaryKeys);
         processForeignKeyConstraints(conn, schema, tablePath, columns);
         schema.init(columns, uniqueConstraints, ormType);
         return schema;
@@ -121,17 +125,17 @@ public abstract class JdbcSchemaLoader {
         return indexMap;
     }
 
-    private JdbcColumn getColumnByPhysicalName(ArrayList<QColumn> columns, String columnName) {
+    private JdbcColumn getColumnByPhysicalName(ArrayList<JdbcColumn> columns, String columnName) {
         columnName = columnName.toLowerCase();
-        for (QColumn column : columns) {
+        for (JdbcColumn column : columns) {
             if (columnName.equals(column.getPhysicalName().toLowerCase())) {
-                return (JdbcColumn)column;
+                return column;
             }
         }
         throw new RuntimeException("column not found: " + columnName);
     }
 
-    private void processForeignKeyConstraints(Connection conn, JdbcSchema fkSchema, TablePath tablePath, ArrayList<QColumn> columns) throws SQLException {
+    private void processForeignKeyConstraints(Connection conn, JdbcSchema fkSchema, TablePath tablePath, ArrayList<JdbcColumn> columns) throws SQLException {
         DatabaseMetaData md = conn.getMetaData();
         ResultSet rs = md.getImportedKeys(tablePath.getCatalog(), tablePath.getSchema(), tablePath.getSimpleName());
         while (rs.next()) {
@@ -163,10 +167,10 @@ public abstract class JdbcSchemaLoader {
         pkSchema.setEntityJoinMap(joinMap);
     }
 
-    private ArrayList<QColumn> getColumns(Connection conn, TablePath tablePath, JdbcSchema schema, ArrayList<String> primaryKeys) throws SQLException {
+    private ArrayList<JdbcColumn> getColumns(Connection conn, TablePath tablePath, JdbcSchema schema, ArrayList<String> primaryKeys) throws SQLException {
         //HashMap<String, JqlIndex> indexes = getUniqueConstraints(conn, dbSchema, tableName);
         Map<String, String> comments = getColumnComments(conn, tablePath);
-        ArrayList<QColumn> columns = new ArrayList<>();
+        ArrayList<JdbcColumn> columns = new ArrayList<>();
         String qname = tablePath.getQualifiedName();
         ResultSet rs = conn.createStatement().executeQuery("select * from " + qname + " limit 1");
         ResultSetMetaData md = rs.getMetaData();
@@ -175,6 +179,9 @@ public abstract class JdbcSchemaLoader {
             String columnName = md.getColumnName(col);
             //ColumnBinder joinedPK = joinedPKs.get(columnName);
             String comment = comments.get(columnName);
+            if ("<deprecated>".equals(comment)) {
+                continue;
+            }
             JdbcColumn ci = new JdbcColumn(schema, md, col, null, comment, primaryKeys);
             columns.add(ci);
         }
@@ -261,34 +268,75 @@ public abstract class JdbcSchemaLoader {
         }
     }
 
-    private String makeQualifiedName(String db_category, String db_schema, String table_name) {
-        String namespace = schemaSupported ? db_schema : db_category;
-        if (namespace == null || (namespace = namespace.trim()).length() == 0) {
-            namespace = defaultNamespace;
-        }
-        return namespace == null ? table_name : namespace + '.' + table_name;
+    private static boolean isEmpty(String s) {
+        return s == null || s.trim().length() == 0;
     }
 
-    public TablePath makeTablePath(Class<?> clazz, boolean useSchema) {
-        Table table = clazz.getAnnotation(Table.class);
-        return table != null ? makeTablePath(table, useSchema) : null;
+    private static final Pattern lowercase_and_numbers = Pattern.compile("[a-z_$][a-z0-9_$]*");
+    private static String toNameToken(String s) {
+        if (s.charAt(0) == '"') {
+            assert (s.charAt(s.length() - 1) == '"');
+        }
+        else if (!lowercase_and_numbers.matcher(s).matches()) {
+            assert (s.charAt(s.length() - 1) != '"');
+            s = '"' + s + '"';
+        }
+        return s;
     }
 
-    public TablePath makeTablePath(Table table, boolean useSchema) {
-        String name = table.name();
-        String namespace = useSchema ? table.schema() : table.catalog();
-        if (namespace.length() == 0) {
-            namespace = this.defaultNamespace;
+    private static String unquoteToken(String s) {
+        if (s.length() > 0) {
+            if (s.charAt(0) == '"') {
+                assert (s.charAt(s.length() - 1) == '"');
+                s = s.substring(1, s.length() - 1);
+            }
+            assert (s.charAt(0) != '"');
+            assert (s.charAt(s.length() - 1) != '"');
         }
-        return TablePath.of(namespace, name);
+        return s;
+    }
+
+    private static String combineDBNameTokens(String db_catalog, String db_schema, String table_name) {
+        StringBuilder sb = new StringBuilder();
+        if (!isEmpty(db_catalog)) {
+            sb.append(toNameToken(db_catalog)).append('.');
+        }
+        if (!isEmpty(db_schema)) {
+            sb.append(toNameToken(db_schema)).append('.');
+        }
+        sb.append(toNameToken(table_name));
+        return sb.toString();
+    }
+
+    private String makeQualifiedName(String db_catalog, String db_schema, String table_name) {
+        if (isEmpty(db_catalog)) db_catalog = this.defaultCatalog;
+        if (isEmpty(db_schema)) db_schema = this.defaultSchema;
+        return combineDBNameTokens(db_catalog, db_schema, table_name);
+    }
+
+    public TablePath makeTablePath(jakarta.persistence.Table table, boolean useSchema) {
+        String catalog = useSchema ? this.defaultCatalog: table.catalog();
+        String schema = useSchema ? table.schema() : this.defaultSchema;
+        String tableName = table.name();
+
+        return new TablePath(catalog, schema, tableName);
+
+//        String name = table.name();
+//        String namespace = useSchema ? table.schema() : table.catalog();
+//        if (namespace.length() == 0) {
+//            namespace = this.defaultSchema;
+//        }
+//        return TablePath.of(namespace, name);
     }
 
     public TablePath makeTablePath(String tableName) {
         tableName = tableName.toLowerCase();
         int last_dot_p = tableName.lastIndexOf('.');
-        String namespace = last_dot_p > 0 ? tableName.substring(0, last_dot_p) : this.defaultNamespace;
+        int first_dot_p = tableName.lastIndexOf('.', last_dot_p - 1);
         String simpleName = tableName.substring(last_dot_p + 1);
-        return new TablePath(namespace, namespace, tableName, simpleName);
+        String schema = last_dot_p < 0 ? this.defaultSchema : tableName.substring(first_dot_p + 1, last_dot_p);
+        String catalog = first_dot_p < 0 ? this.defaultCatalog : tableName.substring(0, first_dot_p);
+        return new TablePath(catalog, schema, simpleName);
     }
 
     public static class TablePath {
@@ -297,11 +345,11 @@ public abstract class JdbcSchemaLoader {
         private final String qualifiedName;
         private final String simpleName;
 
-        TablePath(String catalog, String schema, String qualifiedName, String simpleName) {
-            this.catalog = catalog;
-            this.schema = schema;
-            this.qualifiedName = qualifiedName;
-            this.simpleName = simpleName;
+        TablePath(String catalog, String schema, String simpleName) {
+            this.catalog = unquoteToken(catalog);
+            this.schema = unquoteToken(schema);
+            this.simpleName = unquoteToken(simpleName);
+            this.qualifiedName = combineDBNameTokens(catalog, schema, simpleName);
         }
 
         public String getQualifiedName() {
@@ -319,15 +367,5 @@ public abstract class JdbcSchemaLoader {
         public String getSchema() {
             return schema;
         }
-
-
-        public static TablePath of(String namespace, String simpleName) {
-            namespace = namespace == null ? "" : namespace.trim();
-            simpleName = simpleName.trim();
-
-            String qualifiedName = namespace.length() > 0 ? namespace + '.' + simpleName : simpleName;
-            return new TablePath(namespace, namespace, qualifiedName, simpleName);
-        }
-
     }
 }

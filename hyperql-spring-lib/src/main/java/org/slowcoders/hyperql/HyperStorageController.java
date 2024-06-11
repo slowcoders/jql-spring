@@ -136,28 +136,42 @@ public interface HyperStorageController extends RestTemplate {
         @Operation(summary = "엔터티 추가")
         @Transactional
         @ResponseBody
-        default <ENTITY> ENTITY add(
+        default Response add(
                 @PathVariable("table") String table,
+                @RequestParam(value = "select", required = false) String select$,
                 @Schema(implementation = Object.class)
                 @RequestBody Map<String, Object> properties) throws Exception {
             EntitySet entities = getEntitySet(table);
-            Object created = entities.insert(properties);
-            return (ENTITY) created;
+            Object id = entities.insert(properties);
+            if (select$ != null) {
+                HyperSelect select = HyperSelect.of(select$);
+                Object createdEntity = entities.find(id, select);
+                return Response.of(createdEntity, select);
+            } else {
+                return Response.of("inserted", id);
+            }
         }
 
         @PutMapping(path = "/{table}/add-all", consumes = {MediaType.APPLICATION_JSON_VALUE})
         @Operation(summary = "엔터티 추가")
         @Transactional
         @ResponseBody
-        default <ID> List<ID> addAll(
+        default Response addAll(
                 @PathVariable("table") String table,
+                @RequestParam(value = "select", required = false) String select$,
                 @RequestParam(value = "onConflict", required = false) String onConflict,
                 @Schema(implementation = Object.class)
                 @RequestBody List<Map<String, Object>> entities) throws Exception {
             EntitySet.InsertPolicy insertPolicy = parseInsertPolicy(onConflict);
             EntitySet entitySet = getEntitySet(table);
-            List<ID> res = (List<ID>)entitySet.insert(entities, insertPolicy);
-            return res;
+            List idList = entitySet.insert(entities, insertPolicy);
+            if (select$ != null) {
+                HyperSelect select = HyperSelect.of(select$);
+                List<?> createdEntities = entitySet.find(idList, select);
+                return Response.of(createdEntities, select);
+            } else {
+                return Response.of("inserted", idList.size());
+            }
         }
 
     }

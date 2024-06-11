@@ -84,7 +84,7 @@ public abstract class SqlGenerator extends SqlConverter implements QueryGenerato
     }
 
     private void writeFrom(HyperFilter where) {
-        writeFrom(where, where.getTableName(), false);
+        writeFrom(where, where.getTableExpression(), false);
     }
 
     private void writeFrom(HyperFilter where, String tableName, boolean ignoreEmptyFilter) {
@@ -166,7 +166,7 @@ public abstract class SqlGenerator extends SqlConverter implements QueryGenerato
         this.resultMappings = query.getResultMappings();
         HyperFilter where = query.getFilter();
 
-        String tableName = isNativeQuery ? where.getTableName() : where.getSchema().getEntityType().getName();
+        String tableName = isNativeQuery ? where.getTableExpression() : where.getSchema().getEntityType().getName();
         String select_cmd = (isNativeQuery && !query.isDistinct()) ? "SELECT" : "SELECT DISTINCT";
         boolean need_complex_pagination = isNativeQuery && query.getLimit() > 0 && needDistinctPagination(where);
         if (need_complex_pagination) {
@@ -176,7 +176,7 @@ public abstract class SqlGenerator extends SqlConverter implements QueryGenerato
             writeFrom(where, tableName, true);
             writeWhere(where);
             tableName = "_cte";
-            writeOrderBy(where, query.getSort(), false);
+            writeOrderBy(query, false);
             writePagination(query);
             sw.decTab();
             sw.write("\n)");
@@ -199,7 +199,7 @@ public abstract class SqlGenerator extends SqlConverter implements QueryGenerato
         sw.replaceTrailingComma("\n");
         writeFrom(where, tableName, false);
         writeWhere(where);
-        writeOrderBy(where, query.getSort(), false);//where.hasArrayDescendantNode());
+        writeOrderBy(query, false);//where.hasArrayDescendantNode());
 //        if (!need_complex_pagination && isNativeQuery) {
 //            writePagination(query);
 //        }
@@ -207,7 +207,9 @@ public abstract class SqlGenerator extends SqlConverter implements QueryGenerato
         return sql;
     }
 
-    private void writeOrderBy(HyperFilter where, Sort sort, boolean need_joined_result_set_ordering) {
+    private void writeOrderBy(JdbcQuery query, boolean need_joined_result_set_ordering) {
+        HyperFilter where = query.getFilter();
+        Sort sort = query.getSort();
         if (!need_joined_result_set_ordering) {
             if (sort == null || sort.isUnsorted()) return;
         }
@@ -216,11 +218,13 @@ public abstract class SqlGenerator extends SqlConverter implements QueryGenerato
         final HashSet<String> explicitSortColumns = new HashSet<>();
         if (sort != null) {
             QSchema schema = where.getSchema();
+            String collation = where.getSchema().getStorage().getSortCollation();
             sort.forEach(order -> {
                 String p = order.getProperty();
                 String qname = where.getMappingAlias() + '.' + resolveColumnName(schema.getColumn(p));
                 explicitSortColumns.add(qname);
                 sw.write(qname);
+                sw.write(collation);
                 sw.write(order.isAscending() ? " asc" : " desc").write(", ");
             });
         }
@@ -264,7 +268,7 @@ public abstract class SqlGenerator extends SqlConverter implements QueryGenerato
     }
 
     public String createUpdateQuery(HyperFilter where, Map<String, Object> updateSet) {
-        sw.write("\nUPDATE ").write(where.getTableName()).write(" ").write(where.getMappingAlias()).writeln(" SET");
+        sw.write("\nUPDATE ").write(where.getTableExpression()).write(" ").write(where.getMappingAlias()).writeln(" SET");
         writeUpdateValueSet(where.getSchema(), updateSet);
         this.writeWhere(where);
         String sql = sw.reset();
@@ -330,5 +334,5 @@ public abstract class SqlGenerator extends SqlConverter implements QueryGenerato
         sw.replaceTrailingComma(")");
     }
 
-    public abstract String prepareBatchInsertStatement(JdbcSchema schema, EntitySet.InsertPolicy insertPolicy);
+    public abstract String prepareBatchInsertStatement(JdbcSchema schema, List<JdbcColumn> columns, EntitySet.InsertPolicy insertPolicy);
 }

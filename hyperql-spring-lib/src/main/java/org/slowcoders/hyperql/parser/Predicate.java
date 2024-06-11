@@ -4,7 +4,7 @@ import org.slowcoders.hyperql.schema.QColumn;
 
 import java.util.Collection;
 
-interface Predicate extends Expression {
+public interface Predicate extends Expression {
 
     class MatchAny implements Predicate {
         private final QColumn column;
@@ -49,7 +49,7 @@ interface Predicate extends Expression {
     class Not implements Predicate {
         private Expression statement;
 
-        Not(Expression statement) {
+        public Not(Expression statement) {
             this.statement = statement;
         }
 

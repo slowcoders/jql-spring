@@ -122,7 +122,7 @@ public class JsUtil {
 
         sb.append("\n");
     }
-    static String filler = "                ";
+    static String filler = "                                             ";
     public static String getSimpleSchema(QSchema schema, boolean withTableName) {
         StringBuilder sb = new StringBuilder();
         if (withTableName) {

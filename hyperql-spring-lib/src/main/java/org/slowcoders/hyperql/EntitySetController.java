@@ -16,7 +16,7 @@ import java.util.Map;
 
 public interface EntitySetController<ID> extends RestTemplate {
 
-    EntitySet<?, ID> getEntitySet();
+    <ENTITY> EntitySet<ENTITY, ID> getEntitySet();
 
     class Search<ID> implements EntitySetController<ID> {
         private final EntitySet<?, ID> entities;
@@ -25,8 +25,8 @@ public interface EntitySetController<ID> extends RestTemplate {
             this.entities = entities;
         }
 
-        public EntitySet<?, ID> getEntitySet() {
-            return entities;
+        public <ENTITY> EntitySet<ENTITY, ID> getEntitySet() {
+            return (EntitySet<ENTITY, ID>)entities;
         }
 
         @GetMapping(path = "/{id}")
@@ -50,7 +50,7 @@ public interface EntitySetController<ID> extends RestTemplate {
         @Transactional
         @ResponseBody
         public Response find(OutputOptions req,
-                             @Schema(implementation = Object.class)
+                @Schema(implementation = Object.class)
                 @RequestBody Map<String, Object> filter) throws Exception {
             return search(getEntitySet(), req, filter);
         }
@@ -98,26 +98,40 @@ public interface EntitySetController<ID> extends RestTemplate {
         @Operation(summary = "엔터티 추가")
         @Transactional
         @ResponseBody
-        default <ENTITY> ENTITY add(
+        default Response add(
+                @RequestParam(value = "select", required = false) String select$,
                 @Schema(implementation = Object.class)
                 @RequestBody Map<String, Object> properties) throws Exception {
             EntitySet<?, ID> table = getEntitySet();
-            ENTITY entity = (ENTITY)table.insert(properties);
-            return entity;
+            ID id = table.insert(properties);
+            if (select$ != null) {
+                HyperSelect select = HyperSelect.of(select$);
+                Object createdEntity = table.find(id, select);
+                return Response.of(createdEntity, select);
+            } else {
+                return Response.of("inserted", id);
+            }
         }
 
         @PutMapping(path = "/add-all", consumes = {MediaType.APPLICATION_JSON_VALUE})
         @Operation(summary = "엔터티 추가")
         @Transactional
         @ResponseBody
-        default <ENTITY> ENTITY addAll(
+        default Response addAll(
                 @RequestParam(value = "onConflict", required = false) String onConflict,
+                @RequestParam(value = "select", required = false) String select$,
                 @Schema(implementation = Object.class)
                 @RequestBody List<Map<String, Object>> entities) throws Exception {
             EntitySet.InsertPolicy insertPolicy = parseInsertPolicy(onConflict);
             EntitySet<?, ID> table = getEntitySet();
-            ENTITY entity = (ENTITY)table.insert(entities, insertPolicy);
-            return entity;
+            List<ID> idList = table.insert(entities, insertPolicy);
+            if (select$ != null) {
+                HyperSelect select = HyperSelect.of(select$);
+                List<?> createdEntities = table.find(idList, select);
+                return Response.of(createdEntities, select);
+            } else {
+                return Response.of("inserted", idList.size());
+            }
         }
     }
 

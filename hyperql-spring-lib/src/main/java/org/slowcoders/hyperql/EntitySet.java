@@ -12,7 +12,13 @@ public interface EntitySet<ENTITY, ID> {
         UpdateOnConflict,
     }
 
-    HyperQuery createQuery(Map<String, Object> hqlFilter);
+//    QueryBuilder queryBuilder();
+
+    default HyperQuery createQuery(Map<String, Object> hqlFilter) {
+        return createQuery(HyperSelect.of(hqlFilter), hqlFilter);
+    }
+
+    HyperQuery createQuery(HyperSelect select, Map<String, Object> hqlFilter);
 
     List<ENTITY> findAll(HyperSelect select, Sort sort);
 
@@ -51,11 +57,11 @@ public interface EntitySet<ENTITY, ID> {
         return insert(entities, InsertPolicy.UpdateOnConflict);
     }
 
-    ENTITY insert(Map<String, Object> properties, InsertPolicy insertPolicy);
-    default ENTITY insert(Map<String, Object> properties) {
+    ID insert(Map<String, Object> properties, InsertPolicy insertPolicy);
+    default ID insert(Map<String, Object> properties) {
         return insert(properties, InsertPolicy.ErrorOnConflict);
     }
-    default ENTITY insertOrUpdate(Map<String, Object> properties) {
+    default ID insertOrUpdate(Map<String, Object> properties) {
         return insert(properties, InsertPolicy.UpdateOnConflict);
     }
 

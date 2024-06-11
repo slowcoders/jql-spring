@@ -52,7 +52,7 @@ public abstract class QColumn {
 
     public boolean isForeignKey() { return false; }
 
-    public String getLabel() {
+    public String getComment() {
         return null;
     }
 

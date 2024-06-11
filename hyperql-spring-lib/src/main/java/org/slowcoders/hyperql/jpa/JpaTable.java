@@ -3,6 +3,7 @@ package org.slowcoders.hyperql.jpa;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slowcoders.hyperql.HyperQuery;
+import org.slowcoders.hyperql.HyperSelect;
 import org.slowcoders.hyperql.jdbc.JdbcRepositoryBase;
 import org.slowcoders.hyperql.jdbc.JdbcStorage;
 import org.slowcoders.hyperql.schema.QSchema;
@@ -32,14 +33,14 @@ public abstract class JpaTable<ENTITY, ID> extends HyperAdapter<ENTITY, ID> {
     }
 
     @Override
-    public HyperQuery createQuery(Map<String, Object> hqlFilter) {
-        return (HyperQuery)repository.createQuery(hqlFilter);
+    public HyperQuery createQuery(HyperSelect select, Map<String, Object> hqlFilter) {
+        return (HyperQuery)repository.createQuery(select, hqlFilter);
     }
 
-    public ENTITY insert(Map<String, Object> dataSet, InsertPolicy insertPolicy) {
+    public ID insert(Map<String, Object> dataSet, InsertPolicy insertPolicy) {
         ENTITY entity = super.convertToEntity(dataSet);
-        ENTITY newEntity = this.insertEntity(entity, insertPolicy);
-        return newEntity;
+        ID id = getEntityId(entity);;
+        return id;
     }
 
     public List<ID> insert(Collection<? extends Map<String, Object>> entities, InsertPolicy insertPolicy) {

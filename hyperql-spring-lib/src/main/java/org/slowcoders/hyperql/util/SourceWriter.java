@@ -120,11 +120,25 @@ public class SourceWriter<Self extends SourceWriter> {
         return (Self)this;
     }
 
+    public Self writeValues(Object[] values) {
+        if (values == null || values.length == 0) {
+            return (Self)this;
+        }
+
+        for (Object v : values) {
+            writeValue(v);
+            sb.append(", ");
+        }
+        sb.setLength(sb.length() - 2);
+        return (Self)this;
+    }
+
     protected boolean isQuotedColumn(Object value) {
         if (value == null) return false;
         Class<?> type = value.getClass();
-        return !Number.class.isAssignableFrom(type) &&
-                !Boolean.class.isAssignableFrom(type);
+        return !Number.class.isAssignableFrom(type)
+            && !Boolean.class.isAssignableFrom(type)
+            && !RawStatement.class.isAssignableFrom(type);
     }
 
     @Override
@@ -186,5 +200,19 @@ public class SourceWriter<Self extends SourceWriter> {
 
     public int length() {
         return sb.length();
+    }
+
+
+    public static class RawStatement {
+        private final String statement;
+
+        public RawStatement(String statement) {
+            this.statement = statement;
+        }
+
+        @Override
+        public String toString() {
+            return this.statement;
+        }
     }
 }
