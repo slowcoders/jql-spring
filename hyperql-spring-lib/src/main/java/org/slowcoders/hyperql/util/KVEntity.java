@@ -10,6 +10,14 @@ public class KVEntity extends LinkedHashMap<String, Object> {
         return entity;
     }
 
+    public KVEntity add(String key, Object value) throws IllegalArgumentException {
+        Object old_v = super.put(key, value);
+        if (old_v != null) {
+            throw new IllegalArgumentException("Duplicate key: " + key);
+        }
+        return this;
+    }
+
     public String getString(String key) {
         return (String)super.get(key);
     }

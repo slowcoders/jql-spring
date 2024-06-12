@@ -12,8 +12,6 @@ public interface EntitySet<ENTITY, ID> {
         UpdateOnConflict,
     }
 
-//    QueryBuilder queryBuilder();
-
     default HyperQuery createQuery(Map<String, Object> hqlFilter) {
         return createQuery(HyperSelect.of(hqlFilter), hqlFilter);
     }
