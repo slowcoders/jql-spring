@@ -24,17 +24,12 @@ abstract class PredicateFactory {
         return operators.get(function);
     }
 
-    public PredicateSet getPredicates(EntityFilter node, HqlParser.NodeType nodeType) {
-        PredicateSet basePredicates = node.getPredicateSet();
-        switch (nodeType) {
-            case Entities: {
-                PredicateSet or_qs = new PredicateSet(Conjunction.OR, basePredicates.getBaseFilter());
-                basePredicates.add(or_qs);
-                return or_qs;
-            }
-            case Entity: default:
-                return basePredicates;
-        }
+    public PredicateSet getPredicates(PredicateSet basePredicates, HqlParser.NodeType nodeType) {
+        Conjunction conjunction = nodeType == HqlParser.NodeType.Entities ? Conjunction.OR : Conjunction.AND;
+        if (basePredicates.getConjunction() == conjunction) return basePredicates;
+        PredicateSet or_qs = new PredicateSet(conjunction, basePredicates.getBaseFilter());
+        basePredicates.add(or_qs);
+        return or_qs;
     }
 
     private static final HashMap<String, PredicateFactory> operators = new HashMap<>();
@@ -93,8 +88,7 @@ abstract class PredicateFactory {
 
         public boolean isAttributeNameRequired() { return false; }
 
-        public PredicateSet getPredicates(EntityFilter node, HqlParser.NodeType nodeType) {
-            PredicateSet baseScope = node.getPredicateSet();
+        public PredicateSet getPredicates(PredicateSet baseScope, HqlParser.NodeType nodeType) {
             switch (nodeType) {
                 case Entities: {
                     PredicateSet or_qs = new PredicateSet(Conjunction.OR, baseScope.getBaseFilter());
@@ -119,8 +113,11 @@ abstract class PredicateFactory {
 
         public boolean isAttributeNameRequired() { return false; }
 
-        public PredicateSet getPredicates(EntityFilter node, HqlParser.NodeType nodeType) {
-            PredicateSet baseScope = node.getPredicateSet();
+        public PredicateSet getPredicates(PredicateSet baseScope, HqlParser.NodeType nodeType) {
+            if (baseScope.getConjunction() == conjunction) {
+                return baseScope;
+            }
+
             switch (nodeType) {
                 case Entity:
                 case Entities: {
@@ -164,6 +161,9 @@ abstract class PredicateFactory {
         }
     }
 
+    public static final ExplicitConjunction AND;
+    public static final ExplicitConjunction  OR;
+
     static {
         MatchAny EQ = new MatchAny(HqlOp.EQ);
         MatchAny NE = new NotMatch(HqlOp.NE);
@@ -193,8 +193,9 @@ abstract class PredicateFactory {
         operators.put("between", new PairedPredicate(GE, LE, Conjunction.AND));
         operators.put("not between", new PairedPredicate(LT, GT, Conjunction.OR));
 
-        ExplicitConjunction AND = new ExplicitConjunction(Conjunction.AND);
-        ExplicitConjunction  OR = new ExplicitConjunction(Conjunction.OR);
+        AND = new ExplicitConjunction(Conjunction.AND);
+        OR = new ExplicitConjunction(Conjunction.OR);
+
         operators.put("and", AND);
         operators.put("or", OR);
     }

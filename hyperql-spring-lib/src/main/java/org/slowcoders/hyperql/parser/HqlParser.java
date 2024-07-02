@@ -162,7 +162,7 @@ public class HqlParser {
             }
 
             if (valueNodeType != NodeType.Leaf) {
-                PredicateSet ps = op.getPredicates(subFilter, valueNodeType);
+                PredicateSet ps = op.getPredicates(targetPredicates, valueNodeType);
                 if (valueNodeType == NodeType.Entity) {
                     Map<String, Object> subJql = (Map<String, Object>) value;
                     if (!subJql.isEmpty()) {

@@ -15,6 +15,10 @@ public class PredicateSet extends ArrayList<Expression> implements Predicate {
         this.baseFilter = baseFilter;
     }
 
+    public final Conjunction getConjunction() {
+        return conjunction;
+    }
+
     EntityFilter getBaseFilter() { return baseFilter; }
 
     public boolean add(Expression predicate) {
