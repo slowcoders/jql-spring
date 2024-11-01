@@ -14,6 +14,8 @@ sh build_and_run_tutorial.sh
 ### See tutorial
 http://localhost:7007
 
+### OpenAPI
+http://localhost:7007/swagger-ui.html
 
 ## Run test (jest)
 ```
