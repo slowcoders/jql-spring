@@ -122,13 +122,16 @@ public class HqlParser {
             String key = entry.getKey();
             Object value = entry.getValue();
             int op_start = key.lastIndexOf('@');
-            String function = null;
+            String function = "";
             if (op_start >= 0) {
-                function = key.substring(op_start + 1).toLowerCase().trim();
+                function = key.substring(op_start + 1).trim();
                 key = key.substring(0, op_start).trim();
             }
 
-            PredicateFactory op = PredicateFactory.getFactory(function);
+            PredicateFactory op = PredicateFactory.getFactory(function.toLowerCase());
+            if (op == null) {
+                throw new IllegalArgumentException("invalid JQL operator: " + function);
+            }
 
             /** [has not 구현]
                 SELECT

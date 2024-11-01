@@ -23,6 +23,22 @@ public interface Predicate extends Expression {
         }
     }
 
+    class CompareArray implements Predicate {
+        private final QColumn column;
+        private final Collection value;
+        private final HqlOp operator;
+
+        public CompareArray(QColumn column, HqlOp operator, Collection value) {
+            this.column = column;
+            this.value = value;
+            this.operator = operator;
+        }
+
+        @Override
+        public void accept(PredicateVisitor sb) {
+            sb.visitContains(column, operator, value);
+        }
+    }
 
     class Compare implements Predicate {
         private final QColumn column;
@@ -37,7 +53,9 @@ public interface Predicate extends Expression {
 
         @Override
         public void accept(PredicateVisitor sb) {
-            if (value == null) {
+            if (operator == HqlOp.CONTAINS) {
+                sb.visitContains(column, operator, (Collection) value);
+            } else if (value == null) {
                 sb.visitCompareNull(column, operator);
             } else {
                 sb.visitPredicate(column, operator, value);

@@ -72,8 +72,8 @@ class TableFilter extends EntityFilter implements QResultMapping {
     }
 
 
-    public String getTableExpression() {
-        return schema.getTableName();
+    public String getTableExpression(String[] params) {
+        return schema.getTableExpression(params);
     }
 
     @Override
@@ -185,9 +185,11 @@ class TableFilter extends EntityFilter implements QResultMapping {
 
         for (Map.Entry<String, HyperSelect.ResultMap> entry : resultMap.entrySet()) {
             String key = entry.getKey();
+            HyperSelect.ResultMap subMap = entry.getValue();
             QColumn column = schema.findColumn(key);
-            if (column != null) {
-                if (!allLeaf || schema.getExtendedColumns().contains(column)) {
+            // TODO. Json Selection. is subMap required??
+            if (subMap.isEmpty() && column != null) {
+                if (!allLeaf || !schema.getBaseColumns().contains(column)) {
                     this.addSelectedColumn(column);
                 }
             }

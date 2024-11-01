@@ -83,10 +83,6 @@ public abstract class SqlGenerator extends SqlConverter implements QueryGenerato
         }
     }
 
-    private void writeFrom(HyperFilter where) {
-        writeFrom(where, where.getTableExpression(), false);
-    }
-
     private void writeFrom(HyperFilter where, String tableName, boolean ignoreEmptyFilter) {
         sw.write("FROM ").write(tableName);
         if (!noAliases) {
@@ -136,10 +132,10 @@ public abstract class SqlGenerator extends SqlConverter implements QueryGenerato
         sw.shrinkLength(6);
     }
 
-    public String createCountQuery(HyperFilter where) {
+    public String createCountQuery(HyperFilter where, String[] viewParams) {
         this.resultMappings = where.getResultMappings();
         sw.write("\nSELECT count(*) ");
-        writeFrom(where);
+        this.writeFrom(where, where.getTableExpression(viewParams), false);
         writeWhere(where);
         String sql = sw.reset();
         return sql;
@@ -166,7 +162,7 @@ public abstract class SqlGenerator extends SqlConverter implements QueryGenerato
         this.resultMappings = query.getResultMappings();
         HyperFilter where = query.getFilter();
 
-        String tableName = isNativeQuery ? where.getTableExpression() : where.getSchema().getEntityType().getName();
+        String tableName = isNativeQuery ? where.getTableExpression(query.getViewParams()) : where.getSchema().getEntityType().getName();
         String select_cmd = (isNativeQuery && !query.isDistinct()) ? "SELECT" : "SELECT DISTINCT";
         boolean need_complex_pagination = isNativeQuery && query.getLimit() > 0 && needDistinctPagination(where);
         if (need_complex_pagination) {
@@ -268,7 +264,7 @@ public abstract class SqlGenerator extends SqlConverter implements QueryGenerato
     }
 
     public String createUpdateQuery(HyperFilter where, Map<String, Object> updateSet) {
-        sw.write("\nUPDATE ").write(where.getTableExpression()).write(" ").write(where.getMappingAlias()).writeln(" SET");
+        sw.write("\nUPDATE ").write(where.getSchema().getTableName()).write(" ").write(where.getMappingAlias()).writeln(" SET");
         writeUpdateValueSet(where.getSchema(), updateSet);
         this.writeWhere(where);
         String sql = sw.reset();
@@ -280,7 +276,7 @@ public abstract class SqlGenerator extends SqlConverter implements QueryGenerato
         sw.write("\nDELETE ");
         this.resultMappings = Collections.emptyList();
         this.noAliases = true;
-        this.writeFrom(where);
+        this.writeFrom(where, where.getSchema().getTableName(), false);
         this.writeWhere(where);
         String sql = sw.reset();
         return sql;

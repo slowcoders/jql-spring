@@ -116,7 +116,8 @@ public interface RestTemplate {
             needPagination = limit > 0 && query.getOffset() >= 0;
         }
         if (params.distinct != null) query.distinct((boolean) params.distinct);
-
+        if (params.viewParams != null) query.viewParams(params.viewParams);
+//        List<Object> result = query.getResultList(params.output);
         Response resp = query.execute(params.output);
         resp.query = query;
         if (needPagination) {

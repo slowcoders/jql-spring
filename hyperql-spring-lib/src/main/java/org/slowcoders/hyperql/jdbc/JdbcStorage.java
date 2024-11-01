@@ -20,9 +20,7 @@ import jakarta.persistence.metamodel.EntityType;
 import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class JdbcStorage extends HyperStorage {
 
@@ -162,6 +160,26 @@ public class JdbcStorage extends HyperStorage {
 
 
     public final QueryGenerator createQueryGenerator() { return createQueryGenerator(true); }
+
+    public EntitySet<?, Long> addVirtualTable(String tableName, String filter, String[] defaultFilterValues, String[] primaryKeys) {
+        synchronized (schemaMap) {
+            JdbcSchemaLoader.TablePath path = jdbcSchemaLoader.makeTablePath(tableName);
+            JdbcSchema schema = jdbc.execute(new ConnectionCallback<JdbcSchema>() {
+                @Override
+                public JdbcSchema doInConnection(Connection conn) throws SQLException, DataAccessException {
+                    String tableName = path.getQualifiedName();
+                    VirtualSchema schema = (VirtualSchema)schemaMap.get(tableName);
+                    if (schema == null) {
+                        schema = new VirtualSchema(JdbcStorage.this, tableName, filter, defaultFilterValues);
+                        jdbcSchemaLoader.initVirtualSchema(conn, schema, Arrays.asList(primaryKeys));
+                        schemaMap.put(tableName, schema);
+                    }
+                    return schema;
+                }
+            });
+            return loadRepository(tableName);
+        }
+    }
 
 
     private class JpaTableImpl<ENTITY, ID> extends JpaTable<ENTITY, ID> {

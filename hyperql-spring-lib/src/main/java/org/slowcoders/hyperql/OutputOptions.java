@@ -8,10 +8,14 @@ import lombok.Setter;
 public class OutputOptions {
 
     OutputFormat output;
+    @Schema(implementation = String.class, defaultValue = "*")
     String select;
-    @Schema(implementation = String.class)
+    @Schema(implementation = String.class, defaultValue = "")
     String[] sort;
     Integer page;
     Integer limit;
+    @Schema(implementation = Boolean.class)
     Boolean distinct;
+    @Schema(implementation = String.class, defaultValue = "")
+    String[] viewParams;
 }

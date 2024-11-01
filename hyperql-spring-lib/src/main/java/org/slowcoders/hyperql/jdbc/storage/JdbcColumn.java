@@ -11,6 +11,7 @@ import java.lang.reflect.Field;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.List;
 
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.NONE)
 public class JdbcColumn extends QColumn {
@@ -35,7 +36,7 @@ public class JdbcColumn extends QColumn {
     private int scale;
     //*/
 
-    public JdbcColumn(JdbcSchema schema, ResultSetMetaData md, int col, ColumnBinder fkBinder, String comment, ArrayList<String> primaryKeys) throws SQLException {
+    public JdbcColumn(JdbcSchema schema, ResultSetMetaData md, int col, ColumnBinder fkBinder, String comment, List<String> primaryKeys) throws SQLException {
         super(md.getColumnName(col), resolveJavaType(md, col));
         this.schema = schema;
 
@@ -111,6 +112,7 @@ public class JdbcColumn extends QColumn {
     private String resolveFieldName() {
         StringBuilder sb = new StringBuilder();
         QColumn col = this;
+        // TODO 2024.0930 check to disable scoped name generation.
         for (QColumn joinedPk; (joinedPk = col.getJoinedPrimaryColumn()) != null; col = joinedPk) {
             String token = QJoin.resolveForeignKeyPropertyName(col);
             sb.append(token).append('.');

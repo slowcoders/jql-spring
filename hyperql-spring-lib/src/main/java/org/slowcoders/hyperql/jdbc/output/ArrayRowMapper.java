@@ -1,23 +1,31 @@
 package org.slowcoders.hyperql.jdbc.output;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slowcoders.hyperql.RestTemplate;
-import org.slowcoders.hyperql.schema.QResultMapping;
+import org.slowcoders.hyperql.js.JsType;
 import org.slowcoders.hyperql.schema.QColumn;
+import org.slowcoders.hyperql.schema.QResultMapping;
 import org.springframework.dao.DataAccessException;
 
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
 
 public class ArrayRowMapper implements JdbcResultMapper<Object[]> {
     private final List<QResultMapping> resultMappings;
     private final Properties properties;
+    private final ObjectMapper objectMapper;
     private String[] columnNames;
 
-    public ArrayRowMapper(List<QResultMapping> rowMappings, Properties properties) {
+    public ArrayRowMapper(List<QResultMapping> rowMappings, Properties properties, ObjectMapper objectMapper) {
         this.resultMappings = rowMappings;
         this.properties = properties;
+        this.objectMapper = objectMapper;
     }
 
     @Override
@@ -31,7 +39,19 @@ public class ArrayRowMapper implements JdbcResultMapper<Object[]> {
         while (rs.next()) {
             Object[] values = new Object[columnCount];
             for (int i = columnNames.length; --i >= 0;) {
-                values[i] = rs.getObject(i+1);
+                Object value = rs.getObject(i+1);
+                if (value != null) {
+                    JsType type = JsType.of(value.getClass());
+                    if (type == JsType.Object) {
+                        try {
+                            JsType.of(value.getClass());
+                            value = objectMapper.readValue(value.toString(), Map.class);
+                        } catch (JsonProcessingException e) {
+                            // mariadb longtext 인 경우;
+                        }
+                    }
+                }
+                values[i] = value;
             }
             rows.add(values);
         }

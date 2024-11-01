@@ -10,6 +10,8 @@ import org.slowcoders.hyperql.parser.EntityFilter;
 import org.slowcoders.hyperql.parser.HqlOp;
 import org.slowcoders.hyperql.schema.QColumn;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -44,6 +46,8 @@ public class PGSqlGenerator extends SqlGenerator {
             case NOT_RE -> " !~ ";
             case RE_ignoreCase -> " ~* ";
             case NOT_RE_ignoreCase -> " !~* ";
+            case CONTAINS -> " ?& "; // contains all
+            case INTERSECTS -> " ?& "; // contains all
             default -> super.toSqlExpression(operator);
         };
     }
@@ -104,6 +108,30 @@ public class PGSqlGenerator extends SqlGenerator {
         sw.write(')');
         if (valueType != null) {
             writeTypeCast(valueType);
+        }
+    }
+
+    private void writeVectorCompare(QColumn column, HqlOp operator, Collection values) {
+        writeQualifiedColumnName(column, values);
+        String op = toSqlExpression(operator);
+        sw.write(op);
+        sw.write("ARRAY [");
+        sw.writeValues(values);
+        sw.write("]");
+    }
+
+    @Override
+    public void visitContains(QColumn column, HqlOp operator, Collection values) {
+        if (operator == HqlOp.INTERSECTS) {
+            sw.write("(");
+            for (var value : values) {
+                writeVectorCompare(column, operator, Collections.singletonList(value));
+                sw.write(" OR ");
+            }
+            sw.shrinkLength(4);
+            sw.write(") ");
+        } else {
+            writeVectorCompare(column, operator, values);
         }
     }
 

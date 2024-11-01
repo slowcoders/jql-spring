@@ -50,6 +50,11 @@ public abstract class SqlConverter implements PredicateVisitor {
     }
 
     @Override
+    public void visitContains(QColumn column, HqlOp operator, Collection values) {
+        throw new RuntimeException("Not implemted");
+    }
+
+    @Override
     public void visitMatchAny(QColumn column, HqlOp operator, Collection values) {
         boolean is_not = operator == HqlOp.NE || operator == HqlOp.NOT_LIKE;
         boolean contains_null = values.contains(null);

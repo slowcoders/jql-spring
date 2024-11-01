@@ -45,6 +45,10 @@ public abstract class QSchema {
         return this.tableName;
     }
 
+    public String getTableExpression(String[] params) {
+        return this.tableName;
+    }
+
     public final String getSimpleName() { return this.simpleName; }
 
     public final String generateEntityClassName() {

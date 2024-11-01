@@ -1,6 +1,8 @@
 package org.slowcoders.hyperql.jdbc.storage;
 
+import org.slowcoders.hyperql.HyperRepository;
 import org.slowcoders.hyperql.jdbc.JdbcStorage;
+import org.slowcoders.hyperql.jdbc.VirtualSchema;
 import org.slowcoders.hyperql.schema.QJoin;
 import org.slowcoders.hyperql.schema.QSchema;
 import org.springframework.dao.DataAccessException;
@@ -46,10 +48,17 @@ public abstract class JdbcSchemaLoader {
                 }
             }
         }
-        ArrayList<JdbcColumn> columns = getColumns(conn, tablePath, schema, primaryKeys);
+        Map<String, String> comments = getColumnComments(conn, tablePath);
+        ArrayList<JdbcColumn> columns = getColumns(conn, comments, schema, primaryKeys);
         processForeignKeyConstraints(conn, schema, tablePath, columns);
         schema.init(columns, uniqueConstraints, ormType);
         return schema;
+    }
+
+    public void initVirtualSchema(Connection conn, VirtualSchema schema, List<String> primaryKeys) throws SQLException {
+        ArrayList<JdbcColumn> columns = getColumns(conn, null, schema, primaryKeys);
+//        processForeignKeyConstraints(conn, schema, tablePath, columns);
+        schema.init(columns, Collections.EMPTY_MAP, HyperRepository.rawEntityType);
     }
 
     private ArrayList<String> getPrimaryKeys(Connection conn, TablePath tablePath) throws SQLException {
@@ -167,20 +176,21 @@ public abstract class JdbcSchemaLoader {
         pkSchema.setEntityJoinMap(joinMap);
     }
 
-    private ArrayList<JdbcColumn> getColumns(Connection conn, TablePath tablePath, JdbcSchema schema, ArrayList<String> primaryKeys) throws SQLException {
+    private ArrayList<JdbcColumn> getColumns(Connection conn, Map<String, String> comments, JdbcSchema schema, List<String> primaryKeys) throws SQLException {
         //HashMap<String, JqlIndex> indexes = getUniqueConstraints(conn, dbSchema, tableName);
-        Map<String, String> comments = getColumnComments(conn, tablePath);
         ArrayList<JdbcColumn> columns = new ArrayList<>();
-        String qname = tablePath.getQualifiedName();
-        ResultSet rs = conn.createStatement().executeQuery("select * from " + qname + " limit 1");
+        String sql = schema.getSampleQuery() + " limit 1";
+        ResultSet rs = conn.createStatement().executeQuery(sql);
         ResultSetMetaData md = rs.getMetaData();
         int cntColumn = md.getColumnCount();
+        String comment = null;
         for (int col = 0; ++col <= cntColumn; ) {
             String columnName = md.getColumnName(col);
-            //ColumnBinder joinedPK = joinedPKs.get(columnName);
-            String comment = comments.get(columnName);
-            if ("<deprecated>".equals(comment)) {
-                continue;
+            if (comments != null) {
+                comment = comments.get(columnName);
+                if ("<deprecated>".equals(comment)) {
+                    continue;
+                }
             }
             JdbcColumn ci = new JdbcColumn(schema, md, col, null, comment, primaryKeys);
             columns.add(ci);

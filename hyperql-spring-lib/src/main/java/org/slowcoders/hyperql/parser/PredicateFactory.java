@@ -20,7 +20,6 @@ abstract class PredicateFactory {
     public abstract Predicate createPredicate(QColumn column, Object value);
 
     public static PredicateFactory getFactory(String function) {
-        if (function == null) return IS;
         return operators.get(function);
     }
 
@@ -76,6 +75,29 @@ abstract class PredicateFactory {
             else {
                 cond = new Predicate.Compare(column, operator, value);
             }
+            return cond;
+        }
+    };
+
+    private static class CompareArray extends PredicateFactory {
+        HqlOp operator;
+        CompareArray(HqlOp operator) {
+            super();
+            this.operator = operator;
+        }
+
+        public Class<?> getAccessType(Object value, Class<?> fieldType) {
+            if (value.getClass().isArray() || value instanceof Collection) {
+                fieldType = ClassUtils.getArrayType(fieldType);
+            } else {
+                fieldType = ClassUtils.getArrayType(Object.class);
+            }
+            return fieldType;
+        }
+
+
+        public Predicate createPredicate(QColumn column, Object value) {
+            Predicate cond = new Predicate.CompareArray(column, operator, (Collection) value);
             return cond;
         }
     };
@@ -167,6 +189,7 @@ abstract class PredicateFactory {
     static {
         MatchAny EQ = new MatchAny(HqlOp.EQ);
         MatchAny NE = new NotMatch(HqlOp.NE);
+        operators.put("", EQ);
         operators.put("is", EQ);
         operators.put("not", NE);
         operators.put("eq", EQ);
@@ -192,6 +215,9 @@ abstract class PredicateFactory {
         operators.put("le", LE);
         operators.put("between", new PairedPredicate(GE, LE, Conjunction.AND));
         operators.put("not between", new PairedPredicate(LT, GT, Conjunction.OR));
+
+        operators.put("contains", new CompareArray(HqlOp.CONTAINS));
+        operators.put("intersects", new CompareArray(HqlOp.INTERSECTS));
 
         AND = new ExplicitConjunction(Conjunction.AND);
         OR = new ExplicitConjunction(Conjunction.OR);

@@ -10,7 +10,7 @@ import java.util.Map;
 public interface QueryGenerator {
     String createSelectQuery(JdbcQuery query);
 
-    String createCountQuery(HyperFilter where);
+    String createCountQuery(HyperFilter where, String[] viewParams);
 
     String createUpdateQuery(HyperFilter where, Map<String, Object> updateSet);
 

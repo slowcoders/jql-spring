@@ -28,6 +28,9 @@ public abstract class HyperQuery<ENTITY> {
     @Getter
     private boolean distinct;
 
+    @Getter
+    private String[] viewParams;
+
     protected void select(HyperSelect selection) {
         this.selection = selection;
     }
@@ -68,6 +71,10 @@ public abstract class HyperQuery<ENTITY> {
         return this;
     }
 
+    public HyperQuery<ENTITY> viewParams(String[] viewParams) {
+        this.viewParams = viewParams;
+        return this;
+    }
 
     public abstract List<ENTITY> getResultList(OutputFormat outputType);
 

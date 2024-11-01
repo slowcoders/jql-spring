@@ -54,6 +54,7 @@ public class JsonRowMapper implements JdbcResultMapper<KVEntity> {
 
                 boolean isArray = mapping.isArrayNode();// && mapping.hasArrayDescendantNode();
                 if (!isArray || !mapping.hasJoinedChildMapping()) {
+                    // TODO check Error!! 
                     if (idxColumn + cntColumn < this.mappedColumns.length) {
                         throw new RuntimeException("something wrong");
                     }
@@ -231,7 +232,7 @@ public class JsonRowMapper implements JdbcResultMapper<KVEntity> {
             value = rs.getString(index);
             if (value != null) {
                 try {
-                    value = objectMapper.readValue(value.toString(), JsonNode.class);
+                    value = objectMapper.readValue(value.toString(), Map.class);
                 } catch (JsonProcessingException e) {
                     // mariadb longtext 인 경우;
                 }
@@ -376,3 +377,4 @@ public class JsonRowMapper implements JdbcResultMapper<KVEntity> {
         }
     }
 }
+

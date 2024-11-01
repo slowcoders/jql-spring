@@ -1,25 +1,22 @@
 package org.slowcoders.hyperql.jdbc;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.persistence.Query;
 import org.slowcoders.hyperql.*;
 import org.slowcoders.hyperql.jdbc.output.ArrayRowMapper;
-import org.slowcoders.hyperql.jdbc.output.JdbcResultMapper;
-import org.slowcoders.hyperql.jdbc.storage.BatchUpsert;
 import org.slowcoders.hyperql.jdbc.output.IdListMapper;
+import org.slowcoders.hyperql.jdbc.output.JdbcResultMapper;
 import org.slowcoders.hyperql.jdbc.output.JsonRowMapper;
+import org.slowcoders.hyperql.jdbc.storage.BatchUpsert;
 import org.slowcoders.hyperql.jdbc.storage.JdbcSchema;
-import org.slowcoders.hyperql.parser.HyperFilter;
 import org.slowcoders.hyperql.parser.HqlParser;
+import org.slowcoders.hyperql.parser.HyperFilter;
 import org.slowcoders.hyperql.schema.QColumn;
 import org.slowcoders.hyperql.schema.QSchema;
 import org.springframework.data.domain.Sort;
 import org.springframework.jdbc.core.JdbcTemplate;
 
-import jakarta.persistence.Query;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public abstract class JdbcRepositoryBase<ID> extends HyperRepository<ID> {
 
@@ -65,7 +62,7 @@ public abstract class JdbcRepositoryBase<ID> extends HyperRepository<ID> {
             case Object:
                 return new JsonRowMapper(query.getResultMappings(), storage.getObjectMapper());
             default:
-                return new ArrayRowMapper(query.getResultMappings(), null);
+                return new ArrayRowMapper(query.getResultMappings(), null, storage.getObjectMapper());
         }
     }
 
@@ -172,7 +169,7 @@ public abstract class JdbcRepositoryBase<ID> extends HyperRepository<ID> {
         if (filter == null) {
             filter = new HyperFilter(this.schema);
         }
-        String sqlCount = storage.createQueryGenerator().createCountQuery(filter);
+        String sqlCount = storage.createQueryGenerator().createCountQuery(filter, query.getViewParams());
         long count = jdbc.queryForObject(sqlCount, Long.class);
         return count;
     }
@@ -199,11 +196,70 @@ public abstract class JdbcRepositoryBase<ID> extends HyperRepository<ID> {
         return id;
     }
 
+    private boolean isPartialUpdate(Map<String, Object> updateSet) {
+        //  2024.10.12 partial update 를 위한 scoped key 는 최상위 노드에만 지정 가능하다.
+        for (var key : updateSet.keySet()) {
+            if (key.contains(".")) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static Map<String, Object> getSubEntity(Map<String, Object> entity, String key) {
+        Map<String, Object> subEntity = (Map<String, Object>)entity.get(key);
+        if (subEntity == null) {
+            subEntity = new LinkedHashMap<>();
+            entity.put(key, subEntity);
+        }
+        return subEntity;
+    }
+
+    private void normalizeUpdateSet(Map<String, Object> updateSet) {
+        for (var key : updateSet.keySet()) {
+            if (key.contains(".")) {
+                Object value = updateSet.remove(key);
+                String[] tokens = key.split("\\.");
+                var entity = updateSet;
+                for (int i = 0; i < tokens.length - 1; i ++) {
+                    entity = getSubEntity(entity, tokens[i]);
+                }
+                entity.put(tokens[tokens.length - 1], value);
+            }
+        }
+    }
+
+    private void mergeEntity(Map<String, Object> entity, Map<String, Object> updateSet) {
+        for (var entry : updateSet.entrySet()) {
+            if (entry.getValue() instanceof Map subUpdateSet) {
+                var subEntity = getSubEntity(entity, entry.getKey());
+                mergeEntity(subEntity, subUpdateSet);
+            } else {
+                entity.put(entry.getKey(), entry.getValue());
+            }
+        }
+    }
+
+
     @Override
     public void update(Iterable<ID> idList, Map<String, Object> updateSet) {
-        HyperFilter filter = HyperFilter.of(schema, idList);
-        String sql = storage.createQueryGenerator().createUpdateQuery(filter, updateSet);
-        jdbc.update(sql);
+        if (!isPartialUpdate(updateSet)) {
+            HyperFilter filter = HyperFilter.of(schema, idList);
+            String sql = storage.createQueryGenerator().createUpdateQuery(filter, updateSet);
+            jdbc.update(sql);
+        } else {
+            normalizeUpdateSet(updateSet);
+            var select = HyperSelect.of(updateSet.keySet());
+            for (ID id: idList) {
+                var entity = find(id, select);
+                if (entity != null) {
+                    mergeEntity(entity, updateSet);
+                    HyperFilter filter = HyperFilter.of(schema, id);
+                    String sql = storage.createQueryGenerator().createUpdateQuery(filter, entity);
+                    jdbc.update(sql);
+                }
+            }
+        }
         if (this.pkSelect != null) {
             super.getObserver().onUpdated(idList);
         }

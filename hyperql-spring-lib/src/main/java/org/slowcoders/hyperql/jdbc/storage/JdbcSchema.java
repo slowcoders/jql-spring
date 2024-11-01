@@ -18,7 +18,7 @@ public class JdbcSchema extends QSchema {
 
     private final JdbcStorage schemaLoader;
 
-    private HashMap<String, ArrayList<String>> uniqueConstraints = new HashMap<>();
+    private Map<String, ArrayList<String>> uniqueConstraints = new HashMap<>();
     private final HashMap<String, JoinConstraint> fkConstraints = new HashMap<>();
 
     private Map<String, QJoin> entityJoinMap;
@@ -36,7 +36,7 @@ public class JdbcSchema extends QSchema {
     }
 
 
-    protected void init(ArrayList<JdbcColumn> columns, HashMap<String, ArrayList<String>> uniqueConstraints, Class<?> ormType) {
+    protected void init(ArrayList<JdbcColumn> columns, Map<String, ArrayList<String>> uniqueConstraints, Class<?> ormType) {
         this.uniqueConstraints = uniqueConstraints;
 
         if (!HyperRepository.rawEntityType.isAssignableFrom(ormType)) {
@@ -465,5 +465,9 @@ public class JdbcSchema extends QSchema {
 
     /*packet*/ final JoinMap getImportedJoins() {
         return importedByFkJoinMap;
+    }
+
+    public String getSampleQuery() {
+        return "select * from " + this.getTableName();
     }
 }

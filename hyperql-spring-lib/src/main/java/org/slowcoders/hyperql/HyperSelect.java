@@ -27,6 +27,12 @@ public class HyperSelect {
         }
     }
 
+    private HyperSelect(Collection<String> selectSpec) {
+        for (String s : selectSpec) {
+            parsePropertySelection(s);
+        }
+    }
+
     private static String trimToNull(String s) {
         if (s != null) {
             s = s.trim();
@@ -43,6 +49,13 @@ public class HyperSelect {
     }
     public static HyperSelect of(String[] selectSpec) {
         if (selectSpec == null || selectSpec.length == 0) return Auto;
+
+        HyperSelect select = new HyperSelect(selectSpec);
+        return select;
+    }
+
+    public static HyperSelect of(Collection<String> selectSpec) {
+        if (selectSpec == null || selectSpec.size() == 0) return Auto;
 
         HyperSelect select = new HyperSelect(selectSpec);
         return select;
