@@ -12,6 +12,8 @@
 </template>
 
 <script>
+import { initSampleDB } from "./init_sample_db.js";
+
 export default {
   name: "App",
   data() {
@@ -70,6 +72,11 @@ export default {
       collapsed: false
     };
   },
+
+  mounted() {
+    console.log("App mounted!");
+    initSampleDB();
+  }
 };
 </script>
 

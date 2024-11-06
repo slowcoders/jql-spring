@@ -1,5 +1,7 @@
 package org.slowcoders.hyperql.js;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slowcoders.hyperql.schema.QColumn;
 import org.slowcoders.hyperql.schema.QSchema;
 import org.slowcoders.hyperql.schema.QJoin;
@@ -218,4 +220,21 @@ public class JsUtil {
         }
     }
 
+    public static Object parseJson(ObjectMapper objectMapper, String json) {
+        if (json == null || json.length() == 0) return json;
+        Object value = json;
+        try {
+            Class<?> valueClass = switch (json.charAt(0)) {
+                case '{' -> Map.class;
+                case '[' -> List.class;
+                default -> null;
+            };
+            if (valueClass != null) {
+                value = objectMapper.readValue(json, valueClass);
+            }
+        } catch (JsonProcessingException e) {
+            // mariadb longtext 인 경우;
+        }
+        return value;
+    }
 }

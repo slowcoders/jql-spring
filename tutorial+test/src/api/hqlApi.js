@@ -52,7 +52,7 @@ export class HqlApi {
     }
 
     async insertAll(entity, conflictPolicy) {
-        const url = `${this.baseUrl}/add-all${conflictPolicy ? "?onConflict=" + conflictPolicy : "" }`
+        const url = `${this.baseUrl}/add-all?select=*${conflictPolicy ? "&onConflict=" + conflictPolicy : "" }`
         const response = await axios.put(url, entity, http_options);
         return response.data;
     }

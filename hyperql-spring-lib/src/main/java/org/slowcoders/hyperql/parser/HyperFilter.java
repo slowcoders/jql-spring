@@ -42,10 +42,26 @@ public class HyperFilter extends TableFilter {
         return filter;
     }
 
-    public static <ID> HyperFilter of(QSchema schema, List<ID> idList) {
+    public static <ID> HyperFilter of(QSchema schema, Iterable<ID> idList) {
         HyperFilter filter = new HyperFilter(schema);
-        QColumn first_pk = schema.getPKColumns().get(0);
-        filter.getPredicateSet().add(PredicateFactory.IS.createPredicate(first_pk, idList));
+        PredicateSet ps = filter.getPredicateSet();
+        ID firstId = idList.iterator().next();
+        if (firstId instanceof Object[]) {
+            PredicateSet or_qs = new PredicateSet(Conjunction.OR, filter);
+            ps.add(or_qs);
+            for (ID id : idList) {
+                PredicateSet new_ps = new PredicateSet(Conjunction.AND, filter);
+                Object[] ids = (Object[]) id;
+                int idx = 0;
+                for (QColumn pk : schema.getPKColumns()) {
+                    new_ps.add(PredicateFactory.IS.createPredicate(pk, ids[idx++]));
+                }
+                or_qs.add(new_ps);
+            }
+        } else {
+            QColumn first_pk = schema.getPKColumns().get(0);
+            ps.add(PredicateFactory.IS.createPredicate(first_pk, idList));
+        }
         return filter;
     }
 

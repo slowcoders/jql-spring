@@ -3,7 +3,7 @@ create schema if not exists starwars_jpa;
 
 create table if not exists starwars.character
 (
-    id bigserial not null
+    id  bigint not null
         constraint character_pkey primary key,
     species varchar(31) not null,
     name varchar(255) not null,
@@ -56,7 +56,7 @@ create unique index if not exists character_id__episode_id__uindex
 --------------------------------------------------------
 create table if not exists starwars.starship
 (
-    id bigserial not null
+    id  bigint not null
         constraint starship_pkey
             primary key,
     pilot_id bigint

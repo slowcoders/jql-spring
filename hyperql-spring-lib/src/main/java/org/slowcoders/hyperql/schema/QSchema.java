@@ -138,8 +138,15 @@ public abstract class QSchema {
                 }
             }
 
-            if (!ci.isForeignKey() && !ci.isReadOnly()) {
+            if (/*!ci.isForeignKey() &&*/ !ci.isReadOnly()) {
                 writableColumns.add(ci);
+                /**
+                 * 참고) ForeignKey 를 writableColumns 에 등록하지 않으면,
+                 * Insert 시 fk 를 아래와 같이 구조화하여 요청하여야 한다.
+                 * {
+                 *    master { id = 333 }
+                 * }
+                 */
             }
         }
 

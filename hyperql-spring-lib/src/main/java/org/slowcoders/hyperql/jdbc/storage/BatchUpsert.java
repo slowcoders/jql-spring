@@ -63,6 +63,9 @@ public class BatchUpsert<ID> implements BatchPreparedStatementSetterWithKeyHolde
         int idx = 0;
         for (QColumn col : columns) {
             Object json_v = entity.get(col.getJsonKey());
+            if (json_v == null) {
+                json_v = entity.get(col.getPhysicalName());
+            }
             Object value = convertJsonValueToColumnValue(col, json_v);
             ps.setObject(++idx, value);
         }
@@ -121,6 +124,9 @@ public class BatchUpsert<ID> implements BatchPreparedStatementSetterWithKeyHolde
             int i = 0;
             for (QColumn pk : pkColumns) {
                 Object v = getValue(pk.getJsonKey(), entity, generatedKeys);
+                if (v == null) {
+                    v = getValue(pk.getPhysicalName(), entity, generatedKeys);
+                }
                 id[i++] = v;
             }
             return id;

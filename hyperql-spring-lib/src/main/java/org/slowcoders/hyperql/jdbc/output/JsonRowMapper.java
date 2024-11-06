@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slowcoders.hyperql.RestTemplate;
+import org.slowcoders.hyperql.js.JsUtil;
 import org.slowcoders.hyperql.schema.QColumn;
 import org.slowcoders.hyperql.schema.QResultMapping;
 import org.slowcoders.hyperql.schema.QSchema;
@@ -54,7 +55,8 @@ public class JsonRowMapper implements JdbcResultMapper<KVEntity> {
 
                 boolean isArray = mapping.isArrayNode();// && mapping.hasArrayDescendantNode();
                 if (!isArray || !mapping.hasJoinedChildMapping()) {
-                    // TODO check Error!! 
+                    // TODO check Error!!
+                    // Tutorial, 비교 연산자, starship_ 과 episode_ 를 모두 선택하면 오류 발생.
                     if (idxColumn + cntColumn < this.mappedColumns.length) {
                         throw new RuntimeException("something wrong");
                     }
@@ -229,14 +231,7 @@ public class JsonRowMapper implements JdbcResultMapper<KVEntity> {
     protected Object getColumnValue(ResultSet rs, int index, QColumn column) throws SQLException {
         Object value;
         if (column.isJsonNode()) {
-            value = rs.getString(index);
-            if (value != null) {
-                try {
-                    value = objectMapper.readValue(value.toString(), Map.class);
-                } catch (JsonProcessingException e) {
-                    // mariadb longtext 인 경우;
-                }
-            }
+            value = JsUtil.parseJson(objectMapper, rs.getString(index));
         } else {
             value = JdbcUtils.getResultSetValue(rs, index);
         }

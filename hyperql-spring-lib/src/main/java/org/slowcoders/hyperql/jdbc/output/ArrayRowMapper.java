@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slowcoders.hyperql.RestTemplate;
 import org.slowcoders.hyperql.js.JsType;
+import org.slowcoders.hyperql.js.JsUtil;
 import org.slowcoders.hyperql.schema.QColumn;
 import org.slowcoders.hyperql.schema.QResultMapping;
 import org.springframework.dao.DataAccessException;
@@ -21,6 +22,7 @@ public class ArrayRowMapper implements JdbcResultMapper<Object[]> {
     private final Properties properties;
     private final ObjectMapper objectMapper;
     private String[] columnNames;
+    private QColumn[] mappedColumns;
 
     public ArrayRowMapper(List<QResultMapping> rowMappings, Properties properties, ObjectMapper objectMapper) {
         this.resultMappings = rowMappings;
@@ -39,17 +41,11 @@ public class ArrayRowMapper implements JdbcResultMapper<Object[]> {
         while (rs.next()) {
             Object[] values = new Object[columnCount];
             for (int i = columnNames.length; --i >= 0;) {
-                Object value = rs.getObject(i+1);
-                if (value != null) {
-                    JsType type = JsType.of(value.getClass());
-                    if (type == JsType.Object) {
-                        try {
-                            JsType.of(value.getClass());
-                            value = objectMapper.readValue(value.toString(), Map.class);
-                        } catch (JsonProcessingException e) {
-                            // mariadb longtext 인 경우;
-                        }
-                    }
+                Object value;
+                if (mappedColumns[i].isJsonNode()) {
+                    value = JsUtil.parseJson(objectMapper, rs.getString(i + 1));
+                } else {
+                    value = rs.getObject(i+1);
                 }
                 values[i] = value;
             }
@@ -70,7 +66,8 @@ public class ArrayRowMapper implements JdbcResultMapper<Object[]> {
         ResultSetMetaData rsmd = rs.getMetaData();
         int columnCount = rsmd.getColumnCount();
 
-        String[] mappedColumns = new String[columnCount];
+        String[] columnNames = new String[columnCount];
+        QColumn[] mappedColumns = new QColumn[columnCount];
 
         int idxColumn = 0;
         for (QResultMapping mapping : resultMappings) {
@@ -80,13 +77,15 @@ public class ArrayRowMapper implements JdbcResultMapper<Object[]> {
             }
             String base = toJsonKey(mapping.getEntityMappingPath());
             for (QColumn column : columns) {
-                mappedColumns[idxColumn++] = toJsonKey(base, column.getJsonKey());
+                mappedColumns[idxColumn] = column;
+                columnNames[idxColumn++] = toJsonKey(base, column.getJsonKey());
             }
         }
         if (idxColumn != columnCount) {
             throw new RuntimeException("Something wrong!");
         }
-        return mappedColumns;
+        this.mappedColumns = mappedColumns;
+        return columnNames;
     }
 
     private String toJsonKey(String baseKey, String key) {
