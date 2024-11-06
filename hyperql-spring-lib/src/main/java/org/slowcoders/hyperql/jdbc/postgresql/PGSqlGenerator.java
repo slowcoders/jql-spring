@@ -41,15 +41,21 @@ public class PGSqlGenerator extends SqlGenerator {
     }
 
     protected String toSqlExpression(HqlOp operator) {
+        /**
+         * '?&' 은 text[]를 인자로 받아 top-level object/array 의 key(array 는 value) 존재 확인용. (json 전용)
+         * '@>' 은 json object 및 array 를 key/value 일치 여부 확인용. (json 이 아니면, array 전용)
+         *  && 는 두 pg-array 간의 intersect 여부 확인용 (그러나, 현재 json_array 를 pg_array 로 casting 하는 것은 불가)
+         */
         return switch (operator) {
             case RE -> " ~ ";
             case NOT_RE -> " !~ ";
             case RE_ignoreCase -> " ~* ";
             case NOT_RE_ignoreCase -> " !~* ";
-            case CONTAINS -> " ?& "; // contains all
-            case INTERSECTS -> " ?& "; // contains all
+            case CONTAINS -> " ?& ";
+            case INTERSECTS -> " ?| ";
             default -> super.toSqlExpression(operator);
         };
+
     }
 
     protected void writePreparedInsertStatementValueSet(List<JdbcColumn> columns) {
@@ -111,28 +117,14 @@ public class PGSqlGenerator extends SqlGenerator {
         }
     }
 
-    private void writeVectorCompare(QColumn column, HqlOp operator, Collection values) {
+    @Override
+    public void visitContains(QColumn column, HqlOp operator, Collection values) {
         writeQualifiedColumnName(column, values);
         String op = toSqlExpression(operator);
         sw.write(op);
         sw.write("ARRAY [");
         sw.writeValues(values);
         sw.write("]");
-    }
-
-    @Override
-    public void visitContains(QColumn column, HqlOp operator, Collection values) {
-        if (operator == HqlOp.INTERSECTS) {
-            sw.write("(");
-            for (var value : values) {
-                writeVectorCompare(column, operator, Collections.singletonList(value));
-                sw.write(" OR ");
-            }
-            sw.shrinkLength(4);
-            sw.write(") ");
-        } else {
-            writeVectorCompare(column, operator, values);
-        }
     }
 
     protected void writeTypeCast(JsType vf) {

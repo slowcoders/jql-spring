@@ -248,6 +248,18 @@ public abstract class JdbcRepositoryBase<ID> extends HyperRepository<ID> {
             String sql = storage.createQueryGenerator().createUpdateQuery(filter, updateSet);
             jdbc.update(sql);
         } else {
+            /**
+             * postgress 인 경우, 아래와 같이 전용 함수를 사용할 수 있음.
+             * update person set
+             *     props = jsonb_set(props, '{hobby}', '["축구", "독서", "와인"]')
+             *     또는 props = jsonb_set(props, '{hobby}', jsonb_build_array('축구', '독서', '와인'))
+             * where id = 1
+             *
+             * mysql 의 경우,
+             * update person set
+             *     props = JSON_SET(props, '{$.hobby}', JSON_ARRAY('축구', '독서', '와인'))
+             * where id = 1
+             */
             normalizeUpdateSet(updateSet);
             var select = HyperSelect.of(updateSet.keySet());
             for (ID id: idList) {
