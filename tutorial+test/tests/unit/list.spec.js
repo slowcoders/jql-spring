@@ -1,5 +1,5 @@
 import {describe, expect, test} from '@jest/globals';
-import { hqlApi } from '@/api/hqlApi'
+import { hqlApi } from '@/sample_db'
 
 function checkSorted(items, key, ascending) {
   let prev = items[0];
@@ -18,40 +18,40 @@ describe('Listing', () => {
   test('Find All', async () => {
     const count = await hqlApi.count();
     const res = await hqlApi.find();
-    const characters = res.content;
-    expect(characters.length).toBe(count);
+    const authors = res.content;
+    expect(authors.length).toBe(count);
   });
 
   test('Sort by name ascending order', async () => {
     const res = await hqlApi.find(null, { sort: "name" });
-    const characters = res.content;
-    expect(characters.length).toBeGreaterThan(0);
-    checkSorted(characters, "name", true);
+    const authors = res.content;
+    expect(authors.length).toBeGreaterThan(0);
+    checkSorted(authors, "name", true);
   });
 
   test('Sort by name descending order', async () => {
     const res = await hqlApi.find(null, { sort: "-name" });
-    const characters = res.content;
-    expect(characters.length).toBeGreaterThan(0);
-    checkSorted(characters, "name", false);
+    const authors = res.content;
+    expect(authors.length).toBeGreaterThan(0);
+    checkSorted(authors, "name", false);
   });
 
   test('Limit & Sort', async () => {
     const limit = 5
     const res = await hqlApi.find(null, { sort: "-name", limit });
-    const characters = res.content;
-    expect(characters.length).toBe(limit);
-    checkSorted(characters, "name", false);
+    const authors = res.content;
+    expect(authors.length).toBe(limit);
+    checkSorted(authors, "name", false);
   });
 
   test('Pagination & Sort', async () => {
     const limit = 3;
     const page = 1;
     const res = await hqlApi.find(null, { sort: "-name", limit, page });
-    const characters = res.content;
-    expect(characters.length).toBeLessThanOrEqual(limit);
+    const authors = res.content;
+    expect(authors.length).toBeLessThanOrEqual(limit);
     expect(res.metadata.totalElements).toBeGreaterThanOrEqual(limit);
-    checkSorted(characters, "name", false);
+    checkSorted(authors, "name", false);
   });
 
 });

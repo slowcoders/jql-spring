@@ -220,4 +220,6 @@ const default_friend_map = [
     {  author_id: 2001, friend_id: 1003 }
 ]
 
-await initSampleDB();
+
+const g_serviceUrl = 'http://localhost:7007/api/hql/starwars/';
+export const hqlApi = new HqlApi(g_serviceUrl + 'author');

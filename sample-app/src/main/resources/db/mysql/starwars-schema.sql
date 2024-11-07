@@ -6,7 +6,7 @@
 -- GRANT ALL PRIVILEGES ON starwars.* TO 'hql_demo'@'%' IDENTIFIED BY 'hql_demo';
 -- GRANT ALL PRIVILEGES ON starwars_jpa.* TO 'hql_demo'@'%' IDENTIFIED BY 'hql_demo';
 
-create table if not exists starwars.`character`
+create table if not exists starwars.`author`
 (
     id       int auto_increment
     primary key,
@@ -18,16 +18,16 @@ create table if not exists starwars.`character`
 );
 
 
-create table if not exists starwars.character_friend_link
+create table if not exists starwars.author_friend_link
 (
-    character_id int not null,
+    author_id int not null,
     friend_id    int not null,
-    constraint character_id__friend_id__uindex
-        unique (character_id, friend_id),
-    constraint fk_character_id_2_pk_character__id
-        foreign key (character_id) references starwars.`character` (id),
-    constraint fk_friend_id_2_pk_character__id
-        foreign key (friend_id) references starwars.`character` (id)
+    constraint author_id__friend_id__uindex
+        unique (author_id, friend_id),
+    constraint fk_author_id_2_pk_author__id
+        foreign key (author_id) references starwars.`author` (id),
+    constraint fk_friend_id_2_pk_author__id
+        foreign key (friend_id) references starwars.`author` (id)
 );
 
 create table if not exists starwars.episode
@@ -37,26 +37,26 @@ create table if not exists starwars.episode
     published datetime(6)  null
 );
 
-create table if not exists starwars.character_episode_link
+create table if not exists starwars.author_episode_link
 (
     episode_id   varchar(255) not null,
-    character_id int          not null,
-    constraint character_id__episode_id__uindex
-        unique (character_id, episode_id),
+    author_id int          not null,
+    constraint author_id__episode_id__uindex
+        unique (author_id, episode_id),
     constraint fk_episode_id_2_pk_episode__title
         foreign key (episode_id) references starwars.episode (title),
-    constraint fk_character_id_2_pk_character__id2
-        foreign key (character_id) references starwars.`character` (id)
+    constraint fk_author_id_2_pk_author__id2
+        foreign key (author_id) references starwars.`author` (id)
 );
 
-create table if not exists starwars.starship
+create table if not exists starwars.book
 (
     id       int auto_increment
         primary key,
     length   float        null,
     name     varchar(255) not null,
-    pilot_id int          null,
-    constraint fk_pilot_id_2_pk_character__id
-        foreign key (pilot_id) references starwars.`character` (id)
+    author_id int          null,
+    constraint fk_author_id_2_pk_author__id
+        foreign key (author_id) references starwars.`author` (id)
 );
 

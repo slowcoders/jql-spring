@@ -25,10 +25,10 @@
       <li>JDBC -> JPA migration utility 제공</li>
     </ul>
     <br>
-    예제) starwars.character Table 에서 "Luke" 로 시작하는 Entity 검색하기.
+    예제) starwars.author Table 에서 "Luke" 로 시작하는 Entity 검색하기.
     <div class="code">
       <code>
-        curl -X 'POST' 'http://localhost:7007/api/hql/starwars/character/find' \<br>
+        curl -X 'POST' 'http://localhost:7007/api/hql/starwars/author/find' \<br>
         -H 'Content-Type: application/json' \<br>
         -d '{ "name@like": "Luke%" }'
       </code>

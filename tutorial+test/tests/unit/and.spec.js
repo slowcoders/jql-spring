@@ -1,5 +1,5 @@
 import {beforeAll, describe, expect, test} from '@jest/globals';
-import { hqlApi } from '@/api/hqlApi'
+import { hqlApi } from '@/sample_db'
 
 describe('And operation', () => {
   let last_count;
@@ -26,9 +26,9 @@ describe('And operation', () => {
   ]) ('And 조건 테스트', async ({attr, value}) => {
     filter[attr] = value;
     const res = await hqlApi.find(filter);
-    const characters = res.content;
-    expect(characters.length).toBeLessThan(last_count);
-    last_count = characters.length;
+    const authors = res.content;
+    expect(authors.length).toBeLessThan(last_count);
+    last_count = authors.length;
   });  
 });
 

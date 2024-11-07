@@ -34,6 +34,6 @@ public class StarWarsJpaController extends HyperStorageController.CRUD implement
 
     @GetMapping("/loadData")
     public void loadData() throws IOException {
-        service.loadData();
+//        service.loadData();
     }
 }

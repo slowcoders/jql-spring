@@ -8,7 +8,7 @@
       <div class="details">
         Associative Table 의 두 개의 Foreign key 가 동일한 PK-Table 을 참조하는 경우, <br>
         PK-Table 명을 포함한 Foreign key 를 기본 Join key 로 자동 선정한다. <br>
-        아래는 character_friend_link table 을 통해 친구 관계를 recursive 하게 검색하는 예제이다.
+        아래는 author_friend_link table 을 통해 친구 관계를 recursive 하게 검색하는 예제이다.
       </div>
     </template>
   </LessonView>

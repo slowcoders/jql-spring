@@ -1,5 +1,5 @@
 import {beforeAll, describe, expect, test} from '@jest/globals';
-import { hqlApi } from '@/api/hqlApi'
+import { hqlApi } from '@/sample_db'
 
 describe('Comapre', () => {
   let ref;
@@ -16,8 +16,8 @@ describe('Comapre', () => {
       "id": ref.id
     }
     const res = await hqlApi.find(filter);
-    const characters = res.content;
-    expect(characters.length).toBe(1)
+    const authors = res.content;
+    expect(authors.length).toBe(1)
   });
 
   test('@is (explicit)', async () => {
@@ -25,8 +25,8 @@ describe('Comapre', () => {
       "id@is": ref.id
     }
     const res = await hqlApi.find(filter);
-    const characters = res.content;
-    expect(characters.length).toBe(1)
+    const authors = res.content;
+    expect(authors.length).toBe(1)
   });
 
   test('@not', async () => {
@@ -35,8 +35,8 @@ describe('Comapre', () => {
     }
     const count = await hqlApi.count();
     const res = await hqlApi.find(filter);
-    const characters = res.content;
-    expect(characters.length).toBe(count - 1)
+    const authors = res.content;
+    expect(authors.length).toBe(count - 1)
   });
 
   test('@le (less or equals)', async () => {
@@ -44,9 +44,9 @@ describe('Comapre', () => {
       "id@le": ref.id
     }
     const res = await hqlApi.find(filter);
-    const characters = res.content;
-    for (const character of characters) {
-      expect(character.id).toBeLessThanOrEqual(ref.id)
+    const authors = res.content;
+    for (const author of authors) {
+      expect(author.id).toBeLessThanOrEqual(ref.id)
     }
   });
 
@@ -55,9 +55,9 @@ describe('Comapre', () => {
       "id@lt": ref.id
     }
     const res = await hqlApi.find(filter);
-    const characters = res.content;
-    for (const character of characters) {
-      expect(character.id).toBeLessThan(ref.id)
+    const authors = res.content;
+    for (const author of authors) {
+      expect(author.id).toBeLessThan(ref.id)
     }
   });
 
@@ -66,9 +66,9 @@ describe('Comapre', () => {
       "id@ge": ref.id
     }
     const res = await hqlApi.find(filter);
-    const characters = res.content;
-    for (const character of characters) {
-      expect(character.id).toBeGreaterThanOrEqual(ref.id)
+    const authors = res.content;
+    for (const author of authors) {
+      expect(author.id).toBeGreaterThanOrEqual(ref.id)
     }
   });
 
@@ -77,9 +77,9 @@ describe('Comapre', () => {
       "id@gt": ref.id
     }
     const res = await hqlApi.find(filter);
-    const characters = res.content;
-    for (const character of characters) {
-      expect(character.id).toBeGreaterThan(ref.id)
+    const authors = res.content;
+    for (const author of authors) {
+      expect(author.id).toBeGreaterThan(ref.id)
     }
   });  
 
@@ -89,10 +89,10 @@ describe('Comapre', () => {
       "id@le": ref.id + 1
     }
     const res = await hqlApi.find(filter);
-    const characters = res.content;
-    for (const character of characters) {
-      expect(character.id).toBeGreaterThanOrEqual(ref.id)
-      expect(character.id).toBeLessThanOrEqual(ref.id + 1)
+    const authors = res.content;
+    for (const author of authors) {
+      expect(author.id).toBeGreaterThanOrEqual(ref.id)
+      expect(author.id).toBeLessThanOrEqual(ref.id + 1)
     }
   });    
 
@@ -101,11 +101,11 @@ describe('Comapre', () => {
       "id@between": [ref.id, ref.id + 1]
     }
     const res = await hqlApi.find(filter);
-    const characters = res.content;
-    expect(characters.length).toBeGreaterThanOrEqual(1);
-    for (const character of characters) {
-      expect(character.id).toBeGreaterThanOrEqual(ref.id)
-      expect(character.id).toBeLessThanOrEqual(ref.id + 1)
+    const authors = res.content;
+    expect(authors.length).toBeGreaterThanOrEqual(1);
+    for (const author of authors) {
+      expect(author.id).toBeGreaterThanOrEqual(ref.id)
+      expect(author.id).toBeLessThanOrEqual(ref.id + 1)
     }
   });    
 
@@ -114,10 +114,10 @@ describe('Comapre', () => {
       "id@not between": [ref.id, ref.id + 1]
     }
     const res = await hqlApi.find(filter);
-    const characters = res.content;
-    expect(characters.length).toBeGreaterThanOrEqual(1);
-    for (const character of characters) {
-      expect(character.id >= ref.id && character.id <= ref.id + 1).toBeFalsy()
+    const authors = res.content;
+    expect(authors.length).toBeGreaterThanOrEqual(1);
+    for (const author of authors) {
+      expect(author.id >= ref.id && author.id <= ref.id + 1).toBeFalsy()
     }
   });    
 
@@ -127,11 +127,11 @@ describe('Comapre', () => {
       "name@like": name_start + "%"
     }
     const res = await hqlApi.find(filter);
-    const characters = res.content;
-    expect(characters.length).toBeGreaterThanOrEqual(1);
-    for (const character of characters) {
-      expect(character.name).toMatch(name_start)
-      expect(character.name.indexOf(name_start) >= 0).toBeTruthy();
+    const authors = res.content;
+    expect(authors.length).toBeGreaterThanOrEqual(1);
+    for (const author of authors) {
+      expect(author.name).toMatch(name_start)
+      expect(author.name.indexOf(name_start) >= 0).toBeTruthy();
     }
   });    
 
@@ -141,11 +141,11 @@ describe('Comapre', () => {
       "name@not like": name_start + "%"
     }
     const res = await hqlApi.find(filter);
-    const characters = res.content;
-    expect(characters.length).toBeGreaterThanOrEqual(1);
-    for (const character of characters) {
-      expect(character.name).not.toMatch(name_start)
-      expect(character.name.indexOf(name_start) >= 0).not.toBeTruthy();
+    const authors = res.content;
+    expect(authors.length).toBeGreaterThanOrEqual(1);
+    for (const author of authors) {
+      expect(author.name).not.toMatch(name_start)
+      expect(author.name.indexOf(name_start) >= 0).not.toBeTruthy();
     }
   });
 
@@ -155,11 +155,11 @@ describe('Comapre', () => {
       "name@re": name_start + ".*"
     }
     const res = await hqlApi.find(filter);
-    const characters = res.content;
-    expect(characters.length).toBeGreaterThanOrEqual(1);
-    for (const character of characters) {
-      expect(character.name).toMatch(name_start)
-      expect(character.name.indexOf(name_start) >= 0).toBeTruthy();
+    const authors = res.content;
+    expect(authors.length).toBeGreaterThanOrEqual(1);
+    for (const author of authors) {
+      expect(author.name).toMatch(name_start)
+      expect(author.name.indexOf(name_start) >= 0).toBeTruthy();
     }
   });
 
@@ -169,11 +169,11 @@ describe('Comapre', () => {
       "name@not re": name_start + ".*"
     }
     const res = await hqlApi.find(filter);
-    const characters = res.content;
-    expect(characters.length).toBeGreaterThanOrEqual(1);
-    for (const character of characters) {
-      expect(character.name).not.toMatch(name_start)
-      expect(character.name.indexOf(name_start) >= 0).not.toBeTruthy();
+    const authors = res.content;
+    expect(authors.length).toBeGreaterThanOrEqual(1);
+    for (const author of authors) {
+      expect(author.name).not.toMatch(name_start)
+      expect(author.name.indexOf(name_start) >= 0).not.toBeTruthy();
     }
   });
 
@@ -183,11 +183,11 @@ describe('Comapre', () => {
       "name@re/i": name_start.toUpperCase() + ".*"
     }
     const res = await hqlApi.find(filter);
-    const characters = res.content;
-    expect(characters.length).toBeGreaterThanOrEqual(1);
-    for (const character of characters) {
-      expect(character.name).toMatch(name_start)
-      expect(character.name.indexOf(name_start) >= 0).toBeTruthy();
+    const authors = res.content;
+    expect(authors.length).toBeGreaterThanOrEqual(1);
+    for (const author of authors) {
+      expect(author.name).toMatch(name_start)
+      expect(author.name.indexOf(name_start) >= 0).toBeTruthy();
     }
   });
 
@@ -197,11 +197,11 @@ describe('Comapre', () => {
       "name@not re/i": name_start.toUpperCase() + ".*"
     }
     const res = await hqlApi.find(filter);
-    const characters = res.content;
-    expect(characters.length).toBeGreaterThanOrEqual(1);
-    for (const character of characters) {
-      expect(character.name).not.toMatch(name_start)
-      expect(character.name.indexOf(name_start) >= 0).not.toBeTruthy();
+    const authors = res.content;
+    expect(authors.length).toBeGreaterThanOrEqual(1);
+    for (const author of authors) {
+      expect(author.name).not.toMatch(name_start)
+      expect(author.name.indexOf(name_start) >= 0).not.toBeTruthy();
     }
   });
 });

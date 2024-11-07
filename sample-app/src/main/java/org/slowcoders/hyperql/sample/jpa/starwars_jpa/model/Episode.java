@@ -24,11 +24,11 @@ public class Episode implements java.io.Serializable {
 
     @Getter @Setter
     @ManyToMany(fetch = FetchType.LAZY)
-    @JoinTable(name = "character_episode_link", schema = "starwars_jpa", catalog = "starwars_jpa",
+    @JoinTable(name = "author_episode_link", schema = "starwars_jpa", catalog = "starwars_jpa",
             uniqueConstraints = {
-                    @UniqueConstraint(name ="character_id__episode_id__uindex", columnNames = {"character_id", "episode_id"})
+                    @UniqueConstraint(name ="author_id__episode_id__uindex", columnNames = {"author_id", "episode_id"})
             },
-            joinColumns = @JoinColumn(name="episode_id"), inverseJoinColumns = @JoinColumn(name="character_id"))
-    private Set<Character> character_;
+            joinColumns = @JoinColumn(name="episode_id"), inverseJoinColumns = @JoinColumn(name="author_id"))
+    private Set<Author> author_;
 
 }

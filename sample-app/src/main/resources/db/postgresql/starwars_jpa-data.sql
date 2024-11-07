@@ -3,7 +3,7 @@ INSERT INTO starwars_jpa.episode (title) values
 on conflict DO NOTHING;
 
 
-INSERT INTO starwars_jpa.character (species, id, name, height, mass, metadata) values
+INSERT INTO starwars_jpa.author (species, id, name, height, mass, metadata) values
 ('Human', 1000, 'Luke Skywalker', 1.72, 77, '{ "homePlanet": "Tatooine", "memo": { "favoriteFood": "kimchi", "shoeSize": 260 } }'),
 ('Human', 1001, 'Darth Vader', 2.02, 136, '{ "homePlanet": "Tatooine", "memo": { "favoriteFood": "pork", "shoeSize": 370 } }'),
 ('Human', 1002, 'Han Solo', 1.8, 80, '{ "memo": { "favoriteFood": "apple", "shoeSize": 270 } }'),
@@ -16,7 +16,7 @@ INSERT INTO starwars_jpa.character (species, id, name, height, mass, metadata) v
 on conflict DO NOTHING;
 
 
-INSERT INTO starwars_jpa.starship (id, name, length, pilot_id) values
+INSERT INTO starwars_jpa.book (id, name, length, author_id) values
 (3000, 'Millenium Falcon', 34.37, 1002),
 (3001, 'X-Wing', 12.5, 1000),
 (3002, 'TIE Advanced x1', 9.2, 1001),
@@ -24,7 +24,7 @@ INSERT INTO starwars_jpa.starship (id, name, length, pilot_id) values
 on conflict DO NOTHING;
 
 
-INSERT INTO starwars_jpa.character_episode_link (character_id, episode_id) values
+INSERT INTO starwars_jpa.author_episode_link (author_id, episode_id) values
 (1000, 'NEWHOPE'),
 (1000, 'EMPIRE'),
 (1000, 'JEDI'),
@@ -47,7 +47,7 @@ INSERT INTO starwars_jpa.character_episode_link (character_id, episode_id) value
 on conflict DO NOTHING;
 
 
-INSERT INTO starwars_jpa.character_friend_link (character_id, friend_id)
+INSERT INTO starwars_jpa.author_friend_link (author_id, friend_id)
 values
 (1000, 1002),
 (1000, 1003),

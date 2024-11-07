@@ -56,7 +56,7 @@ public class JsonRowMapper implements JdbcResultMapper<KVEntity> {
                 boolean isArray = mapping.isArrayNode();// && mapping.hasArrayDescendantNode();
                 if (!isArray || !mapping.hasJoinedChildMapping()) {
                     // TODO check Error!!
-                    // Tutorial, 비교 연산자, starship_ 과 episode_ 를 모두 선택하면 오류 발생.
+                    // Tutorial, 비교 연산자, book_ 과 episode_ 를 모두 선택하면 오류 발생.
                     if (idxColumn + cntColumn < this.mappedColumns.length) {
                         throw new RuntimeException("something wrong");
                     }

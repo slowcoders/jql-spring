@@ -1,5 +1,5 @@
 import {describe, expect, test} from '@jest/globals';
-import { hqlApi } from '@/api/hqlApi'
+import { hqlApi } from '@/sample_db'
 
 describe('Join Test', () => {
   describe('Advanced Join', () => {
@@ -9,21 +9,21 @@ describe('Join Test', () => {
         "friend_": {} 
       }      
       const res = await hqlApi.find(filter);
-      const characters = res.content;
+      const authors = res.content;
       console.log(res.content)
-      expect(characters.length).toBe(1);
-      expect(characters[0].friend_.length).toBeGreaterThanOrEqual(3);
+      expect(authors.length).toBe(1);
+      expect(authors[0].friend_.length).toBeGreaterThanOrEqual(3);
     });
 
     test('Find friends of Han Solo with joined query', async () => {
       const filter = {
         "name" : "Han Solo",
-        "friend_": { "starship_": { "length@ge": 10 } }
+        "friend_": { "book_": { "length@ge": 10 } }
       }
       const res = await hqlApi.find(filter);
-      const characters = res.content;
-      expect(characters.length).toBe(1);
-      expect(characters[0].friend_.length).toBe(1);
+      const authors = res.content;
+      expect(authors.length).toBe(1);
+      expect(authors[0].friend_.length).toBe(1);
     });
   });
 });

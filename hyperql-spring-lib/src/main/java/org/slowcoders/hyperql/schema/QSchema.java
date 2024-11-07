@@ -221,11 +221,6 @@ public abstract class QSchema {
         return this.tableName;
     }
 
-    public String getNamespace() {
-        String tableName = this.getTableName();
-        int p = tableName.lastIndexOf('.');
-        return p < 0 ? null : tableName.substring(0, p);
-    }
 
     @Override
     public boolean equals(Object o) {

@@ -1,5 +1,5 @@
 import {beforeAll, describe, expect, test} from '@jest/globals';
-import { hqlApi } from '@/api/hqlApi'
+import { hqlApi } from '@/sample_db'
 
 const normal_height = [ 1.2, 2.0 ]
 
@@ -19,9 +19,9 @@ describe('Or operation', () => {
 
   test('too_small_or_too_tall', async () => {
     const res = await hqlApi.find(too_small_or_too_tall);
-    const characters = res.content;
-    for (const character of characters) {
-      expect(character.height < normal_height[MIN] || character.height > normal_height[MAX]).toBeTruthy();
+    const authors = res.content;
+    for (const author of authors) {
+      expect(author.height < normal_height[MIN] || author.height > normal_height[MAX]).toBeTruthy();
     }
   });
 
@@ -34,9 +34,9 @@ describe('Or operation', () => {
 
   test('too_light_or_too_heavy', async () => {
     const res = await hqlApi.find(too_light_or_too_heavy);
-    const characters = res.content;
-    for (const character of characters) {
-      expect(character.mass < normal_mass[MIN] || character.mass > normal_mass[MAX]).toBeTruthy();
+    const authors = res.content;
+    for (const author of authors) {
+      expect(author.mass < normal_mass[MIN] || author.mass > normal_mass[MAX]).toBeTruthy();
     }
   });
 
@@ -50,9 +50,9 @@ describe('Or operation', () => {
 
   test('too_small_or_too_heavy', async () => {
     const res = await hqlApi.find(too_small_or_too_heavy);
-    const characters = res.content;
-    for (const character of characters) {
-      expect(character.height < normal_height[MIN] || character.mass > normal_mass[MAX]).toBeTruthy();
+    const authors = res.content;
+    for (const author of authors) {
+      expect(author.height < normal_height[MIN] || author.mass > normal_mass[MAX]).toBeTruthy();
     }
   });
 
@@ -64,10 +64,10 @@ describe('Or operation', () => {
   }
   test('too_small_or_too_tall__AND__too_light_or_too_heavy', async () => {
     const res = await hqlApi.find(too_small_or_too_tall__AND__too_light_or_too_heavy);
-    const characters = res.content;
-    for (const character of characters) {
-      expect((character.height < normal_height[MIN] || character.height > normal_height[MAX])
-          &&        (character.mass < normal_mass[MIN] || character.mass > normal_mass[MAX]) ).toBeTruthy();
+    const authors = res.content;
+    for (const author of authors) {
+      expect((author.height < normal_height[MIN] || author.height > normal_height[MAX])
+          &&        (author.mass < normal_mass[MIN] || author.mass > normal_mass[MAX]) ).toBeTruthy();
     }
   });
 });

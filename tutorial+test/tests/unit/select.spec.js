@@ -1,5 +1,5 @@
 import {describe, expect, test} from '@jest/globals';
-import { hqlApi } from '@/api/hqlApi'
+import { hqlApi } from '@/sample_db'
 
 // // 문법이 너무 복잡.
 // const query = [
@@ -11,7 +11,7 @@ import { hqlApi } from '@/api/hqlApi'
 //     "friend": [
 //       '*',
 //       {
-//         'starship': [
+//         'book': [
 //         ]
 //       }
 //     ]
@@ -24,7 +24,7 @@ import { hqlApi } from '@/api/hqlApi'
 //   "a@eq" : 3,
 //   "friend" : {
 //     '@select': [],
-//     'starship': []
+//     'book': []
 //   }
 // }
 //
@@ -35,7 +35,7 @@ import { hqlApi } from '@/api/hqlApi'
 //   "a@eq" : 3,
 //   "friend(#, name)" : {
 //     '@select': '',
-//     'starship': []
+//     'book': []
 //   }
 // }
 //
@@ -63,57 +63,57 @@ describe('Top', () => {
     const filter = {
       "name@like": "Luke%"
     }
-    const character = await hqlApi.top(filter);
+    const author = await hqlApi.top(filter);
 
-    expect(character.name).toBe("Luke Skywalker");
+    expect(author.name).toBe("Luke Skywalker");
 
-    expect(character.name).toMatch("Sky");
-    expect(character.name).toMatch(/Luke Skywalker/);
-    expect(character.name).toMatch(/Luke .*/);
+    expect(author.name).toMatch("Sky");
+    expect(author.name).toMatch(/Luke Skywalker/);
+    expect(author.name).toMatch(/Luke .*/);
 
-    expect(character.name.indexOf("Luke") == 0).toBeTruthy();
-    expect(character.name.startsWith("Luke")).toBeTruthy();
+    expect(author.name.indexOf("Luke") == 0).toBeTruthy();
+    expect(author.name.startsWith("Luke")).toBeTruthy();
   });
 
   test('Select PrimaryKeys only', async () => {
-    const character = await hqlApi.top(null, { select: "0" });
-    for (const k in character) {
+    const author = await hqlApi.top(null, { select: "0" });
+    for (const k in author) {
       expect(k).toBe('id');
     }
   });
 
   test('Select Name and PrimaryKey(Auto selected)', async () => {
-    const character = await hqlApi.top(null, { select: "name" });
-    for (const k in character) {
+    const author = await hqlApi.top(null, { select: "name" });
+    for (const k in author) {
       expect(k == 'id' || k == 'name').toBeTruthy();
     }
   });
 
   test('Select Name and PrimaryKeys(Explicitly selected)', async () => {
-    const character = await hqlApi.top(null, { select: "0, name" });
-    expect(character.id).not.toBeUndefined();
-    expect(character.name).not.toBeUndefined();
-    for (const k in character) {
+    const author = await hqlApi.top(null, { select: "0, name" });
+    expect(author.id).not.toBeUndefined();
+    expect(author.name).not.toBeUndefined();
+    for (const k in author) {
       expect(k == 'id' || k == 'name').toBeTruthy();
     }
   });
 
-  test('Find any character having a starship that length > 10', async () => {
+  test('Find any author having a book that length > 10', async () => {
     const filter = {
-      "starship_": { "length@gt": 10 }
+      "book_": { "length@gt": 10 }
     }
-    const character = await hqlApi.top(filter, {select: "starship_"});
-    for (const ship of character.starship_) {
+    const author = await hqlApi.top(filter, {select: "book_"});
+    for (const ship of author.book_) {
       expect(ship.length).toBeGreaterThan(10);
     }
   });
 
-  test('Find any character having a starship that length < 10', async () => {
+  test('Find any author having a book that length < 10', async () => {
     const filter = {
-      "starship_": { "length@lt": 10 }
+      "book_": { "length@lt": 10 }
     }
-    const character = await hqlApi.top(filter, {select: "starship_"});
-    for (const ship of character.starship_) {
+    const author = await hqlApi.top(filter, {select: "book_"});
+    for (const ship of author.book_) {
       expect(ship.length).toBeLessThan(10);
     }
   });

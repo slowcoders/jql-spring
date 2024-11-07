@@ -2,7 +2,7 @@ package org.slowcoders.hyperql.sample.jpa.starwars_jpa.service;
 
 import org.slowcoders.hyperql.HyperStorage;
 import org.slowcoders.hyperql.jdbc.JdbcStorage;
-import org.slowcoders.hyperql.sample.jpa.starwars_jpa.model.Character;
+import org.slowcoders.hyperql.sample.jpa.starwars_jpa.model.Author;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
 
@@ -24,25 +24,25 @@ public class StarWarsJpaService  {
         return this.storage;
     }
 
-    @PostConstruct
-    void initData() throws IOException {
-        long cntCharacter = storage.loadJpaTable(Character.class).count(null);
-        if (cntCharacter == 0) {
-            loadData();
-        }
-    }
-    public void loadData() throws IOException {
-        String dbType = storage.getDbType();
-        ClassPathResource resource = new ClassPathResource("db/" + dbType + "/starwars_jpa-data.sql");
-        BufferedReader br = new BufferedReader(new InputStreamReader(resource.getInputStream()));
-        StringBuilder sql = new StringBuilder();
-        for (String s = null; (s = br.readLine()) != null; ) {
-            sql.append(s);
-            if (s.trim().endsWith(";")) {
-                storage.getJdbcTemplate().update(sql.toString());
-                sql.setLength(0);
-            }
-        }
-    }
+//    @PostConstruct
+//    void initData() throws IOException {
+//        long cntAuthor = storage.loadJpaTable(Author.class).count(null);
+//        if (cntAuthor == 0) {
+//            loadData();
+//        }
+//    }
+//    public void loadData() throws IOException {
+//        String dbType = storage.getDbType();
+//        ClassPathResource resource = new ClassPathResource("db/" + dbType + "/starwars_jpa-data.sql");
+//        BufferedReader br = new BufferedReader(new InputStreamReader(resource.getInputStream()));
+//        StringBuilder sql = new StringBuilder();
+//        for (String s = null; (s = br.readLine()) != null; ) {
+//            sql.append(s);
+//            if (s.trim().endsWith(";")) {
+//                storage.getJdbcTemplate().update(sql.toString());
+//                sql.setLength(0);
+//            }
+//        }
+//    }
 
 }

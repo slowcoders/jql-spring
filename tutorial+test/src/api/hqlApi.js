@@ -1,7 +1,5 @@
 import axios from "axios";
 
-const g_serviceUrl = 'http://localhost:7007/api/hql/starwars/';
-
 function to_url_param(options) {
     if (!options) return "";
 
@@ -46,7 +44,7 @@ export class HqlApi {
     }
 
     async insert(entity, conflictPolicy) {
-        const url = `${this.baseUrl}${conflictPolicy ? "/?onConflict=" + conflictPolicy : "" }`
+        const url = `${this.baseUrl}?select=*${conflictPolicy ? "&onConflict=" + conflictPolicy : "" }`
         const response = await axios.put(url, entity, http_options);
         return response.data;
     }
@@ -71,4 +69,3 @@ export class HqlApi {
     }
 }
 
-export const hqlApi = new HqlApi(g_serviceUrl + 'character');

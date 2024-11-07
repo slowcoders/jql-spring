@@ -25,7 +25,7 @@ describe('Insert/Delete test', () => {
 
     beforeAll(async () => {
       await clear_garbage({ title: episode_data.title });
-      episode = await hqlApi.insert(episode_data);
+      episode = (await hqlApi.insert(episode_data)).content;
     });
 
     test('insert', async () => {
@@ -35,7 +35,7 @@ describe('Insert/Delete test', () => {
 
     test('should throw error on conflict', async () => {
       await expect(async () => {
-        const episode = await hqlApi.insert(episode);
+        const episode = (await hqlApi.insert(episode)).content;
       }).rejects.toThrowError();
     });
 
@@ -63,7 +63,7 @@ describe('Insert/Delete test', () => {
     beforeAll(async () => {
       await clear_garbage({ 'title@like': 'Test-E2-%' });
 
-      const idList = await hqlApi.insertAll(entity_data);
+      const idList = (await hqlApi.insertAll(entity_data)).content;
       const res = await hqlApi.find({title: idList})
       const episodes = res.content;
       expect(episodes.length).toBe(entity_data.length);
@@ -86,9 +86,7 @@ describe('Insert/Delete test', () => {
     });
 
     test('Ignore on conflict', async () => {
-      const idList = await hqlApi.insertAll(entity_data, 'ignore');
-      const res = await hqlApi.find({title: idList})
-      const episodes = res.content;
+      const episodes = (await hqlApi.insertAll(entity_data, 'ignore')).content;
       for (const episode of episodes) {
         expect(episode.title).toBe(episode_map[episode.title].title);
         expect(episode.id).toBe(episode_map[episode.title].id);
@@ -100,9 +98,7 @@ describe('Insert/Delete test', () => {
       for (const episode of entity_data) {
         episode.published = "2023-03-31 10:30:00"
       }
-      const idList = await hqlApi.insertAll(entity_data, 'update');
-      const res = await hqlApi.find({title: idList})
-      const episodes = res.content;
+      const episodes = (await hqlApi.insertAll(entity_data, 'update')).content;
       for (const episode of episodes) {
         expect(episode.title).toBe(episode_map[episode.title].title);
         expect(episode.id).toBe(episode_map[episode.title].id);

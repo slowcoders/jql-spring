@@ -136,10 +136,10 @@ public class HqlParser {
             /** [has not 구현]
                 SELECT
                     t_0.*, pt_1.episode_id --, t_1.published
-                FROM starwars.character as t_0
-                    left join starwars.character_episode_link as pt_1 on
-                    t_0.id = pt_1.character_id and pt_1.episode_id = 'JEDI'
-                where pt_1.character_id is null;
+                FROM starwars.author as t_0
+                    left join starwars.author_episode_link as pt_1 on
+                    t_0.id = pt_1.author_id and pt_1.episode_id = 'JEDI'
+                where pt_1.author_id is null;
                 ---------------------------------
                 while (key.startsWith("../")) {
                     baseFilter = baseFilter.getParentNode();

@@ -7,15 +7,14 @@ import jakarta.persistence.*;
 
 
 @Entity
-@Table(name = "starship", schema = "starwars_jpa", catalog = "starwars_jpa",
+@Table(name = "book", schema = "starwars_jpa", catalog = "starwars_jpa",
         uniqueConstraints = {
-                @UniqueConstraint(name ="starship_pkey", columnNames = {"id"})
+                @UniqueConstraint(name ="book_pkey", columnNames = {"id"})
         }
 )
-public class Starship implements java.io.Serializable {
-    @Getter
+public class Book implements java.io.Serializable {
+    @Getter @Setter
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", nullable = false)
     private Long id;
 
@@ -30,8 +29,8 @@ public class Starship implements java.io.Serializable {
 
     @Getter @Setter
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "pilot_id", nullable = true, referencedColumnName = "id",
-            foreignKey = @ForeignKey(name = "fk_pilot_id_2_pk_character__id"))
-    private Character pilot;
+    @JoinColumn(name = "author_id", nullable = true, referencedColumnName = "id",
+            foreignKey = @ForeignKey(name = "fk_author_id_2_pk_author__id"))
+    private Author author;
 
 }

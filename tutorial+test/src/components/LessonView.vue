@@ -110,11 +110,11 @@ const sampleStorages = [
 ]
 
 const sampleTables = [
-  "character",
-  "starship",
+  "author",
+  "book",
   "episode",
-  "character_episode_link",
-  "character_friend_link"
+  "author_episode_link",
+  "author_friend_link"
 ]
 
 export default {

@@ -20,15 +20,15 @@ import java.util.List;
 import java.util.Map;
 
 @Service
-public class SecuredCharacterService {
+public class SecuredAuthorService {
 
-    private final HyperRepository<Long> characterEntitySet;
+    private final HyperRepository<Long> authorEntitySet;
 
-    SecuredCharacterService(HyperStorage storage) {
-        characterEntitySet = storage.loadRepository("starwars.character");
+    SecuredAuthorService(HyperStorage storage) {
+        authorEntitySet = storage.loadRepository("starwars.author");
         Filter filter = _and_(
                 _like_("name", "%e%"),
-                _in_("starship_",
+                _in_("book_",
                         _or_(
                                 _ge_("length", 12),
                                 _le_("length", 10)
@@ -36,30 +36,30 @@ public class SecuredCharacterService {
                 )
         );
         HqlParser parser = new HqlParser(storage.getObjectMapper());
-        HyperFilter where = parser.parse(characterEntitySet.getSchema(), filter);
-        JdbcQuery<Object> query = new JdbcQuery<>((JdbcRepositoryBase<?>) characterEntitySet, HyperSelect.Auto, where);
+        HyperFilter where = parser.parse(authorEntitySet.getSchema(), filter);
+        JdbcQuery<Object> query = new JdbcQuery<>((JdbcRepositoryBase<?>) authorEntitySet, HyperSelect.Auto, where);
         List<Object> res = query.getResultList(OutputFormat.Object);
         System.out.println(res);
     }
 
-    public HyperRepository<Long> getCharacterEntitySet() {
-        return characterEntitySet;
+    public HyperRepository<Long> getAuthorEntitySet() {
+        return authorEntitySet;
     }
 
-    public void deleteCharacter(Collection<Long> idList, String accessToken) {
+    public void deleteAuthor(Collection<Long> idList, String accessToken) {
         if ("1234".equals(accessToken)) {
-            characterEntitySet.delete(idList);
+            authorEntitySet.delete(idList);
         } else {
             throw new RuntimeException("Not authorized");
         }
     }
 
-    public Long addNewCharacter(Map<String, Object> properties) {
+    public Long addNewAuthor(Map<String, Object> properties) {
         if (properties.get("metadata") == null) {
             properties.put("metadata", createNote());
         }
 
-        return characterEntitySet.insert(properties);
+        return authorEntitySet.insert(properties);
     }
 
     private KVEntity createNote() {

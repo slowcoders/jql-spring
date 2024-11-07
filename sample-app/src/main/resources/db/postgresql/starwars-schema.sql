@@ -1,31 +1,31 @@
 create schema if not exists starwars;
 create schema if not exists starwars_jpa;
 
-create table if not exists starwars.character
+create table if not exists starwars.author
 (
     id  bigint not null
-        constraint character_pkey primary key,
+        constraint author_pkey primary key,
     species varchar(31) not null,
     name varchar(255) not null,
     height real,
     mass real,
     metadata jsonb
 );
-alter table starwars.character owner to hql_demo;
+alter table starwars.author owner to hql_demo;
 
 --------------------------------------------------------
-create table if not exists starwars.character_friend_link
+create table if not exists starwars.author_friend_link
 (
-    character_id bigint not null
-        constraint fk_character_id_2_pk_character__id
-            references starwars.character,
+    author_id bigint not null
+        constraint fk_author_id_2_pk_author__id
+            references starwars.author,
     friend_id bigint not null
-        constraint fk_friend_id_2_pk_character__id
-            references starwars.character
+        constraint fk_friend_id_2_pk_author__id
+            references starwars.author
 );
-alter table starwars.character_friend_link owner to hql_demo;
-create unique index if not exists character_id__friend_id__uindex
-    on starwars.character_friend_link (character_id, friend_id);
+alter table starwars.author_friend_link owner to hql_demo;
+create unique index if not exists author_id__friend_id__uindex
+    on starwars.author_friend_link (author_id, friend_id);
 
 
 --------------------------------------------------------
@@ -39,33 +39,33 @@ create table if not exists starwars.episode
 alter table starwars.episode owner to hql_demo;
 
 --------------------------------------------------------
-create table if not exists starwars.character_episode_link
+create table if not exists starwars.author_episode_link
 (
-    character_id bigint not null
-        constraint fk_character_id_2_pk_character__id
-            references starwars.character,
+    author_id bigint not null
+        constraint fk_author_id_2_pk_author__id
+            references starwars.author,
     episode_id varchar(255) not null
         constraint fk_episode_id_2_pk_episode__title
             references starwars.episode
 );
-alter table starwars.character_episode_link owner to hql_demo;
-create unique index if not exists character_id__episode_id__uindex
-    on starwars.character_episode_link (character_id, episode_id);
+alter table starwars.author_episode_link owner to hql_demo;
+create unique index if not exists author_id__episode_id__uindex
+    on starwars.author_episode_link (author_id, episode_id);
 
 
 --------------------------------------------------------
-create table if not exists starwars.starship
+create table if not exists starwars.book
 (
     id  bigint not null
-        constraint starship_pkey
+        constraint book_pkey
             primary key,
-    pilot_id bigint
-        constraint fk_pilot_id_2_pk_character__id
-            references starwars.character,
+    author_id bigint
+        constraint fk_author_id_2_pk_author__id
+            references starwars.author,
     length real,
     name varchar(255) not null
 );
-alter table starwars.starship owner to hql_demo;
+alter table starwars.book owner to hql_demo;
 
 --------------------------------------------------------
 

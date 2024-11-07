@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "serve": "vue-cli-service serve",
-    "build": "vue-cli-service build",
+    "build": "vue-cli-service build; node src/init_sample_db.js",
     "lint": "vue-cli-service lint",
     "test": "jest --verbose"
   },

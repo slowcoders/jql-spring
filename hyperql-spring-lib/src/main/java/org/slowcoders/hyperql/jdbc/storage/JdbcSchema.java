@@ -253,7 +253,7 @@ public class JdbcSchema extends QSchema {
         else if (join.getAssociativeJoin() != null) {
             QSchema associateSchema = join.getLinkedSchema();
             sb.write("@JoinTable(name = ").writeQuoted(associateSchema.getSimpleName()).write(", ");
-            String namespace = associateSchema.getNamespace();
+            String namespace = ((JdbcSchema)associateSchema).getNamespace();
             if (namespace != null) {
                 sb.write("schema = ").writeQuoted(namespace).write(", ");
                 sb.write("catalog = ").writeQuoted(namespace).write(",");
@@ -295,6 +295,14 @@ public class JdbcSchema extends QSchema {
         throw new RuntimeException("fkConstraint not found");
     }
 
+    private String getNamespace() {
+        String tableName = this.getTableName();
+        int r = tableName.lastIndexOf('.');
+        if (r < 0) return null;
+        int l = tableName.indexOf('.') + 1;
+        if (l >= r) l = 0;
+        return tableName.substring(l, r);
+    }
 
     private void dumpTableDefinition(SourceWriter sb) {
         sb.write("@Table(name = ").writeQuoted(this.getSimpleName()).write(", ");
