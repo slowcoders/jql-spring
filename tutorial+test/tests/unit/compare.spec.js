@@ -1,5 +1,5 @@
 import {beforeAll, describe, expect, test} from '@jest/globals';
-import { hqlApi } from '@/sample_db'
+import { customerRepo } from '@/sample_db'
 
 describe('Comapre', () => {
   let ref;
@@ -8,45 +8,45 @@ describe('Comapre', () => {
     const filter = {
       "name": "Luke Skywalker"
     }
-    ref = await hqlApi.top(filter);
+    ref = await customerRepo.top(filter);
   })
 
   test('@is (default)', async () => {
     const filter = {
       "id": ref.id
     }
-    const res = await hqlApi.find(filter);
-    const authors = res.content;
-    expect(authors.length).toBe(1)
+    const res = await customerRepo.find(filter);
+    const customers = res.content;
+    expect(customers.length).toBe(1)
   });
 
   test('@is (explicit)', async () => {
     const filter = {
       "id@is": ref.id
     }
-    const res = await hqlApi.find(filter);
-    const authors = res.content;
-    expect(authors.length).toBe(1)
+    const res = await customerRepo.find(filter);
+    const customers = res.content;
+    expect(customers.length).toBe(1)
   });
 
   test('@not', async () => {
     const filter = {
       "id@not": ref.id
     }
-    const count = await hqlApi.count();
-    const res = await hqlApi.find(filter);
-    const authors = res.content;
-    expect(authors.length).toBe(count - 1)
+    const count = await customerRepo.count();
+    const res = await customerRepo.find(filter);
+    const customers = res.content;
+    expect(customers.length).toBe(count - 1)
   });
 
   test('@le (less or equals)', async () => {
     const filter = {
       "id@le": ref.id
     }
-    const res = await hqlApi.find(filter);
-    const authors = res.content;
-    for (const author of authors) {
-      expect(author.id).toBeLessThanOrEqual(ref.id)
+    const res = await customerRepo.find(filter);
+    const customers = res.content;
+    for (const customer of customers) {
+      expect(customer.id).toBeLessThanOrEqual(ref.id)
     }
   });
 
@@ -54,10 +54,10 @@ describe('Comapre', () => {
     const filter = {
       "id@lt": ref.id
     }
-    const res = await hqlApi.find(filter);
-    const authors = res.content;
-    for (const author of authors) {
-      expect(author.id).toBeLessThan(ref.id)
+    const res = await customerRepo.find(filter);
+    const customers = res.content;
+    for (const customer of customers) {
+      expect(customer.id).toBeLessThan(ref.id)
     }
   });
 
@@ -65,10 +65,10 @@ describe('Comapre', () => {
     const filter = {
       "id@ge": ref.id
     }
-    const res = await hqlApi.find(filter);
-    const authors = res.content;
-    for (const author of authors) {
-      expect(author.id).toBeGreaterThanOrEqual(ref.id)
+    const res = await customerRepo.find(filter);
+    const customers = res.content;
+    for (const customer of customers) {
+      expect(customer.id).toBeGreaterThanOrEqual(ref.id)
     }
   });
 
@@ -76,10 +76,10 @@ describe('Comapre', () => {
     const filter = {
       "id@gt": ref.id
     }
-    const res = await hqlApi.find(filter);
-    const authors = res.content;
-    for (const author of authors) {
-      expect(author.id).toBeGreaterThan(ref.id)
+    const res = await customerRepo.find(filter);
+    const customers = res.content;
+    for (const customer of customers) {
+      expect(customer.id).toBeGreaterThan(ref.id)
     }
   });  
 
@@ -88,11 +88,11 @@ describe('Comapre', () => {
       "id@ge": ref.id,
       "id@le": ref.id + 1
     }
-    const res = await hqlApi.find(filter);
-    const authors = res.content;
-    for (const author of authors) {
-      expect(author.id).toBeGreaterThanOrEqual(ref.id)
-      expect(author.id).toBeLessThanOrEqual(ref.id + 1)
+    const res = await customerRepo.find(filter);
+    const customers = res.content;
+    for (const customer of customers) {
+      expect(customer.id).toBeGreaterThanOrEqual(ref.id)
+      expect(customer.id).toBeLessThanOrEqual(ref.id + 1)
     }
   });    
 
@@ -100,12 +100,12 @@ describe('Comapre', () => {
     const filter = {
       "id@between": [ref.id, ref.id + 1]
     }
-    const res = await hqlApi.find(filter);
-    const authors = res.content;
-    expect(authors.length).toBeGreaterThanOrEqual(1);
-    for (const author of authors) {
-      expect(author.id).toBeGreaterThanOrEqual(ref.id)
-      expect(author.id).toBeLessThanOrEqual(ref.id + 1)
+    const res = await customerRepo.find(filter);
+    const customers = res.content;
+    expect(customers.length).toBeGreaterThanOrEqual(1);
+    for (const customer of customers) {
+      expect(customer.id).toBeGreaterThanOrEqual(ref.id)
+      expect(customer.id).toBeLessThanOrEqual(ref.id + 1)
     }
   });    
 
@@ -113,11 +113,11 @@ describe('Comapre', () => {
     const filter = {
       "id@not between": [ref.id, ref.id + 1]
     }
-    const res = await hqlApi.find(filter);
-    const authors = res.content;
-    expect(authors.length).toBeGreaterThanOrEqual(1);
-    for (const author of authors) {
-      expect(author.id >= ref.id && author.id <= ref.id + 1).toBeFalsy()
+    const res = await customerRepo.find(filter);
+    const customers = res.content;
+    expect(customers.length).toBeGreaterThanOrEqual(1);
+    for (const customer of customers) {
+      expect(customer.id >= ref.id && customer.id <= ref.id + 1).toBeFalsy()
     }
   });    
 
@@ -126,12 +126,12 @@ describe('Comapre', () => {
     const filter = {
       "name@like": name_start + "%"
     }
-    const res = await hqlApi.find(filter);
-    const authors = res.content;
-    expect(authors.length).toBeGreaterThanOrEqual(1);
-    for (const author of authors) {
-      expect(author.name).toMatch(name_start)
-      expect(author.name.indexOf(name_start) >= 0).toBeTruthy();
+    const res = await customerRepo.find(filter);
+    const customers = res.content;
+    expect(customers.length).toBeGreaterThanOrEqual(1);
+    for (const customer of customers) {
+      expect(customer.name).toMatch(name_start)
+      expect(customer.name.indexOf(name_start) >= 0).toBeTruthy();
     }
   });    
 
@@ -140,12 +140,12 @@ describe('Comapre', () => {
     const filter = {
       "name@not like": name_start + "%"
     }
-    const res = await hqlApi.find(filter);
-    const authors = res.content;
-    expect(authors.length).toBeGreaterThanOrEqual(1);
-    for (const author of authors) {
-      expect(author.name).not.toMatch(name_start)
-      expect(author.name.indexOf(name_start) >= 0).not.toBeTruthy();
+    const res = await customerRepo.find(filter);
+    const customers = res.content;
+    expect(customers.length).toBeGreaterThanOrEqual(1);
+    for (const customer of customers) {
+      expect(customer.name).not.toMatch(name_start)
+      expect(customer.name.indexOf(name_start) >= 0).not.toBeTruthy();
     }
   });
 
@@ -154,12 +154,12 @@ describe('Comapre', () => {
     const filter = {
       "name@re": name_start + ".*"
     }
-    const res = await hqlApi.find(filter);
-    const authors = res.content;
-    expect(authors.length).toBeGreaterThanOrEqual(1);
-    for (const author of authors) {
-      expect(author.name).toMatch(name_start)
-      expect(author.name.indexOf(name_start) >= 0).toBeTruthy();
+    const res = await customerRepo.find(filter);
+    const customers = res.content;
+    expect(customers.length).toBeGreaterThanOrEqual(1);
+    for (const customer of customers) {
+      expect(customer.name).toMatch(name_start)
+      expect(customer.name.indexOf(name_start) >= 0).toBeTruthy();
     }
   });
 
@@ -168,12 +168,12 @@ describe('Comapre', () => {
     const filter = {
       "name@not re": name_start + ".*"
     }
-    const res = await hqlApi.find(filter);
-    const authors = res.content;
-    expect(authors.length).toBeGreaterThanOrEqual(1);
-    for (const author of authors) {
-      expect(author.name).not.toMatch(name_start)
-      expect(author.name.indexOf(name_start) >= 0).not.toBeTruthy();
+    const res = await customerRepo.find(filter);
+    const customers = res.content;
+    expect(customers.length).toBeGreaterThanOrEqual(1);
+    for (const customer of customers) {
+      expect(customer.name).not.toMatch(name_start)
+      expect(customer.name.indexOf(name_start) >= 0).not.toBeTruthy();
     }
   });
 
@@ -182,12 +182,12 @@ describe('Comapre', () => {
     const filter = {
       "name@re/i": name_start.toUpperCase() + ".*"
     }
-    const res = await hqlApi.find(filter);
-    const authors = res.content;
-    expect(authors.length).toBeGreaterThanOrEqual(1);
-    for (const author of authors) {
-      expect(author.name).toMatch(name_start)
-      expect(author.name.indexOf(name_start) >= 0).toBeTruthy();
+    const res = await customerRepo.find(filter);
+    const customers = res.content;
+    expect(customers.length).toBeGreaterThanOrEqual(1);
+    for (const customer of customers) {
+      expect(customer.name).toMatch(name_start)
+      expect(customer.name.indexOf(name_start) >= 0).toBeTruthy();
     }
   });
 
@@ -196,12 +196,12 @@ describe('Comapre', () => {
     const filter = {
       "name@not re/i": name_start.toUpperCase() + ".*"
     }
-    const res = await hqlApi.find(filter);
-    const authors = res.content;
-    expect(authors.length).toBeGreaterThanOrEqual(1);
-    for (const author of authors) {
-      expect(author.name).not.toMatch(name_start)
-      expect(author.name.indexOf(name_start) >= 0).not.toBeTruthy();
+    const res = await customerRepo.find(filter);
+    const customers = res.content;
+    expect(customers.length).toBeGreaterThanOrEqual(1);
+    for (const customer of customers) {
+      expect(customer.name).not.toMatch(name_start)
+      expect(customer.name.indexOf(name_start) >= 0).not.toBeTruthy();
     }
   });
 });

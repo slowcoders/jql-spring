@@ -1,18 +1,17 @@
 import {beforeAll, describe, expect, test} from '@jest/globals';
-import { HqlApi } from '@/api/hqlApi'
+import { episodeRepo } from '@/sample_db'
 
-const hqlApi = new HqlApi('http://localhost:7007/api/hql/starwars/episode')
 describe('Insert/Delete test', () => {
 
   async function clear_garbage(filter) {
-    const garbage = (await hqlApi.find(filter)).content;
+    const garbage = (await episodeRepo.find(filter)).content;
     let ids = '';
     if (garbage.length > 0) {
       for (const episode of garbage) {
         if (ids.length > 0) ids += ','
         ids += episode.title;
       }
-      await hqlApi.delete(ids)
+      await episodeRepo.delete(ids)
     }
   }
 
@@ -25,7 +24,7 @@ describe('Insert/Delete test', () => {
 
     beforeAll(async () => {
       await clear_garbage({ title: episode_data.title });
-      episode = (await hqlApi.insert(episode_data)).content;
+      episode = (await episodeRepo.insert(episode_data)).content;
     });
 
     test('insert', async () => {
@@ -35,12 +34,12 @@ describe('Insert/Delete test', () => {
 
     test('should throw error on conflict', async () => {
       await expect(async () => {
-        const episode = (await hqlApi.insert(episode)).content;
+        const episode = (await episodeRepo.insert(episode)).content;
       }).rejects.toThrowError();
     });
 
     test('delete test entity', async () => {
-      await hqlApi.delete(episode.title);
+      await episodeRepo.delete(episode.title);
     });
 
   });
@@ -63,7 +62,7 @@ describe('Insert/Delete test', () => {
     beforeAll(async () => {
       await clear_garbage({ 'title@like': 'Test-E2-%' });
 
-      const episodes = (await hqlApi.insertAll(entity_data)).content;
+      const episodes = (await episodeRepo.insertAll(entity_data)).content;
       expect(episodes.length).toBe(entity_data.length);
       for (const episode of episodes) {
         episode_map[episode.title] = episode;
@@ -79,12 +78,12 @@ describe('Insert/Delete test', () => {
 
     test('should throw error on conflict', async () => {
       await expect(async () => {
-        const episode = await hqlApi.insertAll(entity_data);
+        const episode = await episodeRepo.insertAll(entity_data);
       }).rejects.toThrowError();
     });
 
     test('Ignore on conflict', async () => {
-      const episodes = (await hqlApi.insertAll(entity_data, 'ignore')).content;
+      const episodes = (await episodeRepo.insertAll(entity_data, 'ignore')).content;
       for (const episode of episodes) {
         expect(episode.title).toBe(episode_map[episode.title].title);
         expect(episode.id).toBe(episode_map[episode.title].id);
@@ -96,7 +95,7 @@ describe('Insert/Delete test', () => {
       for (const episode of entity_data) {
         episode.published = "2023-03-31 10:30:00"
       }
-      const episodes = (await hqlApi.insertAll(entity_data, 'update')).content;
+      const episodes = (await episodeRepo.insertAll(entity_data, 'update')).content;
       for (const episode of episodes) {
         expect(episode.title).toBe(episode_map[episode.title].title);
         expect(episode.id).toBe(episode_map[episode.title].id);
@@ -106,12 +105,12 @@ describe('Insert/Delete test', () => {
 
     test('delete it', async () => {
       const titles = Object.keys(episode_map);
-      let episodes = (await hqlApi.find({ title: titles } )).content;
+      let episodes = (await episodeRepo.find({ title: titles } )).content;
       expect(episodes.length).toBe(titles.length);
 
-      await hqlApi.delete(titles);
+      await episodeRepo.delete(titles);
 
-      episodes = (await hqlApi.find({ title: titles } )).content;
+      episodes = (await episodeRepo.find({ title: titles } )).content;
       expect(episodes.length).toBe(0)
     });
   });

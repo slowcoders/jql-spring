@@ -4,8 +4,8 @@ database: postgresql
 spring:
   sql.init:
     mode: always
-    schema-locations: classpath*:db/${database}/starwars-schema.sql
-    # data-locations: classpath*:db/${database}/starwars-data.sql
+    schema-locations: classpath*:db/${database}/bookstore-schema.sql
+    # data-locations: classpath*:db/${database}/bookstore-data.sql
   session:
     store-type: none  # Session 저장 유형 StoreType 참조.
     timeout: 3600     # Session timeout.

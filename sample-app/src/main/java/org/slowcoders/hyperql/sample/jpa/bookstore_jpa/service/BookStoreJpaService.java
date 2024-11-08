@@ -1,8 +1,8 @@
-package org.slowcoders.hyperql.sample.jpa.starwars_jpa.service;
+package org.slowcoders.hyperql.sample.jpa.bookstore_jpa.service;
 
 import org.slowcoders.hyperql.HyperStorage;
 import org.slowcoders.hyperql.jdbc.JdbcStorage;
-import org.slowcoders.hyperql.sample.jpa.starwars_jpa.model.Author;
+import org.slowcoders.hyperql.sample.jpa.bookstore_jpa.model.Customer;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
 
@@ -12,11 +12,11 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 
 @Service
-public class StarWarsJpaService  {
+public class BookStoreJpaService  {
 
     private final JdbcStorage storage;
 
-    public StarWarsJpaService(JdbcStorage storage) {
+    public BookStoreJpaService(JdbcStorage storage) {
         this.storage = storage;
     }
 
@@ -26,14 +26,14 @@ public class StarWarsJpaService  {
 
 //    @PostConstruct
 //    void initData() throws IOException {
-//        long cntAuthor = storage.loadJpaTable(Author.class).count(null);
-//        if (cntAuthor == 0) {
+//        long cntCustomer = storage.loadJpaTable(Customer.class).count(null);
+//        if (cntCustomer == 0) {
 //            loadData();
 //        }
 //    }
 //    public void loadData() throws IOException {
 //        String dbType = storage.getDbType();
-//        ClassPathResource resource = new ClassPathResource("db/" + dbType + "/starwars_jpa-data.sql");
+//        ClassPathResource resource = new ClassPathResource("db/" + dbType + "/bookstore_jpa-data.sql");
 //        BufferedReader br = new BufferedReader(new InputStreamReader(resource.getInputStream()));
 //        StringBuilder sql = new StringBuilder();
 //        for (String s = null; (s = br.readLine()) != null; ) {

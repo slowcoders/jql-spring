@@ -1,23 +1,22 @@
 import {beforeAll, describe, expect, test} from '@jest/globals';
-import { hqlApi } from '@/sample_db'
+import { customerRepo } from '@/sample_db'
 
 describe('And operation', () => {
   let last_count;
   const filter = {}
 
   beforeAll(async () => {
-    const res = await hqlApi.find();
+    const res = await customerRepo.find();
     last_count = res.content.length;
 
-    const res2 = await hqlApi.find(null);
+    const res2 = await customerRepo.find(null);
     expect(res2.content.length).toBe(last_count)
 
-    const res3 = await hqlApi.find(filter);
+    const res3 = await customerRepo.find(filter);
     expect(res3.content.length).toBe(last_count)
   })
 
   test.each([
-    { attr: "species", value: "Human"},
     { attr: "height@gt", value: 1.2},
     { attr: "height@lt", value: 2.0},
     { attr: "mass@gt", value: 60 },
@@ -25,10 +24,10 @@ describe('And operation', () => {
     { attr: "metadata.homePlanet", value: "Tatooine" }
   ]) ('And 조건 테스트', async ({attr, value}) => {
     filter[attr] = value;
-    const res = await hqlApi.find(filter);
-    const authors = res.content;
-    expect(authors.length).toBeLessThan(last_count);
-    last_count = authors.length;
+    const res = await customerRepo.find(filter);
+    const customers = res.content;
+    expect(customers.length).toBeLessThan(last_count);
+    last_count = customers.length;
   });  
 });
 

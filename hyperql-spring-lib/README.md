@@ -37,14 +37,14 @@ hql_value = hql_primitive | ArrayOf(hql_primitive) | hql_node | ArrayOf(hql_node
 ## Query Examples
 Finding all person whose first name starts with "Luke" 
 ```js
-const DB_TABLE = "author"
+const DB_TABLE = "customer"
 const hql = { 
     "name@like": "Luke%"
 }
-const res = axios.post(`http://localhost:7007/api/hql/starwars/${DB_TABLE}/find`, hql)
+const res = axios.post(`http://localhost:7007/api/hql/bookstore/${DB_TABLE}/find`, hql)
 ```
 ```sh
-curl -X 'POST' 'http://localhost:7007/api/hql/starwars/author/find' \
+curl -X 'POST' 'http://localhost:7007/api/hql/bookstore/customer/find' \
      -H 'Content-Type: application/json' \
      -d '{ "name@like": "Luke%" }'
 ```
@@ -55,17 +55,17 @@ const DB_TABLE = "book"
 const hql = {
     select: "*",
     filter: {
-        "author": {
+        "customer": {
             "name": "Luke Skywalker"
         }
     }
 }
-const res = axios.post(`http://localhost:7007/api/hql/starwars/${DB_TABLE}/find`, hql)
+const res = axios.post(`http://localhost:7007/api/hql/bookstore/${DB_TABLE}/find`, hql)
 ```
 ```sh
-curl -X 'POST' 'http://localhost:7007/api/hql/starwars/book/find' \
+curl -X 'POST' 'http://localhost:7007/api/hql/bookstore/book/find' \
      -H 'Content-Type: application/json' \
-     -d '{ "filter": { "author": { "name": "Luke Skywalker" } } }' 
+     -d '{ "filter": { "customer": { "name": "Luke Skywalker" } } }' 
 ```
 ## JQL operators vs SQL
 ```
@@ -98,17 +98,17 @@ curl -X 'POST' 'http://localhost:7007/api/hql/starwars/book/find' \
 ### Automatic table join with JQL.
 { "book" : { id: 3000 } } 
 ```
-    --> SELECT t_0.*, t_1.* FROM starwars.author as t_0
-        left join starwars.book as t_1 on
-        t_0.id = t_1.author_id
+    --> SELECT t_0.*, t_1.* FROM bookstore.customer as t_0
+        left join bookstore.book as t_1 on
+        t_0.id = t_1.customer_id
         WHERE (t_1.id = 3000)
 ```
 
 { "book" : [ { id: 3000 }, { id: 3001 } ] }           
 ```
-    --> SELECT t_0.*, t_1.* FROM starwars.author as t_0
-        left join starwars.book as t_1 on
-        t_0.id = t_1.author_id
+    --> SELECT t_0.*, t_1.* FROM bookstore.customer as t_0
+        left join bookstore.book as t_1 on
+        t_0.id = t_1.customer_id
         WHERE (t_1.id = 3000 or t_1.id = 3001) */
 ```
 

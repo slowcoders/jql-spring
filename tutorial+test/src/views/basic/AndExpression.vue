@@ -20,7 +20,6 @@ const hql_select = AUTO;
 
 /* 아래의 주석을 한 줄씩 해제하면서 검색 결과의 차이를 비교해 보십시오. */
 const hql_filter = {
-  //  "species": "Human",
   //  "height@gt": 1.2,
   //  "height@lt": 2.0,
   //  "mass@gt": 60,

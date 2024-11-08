@@ -1,5 +1,5 @@
 import {describe, expect, test} from '@jest/globals';
-import { hqlApi } from '@/sample_db'
+import { customerRepo } from '@/sample_db'
 
 function checkSorted(items, key, ascending) {
   let prev = items[0];
@@ -16,42 +16,42 @@ function checkSorted(items, key, ascending) {
 
 describe('Listing', () => {
   test('Find All', async () => {
-    const count = await hqlApi.count();
-    const res = await hqlApi.find();
-    const authors = res.content;
-    expect(authors.length).toBe(count);
+    const count = await customerRepo.count();
+    const res = await customerRepo.find();
+    const customers = res.content;
+    expect(customers.length).toBe(count);
   });
 
   test('Sort by name ascending order', async () => {
-    const res = await hqlApi.find(null, { sort: "name" });
-    const authors = res.content;
-    expect(authors.length).toBeGreaterThan(0);
-    checkSorted(authors, "name", true);
+    const res = await customerRepo.find(null, { sort: "name" });
+    const customers = res.content;
+    expect(customers.length).toBeGreaterThan(0);
+    checkSorted(customers, "name", true);
   });
 
   test('Sort by name descending order', async () => {
-    const res = await hqlApi.find(null, { sort: "-name" });
-    const authors = res.content;
-    expect(authors.length).toBeGreaterThan(0);
-    checkSorted(authors, "name", false);
+    const res = await customerRepo.find(null, { sort: "-name" });
+    const customers = res.content;
+    expect(customers.length).toBeGreaterThan(0);
+    checkSorted(customers, "name", false);
   });
 
   test('Limit & Sort', async () => {
     const limit = 5
-    const res = await hqlApi.find(null, { sort: "-name", limit });
-    const authors = res.content;
-    expect(authors.length).toBe(limit);
-    checkSorted(authors, "name", false);
+    const res = await customerRepo.find(null, { sort: "-name", limit });
+    const customers = res.content;
+    expect(customers.length).toBe(limit);
+    checkSorted(customers, "name", false);
   });
 
   test('Pagination & Sort', async () => {
     const limit = 3;
     const page = 1;
-    const res = await hqlApi.find(null, { sort: "-name", limit, page });
-    const authors = res.content;
-    expect(authors.length).toBeLessThanOrEqual(limit);
+    const res = await customerRepo.find(null, { sort: "-name", limit, page });
+    const customers = res.content;
+    expect(customers.length).toBeLessThanOrEqual(limit);
     expect(res.metadata.totalElements).toBeGreaterThanOrEqual(limit);
-    checkSorted(authors, "name", false);
+    checkSorted(customers, "name", false);
   });
 
 });

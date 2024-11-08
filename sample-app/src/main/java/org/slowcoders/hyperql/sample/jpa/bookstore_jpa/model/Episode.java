@@ -1,4 +1,4 @@
-package org.slowcoders.hyperql.sample.jpa.starwars_jpa.model;
+package org.slowcoders.hyperql.sample.jpa.bookstore_jpa.model;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -7,7 +7,7 @@ import jakarta.persistence.*;
 
 
 @Entity
-@Table(name = "episode", schema = "starwars_jpa", catalog = "starwars_jpa",
+@Table(name = "episode", schema = "bookstore_jpa", catalog = "bookstore_jpa",
         uniqueConstraints = {
                 @UniqueConstraint(name ="episode_pkey", columnNames = {"title"})
         }
@@ -24,11 +24,11 @@ public class Episode implements java.io.Serializable {
 
     @Getter @Setter
     @ManyToMany(fetch = FetchType.LAZY)
-    @JoinTable(name = "author_episode_link", schema = "starwars_jpa", catalog = "starwars_jpa",
+    @JoinTable(name = "customer_episode_link", schema = "bookstore_jpa", catalog = "bookstore_jpa",
             uniqueConstraints = {
-                    @UniqueConstraint(name ="author_id__episode_id__uindex", columnNames = {"author_id", "episode_id"})
+                    @UniqueConstraint(name ="customer_id__episode_id__uindex", columnNames = {"customer_id", "episode_id"})
             },
-            joinColumns = @JoinColumn(name="episode_id"), inverseJoinColumns = @JoinColumn(name="author_id"))
-    private Set<Author> author_;
+            joinColumns = @JoinColumn(name="episode_id"), inverseJoinColumns = @JoinColumn(name="customer_id"))
+    private Set<Customer> customer_;
 
 }

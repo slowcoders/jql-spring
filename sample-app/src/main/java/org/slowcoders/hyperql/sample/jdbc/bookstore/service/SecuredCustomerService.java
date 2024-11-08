@@ -1,4 +1,4 @@
-package org.slowcoders.hyperql.sample.jdbc.starwars.service;
+package org.slowcoders.hyperql.sample.jdbc.bookstore.service;
 
 import org.slowcoders.hyperql.HyperRepository;
 import org.slowcoders.hyperql.HyperSelect;
@@ -20,12 +20,16 @@ import java.util.List;
 import java.util.Map;
 
 @Service
-public class SecuredAuthorService {
+public class SecuredCustomerService {
 
-    private final HyperRepository<Long> authorEntitySet;
+    private final HyperRepository<Long> customerEntitySet;
 
-    SecuredAuthorService(HyperStorage storage) {
-        authorEntitySet = storage.loadRepository("starwars.author");
+    SecuredCustomerService(HyperStorage storage) {
+        customerEntitySet = storage.loadRepository("bookstore.customer");
+        // testQueryBuilder(storage);
+    }
+
+    private void testQueryBuilder(HyperStorage storage) {
         Filter filter = _and_(
                 _like_("name", "%e%"),
                 _in_("book_",
@@ -36,30 +40,30 @@ public class SecuredAuthorService {
                 )
         );
         HqlParser parser = new HqlParser(storage.getObjectMapper());
-        HyperFilter where = parser.parse(authorEntitySet.getSchema(), filter);
-        JdbcQuery<Object> query = new JdbcQuery<>((JdbcRepositoryBase<?>) authorEntitySet, HyperSelect.Auto, where);
+        HyperFilter where = parser.parse(customerEntitySet.getSchema(), filter);
+        JdbcQuery<Object> query = new JdbcQuery<>((JdbcRepositoryBase<?>) customerEntitySet, HyperSelect.Auto, where);
         List<Object> res = query.getResultList(OutputFormat.Object);
         System.out.println(res);
     }
 
-    public HyperRepository<Long> getAuthorEntitySet() {
-        return authorEntitySet;
+    public HyperRepository<Long> getCustomerEntitySet() {
+        return customerEntitySet;
     }
 
-    public void deleteAuthor(Collection<Long> idList, String accessToken) {
+    public void deleteCustomer(Collection<Long> idList, String accessToken) {
         if ("1234".equals(accessToken)) {
-            authorEntitySet.delete(idList);
+            customerEntitySet.delete(idList);
         } else {
-            throw new RuntimeException("Not authorized");
+            throw new RuntimeException("Not customerized");
         }
     }
 
-    public Long addNewAuthor(Map<String, Object> properties) {
+    public Long addNewCustomer(Map<String, Object> properties) {
         if (properties.get("metadata") == null) {
             properties.put("metadata", createNote());
         }
 
-        return authorEntitySet.insert(properties);
+        return customerEntitySet.insert(properties);
     }
 
     private KVEntity createNote() {

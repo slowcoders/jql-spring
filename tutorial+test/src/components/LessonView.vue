@@ -96,7 +96,7 @@ import { ref } from "vue";
 
 import axios from "axios";
 
-const dbSchema = 'starwars';
+const dbSchema = 'bookstore';
 const baseUrl = 'http://localhost:7007/api/hql'
 
 function count_lines(code) {
@@ -105,16 +105,16 @@ function count_lines(code) {
 }
 
 const sampleStorages = [
-  "starwars",
-  "starwars_jpa",
+  "bookstore",
+  "bookstore_jpa",
 ]
 
 const sampleTables = [
-  "author",
+  "customer",
   "book",
   "episode",
-  "author_episode_link",
-  "author_friend_link"
+  "customer_episode_link",
+  "customer_friend_link"
 ]
 
 export default {

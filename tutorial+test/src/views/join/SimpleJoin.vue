@@ -20,7 +20,6 @@ const sample_code = `
 const hql_select = AUTO;
 
 const hql_filter = {
-  "species" : "Human",
 
   /* 특정 JEDI 에피소드 출연진을 검색.
   ----------------------------------------------------------*/

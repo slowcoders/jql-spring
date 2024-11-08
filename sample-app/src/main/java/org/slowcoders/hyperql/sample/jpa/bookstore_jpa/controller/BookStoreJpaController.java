@@ -1,9 +1,9 @@
-package org.slowcoders.hyperql.sample.jpa.starwars_jpa.controller;
+package org.slowcoders.hyperql.sample.jpa.bookstore_jpa.controller;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import org.slowcoders.hyperql.HyperStorageController;
 import org.slowcoders.hyperql.OutputOptions;
-import org.slowcoders.hyperql.sample.jpa.starwars_jpa.service.StarWarsJpaService;
+import org.slowcoders.hyperql.sample.jpa.bookstore_jpa.service.BookStoreJpaService;
 import org.springframework.core.convert.ConversionService;
 import org.springframework.web.bind.annotation.*;
 
@@ -11,13 +11,13 @@ import java.io.IOException;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/hql/starwars_jpa")
-public class StarWarsJpaController extends HyperStorageController.CRUD implements HyperStorageController.ListAll {
+@RequestMapping("/api/hql/bookstore_jpa")
+public class BookStoreJpaController extends HyperStorageController.CRUD implements HyperStorageController.ListAll {
 
-    private final StarWarsJpaService service;
+    private final BookStoreJpaService service;
 
-    public StarWarsJpaController(StarWarsJpaService service, ConversionService conversionService) {
-        super(service.getStorage(), "starwars_jpa", conversionService);
+    public BookStoreJpaController(BookStoreJpaService service, ConversionService conversionService) {
+        super(service.getStorage(), "bookstore_jpa", conversionService);
         this.service = service;
     }
 

@@ -1,30 +1,48 @@
 import { HqlApi } from "./api/hqlApi";
 
-const starwars_url = "http://localhost:7007/api/hql/starwars"
-const authorRepo = new HqlApi(`${starwars_url}/author`);
-const episodeRepo = new HqlApi(`${starwars_url}/episode`);
-const bookRepo = new HqlApi(`${starwars_url}/book`);
-const author_episode_repo = new HqlApi(`${starwars_url}/author_episode_link`);
-const author_friend_repo = new HqlApi(`${starwars_url}/author_friend_link`);
+const bookstore_url = "http://localhost:7007/api/hql/bookstore"
+export const authorRepo = new HqlApi(`${bookstore_url}/author`);
+export const customerRepo = new HqlApi(`${bookstore_url}/customer`);
+export const episodeRepo = new HqlApi(`${bookstore_url}/episode`);
+export const bookRepo = new HqlApi(`${bookstore_url}/book`);
+export const bookOrderRepo = new HqlApi(`${bookstore_url}/book_order`);
+export const customer_episode_repo = new HqlApi(`${bookstore_url}/customer_episode_link`);
+export const customer_friend_repo = new HqlApi(`${bookstore_url}/customer_friend_link`);
 
 export async function initSampleDB() {
-    // if (await authorRepo.count() > 0) return;
+    // if (await customerRepo.count() > 0) return;
     const authors = await authorRepo.insertAll(default_authors, 'ignore');
     console.log(authors);
+    const customers = await customerRepo.insertAll(default_customers, 'ignore');
+    console.log(customers);
     const episodes   = await episodeRepo.insertAll(default_episodes, 'ignore');
     console.log(episodes);
     const books  = await bookRepo.insertAll(default_books, 'ignore');
     console.log(books);
-    const author_episode_links = await author_episode_repo.insertAll(default_author_episode_links, 'ignore');
-    console.log(author_episode_links);
-    const author_friend_links = await author_friend_repo.insertAll(default_friend_map, 'ignore');
-    console.log(author_friend_links);
+    const bookOrders  = await bookOrderRepo.insertAll(default_book_orders, 'ignore');
+    console.log(bookOrders);
+    const customer_episode_links = await customer_episode_repo.insertAll(default_customer_episode_links, 'ignore');
+    console.log(customer_episode_links);
+    const customer_friend_links = await customer_friend_repo.insertAll(default_friend_map, 'ignore');
+    console.log(customer_friend_links);
 }
 
 const default_authors = [
     {
+        id: 1,
+        name: "한강",
+    }, {
+        id: 2,
+        name: "스티븐 킹"
+    }, {
+        id: 3,
+        name: "조엔 롤링"
+    }
+];
+
+const default_customers = [
+    {
         "id": 1000,
-        "species": "Human",
         "name": "Luke Skywalker",
         "height": 1.72,
         "mass": 77,
@@ -38,7 +56,6 @@ const default_authors = [
     },
     {
         "id": 1001,
-        "species": "Human",
         "name": "Darth Vader",
         "height": 2.02,
         "mass": 136,
@@ -52,7 +69,6 @@ const default_authors = [
     },
     {
         "id": 1003,
-        "species": "Human",
         "name": "Leia Organa",
         "height": 1.5,
         "mass": 49,
@@ -62,36 +78,25 @@ const default_authors = [
     },
     {
         "id": 1004,
-        "species": "Human",
-        "name": "Wilhuff Tarkin",
+        "name": "Groot",
         "height": 1.8,
         "mass": null,
         "metadata": {
             "memo": {
-                "shoeSize": 350,
+                "shoeSize": 850,
                 "favoriteFood": "fish"
             }
         }
     },
     {
         "id": 1005,
-        "species": "Human",
-        "name": "Extra-1",
+        "name": "Hobbit",
         "height": 1.19,
         "mass": 50,
         "metadata": null
     },
     {
-        "id": 1006,
-        "species": "Human",
-        "name": "Extra-2",
-        "height": 1.8,
-        "mass": 121,
-        "metadata": null
-    },
-    {
         "id": 2000,
-        "species": "Droid",
         "name": "C-3PO",
         "height": 1.71,
         "mass": 75,
@@ -101,7 +106,6 @@ const default_authors = [
     },
     {
         "id": 2001,
-        "species": "Droid",
         "name": "R2-D2",
         "height": 1.09,
         "mass": 32,
@@ -111,11 +115,14 @@ const default_authors = [
     },
     {
         "id": 1002,
-        "species": "Human",
         "name": "Han Solo",
         "height": 1.8,
         "mass": 80,
         "metadata": {
+            "memo": {
+                "shoeSize": 270,
+                "favoriteFood": "wine"
+            },
             "hobby": [
                 "축구",
                 "야구",
@@ -130,26 +137,51 @@ const default_authors = [
 const default_books = [
     {
         "id": 3000,
-        "length": 34.37,
-        "name": "Millenium Falcon",
-        "author_id": 1002,
+        "price": 13500,
+        "title": "소년이 온다",
+        "author_id": 1,
     },
     {
         "id": 3001,
-        "length": 12.5,
-        "name": "X-Wing",
-        "author_id": 1000
+        "price": 13500,
+        "title": "채식주의자",
+        "author_id": 1
     },
     {
         "id": 3002,
-        "length": 9.2,
-        "name": "TIE Advanced x1",
-        "author_id": 1001
+        "price": 17000,
+        "title": "미저리",
+        "author_id": 2
     },
     {
         "id": 3003,
-        "length": 20,
-        "name": "Imperial shuttle"
+        "price": 12900,
+        "title": "그린 마일",
+        "author_id": 2
+    },
+    {
+        "id": 3004,
+        "price": 12500,
+        "title": "비밀의 방",
+        "author_id": 3
+    },
+    {
+        "id": 3005,
+        "price": 12500,
+        "title": "불의 잔",
+        "author_id": 3
+    },
+    {
+        "id": 3006,
+        "price": 12500,
+        "title": "죽음의 성물",
+        "author_id": 3
+    },
+    {
+        "id": 3007,
+        "price": 12500,
+        "title": "불사조 기사단",
+        "author_id": 3
     }
 ]
   
@@ -169,57 +201,78 @@ const default_episodes = [
     }
 ]
 
-const default_author_episode_links = [
-    {  author_id: 1000, episode_id: 'NEWHOPE' },
-    {  author_id: 1000, episode_id: 'EMPIRE' },
-    {  author_id: 1000, episode_id: 'JEDI' },
-    {  author_id: 1001, episode_id: 'NEWHOPE' },
-    {  author_id: 1001, episode_id: 'EMPIRE' },
-    {  author_id: 1001, episode_id: 'JEDI' },
-    {  author_id: 1002, episode_id: 'NEWHOPE' },
-    {  author_id: 1002, episode_id: 'EMPIRE' },
-    {  author_id: 1002, episode_id: 'JEDI' },
-    {  author_id: 1003, episode_id: 'NEWHOPE' },
-    {  author_id: 1003, episode_id: 'EMPIRE' },
-    {  author_id: 1003, episode_id: 'JEDI' },
-    {  author_id: 1004, episode_id: 'NEWHOPE' },
-    {  author_id: 2000, episode_id: 'NEWHOPE' },
-    {  author_id: 2000, episode_id: 'EMPIRE' },
-    {  author_id: 2000, episode_id: 'JEDI' },
-    {  author_id: 2001, episode_id: 'NEWHOPE' },
-    {  author_id: 2001, episode_id: 'EMPIRE' },
-    {  author_id: 2001, episode_id: 'JEDI'}
+const default_customer_episode_links = [
+    {  customer_id: 1000, episode_id: 'NEWHOPE' },
+    {  customer_id: 1000, episode_id: 'EMPIRE' },
+    {  customer_id: 1000, episode_id: 'JEDI' },
+    {  customer_id: 1001, episode_id: 'NEWHOPE' },
+    {  customer_id: 1001, episode_id: 'EMPIRE' },
+    {  customer_id: 1001, episode_id: 'JEDI' },
+    {  customer_id: 1002, episode_id: 'NEWHOPE' },
+    {  customer_id: 1002, episode_id: 'EMPIRE' },
+    {  customer_id: 1002, episode_id: 'JEDI' },
+    {  customer_id: 1003, episode_id: 'NEWHOPE' },
+    {  customer_id: 1003, episode_id: 'EMPIRE' },
+    {  customer_id: 1003, episode_id: 'JEDI' },
+    {  customer_id: 1004, episode_id: 'NEWHOPE' },
+    {  customer_id: 2000, episode_id: 'NEWHOPE' },
+    {  customer_id: 2000, episode_id: 'EMPIRE' },
+    {  customer_id: 2000, episode_id: 'JEDI' },
+    {  customer_id: 2001, episode_id: 'NEWHOPE' },
+    {  customer_id: 2001, episode_id: 'EMPIRE' },
+    {  customer_id: 2001, episode_id: 'JEDI'}
+];
+
+const default_book_orders = [
+    {  customer_id: 1000, book_id: 3000 },
+    {  customer_id: 1000, book_id: 3001 },
+    {  customer_id: 1000, book_id: 3002 },
+    {  customer_id: 1001, book_id: 3003 },
+    {  customer_id: 1001, book_id: 3004 },
+    {  customer_id: 1001, book_id: 3005 },
+    {  customer_id: 1002, book_id: 3000 },
+    {  customer_id: 1002, book_id: 3001 },
+    {  customer_id: 1002, book_id: 3002 },
+    {  customer_id: 1003, book_id: 3000 },
+    {  customer_id: 1003, book_id: 3001 },
+    {  customer_id: 1003, book_id: 3002 },
+    {  customer_id: 1004, book_id: 3006 },
+    {  customer_id: 1004, book_id: 3007 },
+    {  customer_id: 2000, book_id: 3000 },
+    {  customer_id: 2000, book_id: 3001 },
+    {  customer_id: 2000, book_id: 3002 },
+    {  customer_id: 2001, book_id: 3000 },
+    {  customer_id: 2001, book_id: 3001 },
+    {  customer_id: 2001, book_id: 3002 }
 ];
 
 const default_friend_map = [
-    {  author_id: 1000, friend_id: 1002 },
-    {  author_id: 1000, friend_id: 1003 },
-    {  author_id: 1000, friend_id: 2000 },
-    {  author_id: 1000, friend_id: 2001 },
+    {  customer_id: 1000, friend_id: 1002 },
+    {  customer_id: 1000, friend_id: 1003 },
+    {  customer_id: 1000, friend_id: 2000 },
+    {  customer_id: 1000, friend_id: 2001 },
 
-    {  author_id: 1001, friend_id: 1004 },
+    {  customer_id: 1001, friend_id: 1004 },
 
-    {  author_id: 1002, friend_id: 1000 },
-    {  author_id: 1002, friend_id: 1003 },
-    {  author_id: 1002, friend_id: 2001 },
+    {  customer_id: 1002, friend_id: 1000 },
+    {  customer_id: 1002, friend_id: 1003 },
+    {  customer_id: 1002, friend_id: 2001 },
 
-    {  author_id: 1003, friend_id: 1000 },
-    {  author_id: 1003, friend_id: 1002 },
-    {  author_id: 1003, friend_id: 2000 },
-    {  author_id: 1003, friend_id: 2001 },
+    {  customer_id: 1003, friend_id: 1000 },
+    {  customer_id: 1003, friend_id: 1002 },
+    {  customer_id: 1003, friend_id: 2000 },
+    {  customer_id: 1003, friend_id: 2001 },
 
-    {  author_id: 1004, friend_id: 1001 },
+    {  customer_id: 1004, friend_id: 1001 },
 
-    {  author_id: 2000, friend_id: 1000 },
-    {  author_id: 2000, friend_id: 1002 },
-    {  author_id: 2000, friend_id: 1003 },
-    {  author_id: 2000, friend_id: 2001 },
+    {  customer_id: 2000, friend_id: 1000 },
+    {  customer_id: 2000, friend_id: 1002 },
+    {  customer_id: 2000, friend_id: 1003 },
+    {  customer_id: 2000, friend_id: 2001 },
 
-    {  author_id: 2001, friend_id: 1000 },
-    {  author_id: 2001, friend_id: 1002 },
-    {  author_id: 2001, friend_id: 1003 }
+    {  customer_id: 2001, friend_id: 1000 },
+    {  customer_id: 2001, friend_id: 1002 },
+    {  customer_id: 2001, friend_id: 1003 }
 ]
 
 
-const g_serviceUrl = 'http://localhost:7007/api/hql/starwars/';
-export const hqlApi = new HqlApi(g_serviceUrl + 'author');

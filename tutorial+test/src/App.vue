@@ -12,7 +12,7 @@
 </template>
 
 <script>
-import { initSampleDB } from "./init_sample_db.js";
+import { initSampleDB } from "./sample_db.js";
 
 export default {
   name: "App",
