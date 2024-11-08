@@ -63,9 +63,7 @@ describe('Insert/Delete test', () => {
     beforeAll(async () => {
       await clear_garbage({ 'title@like': 'Test-E2-%' });
 
-      const idList = (await hqlApi.insertAll(entity_data)).content;
-      const res = await hqlApi.find({title: idList})
-      const episodes = res.content;
+      const episodes = (await hqlApi.insertAll(entity_data)).content;
       expect(episodes.length).toBe(entity_data.length);
       for (const episode of episodes) {
         episode_map[episode.title] = episode;
