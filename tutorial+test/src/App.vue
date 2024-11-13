@@ -62,6 +62,11 @@ export default {
           title: "Json column search",
           icon: "fa fa-file-alt"
         },
+        {
+          href: "/form/form",
+          title: "Simple form integration",
+          icon: "fa fa-file-alt"
+        },
 
         {
           href: "/external",

@@ -48,3 +48,11 @@ export default tseslint.config({
   },
 })
 ```
+
+```sh
+npm create vite@latest
+cd {프로젝트}
+npm install
+npm install -D tailwindcss postcss autoprefixer
+npx tailwindcss init -p
+```

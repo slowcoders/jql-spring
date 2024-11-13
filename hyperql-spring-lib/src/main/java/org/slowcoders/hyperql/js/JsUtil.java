@@ -8,6 +8,7 @@ import org.slowcoders.hyperql.schema.QJoin;
 import org.slowcoders.hyperql.jdbc.storage.JdbcColumn;
 import org.slowcoders.hyperql.util.CaseConverter;
 import org.slowcoders.hyperql.util.ClassUtils;
+import org.slowcoders.hyperql.util.SourceWriter;
 
 import java.util.HashMap;
 import java.util.List;
@@ -15,47 +16,109 @@ import java.util.Map;
 
 public class JsUtil {
 
-    public static String createDDL(QSchema schema) {
-        StringBuilder sb = new StringBuilder();
-        sb.append("const " + schema.getSimpleName() + "Schema_columns = [\n");
+    public static String createJsonModel(QSchema schema) {
+        SourceWriter sb = new SourceWriter('"');
+        sb.write("[\n");
+        sb.incTab();
         for (QColumn col : schema.getBaseColumns()) {
-            dumpJSONSchema(sb, (JdbcColumn)col);
-            sb.append(",\n");
+            dumpJsonSchema(sb, (JdbcColumn)col);
+            sb.write(",\n");
         }
-        sb.append("];\n");
+        sb.incTab();
+        sb.write("];\n");
+
+//        if (!schema.getEntityJoinMap().isEmpty() || !schema.getExtendedColumns().isEmpty()) {
+//            sb.write("\nconst " + schema.getSimpleName() + "Schema_external_entities = [\n");
+//            for (QColumn column : schema.getExtendedColumns()) {
+//                if (column.isForeignKey()) {
+//                    sb.write("  hql.externalJoin(\"").write(column.getJsonKey()).write("\", Object,\n");
+//                }
+//            }
+//            for (Map.Entry<String, QJoin> entry : schema.getEntityJoinMap().entrySet()) {
+//                sb.write("  hql.externalJoin(\"").write(entry.getKey()).write("\", ");
+//                sb.write(entry.getValue().getTargetSchema().getSimpleName()).write("Schema, ");
+//                sb.write(entry.getValue().hasUniqueTarget() ? "Object" : "Array").write("),\n");
+//            }
+//            sb.write("];\n");
+//        }
+
+        return sb.toString();
+    }
+
+    public static String createJsSchema(QSchema schema) {
+        SourceWriter sb = new SourceWriter('"');
+        sb.write("const " + schema.getSimpleName() + "Schema_columns = [\n");
+        for (QColumn col : schema.getBaseColumns()) {
+            dumpJqlSchema(sb, (JdbcColumn)col);
+            sb.write(",\n");
+        }
+        sb.write("];\n");
 
         if (!schema.getEntityJoinMap().isEmpty() || !schema.getExtendedColumns().isEmpty()) {
-            sb.append("\nconst " + schema.getSimpleName() + "Schema_external_entities = [\n");
+            sb.write("\nconst " + schema.getSimpleName() + "Schema_external_entities = [\n");
             for (QColumn column : schema.getExtendedColumns()) {
                 if (column.isForeignKey()) {
-                    sb.append("  hql.externalJoin(\"").append(column.getJsonKey()).append("\", Object,\n");
+                    sb.write("  hql.externalJoin(\"").write(column.getJsonKey()).write("\", Object,\n");
                 }
             }
             for (Map.Entry<String, QJoin> entry : schema.getEntityJoinMap().entrySet()) {
-                sb.append("  hql.externalJoin(\"").append(entry.getKey()).append("\", ");
-                sb.append(entry.getValue().getTargetSchema().getSimpleName()).append("Schema, ");
-                sb.append(entry.getValue().hasUniqueTarget() ? "Object" : "Array").append("),\n");
+                sb.write("  hql.externalJoin(\"").write(entry.getKey()).write("\", ");
+                sb.write(entry.getValue().getTargetSchema().getSimpleName()).write("Schema, ");
+                sb.write(entry.getValue().hasUniqueTarget() ? "Object" : "Array").write("),\n");
             }
-            sb.append("];\n");
+            sb.write("];\n");
         }
 
         return sb.toString();
     }
 
-    public static String dumpJSONSchema(StringBuilder sb, JdbcColumn col) {
+    static String toFormType(JsType jsType) {
+        switch (jsType) {
+            case Text: return "textfield";
+            case Integer: return "number";
+            case Float: return "number";
+            case Boolean: return "boolean";
+            case Date: return "date";
+            case Time: return "time";
+            case Timestamp: return "timestamp";
+            case Object: return "object";
+            case Array: return "array";
+            default: return null;
+        }
+    }
+
+    public static String dumpJsonSchema(SourceWriter sb, JdbcColumn col) {
+        JsType jsType = JsType.of(col.getValueType());
+        if (jsType == null) {
+            throw new RuntimeException("JsonType not registered: " + col.getValueType() + " " + col.getPhysicalName());
+        }
+        sb.writeln("{")
+                .incTab()
+                .writeJsonKeyValue("key", col.getJsonKey())
+                .writeJsonKeyValue("type", toFormType(jsType));
+
+        if (col.isReadOnly()) {
+            sb.writeJsonKeyValue("required", true);
+        }
+        sb.decTab();
+        sb.write("}");
+        return sb.toString();
+    }
+
+    public static String dumpJqlSchema(SourceWriter sb, JdbcColumn col) {
         String jsonType = getColumnType(col);
         if (jsonType == null) {
             throw new RuntimeException("JsonType not registered: " + col.getValueType() + " " + col.getPhysicalName());
         }
-        sb.append("  hql.").append(jsonType).append("(\"")
-                .append(col.getJsonKey()).append("\"");
-        sb.append(")");
+        sb.write("  hql.").write(jsonType).write("(\"")
+                .write(col.getJsonKey()).write("\"");
+        sb.write(")");
 
         if (col.isReadOnly()) {
-            sb.append(".readOnly()");
+            sb.write(".readOnly()");
         }
         else if (!col.isNullable()) {
-            sb.append(".required()");
+            sb.write(".required()");
         }
 
         return sb.toString();
@@ -64,15 +127,15 @@ public class JsUtil {
 
 
     public static String createJoinJQL(QSchema schema) {
-        StringBuilder sb = new StringBuilder();
+        SourceWriter sb = new SourceWriter('"');
         for (QColumn hqlColumn : schema.getReadableColumns()) {
             QColumn joined_pk = hqlColumn.getJoinedPrimaryColumn();
             if (joined_pk == null) continue;
 
-            sb.append(schema.getSimpleName()).append("Schema.join(\"");
-            sb.append(hqlColumn.getJsonKey()).append("\", ");
-            sb.append(joined_pk.getSchema().getEntityType().getSimpleName()).append("Schema, \"");
-            sb.append(joined_pk.getJsonKey()).append("\");\n");
+            sb.write(schema.getSimpleName()).write("Schema.join(\"");
+            sb.write(hqlColumn.getJsonKey()).write("\", ");
+            sb.write(joined_pk.getSchema().getEntityType().getSimpleName()).write("Schema, \"");
+            sb.write(joined_pk.getJsonKey()).write("\");\n");
         }
         return sb.toString();
     }
@@ -105,37 +168,37 @@ public class JsUtil {
         return colType;
     }
 
-    private static void dumpColumnInfo(QColumn col, StringBuilder sb) {
+    private static void dumpColumnInfo(QColumn col, SourceWriter sb) {
         QColumn joinedPK = col.getJoinedPrimaryColumn();
         String columnType = getColumnType(col);
         if (!col.isNullable()) {
             columnType = columnType + '!';
         }
-        sb.append(columnType).append(filler.substring(columnType.length()));
-        sb.append(col.getJsonKey()).append('(').append(col.getPhysicalName()).append(')');
+        sb.write(columnType).write(filler.substring(columnType.length()));
+        sb.write(col.getJsonKey()).write('(').write(col.getPhysicalName()).write(')');
         if (col.isPrimaryKey()) {
-            sb.append(" PK");
+            sb.write(" PK");
         }
         if (joinedPK != null) {
-            sb.append(" FK -> ");
-            sb.append(joinedPK.getSchema().getTableName());
-            sb.append(".").append(joinedPK.getJsonKey());
+            sb.write(" FK -> ");
+            sb.write(joinedPK.getSchema().getTableName());
+            sb.write(".").write(joinedPK.getJsonKey());
         }
 
-        sb.append("\n");
+        sb.write("\n");
     }
     static String filler = "                                             ";
     public static String getSimpleSchema(QSchema schema, boolean withTableName) {
-        StringBuilder sb = new StringBuilder();
+        SourceWriter sb = new SourceWriter('"');
         if (withTableName) {
-            sb.append("==================================================\n");
-            sb.append("# ").append(schema.getSimpleName()).append("\n");
+            sb.write("==================================================\n");
+            sb.write("# ").write(schema.getSimpleName()).write("\n");
         }
         else {
-            sb.append("Type").append(filler.substring("Type".length())).append("Key(physical_column_name)\n");
+            sb.write("Type").write(filler.substring("Type".length())).write("Key(physical_column_name)\n");
         }
-        sb.append("--------------------------------------------------\n");
-        sb.append("// Leaf properties //\n");
+        sb.write("--------------------------------------------------\n");
+        sb.write("// Leaf properties //\n");
         List<QColumn> primitiveColumns = schema.getBaseColumns();
         for (QColumn col : primitiveColumns) {
             dumpColumnInfo(col, sb);
@@ -145,7 +208,7 @@ public class JsUtil {
                 || !schema.getEntityJoinMap().isEmpty();
 
         if (hasRef) {
-            sb.append("\n// Reference properties //\n");
+            sb.write("\n// Reference properties //\n");
 
             for (QColumn col : schema.getExtendedColumns()) {
                 dumpColumnInfo(col, sb);
@@ -157,15 +220,15 @@ public class JsUtil {
                 if (refSchema.hasOnlyForeignKeys()) continue;
                 int start = sb.length();
                 QSchema targetSchema = join.getTargetSchema();
-                sb.append(join.getTargetSchema().generateEntityClassName());
-                if (!join.hasUniqueTarget()) sb.append("[]");
+                sb.write(join.getTargetSchema().generateEntityClassName());
+                if (!join.hasUniqueTarget()) sb.write("[]");
                 int type_len = sb.length() - start;
                 if (type_len >= filler.length()) {
                     type_len = filler.length() - 1;
                 }
-                sb.append(filler.substring(type_len));
-                sb.append(entry.getKey());
-                sb.append("\n");
+                sb.write(filler.substring(type_len));
+                sb.write(entry.getKey());
+                sb.write("\n");
             }
         }
         return sb.toString();

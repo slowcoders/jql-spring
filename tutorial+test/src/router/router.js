@@ -9,6 +9,7 @@ import RecursiveJoin from "@/views/join/RecursiveJoin";
 import JsonSearch from "@/views/join/JsonSearch";
 import ExternalLinks from "@/views/ExternalLinks";
 import Introduction from "@/views/Introduction";
+import SimpleForm from "@/views/basic/SimpleForm";
 
 const router = createRouter({
     history: createWebHashHistory(),
@@ -48,6 +49,10 @@ const router = createRouter({
         {
             path: '/join/json',
             component: JsonSearch,
+        },
+        {
+            path: '/form/form',
+            component: SimpleForm,
         },
         {
             path: '/external',

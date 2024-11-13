@@ -78,8 +78,15 @@ public abstract class JdbcMetadataController {
         if (type == SchemaType.Simple) {
             source = JsUtil.getSimpleSchema(schema, false);
         }
+        else if (type == SchemaType.FormModel) {
+            source = JsUtil.createJsonModel(schema);
+//            String join = JsUtil.createJoinJQL(schema);
+//            StringBuilder sb = new StringBuilder();
+//            sb.append(source).append("\n\n").append(join);
+//            source = sb.toString();
+        }
         else if (type == SchemaType.Javascript) {
-            source = JsUtil.createDDL(schema);
+            source = JsUtil.createJsSchema(schema);
             String join = JsUtil.createJoinJQL(schema);
             StringBuilder sb = new StringBuilder();
             sb.append(source).append("\n\n").append(join);
@@ -118,7 +125,7 @@ public abstract class JdbcMetadataController {
         SourceWriter sb = new SourceWriter('\'');
         for (String tableName : storage.getTableNames(namespace)) {
             QSchema schema = getSchema(namespace, tableName);
-            String source = JsUtil.createDDL(schema);
+            String source = JsUtil.createJsSchema(schema);
             String join = JsUtil.createJoinJQL(schema);
             sb.write(source).write("\n\n").write(join);
             sb.write("\n\n");
@@ -151,6 +158,7 @@ public abstract class JdbcMetadataController {
     enum SchemaType {
         Simple,
         Javascript,
-        SpringJPA
+        SpringJPA,
+        FormModel
     }
 }

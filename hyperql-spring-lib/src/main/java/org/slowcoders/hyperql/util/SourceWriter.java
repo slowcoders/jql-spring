@@ -91,11 +91,19 @@ public class SourceWriter<Self extends SourceWriter> {
 
     public Self writeQuoted(Object value) {
         if (value == null) {
-            sb.append("null");
+            write("null");
         } else {
-            value = value.toString().replace(quoteChar, quoteEscape);
-            sb.append(quote).append(value).append(quote);
+            String s = value.toString().replace(quoteChar, quoteEscape);
+            write(quote).write(s).write(quote);
         }
+        return (Self)this;
+    }
+
+    public Self writeJsonKeyValue(String key, Object value) {
+        writeQuoted(key);
+        write(": ");
+        writeValueAndComma(value);
+        writeln();
         return (Self)this;
     }
 

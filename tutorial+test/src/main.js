@@ -8,6 +8,7 @@ import VueHighlightJS from 'vue3-highlightjs'
 import { GlobalCmComponent } from 'codemirror-editor-vue3';
 
 import 'bootstrap/dist/css/bootstrap.css'
+import 'bootstrap-icons/font/bootstrap-icons.css'
 import 'bootstrap-vue-3/dist/bootstrap-vue-3.css'
 import 'vue-sidebar-menu/dist/vue-sidebar-menu.css'
 
