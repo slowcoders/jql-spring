@@ -1,6 +1,6 @@
 import axios from "axios";
 
-function to_url_param(options) {
+export function to_url_param(options) {
     if (!options) return "";
 
     let params = ""

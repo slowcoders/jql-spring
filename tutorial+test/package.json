@@ -15,6 +15,7 @@
     "bootstrap": "^5.2.2",
     "bootstrap-icons": "^1.11.3",
     "bootstrap-vue-3": "^0.3.12",
+    "choices.js": "^11.0.2",
     "codemirror-editor-vue3": "^2.1.7",
     "core-js": "^3.8.3",
     "survey-core": "^1.12.9",

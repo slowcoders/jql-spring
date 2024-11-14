@@ -9,7 +9,6 @@
        </td><td class="input-column">
          <b-form-select v-model="selectedTable"
                         :options="tableNames"
-                        :disabled="!showSchemaInfo"
                         @input="onTableChanged()">
          </b-form-select>
        </td><td>
@@ -68,11 +67,13 @@ import CodeMirror from "codemirror-editor-vue3";
 // import "https://cdn.form.io/js/formio.embed.js"
 import "codemirror/mode/javascript/javascript.js";
 import "codemirror/theme/dracula.css";
+// import "choices.js/public/assets/styles/choices.css";
 
 import { ref } from "vue";
 
 import axios from "axios";
-import { Formio } from "@formio/js";
+// import { Formio } from "@formio/js";
+import { HqlApi } from "@/api/hqlApi";
 
 const dbSchema = 'bookstore';
 const baseUrl = 'http://localhost:7007/api/hql'
@@ -101,7 +102,7 @@ export default {
   components: { CodeMirror },
   data() {
     return {
-      showSchemaInfo: true,
+      showSchemaInfo: false,
       storageNames: sampleStorages,
       selectedStorage: sampleStorages[0],
       tableNames: sampleTables,
@@ -200,7 +201,7 @@ export default {
     },
 
     onAddEntity() {
-      Formio.createForm(document.getElementById('formio'), form_schema).then(function(form) {
+      window.document.Formio.createForm(document.getElementById('formio'), book_model).then(function(form) {
         form.on('submit', function(submission) {
           alert(JSON.stringify(submission.data, null, 2));
           console.log(submission);
@@ -210,13 +211,32 @@ export default {
 
     onTableChanged() {
       const vm = this;
+      vm.setFormModel(book_model);
       if (vm.showSchemaInfo) {
         const url = `${baseUrl}/metadata/${dbSchema}/${vm.selectedTable}/FormModel`
         axios.get(url).then(res => {
           vm.schemaInfo = `\n/*************** Schema<${vm.selectedTable}> ***********************\n${res.data}*/`;
           console.log("schemaInfo", vm.schemaInfo)
-        }).catch(vm.show_http_error)
+        }).catch(vm.show_http_error);
+
         vm.codeView.setValue(vm.make_sample_code());
+      }
+    },
+
+    async setFormModel(model) {
+      for (const col of model.components) {
+        const ref = col.dataRef;
+        if (ref) {
+          const api = new HqlApi(`${baseUrl}/bookstore/${ref.table}`);
+          const data = await api.find(ref.hql.filter, ref.hql.option);
+          col.data = {
+            values: data.content.map(item => ({
+              value: item[ref.value],
+              label: item[ref.label],
+            }))}
+          ;
+          console.log(col.key, col.data)
+        }
       }
     },
 
@@ -242,56 +262,43 @@ export default {
 };
 
 
-let form_schema = {
+let book_model = {
   components: [
     {
       type: 'textfield',
-      key: 'firstName',
-      label: 'First Name',
-      placeholder: 'Enter your first name.',
+      key: 'name',
+      label: '제목',
+      placeholder: '제목 입력',
       input: true,
-      tooltip: 'Enter your <strong>First Name</strong>',
-      description: 'Enter your <strong>First Name</strong>'
-    },
-    {
-      type: 'textfield',
-      key: 'lastName',
-      label: 'Last Name',
-      placeholder: 'Enter your last name',
-      input: true,
-      tooltip: 'Enter your <strong>Last Name</strong>',
-      description: 'Enter your <strong>Last Name</strong>'
     },
     {
       type: "select",
-      label: "Favorite Things",
-      key: "favoriteThings",
-      placeholder: "These are a few of your favorite things...",
-      data: {
-        values: [
-          {
-            value: "raindropsOnRoses",
-            label: "Raindrops on roses"
-          },
-          {
-            value: "whiskersOnKittens",
-            label: "Whiskers on Kittens"
-          },
-          {
-            value: "brightCopperKettles",
-            label: "Bright Copper Kettles"
-          },
-          {
-            value: "warmWoolenMittens",
-            label: "Warm Woolen Mittens"
-          }
-        ]
+      label: "저자",
+      key: "author_id",
+      placeholder: "저자 선택",
+      "widget": "choicesjs",
+      "customClass": "pl-3 pr-3",
+      dataRef: {
+        table: 'author',
+        hql: {
+          option: { select: "id, name" }
+        },
+        value: 'id',
+        label: 'name'
       },
-      dataSrc: "values",
-      template: "<span>{{ item.label }}</span>",
-      multiple: true,
-      input: true
+      // dataSrc: "values",
+      // template: "<span>{{ item.label }}</span>",
+      // multiple: false,
+      // input: true
     },
+    {
+      type: 'textfield',
+      key: 'name',
+      label: '판매가',
+      placeholder: '판매가',
+      input: true,
+    },
+
     {
       type: 'button',
       action: 'submit',
