@@ -14,3 +14,4 @@ sample-app/src/main/resources/static
 sample-app/out
 db/data
 tutorial+test/node_modules
+node_modules
