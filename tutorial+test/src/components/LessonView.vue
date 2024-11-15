@@ -274,6 +274,8 @@ ${vm.schemaInfo}`
       vm.resetColumns();
     },
 
+
+    
     onTableChanged() {
       const vm = this;
       if (vm.showSchemaInfo) {

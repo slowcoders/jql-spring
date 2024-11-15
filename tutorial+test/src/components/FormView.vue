@@ -67,13 +67,14 @@ import CodeMirror from "codemirror-editor-vue3";
 // import "https://cdn.form.io/js/formio.embed.js"
 import "codemirror/mode/javascript/javascript.js";
 import "codemirror/theme/dracula.css";
-// import "choices.js/public/assets/styles/choices.css";
+import "choices.js/public/assets/styles/choices.css";
+import "@formio/js/dist/formio.full.css"
 
 import { ref } from "vue";
 
 import axios from "axios";
-// import { Formio } from "@formio/js";
 import { HqlApi } from "@/api/hqlApi";
+import { Formio } from "@formio/js";
 
 const dbSchema = 'bookstore';
 const baseUrl = 'http://localhost:7007/api/hql'
@@ -102,6 +103,7 @@ export default {
   components: { CodeMirror },
   data() {
     return {
+      useFormio: true,
       showSchemaInfo: false,
       storageNames: sampleStorages,
       selectedStorage: sampleStorages[0],
@@ -201,7 +203,7 @@ export default {
     },
 
     onAddEntity() {
-      window.document.Formio.createForm(document.getElementById('formio'), book_model).then(function(form) {
+      Formio.createForm(document.getElementById('formio'), book_model).then(function(form) {
         form.on('submit', function(submission) {
           alert(JSON.stringify(submission.data, null, 2));
           console.log(submission);
@@ -265,7 +267,7 @@ export default {
 let book_model = {
   components: [
     {
-      type: 'textfield',
+      type: 'text',
       key: 'name',
       label: '제목',
       placeholder: '제목 입력',

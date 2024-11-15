@@ -29,7 +29,7 @@ const hql_filter = {}
 
 export default {
   components: {
-    FormView
+    FormView,
   },
 
   data() {
@@ -38,4 +38,5 @@ export default {
     }
   }
 }
+
 </script>
