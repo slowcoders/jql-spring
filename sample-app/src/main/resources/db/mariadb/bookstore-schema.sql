@@ -5,7 +5,7 @@ create table if not exists bookstore.`customer`
         primary key,
     height   float                        null,
     mass     float                        null,
-    metadata longtext collate utf8mb4_bin null
+    memo    longtext collate utf8mb4_bin null
         check (json_valid(`metadata`)),
     name     varchar(255)                 not null,
 );

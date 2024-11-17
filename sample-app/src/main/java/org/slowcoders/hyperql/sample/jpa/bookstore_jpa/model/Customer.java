@@ -32,9 +32,9 @@ public class Customer implements java.io.Serializable {
     private Float mass;
 
     @Getter @Setter
-    @Column(name = "metadata", nullable = true, columnDefinition = "jsonb")
+    @Column(name = "memo", nullable = true, columnDefinition = "jsonb")
     @org.hibernate.annotations.Type(io.hypersistence.utils.hibernate.type.json.JsonType.class)
-    private com.fasterxml.jackson.databind.JsonNode metadata;
+    private com.fasterxml.jackson.databind.JsonNode memo;
 
     @Getter @Setter
     @ManyToMany(fetch = FetchType.LAZY)

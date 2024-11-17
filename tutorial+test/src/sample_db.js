@@ -40,11 +40,9 @@ const default_customers = [
         "name": "Luke Skywalker",
         "height": 1.72,
         "mass": 77,
-        "metadata": {
-            "memo": {
-                "shoeSize": 260,
-                "favoriteFood": "kimchi"
-            },
+        "memo": {
+            "shoeSize": 260,
+            "favoriteFood": "kimchi",
             "homePlanet": "Tatooine"
         }
     },
@@ -53,11 +51,9 @@ const default_customers = [
         "name": "Darth Vader",
         "height": 2.02,
         "mass": 136,
-        "metadata": {
-            "memo": {
-                "shoeSize": 370,
-                "favoriteFood": "pork"
-            },
+        "memo": {
+            "shoeSize": 370,
+            "favoriteFood": "pork",
             "homePlanet": "Tatooine"
         }
     },
@@ -66,7 +62,7 @@ const default_customers = [
         "name": "Leia Organa",
         "height": 1.5,
         "mass": 49,
-        "metadata": {
+        "memo": {
             "homePlanet": "Alderaan"
         }
     },
@@ -75,11 +71,9 @@ const default_customers = [
         "name": "Groot",
         "height": 1.8,
         "mass": null,
-        "metadata": {
-            "memo": {
-                "shoeSize": 850,
-                "favoriteFood": "fish"
-            }
+        "memo": {
+            "shoeSize": 850,
+            "favoriteFood": "fish"
         }
     },
     {
@@ -87,14 +81,14 @@ const default_customers = [
         "name": "Hobbit",
         "height": 1.19,
         "mass": 50,
-        "metadata": null
+        "memo": null
     },
     {
         "id": 2000,
         "name": "C-3PO",
         "height": 1.71,
         "mass": 75,
-        "metadata": {
+        "memo": {
             "primaryFunction": "protocol"
         }
     },
@@ -103,7 +97,7 @@ const default_customers = [
         "name": "R2-D2",
         "height": 1.09,
         "mass": 32,
-        "metadata": {
+        "memo": {
             "primaryFunction": "Astromech"
         }
     },
@@ -112,11 +106,9 @@ const default_customers = [
         "name": "Han Solo",
         "height": 1.8,
         "mass": 80,
-        "metadata": {
-            "memo": {
-                "shoeSize": 270,
-                "favoriteFood": "wine"
-            },
+        "memo": {
+            "shoeSize": 270,
+            "favoriteFood": "wine",
             "hobby": [
                 "축구",
                 "야구",

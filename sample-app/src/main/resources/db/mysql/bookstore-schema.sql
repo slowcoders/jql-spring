@@ -12,7 +12,7 @@ create table if not exists bookstore.`customer`
     primary key,
     height   float        null,
     mass     float        null,
-    metadata json         null,
+    memo     json         null,
     name     varchar(255) not null,
 );
 

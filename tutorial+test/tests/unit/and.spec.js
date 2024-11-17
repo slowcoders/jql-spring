@@ -20,8 +20,8 @@ describe('And operation', () => {
     { attr: "height@gt", value: 1.2},
     { attr: "height@lt", value: 2.0},
     { attr: "mass@gt", value: 60 },
-    { attr: "metadata.memo.shoeSize@lt", value: 300 },
-    { attr: "metadata.homePlanet", value: "Tatooine" }
+    { attr: "memo.shoeSize@lt", value: 300 },
+    { attr: "memo.homePlanet", value: "Tatooine" }
   ]) ('And 조건 테스트', async ({attr, value}) => {
     filter[attr] = value;
     const res = await customerRepo.find(filter);

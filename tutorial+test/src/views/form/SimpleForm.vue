@@ -223,7 +223,7 @@ let autor_columns = [
 let customer_columns = [
     HqlForm.number('id', "아이디"),
     HqlForm.text('name', "이름"),
-    HqlForm.text('metadata', "소개"),
+    HqlForm.text('memo', "메모"),
 ]
 
 

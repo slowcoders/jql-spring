@@ -17,7 +17,7 @@ create table if not exists bookstore.customer
     name varchar(255) not null,
     height real,
     mass real,
-    metadata jsonb
+    memo jsonb
 );
 alter table bookstore.customer owner to hql_demo;
 

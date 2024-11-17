@@ -19,10 +19,10 @@ const sample_code = `
 const hql_select = AUTO;
 
 const hql_1 = {
-  "metadata": { "memo" : { "favoriteFood" : "kimchi" } }
+  "memo" : { "favoriteFood" : "kimchi" }
 }
 const hql_2 = {
-  "metadata": { "memo" : { "shoeSize@ge" : 270 } }
+  "memo" : { "shoeSize@ge" : 270 }
 }
 
 /* 아래의 주석을 한 줄씩 번갈아 해제하면서 검색 결과의 차이를 비교해 보십시오. */
