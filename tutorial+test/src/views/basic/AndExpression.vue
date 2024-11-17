@@ -23,7 +23,7 @@ const hql_filter = {
   //  "height@gt": 1.2,
   //  "height@lt": 2.0,
   //  "mass@gt": 60,
-  //  "metadata.homePlanet": "Tatooine",
+  //  "memo.homePlanet": "Tatooine",
 }
 `
 

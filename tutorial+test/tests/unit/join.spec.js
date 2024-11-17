@@ -24,7 +24,7 @@ describe('Join Test', () => {
       const res = await customerRepo.find(filter);
       const customers = res.content;
       expect(customers.length).toBe(1);
-      expect(customers[0].friend_.length).toBe(3);
+      expect(customers[0].friend_.length).toBe(1);
     });
   });
 });

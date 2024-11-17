@@ -102,7 +102,7 @@ public class HyperSelect {
             int ch = select.charAt(idx);
             switch (ch) {
                 case '(': {
-                    key = select.substring(start, idx);
+                    key = select.substring(start, idx).trim();
                     ResultMap subMap = resultMap.makeSubMap(key);
                     idx = parsePropertySelection(subMap, base + key + '.', idx + 1, select);
                     start = idx + 1;

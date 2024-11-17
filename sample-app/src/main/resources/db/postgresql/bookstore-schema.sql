@@ -17,7 +17,7 @@ create table if not exists bookstore.customer
     name varchar(255) not null,
     height real,
     mass real,
-    metadata jsonb
+    memo jsonb
 );
 alter table bookstore.customer owner to hql_demo;
 
@@ -34,31 +34,6 @@ create table if not exists bookstore.customer_friend_link
 alter table bookstore.customer_friend_link owner to hql_demo;
 create unique index if not exists customer_id__friend_id__uindex
     on bookstore.customer_friend_link (customer_id, friend_id);
-
-
---------------------------------------------------------
-create table if not exists bookstore.episode
-(
-    title varchar(255) not null
-        constraint episode_pkey
-            primary key,
-    published timestamp
-);
-alter table bookstore.episode owner to hql_demo;
-
---------------------------------------------------------
-create table if not exists bookstore.customer_episode_link
-(
-    customer_id bigint not null
-        constraint fk_customer_id_2_pk_customer__id
-            references bookstore.customer,
-    episode_id varchar(255) not null
-        constraint fk_episode_id_2_pk_episode__title
-            references bookstore.episode
-);
-alter table bookstore.customer_episode_link owner to hql_demo;
-create unique index if not exists customer_id__episode_id__uindex
-    on bookstore.customer_episode_link (customer_id, episode_id);
 
 
 --------------------------------------------------------
@@ -86,6 +61,7 @@ create table if not exists bookstore.book_order
     book_id bigint not null
         constraint fk_book_id_2_pk_book__id
             references bookstore.book
+    -- date date
 );
 alter table bookstore.book_order owner to hql_demo;
 create unique index if not exists customer_id__book_id__uindex

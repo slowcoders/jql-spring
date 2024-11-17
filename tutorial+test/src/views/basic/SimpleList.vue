@@ -37,12 +37,12 @@ import LessonView from "@/components/LessonView";
 
 const sample_code = `
 /* 아래의 주석을 한 줄씩 해제하면서 검색 결과의 차이를 비교해 보십시오. */
-const hql_select = "0"
-  //             + ", *"
-  //             + ", book_.0"
-  //             + ", episode_"
-  //             + ", friend_.name"
-  //             + ", friend_(name, friend_.name)"
+const hql_select = "*";
+// const hql_select = "0"
+// const hql_select = "name, book_"
+// const hql_select = "name, book_.title"
+// const hql_select = "name, book_(title, price)"
+// const hql_select = "0, name, friend_.name"
 
 const hql_filter = {}
 `

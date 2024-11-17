@@ -32,18 +32,9 @@ public class Customer implements java.io.Serializable {
     private Float mass;
 
     @Getter @Setter
-    @Column(name = "metadata", nullable = true, columnDefinition = "jsonb")
+    @Column(name = "memo", nullable = true, columnDefinition = "jsonb")
     @org.hibernate.annotations.Type(io.hypersistence.utils.hibernate.type.json.JsonType.class)
-    private com.fasterxml.jackson.databind.JsonNode metadata;
-
-    @Getter @Setter
-    @ManyToMany(fetch = FetchType.LAZY)
-    @JoinTable(name = "customer_episode_link", schema = "bookstore_jpa", catalog = "bookstore_jpa",
-            uniqueConstraints = {
-                    @UniqueConstraint(name ="customer_id__episode_id__uindex", columnNames = {"customer_id", "episode_id"})
-            },
-            joinColumns = @JoinColumn(name="customer_id"), inverseJoinColumns = @JoinColumn(name="episode_id"))
-    private Set<Episode> episode_;
+    private com.fasterxml.jackson.databind.JsonNode memo;
 
     @Getter @Setter
     @ManyToMany(fetch = FetchType.LAZY)

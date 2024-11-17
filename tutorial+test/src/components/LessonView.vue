@@ -112,8 +112,8 @@ const sampleStorages = [
 const sampleTables = [
   "customer",
   "book",
-  "episode",
-  "customer_episode_link",
+  "author",
+  "book_order",
   "customer_friend_link"
 ]
 
@@ -274,6 +274,8 @@ ${vm.schemaInfo}`
       vm.resetColumns();
     },
 
+
+    
     onTableChanged() {
       const vm = this;
       if (vm.showSchemaInfo) {

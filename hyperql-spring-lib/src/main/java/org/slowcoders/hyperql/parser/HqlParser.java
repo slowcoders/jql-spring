@@ -135,10 +135,10 @@ public class HqlParser {
 
             /** [has not 구현]
                 SELECT
-                    t_0.*, pt_1.episode_id --, t_1.published
+                    t_0.*, pt_1.book_id --, t_1.published
                 FROM bookstore.customer as t_0
-                    left join bookstore.customer_episode_link as pt_1 on
-                    t_0.id = pt_1.customer_id and pt_1.episode_id = 'JEDI'
+                    left join bookstore.book_order as pt_1 on
+                    t_0.id = pt_1.customer_id and pt_1.book_id = 3000
                 where pt_1.customer_id is null;
                 ---------------------------------
                 while (key.startsWith("../")) {

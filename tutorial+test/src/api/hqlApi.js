@@ -1,6 +1,6 @@
 import axios from "axios";
 
-function to_url_param(options) {
+export function to_url_param(options) {
     if (!options) return "";
 
     let params = ""
@@ -69,3 +69,50 @@ export class HqlApi {
     }
 }
 
+export class HqlForm {
+    static hidden(key) {
+        return {
+            type: 'textfield',
+            key: key,
+        }
+    }
+    static text(key, label) {
+        return {
+            type: 'textfield',
+            key: key,
+            label: label,
+            placeholder: label,
+            input: true,
+        }
+    }
+    static number(key, label) {
+        return {
+            type: 'number',
+            key: key,
+            label: label,
+            placeholder: label,
+            input: true,
+        }
+    }
+    static date(key, label) {
+        return {
+            type: 'datetime',
+            key: key,
+            label: label,
+            placeholder: label,
+            input: true,
+            enableTime: false,
+        }
+    }
+    static select(key, label, ref) {
+        return {
+            type: 'select',
+            key: key,
+            label: label,
+            placeholder: label,
+            input: true,
+            widget: "choicesjs",
+            dataRef: ref
+        }
+    }
+}

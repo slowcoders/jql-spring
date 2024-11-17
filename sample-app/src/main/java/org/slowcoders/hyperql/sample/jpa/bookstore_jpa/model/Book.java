@@ -42,4 +42,5 @@ public class Book implements java.io.Serializable {
             },
             joinColumns = @JoinColumn(name="book_id"), inverseJoinColumns = @JoinColumn(name="customer_id"))
     private Set<Customer> customer_;
+
 }
