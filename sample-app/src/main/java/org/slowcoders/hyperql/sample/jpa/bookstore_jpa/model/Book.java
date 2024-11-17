@@ -29,17 +29,18 @@ public class Book implements java.io.Serializable {
     private Float price;
 
     @Getter @Setter
-    @ManyToMany(fetch = FetchType.LAZY)
-    @JoinTable(name = "book_order", schema = "bookstore_jpa", catalog = "bookstore_jpa",
-            uniqueConstraints = {
-                    @UniqueConstraint(name ="student_id__book_id__uindex", columnNames = {"student_id", "book_id"})
-            },
-            joinColumns = @JoinColumn(name="book_id"), inverseJoinColumns = @JoinColumn(name="student_id"))
-    private Set<Student> student_;
-
-    @Getter @Setter
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "author_id", nullable = true, referencedColumnName = "id",
             foreignKey = @ForeignKey(name = "fk_author_id_2_pk_author__id"))
     private Author author;
+
+    @Getter @Setter
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(name = "book_order", schema = "bookstore_jpa", catalog = "bookstore_jpa",
+            uniqueConstraints = {
+                    @UniqueConstraint(name ="customer_id__book_id__uindex", columnNames = {"customer_id", "book_id"})
+            },
+            joinColumns = @JoinColumn(name="book_id"), inverseJoinColumns = @JoinColumn(name="customer_id"))
+    private Set<Customer> customer_;
+
 }

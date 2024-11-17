@@ -4,7 +4,7 @@ import fs from "fs"
 
 describe('JPA Source Generation Test', () => {
   test.each([
-    { table: "Student" },
+    { table: "Customer" },
     { table: "Episode" },
     { table: "Book" },
   ]) ('소스 비교 테스트', async ({table}) => {

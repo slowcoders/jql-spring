@@ -25,10 +25,10 @@
       <li>JDBC -> JPA migration utility 제공</li>
     </ul>
     <br>
-    예제) bookstore.student Table 에서 "Luke" 로 시작하는 Entity 검색하기.
+    예제) bookstore.customer Table 에서 "Luke" 로 시작하는 Entity 검색하기.
     <div class="code">
       <code>
-        curl -X 'POST' 'http://localhost:7007/api/hql/bookstore/student/find' \<br>
+        curl -X 'POST' 'http://localhost:7007/api/hql/bookstore/customer/find' \<br>
         -H 'Content-Type: application/json' \<br>
         -d '{ "name@like": "Luke%" }'
       </code>

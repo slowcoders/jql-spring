@@ -220,7 +220,7 @@ let autor_columns = [
     HqlForm.text('profile', "소개"),
 ]
 
-let student_columns = [
+let customer_columns = [
     HqlForm.number('id', "아이디"),
     HqlForm.text('name', "이름"),
     HqlForm.text('metadata', "소개"),
@@ -228,8 +228,8 @@ let student_columns = [
 
 
 let order_columns = [
-  HqlForm.select('student.id', "고객", {
-      table: 'student',
+  HqlForm.select('customer.id', "고객", {
+      table: 'customer',
       value: 'id',
       label: 'name'
   }),
@@ -244,7 +244,7 @@ const formSchema = {
   book: book_columns,
   author: autor_columns,
   book_order: order_columns,
-  student: student_columns
+  customer: customer_columns
 };
 
 

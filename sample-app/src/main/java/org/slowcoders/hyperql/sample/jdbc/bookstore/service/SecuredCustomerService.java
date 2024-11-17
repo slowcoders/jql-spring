@@ -20,12 +20,12 @@ import java.util.List;
 import java.util.Map;
 
 @Service
-public class SecuredStudentService {
+public class SecuredCustomerService {
 
-    private final HyperRepository<Long> studentEntitySet;
+    private final HyperRepository<Long> customerEntitySet;
 
-    SecuredStudentService(HyperStorage storage) {
-        studentEntitySet = storage.loadRepository("bookstore.student");
+    SecuredCustomerService(HyperStorage storage) {
+        customerEntitySet = storage.loadRepository("bookstore.customer");
         // testQueryBuilder(storage);
     }
 
@@ -40,30 +40,30 @@ public class SecuredStudentService {
                 )
         );
         HqlParser parser = new HqlParser(storage.getObjectMapper());
-        HyperFilter where = parser.parse(studentEntitySet.getSchema(), filter);
-        JdbcQuery<Object> query = new JdbcQuery<>((JdbcRepositoryBase<?>) studentEntitySet, HyperSelect.Auto, where);
+        HyperFilter where = parser.parse(customerEntitySet.getSchema(), filter);
+        JdbcQuery<Object> query = new JdbcQuery<>((JdbcRepositoryBase<?>) customerEntitySet, HyperSelect.Auto, where);
         List<Object> res = query.getResultList(OutputFormat.Object);
         System.out.println(res);
     }
 
-    public HyperRepository<Long> getStudentEntitySet() {
-        return studentEntitySet;
+    public HyperRepository<Long> getCustomerEntitySet() {
+        return customerEntitySet;
     }
 
-    public void deleteStudent(Collection<Long> idList, String accessToken) {
+    public void deleteCustomer(Collection<Long> idList, String accessToken) {
         if ("1234".equals(accessToken)) {
-            studentEntitySet.delete(idList);
+            customerEntitySet.delete(idList);
         } else {
-            throw new RuntimeException("Not studentized");
+            throw new RuntimeException("Not customerized");
         }
     }
 
-    public Long addNewStudent(Map<String, Object> properties) {
+    public Long addNewCustomer(Map<String, Object> properties) {
         if (properties.get("metadata") == null) {
             properties.put("metadata", createNote());
         }
 
-        return studentEntitySet.insert(properties);
+        return customerEntitySet.insert(properties);
     }
 
     private KVEntity createNote() {

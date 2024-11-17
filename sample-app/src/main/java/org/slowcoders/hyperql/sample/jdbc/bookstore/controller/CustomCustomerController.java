@@ -5,7 +5,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import org.slowcoders.hyperql.EntitySetController;
 import org.slowcoders.hyperql.HyperSelect;
 import org.slowcoders.hyperql.OutputOptions;
-import org.slowcoders.hyperql.sample.jdbc.bookstore.service.SecuredStudentService;
+import org.slowcoders.hyperql.sample.jdbc.bookstore.service.SecuredCustomerService;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.transaction.Transactional;
@@ -13,13 +13,13 @@ import java.util.Collection;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/hql/bookstore/student")
-public class CustomStudentController extends EntitySetController.CRUD<Long> implements EntitySetController.ListAll<Long> {
+@RequestMapping("/api/hql/bookstore/customer")
+public class CustomCustomerController extends EntitySetController.CRUD<Long> implements EntitySetController.ListAll<Long> {
 
-    private final SecuredStudentService service;
+    private final SecuredCustomerService service;
 
-    public CustomStudentController(SecuredStudentService service) {
-        super(service.getStudentEntitySet());
+    public CustomCustomerController(SecuredCustomerService service) {
+        super(service.getCustomerEntitySet());
         this.service = service;
     }
 
@@ -52,7 +52,7 @@ public class CustomStudentController extends EntitySetController.CRUD<Long> impl
     @Transactional
     public Collection<Long> delete(@PathVariable("idList") Collection<Long> idList,
                                      @RequestParam String accessToken) {
-        service.deleteStudent(idList, accessToken);
+        service.deleteCustomer(idList, accessToken);
         return idList;
     }
 
@@ -63,7 +63,7 @@ public class CustomStudentController extends EntitySetController.CRUD<Long> impl
             @RequestParam(value = "select", required = false) String select$,
             @Schema(implementation = Object.class)
             @RequestBody Map<String, Object> properties) throws Exception {
-        Long id = service.addNewStudent(properties);
+        Long id = service.addNewCustomer(properties);
         if (select$ != null) {
             HyperSelect select = HyperSelect.of(select$);
             Object createdEntity = getEntitySet().find(id, select);

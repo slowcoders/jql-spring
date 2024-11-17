@@ -2,29 +2,29 @@ import { HqlApi } from "./api/hqlApi";
 
 const bookstore_url = "http://localhost:7007/api/hql/bookstore"
 export const authorRepo = new HqlApi(`${bookstore_url}/author`);
-export const studentRepo = new HqlApi(`${bookstore_url}/student`);
+export const customerRepo = new HqlApi(`${bookstore_url}/customer`);
 export const episodeRepo = new HqlApi(`${bookstore_url}/episode`);
 export const bookRepo = new HqlApi(`${bookstore_url}/book`);
 export const bookOrderRepo = new HqlApi(`${bookstore_url}/book_order`);
-export const student_episode_repo = new HqlApi(`${bookstore_url}/student_episode_link`);
-export const student_friend_repo = new HqlApi(`${bookstore_url}/student_friend_link`);
+export const customer_episode_repo = new HqlApi(`${bookstore_url}/customer_episode_link`);
+export const customer_friend_repo = new HqlApi(`${bookstore_url}/customer_friend_link`);
 
 export async function initSampleDB() {
-    // if (await studentRepo.count() > 0) return;
+    // if (await customerRepo.count() > 0) return;
     const authors = await authorRepo.insertAll(default_authors, 'ignore');
     console.log(authors);
-    const students = await studentRepo.insertAll(default_students, 'ignore');
-    console.log(students);
+    const customers = await customerRepo.insertAll(default_customers, 'ignore');
+    console.log(customers);
     const episodes   = await episodeRepo.insertAll(default_episodes, 'ignore');
     console.log(episodes);
     const books  = await bookRepo.insertAll(default_books, 'ignore');
     console.log(books);
     const bookOrders  = await bookOrderRepo.insertAll(default_book_orders, 'ignore');
     console.log(bookOrders);
-    const student_episode_links = await student_episode_repo.insertAll(default_student_episode_links, 'ignore');
-    console.log(student_episode_links);
-    const student_friend_links = await student_friend_repo.insertAll(default_friend_map, 'ignore');
-    console.log(student_friend_links);
+    const customer_episode_links = await customer_episode_repo.insertAll(default_customer_episode_links, 'ignore');
+    console.log(customer_episode_links);
+    const customer_friend_links = await customer_friend_repo.insertAll(default_friend_map, 'ignore');
+    console.log(customer_friend_links);
 }
 
 const default_authors = [
@@ -40,7 +40,7 @@ const default_authors = [
     }
 ];
 
-const default_students = [
+const default_customers = [
     {
         "id": 1000,
         "name": "Luke Skywalker",
@@ -201,78 +201,78 @@ const default_episodes = [
     }
 ]
 
-const default_student_episode_links = [
-    {  student_id: 1000, episode_id: 'NEWHOPE' },
-    {  student_id: 1000, episode_id: 'EMPIRE' },
-    {  student_id: 1000, episode_id: 'JEDI' },
-    {  student_id: 1001, episode_id: 'NEWHOPE' },
-    {  student_id: 1001, episode_id: 'EMPIRE' },
-    {  student_id: 1001, episode_id: 'JEDI' },
-    {  student_id: 1002, episode_id: 'NEWHOPE' },
-    {  student_id: 1002, episode_id: 'EMPIRE' },
-    {  student_id: 1002, episode_id: 'JEDI' },
-    {  student_id: 1003, episode_id: 'NEWHOPE' },
-    {  student_id: 1003, episode_id: 'EMPIRE' },
-    {  student_id: 1003, episode_id: 'JEDI' },
-    {  student_id: 1004, episode_id: 'NEWHOPE' },
-    {  student_id: 2000, episode_id: 'NEWHOPE' },
-    {  student_id: 2000, episode_id: 'EMPIRE' },
-    {  student_id: 2000, episode_id: 'JEDI' },
-    {  student_id: 2001, episode_id: 'NEWHOPE' },
-    {  student_id: 2001, episode_id: 'EMPIRE' },
-    {  student_id: 2001, episode_id: 'JEDI'}
+const default_customer_episode_links = [
+    {  customer_id: 1000, episode_id: 'NEWHOPE' },
+    {  customer_id: 1000, episode_id: 'EMPIRE' },
+    {  customer_id: 1000, episode_id: 'JEDI' },
+    {  customer_id: 1001, episode_id: 'NEWHOPE' },
+    {  customer_id: 1001, episode_id: 'EMPIRE' },
+    {  customer_id: 1001, episode_id: 'JEDI' },
+    {  customer_id: 1002, episode_id: 'NEWHOPE' },
+    {  customer_id: 1002, episode_id: 'EMPIRE' },
+    {  customer_id: 1002, episode_id: 'JEDI' },
+    {  customer_id: 1003, episode_id: 'NEWHOPE' },
+    {  customer_id: 1003, episode_id: 'EMPIRE' },
+    {  customer_id: 1003, episode_id: 'JEDI' },
+    {  customer_id: 1004, episode_id: 'NEWHOPE' },
+    {  customer_id: 2000, episode_id: 'NEWHOPE' },
+    {  customer_id: 2000, episode_id: 'EMPIRE' },
+    {  customer_id: 2000, episode_id: 'JEDI' },
+    {  customer_id: 2001, episode_id: 'NEWHOPE' },
+    {  customer_id: 2001, episode_id: 'EMPIRE' },
+    {  customer_id: 2001, episode_id: 'JEDI'}
 ];
 
 const default_book_orders = [
-    {  student_id: 1000, book_id: 3000 },
-    {  student_id: 1000, book_id: 3001 },
-    {  student_id: 1000, book_id: 3002 },
-    {  student_id: 1001, book_id: 3003 },
-    {  student_id: 1001, book_id: 3004 },
-    {  student_id: 1001, book_id: 3007 },
-    {  student_id: 1002, book_id: 3000 },
-    {  student_id: 1002, book_id: 3001 },
-    {  student_id: 1002, book_id: 3006 },
-    {  student_id: 1003, book_id: 3000 },
-    {  student_id: 1003, book_id: 3001 },
-    {  student_id: 1003, book_id: 3004 },
-    {  student_id: 1004, book_id: 3006 },
-    {  student_id: 1004, book_id: 3007 },
-    {  student_id: 2000, book_id: 3005 },
-    {  student_id: 2000, book_id: 3004 },
-    {  student_id: 2000, book_id: 3007 },
-    {  student_id: 2001, book_id: 3005 },
-    {  student_id: 2001, book_id: 3004 },
-    {  student_id: 2001, book_id: 3007 }
+    {  customer_id: 1000, book_id: 3000 },
+    {  customer_id: 1000, book_id: 3001 },
+    {  customer_id: 1000, book_id: 3002 },
+    {  customer_id: 1001, book_id: 3003 },
+    {  customer_id: 1001, book_id: 3004 },
+    {  customer_id: 1001, book_id: 3007 },
+    {  customer_id: 1002, book_id: 3000 },
+    {  customer_id: 1002, book_id: 3001 },
+    {  customer_id: 1002, book_id: 3006 },
+    {  customer_id: 1003, book_id: 3000 },
+    {  customer_id: 1003, book_id: 3001 },
+    {  customer_id: 1003, book_id: 3004 },
+    {  customer_id: 1004, book_id: 3006 },
+    {  customer_id: 1004, book_id: 3007 },
+    {  customer_id: 2000, book_id: 3005 },
+    {  customer_id: 2000, book_id: 3004 },
+    {  customer_id: 2000, book_id: 3007 },
+    {  customer_id: 2001, book_id: 3005 },
+    {  customer_id: 2001, book_id: 3004 },
+    {  customer_id: 2001, book_id: 3007 }
 ];
 
 const default_friend_map = [
-    {  student_id: 1000, friend_id: 1002 },
-    {  student_id: 1000, friend_id: 1003 },
-    {  student_id: 1000, friend_id: 2000 },
-    {  student_id: 1000, friend_id: 2001 },
+    {  customer_id: 1000, friend_id: 1002 },
+    {  customer_id: 1000, friend_id: 1003 },
+    {  customer_id: 1000, friend_id: 2000 },
+    {  customer_id: 1000, friend_id: 2001 },
 
-    {  student_id: 1001, friend_id: 1004 },
+    {  customer_id: 1001, friend_id: 1004 },
 
-    {  student_id: 1002, friend_id: 1000 },
-    {  student_id: 1002, friend_id: 1003 },
-    {  student_id: 1002, friend_id: 2001 },
+    {  customer_id: 1002, friend_id: 1000 },
+    {  customer_id: 1002, friend_id: 1003 },
+    {  customer_id: 1002, friend_id: 2001 },
 
-    {  student_id: 1003, friend_id: 1000 },
-    {  student_id: 1003, friend_id: 1002 },
-    {  student_id: 1003, friend_id: 2000 },
-    {  student_id: 1003, friend_id: 2001 },
+    {  customer_id: 1003, friend_id: 1000 },
+    {  customer_id: 1003, friend_id: 1002 },
+    {  customer_id: 1003, friend_id: 2000 },
+    {  customer_id: 1003, friend_id: 2001 },
 
-    {  student_id: 1004, friend_id: 1001 },
+    {  customer_id: 1004, friend_id: 1001 },
 
-    {  student_id: 2000, friend_id: 1000 },
-    {  student_id: 2000, friend_id: 1002 },
-    {  student_id: 2000, friend_id: 1003 },
-    {  student_id: 2000, friend_id: 2001 },
+    {  customer_id: 2000, friend_id: 1000 },
+    {  customer_id: 2000, friend_id: 1002 },
+    {  customer_id: 2000, friend_id: 1003 },
+    {  customer_id: 2000, friend_id: 2001 },
 
-    {  student_id: 2001, friend_id: 1000 },
-    {  student_id: 2001, friend_id: 1002 },
-    {  student_id: 2001, friend_id: 1003 }
+    {  customer_id: 2001, friend_id: 1000 },
+    {  customer_id: 2001, friend_id: 1002 },
+    {  customer_id: 2001, friend_id: 1003 }
 ]
 
 
