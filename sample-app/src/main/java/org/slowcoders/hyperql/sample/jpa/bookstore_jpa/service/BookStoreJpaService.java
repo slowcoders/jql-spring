@@ -2,7 +2,7 @@ package org.slowcoders.hyperql.sample.jpa.bookstore_jpa.service;
 
 import org.slowcoders.hyperql.HyperStorage;
 import org.slowcoders.hyperql.jdbc.JdbcStorage;
-import org.slowcoders.hyperql.sample.jpa.bookstore_jpa.model.Customer;
+import org.slowcoders.hyperql.sample.jpa.bookstore_jpa.model.Student;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
 
@@ -26,8 +26,8 @@ public class BookStoreJpaService  {
 
 //    @PostConstruct
 //    void initData() throws IOException {
-//        long cntCustomer = storage.loadJpaTable(Customer.class).count(null);
-//        if (cntCustomer == 0) {
+//        long cntStudent = storage.loadJpaTable(Student.class).count(null);
+//        if (cntStudent == 0) {
 //            loadData();
 //        }
 //    }

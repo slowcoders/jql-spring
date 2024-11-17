@@ -1,5 +1,5 @@
 import {beforeAll, describe, expect, test} from '@jest/globals';
-import { customerRepo } from '@/sample_db'
+import { studentRepo } from '@/sample_db'
 
 const normal_height = [ 1.2, 2.0 ]
 
@@ -18,10 +18,10 @@ describe('Or operation', () => {
   }
 
   test('too_small_or_too_tall', async () => {
-    const res = await customerRepo.find(too_small_or_too_tall);
-    const customers = res.content;
-    for (const customer of customers) {
-      expect(customer.height < normal_height[MIN] || customer.height > normal_height[MAX]).toBeTruthy();
+    const res = await studentRepo.find(too_small_or_too_tall);
+    const students = res.content;
+    for (const student of students) {
+      expect(student.height < normal_height[MIN] || student.height > normal_height[MAX]).toBeTruthy();
     }
   });
 
@@ -33,10 +33,10 @@ describe('Or operation', () => {
   }
 
   test('too_light_or_too_heavy', async () => {
-    const res = await customerRepo.find(too_light_or_too_heavy);
-    const customers = res.content;
-    for (const customer of customers) {
-      expect(customer.mass < normal_mass[MIN] || customer.mass > normal_mass[MAX]).toBeTruthy();
+    const res = await studentRepo.find(too_light_or_too_heavy);
+    const students = res.content;
+    for (const student of students) {
+      expect(student.mass < normal_mass[MIN] || student.mass > normal_mass[MAX]).toBeTruthy();
     }
   });
 
@@ -49,10 +49,10 @@ describe('Or operation', () => {
   }
 
   test('too_small_or_too_heavy', async () => {
-    const res = await customerRepo.find(too_small_or_too_heavy);
-    const customers = res.content;
-    for (const customer of customers) {
-      expect(customer.height < normal_height[MIN] || customer.mass > normal_mass[MAX]).toBeTruthy();
+    const res = await studentRepo.find(too_small_or_too_heavy);
+    const students = res.content;
+    for (const student of students) {
+      expect(student.height < normal_height[MIN] || student.mass > normal_mass[MAX]).toBeTruthy();
     }
   });
 
@@ -63,11 +63,11 @@ describe('Or operation', () => {
     ]
   }
   test('too_small_or_too_tall__AND__too_light_or_too_heavy', async () => {
-    const res = await customerRepo.find(too_small_or_too_tall__AND__too_light_or_too_heavy);
-    const customers = res.content;
-    for (const customer of customers) {
-      expect((customer.height < normal_height[MIN] || customer.height > normal_height[MAX])
-          &&        (customer.mass < normal_mass[MIN] || customer.mass > normal_mass[MAX]) ).toBeTruthy();
+    const res = await studentRepo.find(too_small_or_too_tall__AND__too_light_or_too_heavy);
+    const students = res.content;
+    for (const student of students) {
+      expect((student.height < normal_height[MIN] || student.height > normal_height[MAX])
+          &&        (student.mass < normal_mass[MIN] || student.mass > normal_mass[MAX]) ).toBeTruthy();
     }
   });
 });

@@ -10,30 +10,30 @@ create table if not exists bookstore.author
 );
 alter table bookstore.author owner to hql_demo;
 
-create table if not exists bookstore.customer
+create table if not exists bookstore.student
 (
     id  bigint not null
-        constraint customer_pkey primary key,
+        constraint student_pkey primary key,
     name varchar(255) not null,
     height real,
     mass real,
     metadata jsonb
 );
-alter table bookstore.customer owner to hql_demo;
+alter table bookstore.student owner to hql_demo;
 
 --------------------------------------------------------
-create table if not exists bookstore.customer_friend_link
+create table if not exists bookstore.student_friend_link
 (
-    customer_id bigint not null
-        constraint fk_customer_id_2_pk_customer__id
-            references bookstore.customer,
+    student_id bigint not null
+        constraint fk_student_id_2_pk_student__id
+            references bookstore.student,
     friend_id bigint not null
-        constraint fk_friend_id_2_pk_customer__id
-            references bookstore.customer
+        constraint fk_friend_id_2_pk_student__id
+            references bookstore.student
 );
-alter table bookstore.customer_friend_link owner to hql_demo;
-create unique index if not exists customer_id__friend_id__uindex
-    on bookstore.customer_friend_link (customer_id, friend_id);
+alter table bookstore.student_friend_link owner to hql_demo;
+create unique index if not exists student_id__friend_id__uindex
+    on bookstore.student_friend_link (student_id, friend_id);
 
 
 --------------------------------------------------------
@@ -47,18 +47,18 @@ create table if not exists bookstore.episode
 alter table bookstore.episode owner to hql_demo;
 
 --------------------------------------------------------
-create table if not exists bookstore.customer_episode_link
+create table if not exists bookstore.student_episode_link
 (
-    customer_id bigint not null
-        constraint fk_customer_id_2_pk_customer__id
-            references bookstore.customer,
+    student_id bigint not null
+        constraint fk_student_id_2_pk_student__id
+            references bookstore.student,
     episode_id varchar(255) not null
         constraint fk_episode_id_2_pk_episode__title
             references bookstore.episode
 );
-alter table bookstore.customer_episode_link owner to hql_demo;
-create unique index if not exists customer_id__episode_id__uindex
-    on bookstore.customer_episode_link (customer_id, episode_id);
+alter table bookstore.student_episode_link owner to hql_demo;
+create unique index if not exists student_id__episode_id__uindex
+    on bookstore.student_episode_link (student_id, episode_id);
 
 
 --------------------------------------------------------
@@ -80,13 +80,13 @@ alter table bookstore.book owner to hql_demo;
 --------------------------------------------------------
 create table if not exists bookstore.book_order
 (
-    customer_id bigint not null
-        constraint fk_customer_id_2_pk_customer__id
-            references bookstore.customer,
+    student_id bigint not null
+        constraint fk_student_id_2_pk_student__id
+            references bookstore.student,
     book_id bigint not null
         constraint fk_book_id_2_pk_book__id
             references bookstore.book
 );
 alter table bookstore.book_order owner to hql_demo;
-create unique index if not exists customer_id__book_id__uindex
-    on bookstore.book_order (customer_id, book_id);
+create unique index if not exists student_id__book_id__uindex
+    on bookstore.book_order (student_id, book_id);

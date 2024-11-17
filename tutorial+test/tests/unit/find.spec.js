@@ -1,5 +1,5 @@
 import {describe, expect, test} from '@jest/globals';
-import { customerRepo } from '@/sample_db'
+import { studentRepo } from '@/sample_db'
 
 describe('Join Test', () => {
   describe('Advanced Join', () => {
@@ -8,10 +8,10 @@ describe('Join Test', () => {
         "name" : "Han Solo",
         "friend_": {} 
       }      
-      const res = await customerRepo.find(filter);
-      const customers = res.content;
-      expect(customers.length).toBe(1);
-      expect(customers[0].friend_.length).toBeGreaterThanOrEqual(3);
+      const res = await studentRepo.find(filter);
+      const students = res.content;
+      expect(students.length).toBe(1);
+      expect(students[0].friend_.length).toBeGreaterThanOrEqual(3);
     });
 
     const PRICE = 15000;
@@ -20,10 +20,10 @@ describe('Join Test', () => {
         "name" : "Han Solo",
         "friend_": { "book_": { "price@gt": PRICE } }
       }
-      const res = await customerRepo.find(filter);
-      const customers = res.content;
-      expect(customers.length).toBe(1);
-      expect(customers[0].friend_.length).toBe(3);
+      const res = await studentRepo.find(filter);
+      const students = res.content;
+      expect(students.length).toBe(1);
+      expect(students[0].friend_.length).toBe(1);
     });
   });
 });

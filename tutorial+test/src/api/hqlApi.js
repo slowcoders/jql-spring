@@ -69,3 +69,40 @@ export class HqlApi {
     }
 }
 
+export class HqlForm {
+    static hidden(key) {
+        return {
+            type: 'textfield',
+            key: key,
+        }
+    }
+    static text(key, label) {
+        return {
+            type: 'textfield',
+            key: key,
+            label: label,
+            placeholder: label,
+            input: true,
+        }
+    }
+    static number(key, label) {
+        return {
+            type: 'number',
+            key: key,
+            label: label,
+            placeholder: label,
+            input: true,
+        }
+    }
+    static select(key, label, ref) {
+        return {
+            type: 'select',
+            key: key,
+            label: label,
+            placeholder: label,
+            input: true,
+            widget: "choicesjs",
+            dataRef: ref
+        }
+    }
+}

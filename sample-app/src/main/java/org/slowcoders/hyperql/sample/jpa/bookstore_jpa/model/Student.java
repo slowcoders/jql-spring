@@ -7,12 +7,12 @@ import jakarta.persistence.*;
 
 
 @Entity
-@Table(name = "customer", schema = "bookstore_jpa", catalog = "bookstore_jpa",
+@Table(name = "student", schema = "bookstore_jpa", catalog = "bookstore_jpa",
         uniqueConstraints = {
-                @UniqueConstraint(name ="customer_pkey", columnNames = {"id"})
+                @UniqueConstraint(name ="student_pkey", columnNames = {"id"})
         }
 )
-public class Customer implements java.io.Serializable {
+public class Student implements java.io.Serializable {
     @Getter
     @Setter
     @Id
@@ -38,28 +38,28 @@ public class Customer implements java.io.Serializable {
 
     @Getter @Setter
     @ManyToMany(fetch = FetchType.LAZY)
-    @JoinTable(name = "customer_episode_link", schema = "bookstore_jpa", catalog = "bookstore_jpa",
+    @JoinTable(name = "student_episode_link", schema = "bookstore_jpa", catalog = "bookstore_jpa",
             uniqueConstraints = {
-                    @UniqueConstraint(name ="customer_id__episode_id__uindex", columnNames = {"customer_id", "episode_id"})
+                    @UniqueConstraint(name ="student_id__episode_id__uindex", columnNames = {"student_id", "episode_id"})
             },
-            joinColumns = @JoinColumn(name="customer_id"), inverseJoinColumns = @JoinColumn(name="episode_id"))
+            joinColumns = @JoinColumn(name="student_id"), inverseJoinColumns = @JoinColumn(name="episode_id"))
     private Set<Episode> episode_;
 
     @Getter @Setter
     @ManyToMany(fetch = FetchType.LAZY)
-    @JoinTable(name = "customer_friend_link", schema = "bookstore_jpa", catalog = "bookstore_jpa",
+    @JoinTable(name = "student_friend_link", schema = "bookstore_jpa", catalog = "bookstore_jpa",
             uniqueConstraints = {
-                    @UniqueConstraint(name ="customer_id__friend_id__uindex", columnNames = {"customer_id", "friend_id"})
+                    @UniqueConstraint(name ="student_id__friend_id__uindex", columnNames = {"student_id", "friend_id"})
             },
-            joinColumns = @JoinColumn(name="customer_id"), inverseJoinColumns = @JoinColumn(name="friend_id"))
-    private Set<Customer> friend_;
+            joinColumns = @JoinColumn(name="student_id"), inverseJoinColumns = @JoinColumn(name="friend_id"))
+    private Set<Student> friend_;
 
     @Getter @Setter
     @ManyToMany(fetch=FetchType.LAZY)
     @JoinTable(name = "book_order", schema = "bookstore_jpa", catalog = "bookstore_jpa", 
         uniqueConstraints = {
-                @UniqueConstraint(name = "customer_id__book_id__uindex", columnNames ={"customer_id", "book_id"})
+                @UniqueConstraint(name = "student_id__book_id__uindex", columnNames ={"student_id", "book_id"})
         },
-        joinColumns = @JoinColumn(name = "customer_id"), inverseJoinColumns = @JoinColumn(name = "book_id"))
+        joinColumns = @JoinColumn(name = "student_id"), inverseJoinColumns = @JoinColumn(name = "book_id"))
     private Set<Book>book_;
 }

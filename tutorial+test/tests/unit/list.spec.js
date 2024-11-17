@@ -1,5 +1,5 @@
 import {describe, expect, test} from '@jest/globals';
-import { customerRepo } from '@/sample_db'
+import { studentRepo } from '@/sample_db'
 
 function checkSorted(items, key, ascending) {
   let prev = items[0];
@@ -16,42 +16,42 @@ function checkSorted(items, key, ascending) {
 
 describe('Listing', () => {
   test('Find All', async () => {
-    const count = await customerRepo.count();
-    const res = await customerRepo.find();
-    const customers = res.content;
-    expect(customers.length).toBe(count);
+    const count = await studentRepo.count();
+    const res = await studentRepo.find();
+    const students = res.content;
+    expect(students.length).toBe(count);
   });
 
   test('Sort by name ascending order', async () => {
-    const res = await customerRepo.find(null, { sort: "name" });
-    const customers = res.content;
-    expect(customers.length).toBeGreaterThan(0);
-    checkSorted(customers, "name", true);
+    const res = await studentRepo.find(null, { sort: "name" });
+    const students = res.content;
+    expect(students.length).toBeGreaterThan(0);
+    checkSorted(students, "name", true);
   });
 
   test('Sort by name descending order', async () => {
-    const res = await customerRepo.find(null, { sort: "-name" });
-    const customers = res.content;
-    expect(customers.length).toBeGreaterThan(0);
-    checkSorted(customers, "name", false);
+    const res = await studentRepo.find(null, { sort: "-name" });
+    const students = res.content;
+    expect(students.length).toBeGreaterThan(0);
+    checkSorted(students, "name", false);
   });
 
   test('Limit & Sort', async () => {
     const limit = 5
-    const res = await customerRepo.find(null, { sort: "-name", limit });
-    const customers = res.content;
-    expect(customers.length).toBe(limit);
-    checkSorted(customers, "name", false);
+    const res = await studentRepo.find(null, { sort: "-name", limit });
+    const students = res.content;
+    expect(students.length).toBe(limit);
+    checkSorted(students, "name", false);
   });
 
   test('Pagination & Sort', async () => {
     const limit = 3;
     const page = 1;
-    const res = await customerRepo.find(null, { sort: "-name", limit, page });
-    const customers = res.content;
-    expect(customers.length).toBeLessThanOrEqual(limit);
+    const res = await studentRepo.find(null, { sort: "-name", limit, page });
+    const students = res.content;
+    expect(students.length).toBeLessThanOrEqual(limit);
     expect(res.metadata.totalElements).toBeGreaterThanOrEqual(limit);
-    checkSorted(customers, "name", false);
+    checkSorted(students, "name", false);
   });
 
 });
