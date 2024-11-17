@@ -238,7 +238,7 @@ let order_columns = [
       value: 'id',
       label: 'title'
   }),
-  HqlForm.date('date', '주문일')
+  // HqlForm.date('date', '주문일')
 ]
 
 const formSchema = {

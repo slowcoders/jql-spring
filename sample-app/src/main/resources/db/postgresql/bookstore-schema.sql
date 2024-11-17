@@ -60,8 +60,8 @@ create table if not exists bookstore.book_order
             references bookstore.customer,
     book_id bigint not null
         constraint fk_book_id_2_pk_book__id
-            references bookstore.book,
-    date date
+            references bookstore.book
+    -- date date
 );
 alter table bookstore.book_order owner to hql_demo;
 create unique index if not exists customer_id__book_id__uindex

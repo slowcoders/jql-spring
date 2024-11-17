@@ -15,7 +15,7 @@ describe('Join Test', () => {
     });
 
     const PRICE = 15000;
-    test('Find friends of Han Solo who ordered book price > ' + PRICE, async () => {
+    test('Find friends of Han Solo who ordered book price > 15000', async () => {
       const filter = {
         "name" : "Han Solo",
         "friend_": { "book_": { "price@gt": PRICE } }
