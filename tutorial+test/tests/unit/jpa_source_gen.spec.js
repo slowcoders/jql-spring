@@ -5,7 +5,7 @@ import fs from "fs"
 describe('JPA Source Generation Test', () => {
   test.each([
     { table: "Customer" },
-    { table: "Episode" },
+    { table: "Author" },
     { table: "Book" },
   ]) ('소스 비교 테스트', async ({table}) => {
     const ref_file = `../sample-app/src/main/java/org/slowcoders/hyperql/sample/jpa/bookstore_jpa/model/${table}.java`;

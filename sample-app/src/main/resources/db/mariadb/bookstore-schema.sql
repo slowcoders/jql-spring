@@ -23,24 +23,6 @@ create table if not exists bookstore.customer_friend_link
         foreign key (friend_id) references bookstore.`customer` (id)
 );
 
-create table if not exists bookstore.episode
-(
-    title     varchar(255) not null
-        primary key,
-    published datetime(6)  null
-);
-
-create table if not exists bookstore.customer_episode_link
-(
-    episode_id   varchar(255) not null,
-    customer_id int          not null,
-    constraint customer_id__episode_id__uindex
-        unique (customer_id, episode_id),
-    constraint fk_episode_id_2_pk_episode__title
-        foreign key (episode_id) references bookstore.episode (title),
-    constraint fk_customer_id_2_pk_customer__id2
-        foreign key (customer_id) references bookstore.`customer` (id)
-);
 
 create table if not exists bookstore.book
 (

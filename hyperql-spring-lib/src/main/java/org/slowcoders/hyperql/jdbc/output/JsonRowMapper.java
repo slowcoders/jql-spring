@@ -55,10 +55,10 @@ public class JsonRowMapper implements JdbcResultMapper<KVEntity> {
 
                 boolean isArray = mapping.isArrayNode();// && mapping.hasArrayDescendantNode();
                 if (!isArray || !mapping.hasJoinedChildMapping()) {
-                    // TODO check Error!!
-                    // Tutorial, 비교 연산자, book_ 과 episode_ 를 모두 선택하면 오류 발생.
-                    // 2 개 이상의 subArray Table 을 Join 검색하면서 발생하는 문제.. (resultSet 길이가 각 Join 결과 갯수를 모두 곱한 값을 가지게 된다.)
                     if (idxColumn + cntColumn < this.mappedColumns.length) {
+                        // TODO check Error!!
+                        // SimpleForm:book_order, author.id 와 book.id 를 모두 select하면 오류 발생.
+                        // 2 개 이상의 subArray Table 을 Join 검색하면서 발생하는 문제.. (resultSet 길이가 각 Join 결과 갯수를 모두 곱한 값을 가지게 된다.)
                         // throw new RuntimeException("multi sub array join is not allowed!");
                     }
                     readColumns(rs, idxColumn, cntColumn);

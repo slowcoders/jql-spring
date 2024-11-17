@@ -94,6 +94,16 @@ export class HqlForm {
             input: true,
         }
     }
+    static date(key, label) {
+        return {
+            type: 'datetime',
+            key: key,
+            label: label,
+            placeholder: label,
+            input: true,
+            enableTime: false,
+        }
+    }
     static select(key, label, ref) {
         return {
             type: 'select',

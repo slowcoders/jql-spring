@@ -38,15 +38,6 @@ public class Customer implements java.io.Serializable {
 
     @Getter @Setter
     @ManyToMany(fetch = FetchType.LAZY)
-    @JoinTable(name = "customer_episode_link", schema = "bookstore_jpa", catalog = "bookstore_jpa",
-            uniqueConstraints = {
-                    @UniqueConstraint(name ="customer_id__episode_id__uindex", columnNames = {"customer_id", "episode_id"})
-            },
-            joinColumns = @JoinColumn(name="customer_id"), inverseJoinColumns = @JoinColumn(name="episode_id"))
-    private Set<Episode> episode_;
-
-    @Getter @Setter
-    @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(name = "customer_friend_link", schema = "bookstore_jpa", catalog = "bookstore_jpa",
             uniqueConstraints = {
                     @UniqueConstraint(name ="customer_id__friend_id__uindex", columnNames = {"customer_id", "friend_id"})

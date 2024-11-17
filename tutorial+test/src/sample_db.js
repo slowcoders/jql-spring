@@ -3,10 +3,8 @@ import { HqlApi } from "./api/hqlApi";
 const bookstore_url = "http://localhost:7007/api/hql/bookstore"
 export const authorRepo = new HqlApi(`${bookstore_url}/author`);
 export const customerRepo = new HqlApi(`${bookstore_url}/customer`);
-export const episodeRepo = new HqlApi(`${bookstore_url}/episode`);
 export const bookRepo = new HqlApi(`${bookstore_url}/book`);
 export const bookOrderRepo = new HqlApi(`${bookstore_url}/book_order`);
-export const customer_episode_repo = new HqlApi(`${bookstore_url}/customer_episode_link`);
 export const customer_friend_repo = new HqlApi(`${bookstore_url}/customer_friend_link`);
 
 export async function initSampleDB() {
@@ -15,14 +13,10 @@ export async function initSampleDB() {
     console.log(authors);
     const customers = await customerRepo.insertAll(default_customers, 'ignore');
     console.log(customers);
-    const episodes   = await episodeRepo.insertAll(default_episodes, 'ignore');
-    console.log(episodes);
     const books  = await bookRepo.insertAll(default_books, 'ignore');
     console.log(books);
     const bookOrders  = await bookOrderRepo.insertAll(default_book_orders, 'ignore');
     console.log(bookOrders);
-    const customer_episode_links = await customer_episode_repo.insertAll(default_customer_episode_links, 'ignore');
-    console.log(customer_episode_links);
     const customer_friend_links = await customer_friend_repo.insertAll(default_friend_map, 'ignore');
     console.log(customer_friend_links);
 }
@@ -161,89 +155,52 @@ const default_books = [
     },
     {
         "id": 3004,
-        "price": 12500,
+        "price": 9800,
         "title": "비밀의 방",
         "author_id": 3
     },
     {
         "id": 3005,
-        "price": 12500,
+        "price": 9800,
         "title": "불의 잔",
         "author_id": 3
     },
     {
         "id": 3006,
-        "price": 12500,
+        "price": 9800,
         "title": "죽음의 성물",
         "author_id": 3
     },
     {
         "id": 3007,
-        "price": 12500,
+        "price": 9800,
         "title": "불사조 기사단",
         "author_id": 3
     }
 ]
   
 
-const default_episodes = [
-    {
-        "title": "NEWHOPE",
-        "published": "2022-12-09T15:00:00"
-    },
-    {
-        "title": "EMPIRE",
-        "published": "2021-12-09T15:00:00"
-    },
-    {
-        "title": "JEDI",
-        "published": "2020-12-09T15:00:00"
-    }
-]
-
-const default_customer_episode_links = [
-    {  customer_id: 1000, episode_id: 'NEWHOPE' },
-    {  customer_id: 1000, episode_id: 'EMPIRE' },
-    {  customer_id: 1000, episode_id: 'JEDI' },
-    {  customer_id: 1001, episode_id: 'NEWHOPE' },
-    {  customer_id: 1001, episode_id: 'EMPIRE' },
-    {  customer_id: 1001, episode_id: 'JEDI' },
-    {  customer_id: 1002, episode_id: 'NEWHOPE' },
-    {  customer_id: 1002, episode_id: 'EMPIRE' },
-    {  customer_id: 1002, episode_id: 'JEDI' },
-    {  customer_id: 1003, episode_id: 'NEWHOPE' },
-    {  customer_id: 1003, episode_id: 'EMPIRE' },
-    {  customer_id: 1003, episode_id: 'JEDI' },
-    {  customer_id: 1004, episode_id: 'NEWHOPE' },
-    {  customer_id: 2000, episode_id: 'NEWHOPE' },
-    {  customer_id: 2000, episode_id: 'EMPIRE' },
-    {  customer_id: 2000, episode_id: 'JEDI' },
-    {  customer_id: 2001, episode_id: 'NEWHOPE' },
-    {  customer_id: 2001, episode_id: 'EMPIRE' },
-    {  customer_id: 2001, episode_id: 'JEDI'}
-];
-
 const default_book_orders = [
-    {  customer_id: 1000, book_id: 3000 },
-    {  customer_id: 1000, book_id: 3001 },
-    {  customer_id: 1000, book_id: 3002 },
-    {  customer_id: 1001, book_id: 3003 },
-    {  customer_id: 1001, book_id: 3004 },
-    {  customer_id: 1001, book_id: 3007 },
-    {  customer_id: 1002, book_id: 3000 },
-    {  customer_id: 1002, book_id: 3001 },
-    {  customer_id: 1002, book_id: 3006 },
-    {  customer_id: 1003, book_id: 3000 },
-    {  customer_id: 1003, book_id: 3001 },
-    {  customer_id: 1003, book_id: 3004 },
-    {  customer_id: 1004, book_id: 3006 },
-    {  customer_id: 1004, book_id: 3007 },
-    {  customer_id: 2000, book_id: 3005 },
-    {  customer_id: 2000, book_id: 3004 },
-    {  customer_id: 2000, book_id: 3007 },
-    {  customer_id: 2001, book_id: 3005 },
-    {  customer_id: 2001, book_id: 3004 },
-    {  customer_id: 2001, book_id: 3007 }
+    {  customer_id: 1000, book_id: 3000, date: '2022-10-11' },
+    {  customer_id: 1000, book_id: 3001, date: '2022-11-22' },
+    {  customer_id: 1000, book_id: 3002, date: '2024-08-21' },
+    {  customer_id: 1001, book_id: 3003, date: '2022-07-30' },
+    {  customer_id: 1001, book_id: 3004, date: '2023-09-01' },
+    {  customer_id: 1001, book_id: 3007, date: '2024-03-23' },
+    {  customer_id: 1002, book_id: 3000, date: '2022-05-07' },
+    {  customer_id: 1002, book_id: 3001, date: '2023-06-28' },
+    {  customer_id: 1002, book_id: 3006, date: '2024-08-05' },
+    {  customer_id: 1003, book_id: 3000, date: '2021-01-13' },
+    {  customer_id: 1003, book_id: 3001, date: '2022-05-23' },
+    {  customer_id: 1003, book_id: 3004, date: '2024-06-17' },
+    {  customer_id: 1004, book_id: 3006, date: '2024-01-20' },
+    {  customer_id: 1004, book_id: 3007, date: '2024-09-27' },
+    {  customer_id: 2000, book_id: 3005, date: '2021-05-30' },
+    {  customer_id: 2000, book_id: 3004, date: '2022-08-16' },
+    {  customer_id: 2000, book_id: 3007, date: '2024-06-23' },
+    {  customer_id: 2001, book_id: 3005, date: '2023-04-12' },
+    {  customer_id: 2001, book_id: 3004, date: '2024-05-10' },
+    {  customer_id: 2001, book_id: 3007, date: '2024-09-08' },
 ];
 
 const default_friend_map = [

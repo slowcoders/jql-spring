@@ -37,7 +37,6 @@ import LessonView from "@/components/LessonView";
 
   //             + ", *"
   //             + ", book_.0"
-  //             + ", episode_"
   //             + ", friend_.name"
   //             + ", friend_(name, friend_.name)"
 
