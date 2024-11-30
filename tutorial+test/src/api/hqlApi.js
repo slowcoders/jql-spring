@@ -49,6 +49,12 @@ export class HqlApi {
         return response.data;
     }
 
+    async updateByIdList(idList, jql) {
+        let res = await axios.patch(this.baseUrl+`/${idList}`, jql);
+        return res.data.content;
+    }
+
+
     async insertAll(entity, conflictPolicy) {
         const url = `${this.baseUrl}/add-all?select=*${conflictPolicy ? "&onConflict=" + conflictPolicy : "" }`
         const response = await axios.put(url, entity, http_options);
@@ -113,6 +119,18 @@ export class HqlForm {
             input: true,
             widget: "choicesjs",
             dataRef: ref
+        }
+    }
+    static tags(key, label, tags) {
+        return {
+            type: 'select',
+            multiple: true,
+            key: key,
+            label: label,
+            placeholder: label,
+            input: true,
+            widget: "choicesjs",
+            data: { values : tags.map(tag => ({value: tag, label: tag})) }
         }
     }
 }

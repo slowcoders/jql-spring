@@ -50,8 +50,27 @@ public abstract class SqlConverter implements PredicateVisitor {
     }
 
     @Override
-    public void visitContains(QColumn column, HqlOp operator, Collection values) {
+    public void visitCompareArray(QColumn column, HqlOp operator, Collection values) {
         throw new RuntimeException("Not implemted");
+    }
+
+    private Object getElementValue(Object value) {
+        if (value == null) return null;
+
+        if (value instanceof Collection) {
+            for (Object v : (Collection) value) {
+                if (v != null) return v;
+            }
+            return null;
+        }
+        if (value instanceof Object[]) {
+            for (Object v : (Object[]) value) {
+                if (v != null) return v;
+            }
+            return null;
+        }
+
+        return value;
     }
 
     @Override
@@ -72,7 +91,8 @@ public abstract class SqlConverter implements PredicateVisitor {
         }
 
         if (operator == HqlOp.EQ || operator == HqlOp.NE) {
-            writeQualifiedColumnName(column, values);
+            Object typeValue = getElementValue(values);
+            writeQualifiedColumnName(column, typeValue);
         }
 
         if (values.isEmpty()) {

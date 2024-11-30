@@ -48,6 +48,7 @@ const sampleStorages = [
 
 const sampleTables = [
   "author",
+  "customer",
   "book",
   "book_order",
 ]
@@ -77,64 +78,6 @@ export default {
 
   methods : {
 
-    to_url_param(options) {
-      if (!options) return "";
-
-      let params = ""
-      for (const k in options) {
-        params += params.length > 1 ? '&' : '?';
-        params += k + "=" + options[k];
-      }
-      return params;
-    },
-
-    make_http_param() {
-      const vm = this;
-      let param = "select=";
-      param += (vm.selectedColumns?.length > 0) ? vm.selectedColumns : '${hql_select}'
-      if (vm.first_sort?.length > 0) {
-        param += '&sort=' + vm.first_sort
-      }
-      if (vm.limit > 0) {
-        param += '&limit=' + vm.limit
-      }
-      return param;
-    },
-
-    make_sample_code() {
-      const vm = this;
-
-      return `${vm.schemaInfo}`
-    },
-
-    onUpdateSchema() {
-      alert("onUpdateSchema");
-    },
-
-    onAddEntity() {
-      const model = {components: [...this.columns, {
-            type: 'button',
-            action: 'submit',
-            label: 'Submit',
-            theme: 'primary'
-          }
-        ]
-      }
-      Formio.createForm(document.getElementById('formio'), model)
-      .then(function(form) {
-        // form.submission = {
-        //   data: {
-        //     title: '그리스인 조르바',
-        //     price: 10000,
-        //   }
-        // }
-        form.on('submit', function(submission) {
-          alert(JSON.stringify(submission.data, null, 2));
-          console.log(submission);
-        });
-      });
-    },
-
     async onTableChanged() {
       const vm = this;
       const columns = formSchema[vm.selectedTable];
@@ -146,36 +89,43 @@ export default {
           key: "children",
           input: false,
           components: columns, 
+        }, {
+            type: 'button',
+            action: 'submit',
+            label: 'Submit',
+            theme: 'primary'
         }]
       }
       const select = columns.map(row => row.key)
       const api = new HqlApi(`${baseUrl}/bookstore/${vm.selectedTable}`);
       const res = await api.find(null, {select});
-      console.log("datagrid", res)
+      console.log("editgrid", res)
       Formio.createForm(document.getElementById('formio'), model)
       .then(function(form) {
         form.submission = {
           data: {
-            children: res.content
+            children: JSON.parse(JSON.stringify(res.content))
           }
         }
         form.on('submit', function(submission) {
-          alert(JSON.stringify(submission.data, null, 2));
-          console.log(submission);
+          for (const row of submission.data.children) {
+            const org = res.content.find((r) => r.id === row.id);
+            if (!org) {
+              api.insert(row);
+            } else if (JSON.stringify(row) !== JSON.stringify(org)) {
+              api.updateByIdList([row.id], row);
+            }
+          }
+          for (const row of res.content) {
+            const org = submission.data.children.find((r) => r.id === row.id);
+            if (!org) {
+              api.delete(row.id);
+            }
+          }
+          // vm.$forceUpdate();
+          return true;          
         });
       });
-
-
-
-      if (vm.showSchemaInfo) {
-        const url = `${baseUrl}/metadata/${dbSchema}/${vm.selectedTable}/FormModel`
-        axios.get(url).then(res => {
-          vm.schemaInfo = `\n/*************** Schema<${vm.selectedTable}> ***********************\n${res.data}*/`;
-          console.log("schemaInfo", vm.schemaInfo)
-        }).catch(vm.show_http_error);
-
-        vm.codeView.setValue(vm.make_sample_code());
-      }
     },
 
     async setFormModel(columns) {
@@ -204,26 +154,33 @@ export default {
 };
 
 let book_columns = [
-  HqlForm.hidden('id'),
+  HqlForm.number('id', "아이디"),
   HqlForm.text('title', "제목"),
   HqlForm.select('author.id', "저자", {
       table: 'author',
       value: 'id',
       label: 'name'
   }),
-  HqlForm.text('price', "가격"),
+  /*HqlForm.select('publisher.id', "출판사", {
+      table: 'publisher',
+      value: 'id',
+      label: 'name'
+  }),*/
+  HqlForm.number('price', "가격"),
 ]
 
-let autor_columns = [
+let author_columns = [
     HqlForm.number('id', "아이디"),
     HqlForm.text('name', "이름"),
-    HqlForm.text('profile', "소개"),
+    // HqlForm.text('profile.hometown', "출생지"),
+    HqlForm.text('profile.country', "국적"),
+    HqlForm.number('profile.birthYear', "출생년도"),
 ]
 
 let customer_columns = [
     HqlForm.number('id', "아이디"),
     HqlForm.text('name', "이름"),
-    HqlForm.text('memo', "메모"),
+    HqlForm.tags('memo.favoriteGenre', '선호 장르', ['추리', '스릴러', 'SF', '로맨스', '무협', '공포', '판타지'])
 ]
 
 
@@ -243,7 +200,7 @@ let order_columns = [
 
 const formSchema = {
   book: book_columns,
-  author: autor_columns,
+  author: author_columns,
   book_order: order_columns,
   customer: customer_columns
 };
@@ -280,22 +237,6 @@ const formSchema = {
     margin-bottom: 0.7em;
   }
 
-  #code-area {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-  }
-  div.code {
-    /*overflow: auto;*/
-    /*max-height: 100%;*/
-  }
-
-  .CodeMirror * {
-    font-family: Curier, monospace;
-    font-size: small;
-  }
-  .test-result-view .CodeMirror-cursor {
-    display: none !important
-  }
   table td {
     padding: 5px
   }

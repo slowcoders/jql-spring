@@ -42,7 +42,7 @@ const default_customers = [
         "mass": 77,
         "memo": {
             "shoeSize": 260,
-            "favoriteFood": "kimchi",
+            "favoriteGenre": ["추리", "미스테리", "SF"],
             "homePlanet": "Tatooine"
         }
     },
@@ -53,7 +53,7 @@ const default_customers = [
         "mass": 136,
         "memo": {
             "shoeSize": 370,
-            "favoriteFood": "pork",
+            "favoriteGenre": ["공포", "무협", "스릴러"],
             "homePlanet": "Tatooine"
         }
     },
@@ -63,7 +63,8 @@ const default_customers = [
         "height": 1.5,
         "mass": 49,
         "memo": {
-            "homePlanet": "Alderaan"
+            "homePlanet": "Alderaan",
+            "favoriteGenre": ["로맨스", "역사", "판타지"],
         }
     },
     {
@@ -73,7 +74,7 @@ const default_customers = [
         "mass": null,
         "memo": {
             "shoeSize": 850,
-            "favoriteFood": "fish"
+            "favoriteGenre": ["무협", "로맨스"],
         }
     },
     {
@@ -81,7 +82,9 @@ const default_customers = [
         "name": "Hobbit",
         "height": 1.19,
         "mass": 50,
-        "memo": null
+        "memo": {
+            "favoriteGenre": ["무협", "판타지"],
+        }
     },
     {
         "id": 2000,
@@ -108,13 +111,7 @@ const default_customers = [
         "mass": 80,
         "memo": {
             "shoeSize": 270,
-            "favoriteFood": "wine",
-            "hobby": [
-                "축구",
-                "야구",
-                "영화",
-                "만화"
-            ],
+            "favoriteGenre": ["무협", "판타지"],
             "birth-day": "2001.03.03"
         }
     }
