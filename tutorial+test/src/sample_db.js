@@ -1,6 +1,6 @@
 import { HqlApi } from "./api/hqlApi";
 
-const bookstore_url = "http://localhost:7007/api/hql/bookstore"
+const bookstore_url = "http://localhost:7007/api/hql/bookstore_jpa"
 export const authorRepo = new HqlApi(`${bookstore_url}/author`);
 export const customerRepo = new HqlApi(`${bookstore_url}/customer`);
 export const bookRepo = new HqlApi(`${bookstore_url}/book`);

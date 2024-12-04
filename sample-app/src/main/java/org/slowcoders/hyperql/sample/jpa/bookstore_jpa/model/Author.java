@@ -24,7 +24,7 @@ public class Author implements java.io.Serializable {
     private String name;
 
     @Getter @Setter
-    @Column(name = "profile", nullable = true, columnDefinition = "json")
+    @Column(name = "profile", nullable = true, columnDefinition = "jsonb")
     @org.hibernate.annotations.Type(io.hypersistence.utils.hibernate.type.json.JsonType.class)
     private com.fasterxml.jackson.databind.JsonNode profile;
 

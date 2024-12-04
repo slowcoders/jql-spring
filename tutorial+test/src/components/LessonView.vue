@@ -10,7 +10,6 @@
               </td><td class="input-column">
                 <b-form-select v-model="selectedStorage"
                               :options="storageNames"
-                              :disabled="disableTableSelector"
                               @input="onTableChanged()">
                 </b-form-select>
               </td><td>

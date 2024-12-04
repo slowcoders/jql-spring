@@ -123,7 +123,7 @@ public abstract class SqlGenerator extends SqlConverter implements QueryGenerato
         if (!noAliases) {
             sw.write(isNativeQuery ? " as " : " ").write(filter.getMappingAlias());
         }
-        if (JSON_RS) {
+        if (JSON_RS && isNativeQuery) {
             writeJoin2(filter);
             return;
         }
@@ -136,14 +136,10 @@ public abstract class SqlGenerator extends SqlConverter implements QueryGenerato
             String parentAlias = mapping.getParentNode().getMappingAlias();
             String alias = mapping.getMappingAlias();
             if (isNativeQuery) {
-                if (JSON_RS && mapping.isArrayNode() && mapping.getEntityJoin() != null) {
-                    // do nothing.
-                } else {
-                    QJoin associated = join.getAssociativeJoin();
-                    writeJoinStatement(join, parentAlias, associated == null ? alias : "p" + alias);
-                    if (associated != null) {
-                        writeJoinStatement(associated, "p" + alias, alias);
-                    }
+                QJoin associated = join.getAssociativeJoin();
+                writeJoinStatement(join, parentAlias, associated == null ? alias : "p" + alias);
+                if (associated != null) {
+                    writeJoinStatement(associated, "p" + alias, alias);
                 }
             }
             else {
