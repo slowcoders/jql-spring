@@ -186,9 +186,7 @@ let customer_columns = [
     HqlForm.number('id', "아이디"),
     HqlForm.text('name', "이름"),
     HqlForm.tags('memo.favoriteGenre', '선호 장르', ['추리', '스릴러', 'SF', '로맨스', '무협', '공포', '판타지']),
-   HqlForm.number('height', '키'),
-   HqlForm.number('mass', '체중')
-  ]
+]
 
 let publisher_columns = [
     HqlForm.number('id', "아이디"),
