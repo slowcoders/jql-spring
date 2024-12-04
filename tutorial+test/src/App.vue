@@ -20,7 +20,7 @@ export default {
     return {
       menu: [
         {
-          header: "JQL Tutorial"
+          header: "HQL Tutorial"
         },
         {
           href: "/basic/list",

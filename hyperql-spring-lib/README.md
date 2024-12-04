@@ -1,36 +1,34 @@
-# Json Query Language (JQL)
+# Hyper Query Language (HQL)
 
-## What is JQL
-* Hierarchical property selection like GraphQL
-* Simple search filter with Json syntax
+## What is HQL
+* Bidirectional graph data search filter using Json syntax
+* Seamless RDB and json data intergration
 
-## JQL for JDBC
+## HQL for JDBC
 * Automatic repository creation
 * Automatic join query generation.
 * Supports JPA EntityManager.
 
 
-## JQL Grammar
+## HQL Grammar
 ```sh
 hql = {
-    select: "<hql_property_selection>",
+    select: "<hql_selector>",
     sort: "<hql_sort_option>",
     limit: Integer,
     page: Integer,
     filter: hql_node
 }
-hql_key = Identifier['.'hql_key]
-hql_selector = '*' | '0' | hql_key
-hql_selector_set = hql_key '.(' hql_selector { ',' hql_selector } ')'
-hql_property_selection = [ (hql_selector | hql_selector_set) [',' hql_property_selection ] ]  
+hql_key = Identifier['.' hql_key]
+hql_selector = '*' | '0' | hql_key [('.(' hql_selector ')') | (',' hql_selector)]
+hql_sort_option = ['+' | '-'] hql_key [',' hql_sort_option]
 
-hql_sort_option = [-]hql_key [',' hql_sort_option]
-
-hql_node = '{' hql_predicates [',' hql_node] '}'
-hql_predicates = '"' hql_key ['@' hql_operator] '"' : hql_value
-hql_operator = "is" | "not" | "like" | "not like" | "lt" | "gt" | "le" | "ge" | "between" | "not between"
-hql_primitive = false | null | true | number | string
-hql_value = hql_primitive | ArrayOf(hql_primitive) | hql_node | ArrayOf(hql_node)  
+hql_node = '{' (hql_conjunction | hql_predicates) [',' hql_node] '}'
+hql_conjunction = ('and' | 'or' | 'not') ':' (hql_node | ArrayOf(hql_node))
+hql_predicates = (hql_key [' ' hql_operator]) ':' hql_value
+hql_operator = ['!'] ('==' | 'like' | 'like' | '<' | '>' | '<=' | '>=' | 'between' | 'contains' | 'overlaps') ['*']
+hql_primitive = boolean | number | string
+hql_value = null | hql_primitive | ArrayOf(hql_primitive) | 
 ```
 
 
@@ -67,49 +65,6 @@ curl -X 'POST' 'http://localhost:7007/api/hql/bookstore/book/nodes' \
      -H 'Content-Type: application/json' \
      -d '{ "filter": { "customer": { "name": "Luke Skywalker" } } }' 
 ```
-## JQL operators vs SQL
-```
-{ "id" : 1000 }              /* --> where id = 1000 */ 
-{ "id ==" : 1000 }           /* --> where id = 1000 */ 
-{ "id !=" : 1000 }          /* --> where id != 1000 */ 
-{ "id" : [1000, 1001]}       /* --> where id in (1000, 1001) */ 
-{ "id ==" : [1000, 1001]}    /* --> where id in (1000, 1001) */ 
-{ "id !=" : [1000, 1001]}   /* --> where id not in (1000, 1001) */ 
-```
 
-### like, not like
-```
-{ "name like" : "%e" }       /* --> where name like '%e%' */ 
-{ "name !like" : "%e" }   /* --> where name not like '%e%' */ 
-{ "name like" : ["%e", "%f"] }       /* --> where name like '%e%' or like '%f%' */ 
-{ "name !like" : ["%e", "%f"] }   /* --> where name not (like '%e%' or like '%f%') */
-```
-
-### le, lt, ge, gt, between, not between 
-```
-{ "id <" : 1000 }                      /* --> where id <  1000 */ 
-{ "id <=" : 1000 }                      /* --> where id <= 1000 */ 
-{ "id >" : 1000 }                      /* --> where id >  1000 */ 
-{ "id >=" : 1000 }                      /* --> where id >= 1000 */ 
-{ "id between" : [1000, 1001] }         /* --> where id >= 1000 and id <= 1001 */ 
-{ "id !between" : [1000, 10001] }    /* --> where not (id >= 1000 and id <= 1001) */ 
-```
-
-### Automatic table join with JQL.
-{ "book" : { id: 3000 } } 
-```
-    --> SELECT t_0.*, t_1.* FROM bookstore.customer as t_0
-        left join bookstore.book as t_1 on
-        t_0.id = t_1.customer_id
-        WHERE (t_1.id = 3000)
-```
-
-{ "book" : [ { id: 3000 }, { id: 3001 } ] }           
-```
-    --> SELECT t_0.*, t_1.* FROM bookstore.customer as t_0
-        left join bookstore.book as t_1 on
-        t_0.id = t_1.customer_id
-        WHERE (t_1.id = 3000 or t_1.id = 3001) */
-```
 
 

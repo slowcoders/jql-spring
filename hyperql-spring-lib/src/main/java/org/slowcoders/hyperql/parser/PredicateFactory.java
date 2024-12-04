@@ -19,8 +19,12 @@ abstract class PredicateFactory {
 
     public abstract Predicate createPredicate(QColumn column, Object value);
 
-    public static PredicateFactory getFactory(String function) {
-        return operators.get(function);
+    public static PredicateFactory getFactory(String operator) {
+        return operators.get(operator);
+    }
+
+    public static PredicateFactory getUnaryFactory(String operator) {
+        return unaryOperators.get(operator);
     }
 
     public PredicateSet getPredicates(PredicateSet basePredicates, HqlParser.NodeType nodeType) {
@@ -32,6 +36,7 @@ abstract class PredicateFactory {
     }
 
     private static final HashMap<String, PredicateFactory> operators = new HashMap<>();
+    private static final HashMap<String, PredicateFactory> unaryOperators = new HashMap<>();
 
     //=======================================================//
     // Operators
@@ -185,24 +190,23 @@ abstract class PredicateFactory {
 
     public static final ExplicitConjunction AND;
     public static final ExplicitConjunction  OR;
+    public static final NotMatch NOT;
 
     static {
         MatchAny EQ = new MatchAny(HqlOp.EQ);
-        MatchAny NE = new NotMatch(HqlOp.NE);
+        MatchAny NE = new MatchAny(HqlOp.NE);
         operators.put("", EQ);
         operators.put("==", EQ);
-        operators.put("!", NE);
-        operators.put("not", NE);
         operators.put("!=", NE);
 
         operators.put("like", new MatchAny(HqlOp.LIKE));
-        operators.put("!like", new NotMatch(HqlOp.NOT_LIKE));
+        operators.put("!like", new MatchAny(HqlOp.NOT_LIKE));
 
         operators.put("re", new MatchAny(HqlOp.RE));
-        operators.put("!re", new NotMatch(HqlOp.NOT_RE));
+        operators.put("!re", new MatchAny(HqlOp.NOT_RE));
 
         operators.put("re/i", new MatchAny(HqlOp.RE_ignoreCase));
-        operators.put("!re/i", new NotMatch(HqlOp.NOT_RE_ignoreCase));
+        operators.put("!re/i", new MatchAny(HqlOp.NOT_RE_ignoreCase));
 
         Compare GT = new Compare(HqlOp.GT);
         Compare LT = new Compare(HqlOp.LT);
@@ -223,8 +227,14 @@ abstract class PredicateFactory {
 
         AND = new ExplicitConjunction(Conjunction.AND);
         OR = new ExplicitConjunction(Conjunction.OR);
+        NOT = new NotMatch(HqlOp.NE);
 
-        operators.put("and", AND);
-        operators.put("or", OR);
+//        operators.put("and", AND);
+//        operators.put("or", OR);
+//        operators.put("not", new NotMatch(HqlOp.NE));
+
+        unaryOperators.put("and", AND);
+        unaryOperators.put("or", OR);
+        unaryOperators.put("not", NOT);
     }
 }

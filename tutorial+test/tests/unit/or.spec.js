@@ -10,12 +10,10 @@ const MIN = 0, MAX = 1;
 describe('Or operation', () => {
   let last_count;
 
-  const too_small_or_too_tall = {
-    " or": {
-      "height <": normal_height[MIN],
-      "height >": normal_height[MAX]
-    }
-  }
+  const too_small_or_too_tall = [
+    { "height <": normal_height[MIN] },
+    { "height >": normal_height[MAX] }
+  ]
 
   test('too_small_or_too_tall', async () => {
     const res = await customerRepo.find(too_small_or_too_tall);
@@ -25,12 +23,10 @@ describe('Or operation', () => {
     }
   });
 
-  const too_light_or_too_heavy = {
-    " or": {
-      "mass <": normal_mass[MIN],
-      "mass >": normal_mass[MAX]
-    }
-  }
+  const too_light_or_too_heavy = [
+    { "mass <": normal_mass[MIN] },
+    { "mass >": normal_mass[MAX] }
+  ]
 
   test('too_light_or_too_heavy', async () => {
     const res = await customerRepo.find(too_light_or_too_heavy);
@@ -41,12 +37,10 @@ describe('Or operation', () => {
   });
 
 
-  const too_small_or_too_heavy = {
-    " or": {
-      "height <": normal_height[MIN],
-      "mass >": normal_mass[MAX]
-    }
-  }
+  const too_small_or_too_heavy = [
+    { "height <": normal_height[MIN] },
+    { "mass >": normal_mass[MAX] }
+  ]
 
   test('too_small_or_too_heavy', async () => {
     const res = await customerRepo.find(too_small_or_too_heavy);
@@ -57,10 +51,8 @@ describe('Or operation', () => {
   });
 
   const too_small_or_too_tall__AND__too_light_or_too_heavy = {
-    " and": [
-      too_small_or_too_tall,
-      too_light_or_too_heavy
-    ]
+    "OR#1": too_small_or_too_tall,
+    "OR#2": too_light_or_too_heavy
   }
   test('too_small_or_too_tall__AND__too_light_or_too_heavy', async () => {
     const res = await customerRepo.find(too_small_or_too_tall__AND__too_light_or_too_heavy);

@@ -53,8 +53,6 @@ public abstract class EntityFilter {
 
 
     public final EntityFilter getFilterNode(String key, HqlParser.NodeType nodeType) {
-        if (key == null) return this;
-
         EntityFilter scope = this;
         for (int p; (p = key.indexOf('.')) > 0; ) {
             QSchema schema = scope.getSchema();

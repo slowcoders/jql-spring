@@ -222,7 +222,7 @@ export default {
     make_sample_code() {
       const vm = this;
 
-      return ` // JQL Sample
+      return ` // HQL Sample
 const dbSchema = '${vm.selectedStorage}'
 const dbTable = '${vm.selectedTable}'
 const AUTO = ""

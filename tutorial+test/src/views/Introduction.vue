@@ -67,3 +67,8 @@ div.code {
   background-color: black;
 }
 </style>
+
+
+curl -X 'POST' 'http://localhost:7007/api/hql/bookstore/customer/nodes' \
+        -H 'Content-Type: application/json' \
+        -d '{ "name like": "Luke%" }'

@@ -6,8 +6,8 @@
     <template v-slot:description>
       <div class="details">
         <h5> Select: 검색 결과 계층적 선별 </h5>
-        JQL 의 <b>select</b> 문은 검색 결과에 포함할 프로퍼티를 계층적으로 선별하기 위해 사용된다.<br>
-        JQL 은 다음 2 가지로 프로퍼티 유형을 구분한다.<br>
+        HQL 의 <b>select</b> 문은 검색 결과에 포함할 프로퍼티를 계층적으로 선별하기 위해 사용된다.<br>
+        HQL 은 다음 2 가지로 프로퍼티 유형을 구분한다.<br>
         <ul>
           <li> Leaf Property : 숫자, 문자열, 날짜 등 단일값을 가지는 프로퍼티</li>
           <li> Reference Property : Json 객체형 {} 또는 어레이형 [] 값을 가진 프로퍼티</li>

@@ -30,6 +30,9 @@ export class HqlApi {
     }
 
     async find(filter, options) {
+        if (Array.isArray(filter)) {
+            filter = { OR: filter }
+        }
         const url = `${this.baseUrl}/nodes${to_url_param(options)}`
         filter = filter ? filter : {}
         const response = await axios.post(url, filter, http_options);

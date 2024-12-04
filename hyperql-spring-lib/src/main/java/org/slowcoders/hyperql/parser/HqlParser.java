@@ -36,10 +36,6 @@ public class HqlParser {
     }
 
     public void parse2(PredicateSet predicates, Filter filter, boolean excludeConstantAttribute) {
-        // "joinColumn명" : { "id@?EQ" : "joinedColumn2.joinedColumn3.columnName" }; // Fetch 자동 수행.
-        //   --> @?EQ 기능은 넣되, 숨겨진 고급기능으로..
-        // "groupBy@" : ["attr1", "attr2/attr3" ]
-
         EntityFilter baseFilter = predicates.getBaseFilter();
 
         for (Filter entry : filter.entries()) {
@@ -112,56 +108,61 @@ public class HqlParser {
     }
 
     public void parse(PredicateSet predicates, Map<String, Object> filter, boolean excludeConstantAttribute) {
-        // "joinColumn명" : { "id@?EQ" : "joinedColumn2.joinedColumn3.columnName" }; // Fetch 자동 수행.
-        //   --> @?EQ 기능은 넣되, 숨겨진 고급기능으로..
-        // "groupBy@" : ["attr1", "attr2/attr3" ]
-
         EntityFilter baseFilter = predicates.getBaseFilter();
 
         for (Map.Entry<String, Object> entry : filter.entrySet()) {
-            String key = entry.getKey();
+            String key = entry.getKey().trim();
             Object value = entry.getValue();
-            int op_start = key.lastIndexOf(' ');
-            String function = "";
-            if (op_start >= 0) {
-                function = key.substring(op_start + 1).trim();
-                key = key.substring(0, op_start).trim();
-            }
+            PredicateFactory op = null;
+            int op_start;
 
-            PredicateFactory op = PredicateFactory.getFactory(function.toLowerCase());
-            if (op == null) {
-                throw new IllegalArgumentException("invalid HQL operator: " + function);
-            }
-
-            /** [has not 구현]
-                SELECT
-                    t_0.*, pt_1.book_id --, t_1.published
-                FROM bookstore.customer as t_0
-                    left join bookstore.book_order as pt_1 on
-                    t_0.id = pt_1.customer_id and pt_1.book_id = 3000
-                where pt_1.customer_id is null;
-                ---------------------------------
-                while (key.startsWith("../")) {
-                    baseFilter = baseFilter.getParentNode();
-                    key = key.substring(3);
-                }
-             */
-
-            if (!baseFilter.isJsonNode() && !isValidKey(key)) {
-                if (op.isAttributeNameRequired()) {
-                    if (op_start == 0) {
-                        throw new IllegalArgumentException("Property name is missing : " + entry.getKey());
-                    }
-                    throw new IllegalArgumentException("invalid HQL key: " + entry.getKey());
-                }
+            if (key.toLowerCase().startsWith("or#")) {
+                op = PredicateFactory.OR;
                 key = null;
+            } else if (key.toLowerCase().startsWith("not#")) {
+                op = PredicateFactory.NOT;
+                key = null;
+            } else {
+                op_start = key.lastIndexOf(' ');
+
+                if (op_start >= 0) {
+                    String operator = key.substring(op_start + 1).trim();
+                    key = key.substring(0, op_start).trim();
+                    op = PredicateFactory.getFactory(operator.toLowerCase());
+                    if (op == null) {
+                        throw new IllegalArgumentException("invalid HQL operator: " + operator);
+                    }
+                } else {
+                    op = PredicateFactory.getUnaryFactory(key.toLowerCase());
+                    if (op == null) {
+                        op = PredicateFactory.IS;
+                    } else {
+                        key = null;
+                    }
+                }
             }
+
+//            if (!baseFilter.isJsonNode() && !isValidKey(key)) {
+//                if (op.isAttributeNameRequired()) {
+//                    if (op_start == 0) {
+//                        throw new IllegalArgumentException("Property name is missing : " + entry.getKey());
+//                    }
+//                    throw new IllegalArgumentException("invalid HQL key: " + entry.getKey());
+//                }
+//                key = null;
+//            }
 
             NodeType valueNodeType = this.getNodeType(value);
-            EntityFilter subFilter = baseFilter.getFilterNode(key, valueNodeType);
+            if (op == PredicateFactory.OR && valueNodeType != NodeType.Entities) {
+                throw new IllegalArgumentException("Or operator must contains entity array");
+            }
+            EntityFilter subFilter = baseFilter;
             PredicateSet targetPredicates = predicates;
-            if (subFilter != baseFilter) {
-                targetPredicates = subFilter.getPredicateSet();
+            if (key != null) {
+                subFilter = baseFilter.getFilterNode(key, valueNodeType);
+                if (subFilter != baseFilter) {
+                    targetPredicates = subFilter.getPredicateSet();
+                }
             }
 
             if (valueNodeType != NodeType.Leaf) {
@@ -174,7 +175,7 @@ public class HqlParser {
                 }
                 else {  // ValueNodeType.Entities
                     for (Map<String, Object> map : (Collection<Map<String, Object>>) value) {
-                        if (true) {
+                        if (ps.getConjunction() == Conjunction.OR) {
                             PredicateSet and_qs = new PredicateSet(Conjunction.AND, ps.getBaseFilter());
                             this.parse(and_qs, map, false);
                             ps.add(and_qs);
@@ -238,8 +239,11 @@ public class HqlParser {
     private NodeType getNodeType(Object value) {
         if (value instanceof Collection) {
             Collection values = (Collection) value;
-            if (!values.isEmpty() && values.iterator().next() instanceof Map) {
-                return NodeType.Entities;
+            if (!values.isEmpty()) {
+                var firstElement = values.iterator().next();
+                if (firstElement instanceof Map) {
+                    return NodeType.Entities;
+                }
             }
         }
         if (value instanceof Map) {
@@ -252,7 +256,7 @@ public class HqlParser {
     public enum NodeType {
         Leaf,
         Entity,
-        Entities
+        Entities,
     }
 }
 

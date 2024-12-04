@@ -6,7 +6,7 @@
     <template v-slot:description>
       <H5> Join Query. </H5>
       <div class="details">
-        JQL 은 DB 의 metadata 를 분석하여 FK->PK Join 관계를 자동 분석하여 처리한다.<br>
+        HQL 은 DB 의 metadata 를 분석하여 FK->PK Join 관계를 자동 분석하여 처리한다.<br>
         Property key 를 '.' 기호로 연결하거나, 비교값 위치에 Object {} 또는 Object Array [ {} ] 를 사용하여 Joined Query 를 작성할 수 있다.<p/>
       </div>
     </template>
