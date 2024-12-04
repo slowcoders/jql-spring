@@ -10,7 +10,7 @@ public class MariaSqlGenerator extends MySqlGenerator {
         super(isNativeQuery);
     }
 
-    protected void writeJsonPath(EntityFilter node, QColumn column, JsType valueType) {
+    protected void writeQualifiedJsonPath(EntityFilter node, QColumn column, JsType valueType) {
         sw.write("json_value(");
         writeJsonPath(node);
         sw.write(column.getJsonKey()).write('\'');

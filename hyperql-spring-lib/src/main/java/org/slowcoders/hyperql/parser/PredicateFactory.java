@@ -148,12 +148,12 @@ abstract class PredicateFactory {
                     return qs;
                 }
                 default:
-                    throw new RuntimeException("'@and' and '@or' operators take only condition node(s)");
+                    throw new RuntimeException("'and' and 'or' operators take only condition node(s)");
             }
         }
 
         public Predicate createPredicate(QColumn column, Object value) {
-            throw new RuntimeException("'@and' and '@or' operators take only condition node(s)");
+            throw new RuntimeException("'and' and 'or' operators take only condition node(s)");
         }
 
     }
@@ -190,34 +190,36 @@ abstract class PredicateFactory {
         MatchAny EQ = new MatchAny(HqlOp.EQ);
         MatchAny NE = new NotMatch(HqlOp.NE);
         operators.put("", EQ);
-        operators.put("is", EQ);
+        operators.put("==", EQ);
+        operators.put("!", NE);
         operators.put("not", NE);
-        operators.put("eq", EQ);
-        operators.put("ne", NE);
+        operators.put("!=", NE);
 
         operators.put("like", new MatchAny(HqlOp.LIKE));
-        operators.put("not like", new NotMatch(HqlOp.NOT_LIKE));
+        operators.put("!like", new NotMatch(HqlOp.NOT_LIKE));
 
         operators.put("re", new MatchAny(HqlOp.RE));
-        operators.put("not re", new NotMatch(HqlOp.NOT_RE));
+        operators.put("!re", new NotMatch(HqlOp.NOT_RE));
 
         operators.put("re/i", new MatchAny(HqlOp.RE_ignoreCase));
-        operators.put("not re/i", new NotMatch(HqlOp.NOT_RE_ignoreCase));
+        operators.put("!re/i", new NotMatch(HqlOp.NOT_RE_ignoreCase));
 
         Compare GT = new Compare(HqlOp.GT);
         Compare LT = new Compare(HqlOp.LT);
         Compare GE = new Compare(HqlOp.GE);
         Compare LE = new Compare(HqlOp.LE);
 
-        operators.put("gt", GT);
-        operators.put("lt", LT);
-        operators.put("ge", GE);
-        operators.put("le", LE);
+        operators.put(">", GT);
+        operators.put("<", LT);
+        operators.put(">=", GE);
+        operators.put("<=", LE);
         operators.put("between", new PairedPredicate(GE, LE, Conjunction.AND));
-        operators.put("not between", new PairedPredicate(LT, GT, Conjunction.OR));
+        operators.put("!between", new PairedPredicate(LT, GT, Conjunction.OR));
 
         operators.put("contains", new CompareArray(HqlOp.CONTAINS));
-        operators.put("intersects", new CompareArray(HqlOp.INTERSECTS));
+        operators.put("!contains", new CompareArray(HqlOp.NOT_CONTAINS));
+        operators.put("overlaps", new CompareArray(HqlOp.OVERLAPS));
+        operators.put("!overlaps", new CompareArray(HqlOp.NOT_OVERLAPS));
 
         AND = new ExplicitConjunction(Conjunction.AND);
         OR = new ExplicitConjunction(Conjunction.OR);

@@ -45,13 +45,23 @@ public interface EntitySetController<ID> extends RestTemplate {
             return Response.of(res, select);
         }
 
-        @PostMapping(path = "/find", consumes = {MediaType.APPLICATION_JSON_VALUE})
+        @PostMapping(path = "/nodes", consumes = {MediaType.APPLICATION_JSON_VALUE})
         @Operation(summary = "엔터티 검색")
         @Transactional
         @ResponseBody
-        public Response find(OutputOptions req,
+        public Response nodes(OutputOptions req,
                 @Schema(implementation = Object.class)
                 @RequestBody Map<String, Object> filter) throws Exception {
+            return search(getEntitySet(), req, filter);
+        }
+
+        @PostMapping(path = "/rows", consumes = {MediaType.APPLICATION_JSON_VALUE})
+        @Operation(summary = "Raw Data 검색")
+        @Transactional
+        @ResponseBody
+        public Response rows(OutputOptions req,
+                             @Schema(implementation = Object.class)
+                             @RequestBody Map<String, Object> filter) throws Exception {
             return search(getEntitySet(), req, filter);
         }
 

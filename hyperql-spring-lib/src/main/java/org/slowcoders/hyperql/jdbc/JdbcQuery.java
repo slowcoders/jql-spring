@@ -84,12 +84,16 @@ public class JdbcQuery<ENTITY> extends HyperQuery<ENTITY> {
         return extraInfo;
     }
 
+    private List<QResultMapping> resultMappings;
     public List<QResultMapping> getResultMappings() {
-        HyperSelect select = super.getSelection();
-        if (select == null) {
-            select = HyperSelect.Auto;
+        if (resultMappings == null) {
+            HyperSelect select = super.getSelection();
+            if (select == null) {
+                select = HyperSelect.Auto;
+            }
+            filter.setSelectedProperties(select.getPropertyMap());
+            resultMappings = filter.getResultMappings();
         }
-        filter.setSelectedProperties(select.getPropertyMap());
-        return filter.getResultMappings();
+        return this.resultMappings;
     }
 }

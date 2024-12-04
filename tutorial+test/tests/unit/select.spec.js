@@ -4,7 +4,7 @@ import { customerRepo } from '@/sample_db'
 describe('Top', () => {
   test('Find first', async () => {
     const filter = {
-      "name@like": "Luke%"
+      "name like": "Luke%"
     }
     const customer = await customerRepo.top(filter);
 
@@ -45,7 +45,7 @@ describe('Top', () => {
   // sum 으로 변경.
   test('Find any customer order a book that price >= ' + PRICE, async () => {
     const filter = {
-      "book_": { "price@ge": PRICE }
+      "book_": { "price >=": PRICE }
     }
     const customer = await customerRepo.top(filter, {select: "book_"});
     for (const book of customer.book_) {
@@ -55,7 +55,7 @@ describe('Top', () => {
 
   test('Find any customer order a book that price < ' + PRICE, async () => {
     const filter = {
-      "book_": { "price@lt": PRICE }
+      "book_": { "price <": PRICE }
     }
     const customer = await customerRepo.top(filter, {select: "book_"});
     for (const book of customer.book_) {

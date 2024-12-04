@@ -35,7 +35,7 @@ describe('Comapre', () => {
 
   test('@not: []', async () => {
     const filter = {
-      "id@not": [refs[0].id, refs[1].id]
+      "id !=": [refs[0].id, refs[1].id]
     }
     const count = await customerRepo.count();
     const res = await customerRepo.find(filter);
@@ -51,7 +51,7 @@ describe('Comapre', () => {
 
   test('@like []', async () => {
     const filter = {
-      "name@like": [refs[0].name.substring(0, 4) + "%", refs[1].name.substring(0, 4) + "%"] 
+      "name like": [refs[0].name.substring(0, 4) + "%", refs[1].name.substring(0, 4) + "%"] 
     }
     const res = await customerRepo.find(filter);
     const customers = res.content;
@@ -64,9 +64,9 @@ describe('Comapre', () => {
     expect(id_set[refs[1].id]).not.toBeUndefined();
   });
 
-  test('@not like []', async () => {
+  test(' !like []', async () => {
     const filter = {
-      "name@not like": [refs[0].name.substring(0, 4) + "%", refs[1].name.substring(0, 4) + "%"] 
+      "name !like": [refs[0].name.substring(0, 4) + "%", refs[1].name.substring(0, 4) + "%"] 
     }
     const res = await customerRepo.find(filter);
     const customers = res.content;

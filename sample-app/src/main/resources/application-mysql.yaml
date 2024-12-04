@@ -1,0 +1,18 @@
+
+database: mysql
+
+spring:
+  sql.init:
+    mode: always
+    schema-locations: classpath*:db/${database}/bookstore-schema.sql
+    # data-locations: classpath*:db/${database}/bookstore-data.sql
+  session:
+    store-type: none  # Session 저장 유형 StoreType 참조.
+    timeout: 3600     # Session timeout.
+
+
+  datasource:
+    url: ${DB_URL:jdbc:${database}://localhost/bookstore}?useSSL=false&allowPublicKeyRetrieval=true
+    username: ${DB_USER:hql_demo}
+    password: ${DB_PASS:hql_demo}
+

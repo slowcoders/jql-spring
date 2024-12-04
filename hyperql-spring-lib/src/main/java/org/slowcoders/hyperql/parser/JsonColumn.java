@@ -4,8 +4,11 @@ import org.slowcoders.hyperql.schema.QColumn;
 import org.slowcoders.hyperql.schema.QSchema;
 
 public class JsonColumn extends QColumn {
-    protected JsonColumn(String name, Class type) {
+    private final EntityFilter filter;
+
+    public JsonColumn(EntityFilter filter, String name, Class type) {
         super(name, type);
+        this.filter = filter;
     }
 
     @Override
@@ -14,5 +17,9 @@ public class JsonColumn extends QColumn {
     @Override
     public String getJsonKey() {
         return super.getPhysicalName();
+    }
+
+    public EntityFilter getEntityNode() {
+        return filter;
     }
 }

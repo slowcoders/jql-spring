@@ -9,6 +9,7 @@ import org.slowcoders.hyperql.jdbc.output.JdbcResultMapper;
 import org.slowcoders.hyperql.jdbc.output.JsonRowMapper;
 import org.slowcoders.hyperql.jdbc.storage.BatchUpsert;
 import org.slowcoders.hyperql.jdbc.storage.JdbcSchema;
+import org.slowcoders.hyperql.jdbc.storage.SqlGenerator;
 import org.slowcoders.hyperql.parser.HqlParser;
 import org.slowcoders.hyperql.parser.HyperFilter;
 import org.slowcoders.hyperql.schema.QColumn;
@@ -60,9 +61,11 @@ public abstract class JdbcRepositoryBase<ID> extends HyperRepository<ID> {
     protected JdbcResultMapper<?> createColumnMapRowMapper(JdbcQuery query, OutputFormat outputFormat) {
         switch (outputFormat) {
             case Object:
-                return new JsonRowMapper(query.getResultMappings(), storage.getObjectMapper());
+                if (!SqlGenerator.JSON_RS) {
+                    return new JsonRowMapper(query.getResultMappings(), storage.getObjectMapper());
+                }
             default:
-                return new ArrayRowMapper(query.getResultMappings(), null, storage.getObjectMapper());
+                return new ArrayRowMapper(query, storage.getObjectMapper());
         }
     }
 
@@ -113,6 +116,9 @@ public abstract class JdbcRepositoryBase<ID> extends HyperRepository<ID> {
                 sql += s;
             }
             res = jdbc.query(sql, createColumnMapRowMapper(query, outputFormat));
+            if (SqlGenerator.JSON_RS && outputFormat == OutputFormat.Object) {
+                res = ArrayRowMapper.extractJsonData(res, query.getFilter().getColumnNameMappings());
+            }
         }
         return res;
     }
@@ -145,6 +151,9 @@ public abstract class JdbcRepositoryBase<ID> extends HyperRepository<ID> {
                 sql += s;
             }
             res = jdbc.query(sql, rsExtractor);
+            if (SqlGenerator.JSON_RS) {
+                res = ArrayRowMapper.extractJsonData(res, query.getFilter().getColumnNameMappings());
+            }
         }
         RestTemplate.Response resp = RestTemplate.Response.of(res, query.getSelection());
         if (rsExtractor != null) rsExtractor.setOutputMetadata(resp);

@@ -23,47 +23,20 @@ const max_height = 2.0
 const min_weight = 40
 const max_weight = 120
 
-const normal_height = {
-    "height@ge": min_height,
-    "height@le": max_height
-}
+const normal_height = { "height >=": min_height, "height <=": max_height }
+const normal_mass   = { "mass >=":   min_weight, "mass <=":   max_weight }
 
-const normal_mass = {
-    "mass@ge": min_weight,
-    "mass@le": max_weight
-}
+const too_small_or_too_tall  = { " or": { "height <": min_height, "height >": max_height }}
+const too_light_or_too_heavy = { " or": { "mass <":   min_weight, "mass >":   max_weight }}
+const too_small_or_too_heavy = { " or": { "height <": min_height, "mass >":   max_weight }}
 
-const too_small_or_too_tall = {
-    "@or": {
-        "height@lt": min_height,
-        "height@gt": max_height
-    }
-}
-
-const too_light_or_too_heavy = {
-    "@or": {
-        "mass@lt": min_weight,
-        "mass@gt": max_weight
-    }
-}
-
-const too_small_or_too_heavy = {
-    "@or": {
-        "height@lt": min_height,
-        "mass@gt": max_weight
-    }
-}
-
-const too_small_or_too_tall__AND__too_light_or_too_heavy = {
-  "@and": [
-    too_small_or_too_tall,
-    too_light_or_too_heavy
-  ]
+const too_small_or_too_tall__AND__too_light_or_too_heavy = { 
+  " and": [ too_small_or_too_tall, too_light_or_too_heavy ]
 }
 
 const too_small_or_too_tall__AND__too_light_or_too_heavy__short_expression = {
-    "height@not between": [min_height, max_height],
-    "mass@not between": [min_weight, max_weight],
+    "height !between": [min_height, max_height],
+    "mass !between": [min_weight, max_weight],
 }
 
 /* 아래의 주석을 한 줄씩 번갈아 해제하면서 검색 결과의 차이를 비교해 보십시오. */

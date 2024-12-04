@@ -69,7 +69,14 @@ public abstract class JdbcMetadataController {
                 case SpringJPA:
                     return dumpJpaSchemas(namespace);
                 default:
-                    return "";
+                    SourceWriter sw = new SourceWriter('"');
+                    for (String table : storage.getTableNames(namespace)) {
+                        QSchema schema = getSchema(namespace, table);
+                        String source = JsUtil.getSimpleSchema(schema, true);
+                        sw.write(source);
+                        sw.write("\n\n");
+                    }
+                    return sw.toString();
             }
         }
 

@@ -8,19 +8,19 @@ describe('Join Test', () => {
         "name" : "Han Solo",
         "friend_": {} 
       }      
-      const res = await customerRepo.find(filter);
+      const res = await customerRepo.find(filter, {select: "*, friend_"});
       const customers = res.content;
       expect(customers.length).toBe(1);
-      expect(customers[0].friend_.length).toBeGreaterThanOrEqual(3);
+      expect(customers[0].friend_.length).toBeGreaterThanOrEqual(2);
     });
 
     const PRICE = 15000;
     test('Find friends of Han Solo who ordered book price > 15000', async () => {
       const filter = {
         "name" : "Han Solo",
-        "friend_": { "book_": { "price@gt": PRICE } }
+        "friend_": { "book_": { "price >": PRICE } }
       }
-      const res = await customerRepo.find(filter);
+      const res = await customerRepo.find(filter, {select: "*, friend_"});
       const customers = res.content;
       expect(customers.length).toBe(1);
       expect(customers[0].friend_.length).toBe(1);

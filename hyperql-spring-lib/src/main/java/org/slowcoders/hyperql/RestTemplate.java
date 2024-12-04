@@ -80,7 +80,7 @@ public interface RestTemplate {
 
         @JsonSerialize(using = JpaFilter.Serializer.class)
         public static class JpaFilter extends Response {
-            public static final String JQL_RESULT_MAPPING_KEY = "hql-result-mapping";
+            public static final String HQL_RESULT_MAPPING_KEY = "hql-result-mapping";
 
             /*internal*/ JpaFilter(Object content, HyperSelect.ResultMap resultMappings) {
                 super(content, resultMappings);
@@ -93,7 +93,7 @@ public interface RestTemplate {
 
                 @Override
                 public void serialize(RestTemplate.Response.JpaFilter value, JsonGenerator gen, SerializerProvider provider) throws IOException {
-                    provider.setAttribute(JQL_RESULT_MAPPING_KEY, value.getResultMapping());
+                    provider.setAttribute(HQL_RESULT_MAPPING_KEY, value.getResultMapping());
                     JsonSerializer<Object> s = provider.findValueSerializer(RestTemplate.Response.class);
                     s.serialize(value, gen, provider);
                 }

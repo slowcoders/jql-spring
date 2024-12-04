@@ -24,7 +24,7 @@ const hql_filter = {
   /*
    Luke 의 친구 중 특정 도서를 구입한 친구를 검색한다.
   */
-  "name@like": "Luke%",
+  "name like": "Luke%",
   "friend_": {
       "book_" : {
 //          "title" : "불사조 기사단"

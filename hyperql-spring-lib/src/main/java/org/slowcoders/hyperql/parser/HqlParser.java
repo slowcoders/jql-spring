@@ -50,7 +50,7 @@ public class HqlParser {
 
             if (!baseFilter.isJsonNode() && !isValidKey(key)) {
                 if (op.isAttributeNameRequired()) {
-                    throw new IllegalArgumentException("invalid JQL key: " + entry.getKey());
+                    throw new IllegalArgumentException("invalid HQL key: " + entry.getKey());
                 }
                 key = null;
             }
@@ -104,7 +104,7 @@ public class HqlParser {
                 }
             }
             else {
-                column = new JsonColumn(columnName, value == null ? String.class : value.getClass());
+                column = new JsonColumn(subFilter, columnName, value == null ? String.class : value.getClass());
             }
             Expression cond = op.createPredicate(column, value);
             targetPredicates.add(cond);
@@ -121,7 +121,7 @@ public class HqlParser {
         for (Map.Entry<String, Object> entry : filter.entrySet()) {
             String key = entry.getKey();
             Object value = entry.getValue();
-            int op_start = key.lastIndexOf('@');
+            int op_start = key.lastIndexOf(' ');
             String function = "";
             if (op_start >= 0) {
                 function = key.substring(op_start + 1).trim();
@@ -130,7 +130,7 @@ public class HqlParser {
 
             PredicateFactory op = PredicateFactory.getFactory(function.toLowerCase());
             if (op == null) {
-                throw new IllegalArgumentException("invalid JQL operator: " + function);
+                throw new IllegalArgumentException("invalid HQL operator: " + function);
             }
 
             /** [has not 구현]
@@ -152,7 +152,7 @@ public class HqlParser {
                     if (op_start == 0) {
                         throw new IllegalArgumentException("Property name is missing : " + entry.getKey());
                     }
-                    throw new IllegalArgumentException("invalid JQL key: " + entry.getKey());
+                    throw new IllegalArgumentException("invalid HQL key: " + entry.getKey());
                 }
                 key = null;
             }
@@ -174,9 +174,13 @@ public class HqlParser {
                 }
                 else {  // ValueNodeType.Entities
                     for (Map<String, Object> map : (Collection<Map<String, Object>>) value) {
-//                        PredicateSet and_qs = new PredicateSet(Conjunction.AND, ps.getBaseFilter());
-                        this.parse(ps, map, false);
-//                        ps.add(and_qs);
+                        if (true) {
+                            PredicateSet and_qs = new PredicateSet(Conjunction.AND, ps.getBaseFilter());
+                            this.parse(and_qs, map, false);
+                            ps.add(and_qs);
+                        } else {
+                            this.parse(ps, map, false);
+                        }
                     }
                 }
                 continue;
@@ -205,7 +209,7 @@ public class HqlParser {
                 }
             }
             else {
-                column = new JsonColumn(columnName, value == null ? String.class : value.getClass());
+                column = new JsonColumn(subFilter, columnName, value == null ? String.class : value.getClass());
             }
             Expression cond = op.createPredicate(column, value);
             targetPredicates.add(cond);

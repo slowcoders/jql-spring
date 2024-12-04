@@ -80,11 +80,24 @@ public interface HyperStorageController extends RestTemplate {
             return Response.of(res, select);
         }
 
-        @PostMapping(path = "/{table}/find", consumes = {MediaType.APPLICATION_JSON_VALUE})
+        @PostMapping(path = "/{table}/nodes", consumes = {MediaType.APPLICATION_JSON_VALUE})
         @Operation(summary = "엔터티 검색")
         @Transactional
         @ResponseBody
-        public Response find(
+        public Response nodes(
+                @PathVariable("table") String table,
+                OutputOptions req,
+                @Schema(implementation = Object.class)
+                @RequestBody Map<String, Object> filter) throws Exception {
+            EntitySet entities = getEntitySet(table);
+            return search(entities, req, filter);
+        }
+
+        @PostMapping(path = "/{table}/rows", consumes = {MediaType.APPLICATION_JSON_VALUE})
+        @Operation(summary = "Raw data 검색")
+        @Transactional
+        @ResponseBody
+        public Response rows(
                 @PathVariable("table") String table,
                 OutputOptions req,
                 @Schema(implementation = Object.class)

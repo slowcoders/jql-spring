@@ -19,14 +19,16 @@ const sample_code = `
 const hql_select = "name, memo";
 
 /* 아래의 주석을 한 줄씩 번갈아 해제하면서 검색 결과의 차이를 비교해 보십시오. */
-const hql_filter = { "memo" : { "shoeSize@ge" : 270 } };
-// const hql_filter = { "memo" : { "shoeSize@le" : 260, "shoeSize@le" : 280 } };
+const hql_filter = { "memo" : { "shoeSize >=" : 270 } };
+// const hql_filter = { "memo" : { "shoeSize <=" : 260, "shoeSize <=" : 280 } };
 
-/* 판타지와 무협 소설을 모두 좋아하는 고객 검색 */
-// const hql_filter = {  "memo" : { "favoriteGenre@contains" : ["무협", "판타지"] } };
+/* 판타지와 무협 소설을 모두 좋아하는 독자 검색 */
+// const hql_filter = {  "memo" : { "favoriteGenre contains" : ["무협", "판타지"] } };
+// const hql_filter = {  "memo" : { "favoriteGenre !contains" : ["무협", "판타지"] } };
 
-/* 판타지 또는 로맨스 소설 중 하나를 좋아하는 고객 검색 */
-// const hql_filter = {  "memo" : { "favoriteGenre@intersects" : ["판타지", "로맨스"] } };
+/* 판타지 또는 로맨스 소설 중 한 가지 이상을 좋아하는 독자 검색 */
+// const hql_filter = {  "memo" : { "favoriteGenre overlaps" : ["판타지", "로맨스"] } };
+// const hql_filter = {  "memo" : { "favoriteGenre !overlaps" : ["판타지", "로맨스"] } };
 `
 
 export default {

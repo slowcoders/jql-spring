@@ -63,7 +63,7 @@ describe('Insert/Delete test', () => {
     let book_map = {};
 
     beforeAll(async () => {
-      await clear_garbage({ 'title@like': 'Test-E2-%' });
+      await clear_garbage({ 'title like': 'Test-E2-%' });
 
       const books = (await bookRepo.insertAll(entity_data)).content;
       expect(books.length).toBe(entity_data.length);

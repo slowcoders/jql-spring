@@ -21,14 +21,14 @@ const hql_select = AUTO;
 
 /* 아래의 주석을 한 줄씩 번갈아 해제하면서 검색 결과의 차이를 비교해 보십시오. */
 const hql_filter = {
-  // "id": [1001, 1002]
-  // "id@not": [1001, 1002]
+  // "id": [1000, 1003]
+  // "id !=": [1000, 1003]
 
   // "name": ["Darth Vader", "Luke Skywalker"]
-  // "name@not": ["Darth Vader", "Luke Skywalker"]
+  // "name !=": ["Darth Vader", "Luke Skywalker"]
 
-  // "name@like": [ "L%", "D%" ]
-  // "name@not like": [ "L%", "D%" ]
+  // "name like": [ "L%", "D%" ]
+  // "name !like": [ "L%", "D%" ]
 }
 `
 

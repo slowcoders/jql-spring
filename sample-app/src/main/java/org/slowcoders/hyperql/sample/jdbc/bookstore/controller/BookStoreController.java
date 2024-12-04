@@ -20,9 +20,16 @@ public class BookStoreController extends HyperStorageController.CRUD implements 
     @PostConstruct
     void init() {
         var storage = (JdbcStorage)this.getStorage();
-        storage.addVirtualTable("bookstore.best_seller", best_seller_filter, null, new String[] {"id"});
-        JdbcColumn fkCol = (JdbcColumn) this.getStorage().loadSchema("bookstore.best_seller").getColumn("author_id");
-        fkCol.setJoinedPrimaryColumn_unsafe("author", "bookstore.author", "id");
+        storage.setSortCollation(" COLLATE \"ko_KR.utf8\"");
+        {
+            JdbcColumn fkCol = (JdbcColumn) this.getStorage().loadSchema("bookstore.book").getColumn("publisher_id");
+            fkCol.setJoinedPrimaryColumn_unsafe("publisher", "bookstore.publisher", "id");
+        }
+        {
+            storage.addVirtualTable("bookstore.best_seller", best_seller_filter, null, new String[]{"id"});
+            JdbcColumn fkCol = (JdbcColumn) this.getStorage().loadSchema("bookstore.best_seller").getColumn("author_id");
+            fkCol.setJoinedPrimaryColumn_unsafe("author", "bookstore.author", "id");
+        }
     }
 
     private static final String best_seller_filter = """

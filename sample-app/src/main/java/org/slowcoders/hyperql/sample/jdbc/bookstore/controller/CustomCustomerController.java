@@ -25,12 +25,11 @@ public class CustomCustomerController extends EntitySetController.CRUD<Long> imp
 
 
     @Override
-    public Response find(
+    public Response nodes(
             OutputOptions req,
             @Schema(implementation = Object.class)
             @RequestBody Map<String, Object> filter) throws Exception {
-        Response resp = super.find(req, filter);
-        resp.setProperty("lastExecutedSql", resp.getQuery().getExecutedQuery());
+        Response resp = super.nodes(req, filter);
         return resp;
     }
 

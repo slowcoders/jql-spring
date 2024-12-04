@@ -30,7 +30,7 @@ export class HqlApi {
     }
 
     async find(filter, options) {
-        const url = `${this.baseUrl}/find${to_url_param(options)}`
+        const url = `${this.baseUrl}/nodes${to_url_param(options)}`
         filter = filter ? filter : {}
         const response = await axios.post(url, filter, http_options);
         return response.data;
@@ -80,55 +80,58 @@ export class HqlForm {
         return {
             type: 'textfield',
             key: key,
+            input: false
         }
     }
-    static text(key, label) {
+    static text(key, label, input=true) {
         return {
             type: 'textfield',
             key: key,
             label: label,
             placeholder: label,
-            input: true,
+            defaultValue: null,
+            input,
         }
     }
-    static number(key, label) {
+    static number(key, label, input=true) {
         return {
             type: 'number',
             key: key,
             label: label,
             placeholder: label,
-            input: true,
+            input,
         }
     }
-    static date(key, label) {
+    static date(key, label, input=true) {
         return {
             type: 'datetime',
             key: key,
             label: label,
             placeholder: label,
-            input: true,
+            defaultValue: null,
+            input,
             enableTime: false,
         }
     }
-    static select(key, label, ref) {
+    static select(key, label, ref, input=true) {
         return {
             type: 'select',
             key: key,
             label: label,
             placeholder: label,
-            input: true,
+            input,
             widget: "choicesjs",
             dataRef: ref
         }
     }
-    static tags(key, label, tags) {
+    static tags(key, label, tags, input=true) {
         return {
             type: 'select',
             multiple: true,
             key: key,
             label: label,
             placeholder: label,
-            input: true,
+            input,
             widget: "choicesjs",
             data: { values : tags.map(tag => ({value: tag, label: tag})) }
         }

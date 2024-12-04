@@ -22,13 +22,12 @@ public class BookStoreJpaController extends HyperStorageController.CRUD implemen
     }
 
     @Override
-    public Response find(
+    public Response nodes(
             @PathVariable("table") String table,
             OutputOptions req,
             @Schema(implementation = Object.class)
             @RequestBody Map<String, Object> filter) throws Exception {
-        Response resp = super.find(table, req, filter);
-        resp.setProperty("lastExecutedSql", resp.getQuery().getExecutedQuery());
+        Response resp = super.nodes(table, req, filter);
         return resp;
     }
 

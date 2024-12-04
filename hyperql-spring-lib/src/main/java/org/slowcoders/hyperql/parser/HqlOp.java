@@ -11,7 +11,8 @@ public enum HqlOp {
 
     RE, NOT_RE,
 
-    CONTAINS, INTERSECTS,
+    CONTAINS, OVERLAPS,
+    NOT_CONTAINS, NOT_OVERLAPS,
 
     RE_ignoreCase, NOT_RE_ignoreCase;
 }

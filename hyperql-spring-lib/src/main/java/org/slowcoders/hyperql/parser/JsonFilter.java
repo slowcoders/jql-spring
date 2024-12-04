@@ -1,5 +1,12 @@
 package org.slowcoders.hyperql.parser;
 
+import org.slowcoders.hyperql.HyperSelect;
+import org.slowcoders.hyperql.schema.QColumn;
+import org.slowcoders.hyperql.schema.QSchema;
+
+import java.util.ArrayList;
+import java.util.Map;
+
 class JsonFilter extends EntityFilter {
     private final String key;
 
@@ -32,5 +39,28 @@ class JsonFilter extends EntityFilter {
         return key.substring(key.lastIndexOf('.') + 1);
     }
 
+    private TableFilter getTableFilter() {
+        EntityFilter f = this;
+        while (true) {
+            var table = f.asTableFilter();
+            if (table != null) {
+                return table;
+            }
+            f = f.getParentNode();
+        }
+    }
+    protected void addSelection(HyperSelect.ResultMap resultMap) {
+
+        for (Map.Entry<String, HyperSelect.ResultMap> entry : resultMap.entrySet()) {
+            HyperSelect.ResultMap subMap = entry.getValue();
+            if (subMap.isEmpty()) {
+                var selectedColumns = getTableFilter().getSelectedColumns();
+                selectedColumns.add(new JsonColumn(this, entry.getKey(), null));
+            } else {
+                EntityFilter scope = this.makeSubNode(key, HqlParser.NodeType.Entity);
+                scope.addSelection(subMap);
+            }
+        }
+    }
 
 }

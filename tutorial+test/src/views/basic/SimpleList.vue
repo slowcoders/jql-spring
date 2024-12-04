@@ -36,7 +36,7 @@
 import LessonView from "@/components/LessonView";
 
 const sample_code = `
-/* 아래의 주석을 한 줄씩 해제하면서 검색 결과의 차이를 비교해 보십시오. */
+/* 아래의 주석을 한 줄씩 번갈아 해제하면서 검색 결과의 차이를 비교해 보십시오. */
 const hql_select = "*";
 // const hql_select = "0"
 // const hql_select = "name, book_"

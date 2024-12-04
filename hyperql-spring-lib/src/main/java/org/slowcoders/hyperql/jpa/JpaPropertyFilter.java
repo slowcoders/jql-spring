@@ -11,8 +11,8 @@ import org.slowcoders.hyperql.js.JsType;
 import jakarta.persistence.Id;
 
 public class JpaPropertyFilter extends BeanPropertyWriter {
-    private static final String JQL_RESULT_MAPPING_KEY = RestTemplate.Response.JpaFilter.JQL_RESULT_MAPPING_KEY;
-    private static final String JQL_INCLUDE_ID = "hql-include-id";
+    private static final String HQL_RESULT_MAPPING_KEY = RestTemplate.Response.JpaFilter.HQL_RESULT_MAPPING_KEY;
+    private static final String HQL_INCLUDE_ID = "hql-include-id";
 
     private final BeanPropertyWriter writer;
     private final boolean isId;
@@ -40,9 +40,9 @@ public class JpaPropertyFilter extends BeanPropertyWriter {
                                  JsonGenerator gen,
                                  SerializerProvider prov) throws Exception {
 
-        HyperSelect.ResultMap mapping = (HyperSelect.ResultMap) prov.getAttribute(JQL_RESULT_MAPPING_KEY);
+        HyperSelect.ResultMap mapping = (HyperSelect.ResultMap) prov.getAttribute(HQL_RESULT_MAPPING_KEY);
         if (mapping != null) {
-            boolean include_id = prov.getAttribute(JQL_INCLUDE_ID) != null && (Boolean) prov.getAttribute(JQL_INCLUDE_ID);
+            boolean include_id = prov.getAttribute(HQL_INCLUDE_ID) != null && (Boolean) prov.getAttribute(HQL_INCLUDE_ID);
             String p_name = this.getName();
             Object column = mapping.get(p_name);
             if (column == null) {
@@ -54,16 +54,16 @@ public class JpaPropertyFilter extends BeanPropertyWriter {
                 }
             }
             else if (!isLeaf) {
-                prov.setAttribute(JQL_RESULT_MAPPING_KEY, column);
+                prov.setAttribute(HQL_RESULT_MAPPING_KEY, column);
                 Boolean id_required = (this.getType().getContentType() != null);
                 if (id_required != include_id) {
-                    prov.setAttribute(JQL_INCLUDE_ID, id_required);
+                    prov.setAttribute(HQL_INCLUDE_ID, id_required);
                 }
                 writer.serializeAsField(bean, gen, prov);
                 if (id_required != include_id) {
-                    prov.setAttribute(JQL_INCLUDE_ID, include_id);
+                    prov.setAttribute(HQL_INCLUDE_ID, include_id);
                 }
-                prov.setAttribute(JQL_RESULT_MAPPING_KEY, mapping);
+                prov.setAttribute(HQL_RESULT_MAPPING_KEY, mapping);
                 return;
             }
         }

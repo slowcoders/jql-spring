@@ -3,16 +3,23 @@
     <div>
       <div style="background-color: #F0F0F0">
         <table>
-          <tr>
-            <td>
-              <label class="form-label">Table: </label>
-            </td><td class="input-column">
-              <b-form-select v-model="selectedTable"
-                              :options="sampleTables"
-                              @input="onTableChanged()">
-              </b-form-select>
-            </td>
-          </tr>
+          <tbody>
+            <tr>
+              <td>
+                <label class="form-label">Table: </label>
+              </td><td class="input-column">
+                <b-form-select v-model="selectedTable"
+                                :options="sampleTables"
+                                @input="onTableChanged()">
+                </b-form-select>
+              </td><td width="50%">
+              </td><td class="input-column">
+                <b-button @click="save()">
+                  Save
+                </b-button>
+              </td>
+            </tr>
+          </tbody>  
         </table>
       </div>
       <br>
@@ -26,15 +33,10 @@
 </template>
 
 <script>
-// import CodeMirror from "codemirror-editor-vue3";
-// import "codemirror/mode/javascript/javascript.js";
-// import "codemirror/theme/dracula.css";
 import "choices.js/public/assets/styles/choices.css";
 import "@formio/js/dist/formio.full.css"
+import "@/css/header.css"
 
-import { ref } from "vue";
-
-import axios from "axios";
 import { HqlApi, HqlForm } from "@/api/hqlApi";
 import { Formio } from "@formio/js";
 
@@ -48,14 +50,13 @@ const sampleStorages = [
 
 const sampleTables = [
   "author",
-  "customer",
   "book",
+  "customer",
+  "publisher",
   "book_order",
 ]
 
 export default {
-
-  // components: { CodeMirror },
   data() {
     return {
       showSchemaInfo: false,
@@ -64,44 +65,44 @@ export default {
       selectedStorage: sampleStorages[0],
       selectedTable: sampleTables[0],
       schemaInfo: '',
+      hqlRepo: null,
       columns: [],
     }
   },
 
   mounted() {
-    // this.codeView = this.$refs.codeView.cminstance;
     setTimeout(this.onTableChanged, 10);
   },
 
-  computed: {
-  },
-
   methods : {
-
     async onTableChanged() {
       const vm = this;
       const columns = formSchema[vm.selectedTable];
       await vm.setFormModel(columns);
       const model = {
         components: [ {
-          type: "editgrid",
           label: vm.selectedTable,
           key: "children",
-          input: false,
+          type: "editgrid",
+          input: true,
           components: columns, 
-        }, {
-            type: 'button',
-            action: 'submit',
-            label: 'Submit',
-            theme: 'primary'
+          // templates: {
+          //   row: `<div class=row> 
+          //     {%util.eachComponent(components, function(component) { %}
+          //       <div class="col-sm-2">
+          //         {{ row[component.key] }}
+          //       </div>
+          //     {% }) %}
+          //     </div>`
+          // }
         }]
       }
       const select = columns.map(row => row.key)
-      const api = new HqlApi(`${baseUrl}/bookstore/${vm.selectedTable}`);
-      const res = await api.find(null, {select});
-      console.log("editgrid", res)
+      vm.hqlRepo = new HqlApi(`${baseUrl}/bookstore/${vm.selectedTable}`);
+      const res = await vm.hqlRepo.find(null, {select});
       Formio.createForm(document.getElementById('formio'), model)
-      .then(function(form) {
+      .then((form) => {
+        vm.form = form;
         form.submission = {
           data: {
             children: JSON.parse(JSON.stringify(res.content))
@@ -111,21 +112,24 @@ export default {
           for (const row of submission.data.children) {
             const org = res.content.find((r) => r.id === row.id);
             if (!org) {
-              api.insert(row);
+              vm.hqlRepo.insert(row);
             } else if (JSON.stringify(row) !== JSON.stringify(org)) {
-              api.updateByIdList([row.id], row);
+              vm.hqlRepo.updateByIdList([row.id], row);
             }
           }
           for (const row of res.content) {
             const org = submission.data.children.find((r) => r.id === row.id);
             if (!org) {
-              api.delete(row.id);
+              vm.hqlRepo.delete(row.id);
             }
           }
-          // vm.$forceUpdate();
           return true;          
         });
-      });
+      })
+    },
+
+    save() {
+      this.form.submit();
     },
 
     async setFormModel(columns) {
@@ -133,7 +137,7 @@ export default {
       for (const col of columns) {
         const ref = col.dataRef;
         if (ref) {
-          const api = new HqlApi(`${baseUrl}/bookstore/${ref.table}`);
+          const api = new HqlApi(`${baseUrl}/bookstore/${ref.schema}`);
           const select = ref.value + ',' + ref.label
           const data = await api.find(ref.filter, {select});
           col.data = {
@@ -156,25 +160,26 @@ export default {
 let book_columns = [
   HqlForm.number('id', "아이디"),
   HqlForm.text('title', "제목"),
-  HqlForm.select('author.id', "저자", {
-      table: 'author',
+  HqlForm.select('author_id', "저자", {
+      schema: 'author',
       value: 'id',
       label: 'name'
   }),
-  /*HqlForm.select('publisher.id', "출판사", {
-      table: 'publisher',
+  HqlForm.select('publisher_id', "출판사", {
+      schema: 'publisher',
       value: 'id',
       label: 'name'
-  }),*/
+  }),
   HqlForm.number('price', "가격"),
+  HqlForm.text('customer_.name', "구매자"),
 ]
 
 let author_columns = [
     HqlForm.number('id', "아이디"),
     HqlForm.text('name', "이름"),
     // HqlForm.text('profile.hometown', "출생지"),
-    HqlForm.text('profile.country', "국적"),
-    HqlForm.number('profile.birthYear', "출생년도"),
+    // HqlForm.text('profile.country', "국적"),
+    // HqlForm.number('profile.birthYear', "출생년도"),
 ]
 
 let customer_columns = [
@@ -183,62 +188,31 @@ let customer_columns = [
     HqlForm.tags('memo.favoriteGenre', '선호 장르', ['추리', '스릴러', 'SF', '로맨스', '무협', '공포', '판타지'])
 ]
 
+let publisher_columns = [
+    HqlForm.number('id', "아이디"),
+    HqlForm.text('name', "이름"),
+]
 
 let order_columns = [
-  HqlForm.select('customer.id', "고객", {
-      table: 'customer',
+  HqlForm.select('customer_id', "고객", {
+      schema: 'customer',
       value: 'id',
       label: 'name'
   }),
-  HqlForm.select('book.id', "책", {
-      table: 'book',
+  HqlForm.select('book_id', "책", {
+      schema: 'book',
       value: 'id',
       label: 'title'
   }),
-  // HqlForm.date('date', '주문일')
+  // HqlForm.number('book.price', '가격'),
+  // HqlForm.number('book.publisher.name', '출판사')
 ]
 
 const formSchema = {
   book: book_columns,
   author: author_columns,
   book_order: order_columns,
-  customer: customer_columns
+  customer: customer_columns,
+  publisher: publisher_columns,
 };
-
-
 </script>
-
-<style>
-  form {
-    padding-top: 2em;
-    padding-right: 2em;
-    padding-bottom: 1em;
-    display: grid;
-    grid-template-rows: auto 1fr;
-    height: 100vh;
-    max-height: 100vh;
-  }
-
-  /*.test-result-view .CodeMirror {*/
-  /*  overflow: auto;*/
-  /*  height: 100%;*/
-  /*}*/
-
-  td > label {
-    padding-top: 0.5em;
-  }
-
-  td.input-column {
-    padding-right: 2em;
-  }
-
-  .details {
-    padding-left: 1em;
-    margin-bottom: 0.7em;
-  }
-
-  table td {
-    padding: 5px
-  }
-
-</style>

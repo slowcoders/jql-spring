@@ -17,10 +17,10 @@ describe('And operation', () => {
   })
 
   test.each([
-    { attr: "height@gt", value: 1.2},
-    { attr: "height@lt", value: 2.0},
-    { attr: "mass@gt", value: 60 },
-    { attr: "memo.shoeSize@lt", value: 300 },
+    { attr: "height >", value: 1.2},
+    { attr: "height <", value: 2.0},
+    { attr: "mass >", value: 60 },
+    { attr: "memo.shoeSize <", value: 300 },
     { attr: "memo.homePlanet", value: "Tatooine" }
   ]) ('And 조건 테스트', async ({attr, value}) => {
     filter[attr] = value;

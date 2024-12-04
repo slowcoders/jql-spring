@@ -39,14 +39,14 @@ Finding all person whose first name starts with "Luke"
 ```js
 const DB_TABLE = "customer"
 const hql = { 
-    "name@like": "Luke%"
+    "name like": "Luke%"
 }
-const res = axios.post(`http://localhost:7007/api/hql/bookstore/${DB_TABLE}/find`, hql)
+const res = axios.post(`http://localhost:7007/api/hql/bookstore/${DB_TABLE}/nodes`, hql)
 ```
 ```sh
-curl -X 'POST' 'http://localhost:7007/api/hql/bookstore/customer/find' \
+curl -X 'POST' 'http://localhost:7007/api/hql/bookstore/customer/nodes' \
      -H 'Content-Type: application/json' \
-     -d '{ "name@like": "Luke%" }'
+     -d '{ "name like": "Luke%" }'
 ```
 
 Finding all books of the person named "Luke Skywalker"
@@ -60,39 +60,39 @@ const hql = {
         }
     }
 }
-const res = axios.post(`http://localhost:7007/api/hql/bookstore/${DB_TABLE}/find`, hql)
+const res = axios.post(`http://localhost:7007/api/hql/bookstore/${DB_TABLE}/nodes`, hql)
 ```
 ```sh
-curl -X 'POST' 'http://localhost:7007/api/hql/bookstore/book/find' \
+curl -X 'POST' 'http://localhost:7007/api/hql/bookstore/book/nodes' \
      -H 'Content-Type: application/json' \
      -d '{ "filter": { "customer": { "name": "Luke Skywalker" } } }' 
 ```
 ## JQL operators vs SQL
 ```
 { "id" : 1000 }              /* --> where id = 1000 */ 
-{ "id@is" : 1000 }           /* --> where id = 1000 */ 
-{ "id@not" : 1000 }          /* --> where id != 1000 */ 
+{ "id ==" : 1000 }           /* --> where id = 1000 */ 
+{ "id !=" : 1000 }          /* --> where id != 1000 */ 
 { "id" : [1000, 1001]}       /* --> where id in (1000, 1001) */ 
-{ "id@is" : [1000, 1001]}    /* --> where id in (1000, 1001) */ 
-{ "id@not" : [1000, 1001]}   /* --> where id not in (1000, 1001) */ 
+{ "id ==" : [1000, 1001]}    /* --> where id in (1000, 1001) */ 
+{ "id !=" : [1000, 1001]}   /* --> where id not in (1000, 1001) */ 
 ```
 
 ### like, not like
 ```
-{ "name@like" : "%e" }       /* --> where name like '%e%' */ 
-{ "name@not like" : "%e" }   /* --> where name not like '%e%' */ 
-{ "name@like" : ["%e", "%f"] }       /* --> where name like '%e%' or like '%f%' */ 
-{ "name@not like" : ["%e", "%f"] }   /* --> where name not (like '%e%' or like '%f%') */
+{ "name like" : "%e" }       /* --> where name like '%e%' */ 
+{ "name !like" : "%e" }   /* --> where name not like '%e%' */ 
+{ "name like" : ["%e", "%f"] }       /* --> where name like '%e%' or like '%f%' */ 
+{ "name !like" : ["%e", "%f"] }   /* --> where name not (like '%e%' or like '%f%') */
 ```
 
 ### le, lt, ge, gt, between, not between 
 ```
-{ "id@lt" : 1000 }                      /* --> where id <  1000 */ 
-{ "id@le" : 1000 }                      /* --> where id <= 1000 */ 
-{ "id@gt" : 1000 }                      /* --> where id >  1000 */ 
-{ "id@ge" : 1000 }                      /* --> where id >= 1000 */ 
-{ "id@between" : [1000, 1001] }         /* --> where id >= 1000 and id <= 1001 */ 
-{ "id@not between" : [1000, 10001] }    /* --> where not (id >= 1000 and id <= 1001) */ 
+{ "id <" : 1000 }                      /* --> where id <  1000 */ 
+{ "id <=" : 1000 }                      /* --> where id <= 1000 */ 
+{ "id >" : 1000 }                      /* --> where id >  1000 */ 
+{ "id >=" : 1000 }                      /* --> where id >= 1000 */ 
+{ "id between" : [1000, 1001] }         /* --> where id >= 1000 and id <= 1001 */ 
+{ "id !between" : [1000, 10001] }    /* --> where not (id >= 1000 and id <= 1001) */ 
 ```
 
 ### Automatic table join with JQL.

@@ -1,20 +1,23 @@
 package org.slowcoders.hyperql.parser;
 
 import org.slowcoders.hyperql.HyperSelect;
+import org.slowcoders.hyperql.jdbc.storage.SqlGenerator;
 import org.slowcoders.hyperql.schema.QColumn;
 import org.slowcoders.hyperql.schema.QJoin;
 import org.slowcoders.hyperql.schema.QResultMapping;
 import org.slowcoders.hyperql.schema.QSchema;
+import org.springframework.data.domain.Sort;
 
 import java.util.*;
 
-class TableFilter extends EntityFilter implements QResultMapping {
+public class TableFilter extends EntityFilter implements QResultMapping {
     private final QSchema schema;
     private final QJoin join;
     private final String mappingAlias;
 
     private String[] entityMappingPath;
     private List<QColumn> selectedColumns = null;
+    private List<Sort.Order> orders = new ArrayList<>();
     private boolean hasArrayDescendant;
 
     private static final String[] emptyPath = new String[0];
@@ -39,7 +42,7 @@ class TableFilter extends EntityFilter implements QResultMapping {
         return schema;
     }
 
-    TableFilter asTableFilter() {
+    public TableFilter asTableFilter() {
         return this;
     }
 
@@ -79,12 +82,12 @@ class TableFilter extends EntityFilter implements QResultMapping {
     @Override
     public List<QColumn> getSelectedColumns() {
         if (selectedColumns == null) {
-            if (!getRootNode().isSelectAuto()) {
-                this.selectedColumns = Collections.EMPTY_LIST;
+            if (SqlGenerator.JSON_RS || !getRootNode().isSelectAuto()) {
+                this.selectedColumns = new ArrayList<>();
             }
             else {
                 this.selectedColumns = schema.getBaseColumns();
-                if (this.schema.getExtendedColumns().size() > 0) {
+                if (!SqlGenerator.JSON_RS && this.schema.getExtendedColumns().size() > 0) {
                     for (Map.Entry<String, EntityFilter> entry : this.subFilters.entrySet()) {
                         EntityFilter filter = entry.getValue();
                         if (filter.isJsonNode()) {
@@ -113,11 +116,34 @@ class TableFilter extends EntityFilter implements QResultMapping {
                 this.hasJoinedChildMapping = true;
             } else {
                 subQuery = new JsonFilter(this, jsonColumn.getPhysicalName());
-                this.addSelectedColumn(jsonColumn);
+                if (!SqlGenerator.JSON_RS) {
+                    this.addSelectedColumn(jsonColumn);
+                }
             }
             subFilters.put(key, subQuery);
         }
         return subQuery;
+    }
+
+    protected void addSelectedColumn(String key) {
+        if (key.length() == 1) {
+            List<QColumn> columns;
+            switch (key.charAt(0)) {
+                case HyperSelect.LeafProperties ->
+                        columns = schema.getBaseColumns();
+                case HyperSelect.PrimaryKeys ->
+                        columns = schema.getPKColumns();
+                default ->
+                        columns = null;
+            }
+            if (columns != null) {
+                for (var col : columns) {
+                    this.addSelectedColumn(col);
+                }
+                return;
+            }
+        }
+        this.addSelectedColumn(this.schema.getColumn(key));
     }
 
     private void addSelectedColumn(QColumn column) {
@@ -160,6 +186,17 @@ class TableFilter extends EntityFilter implements QResultMapping {
         return this.hasArrayDescendant;
     }
 
+    public List<TableFilter> getJoinedFilters() {
+        var list = new ArrayList<TableFilter>();
+        for (EntityFilter q : subFilters.values()) {
+            TableFilter table = q.asTableFilter();
+            if (table != null) {
+                list.add(table);
+            }
+        }
+        return list;
+    }
+
     protected void gatherColumnMappings(List<QResultMapping> columnGroupMappings) {
         columnGroupMappings.add(this);
         this.hasArrayDescendant = false;
@@ -185,17 +222,14 @@ class TableFilter extends EntityFilter implements QResultMapping {
 
         for (Map.Entry<String, HyperSelect.ResultMap> entry : resultMap.entrySet()) {
             String key = entry.getKey();
-            HyperSelect.ResultMap subMap = entry.getValue();
             QColumn column = schema.findColumn(key);
             // TODO. Json Selection. is subMap required??
-            if (subMap.isEmpty() && column != null) {
-                if (!allLeaf || !schema.getBaseColumns().contains(column)) {
-                    this.addSelectedColumn(column);
-                }
-            }
-            else {
+            HyperSelect.ResultMap subMap = entry.getValue();
+            if (column != null && subMap.isEmpty()) {
+                this.addSelectedColumn(column);
+            } else {
                 EntityFilter scope = this.makeSubNode(key, HqlParser.NodeType.Entity);
-                scope.addSelection((HyperSelect.ResultMap)entry.getValue());
+                scope.addSelection(subMap);
             }
         }
     }
@@ -205,4 +239,20 @@ class TableFilter extends EntityFilter implements QResultMapping {
         return join != null ? join.getJsonKey() : schema.getTableName();
     }
 
+    public void addOrderBy(Sort.Order order) {
+        this.orders.add(order);
+    }
+
+    public List<Sort.Order> getOrders() {
+        return orders;
+    }
+
+    public boolean hasAnySelectSubColumns() {
+        if (this.selectedColumns != null && !this.selectedColumns.isEmpty()) return true;
+        for (var f : subFilters.values()) {
+            TableFilter tf = f.asTableFilter();
+            if (tf != null && tf.hasAnySelectSubColumns()) return true;
+        }
+        return false;
+    }
 }

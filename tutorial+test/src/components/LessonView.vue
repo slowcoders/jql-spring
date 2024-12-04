@@ -2,57 +2,61 @@
   <form>
     <div>
       <div style="background-color: #F0F0F0">
-        <table><tr><td>
-          <label class="form-label">Storage: </label>
-        </td><td class="input-column">
-          <b-form-select v-model="selectedStorage"
-                         :options="storageNames"
-                         :disabled="disableTableSelector"
-                         @input="onTableChanged()">
-          </b-form-select>
-        </td><td>
-         <label class="form-label">Table: </label>
-       </td><td class="input-column">
-         <b-form-select v-model="selectedTable"
-                        :options="tableNames"
-                        :disabled="disableTableSelector"
-                        @input="onTableChanged()">
-         </b-form-select>
-        </td><td>
-          <label class="form-label">Select: </label>
-        </td><td class="input-column">
-          <b-dropdown text="Columns" ref="dropDown">
-            <b-dropdown-item @click.stop="">
-              <b-form-checkbox-group v-model="selectedColumns"
-                                       :options="selectableColumns"
-                                       stacked
-                                       @change="onSelectChanged"/>
-            </b-dropdown-item>
-          </b-dropdown>
-        </td><td>
-          <label class="form-label">Sort: </label>
-        </td><td class="input-column">
-          <b-form-select
-                         class="form-control"
-                         v-model="first_sort"
-                         @input="onTableChanged()">
-            <b-form-select-option :value="''" key="-1">
-               Sort Options
-            </b-form-select-option>
-            <b-form-select-option
-                v-for="(value, i) in sortOptions"
-                :key="i"
-                :value="value.trim()">
-              {{ value }}
-            </b-form-select-option>
-          </b-form-select>
-        </td><td>
-          <label class="form-label">Limit: </label>
-        </td><td class="input-column">
-          <b-form-input v-model="limit"
-                        @input="onTableChanged()"/>
-        </td>
-        </tr>
+        <table>
+          <tbody>
+            <tr>
+              <td>
+                <label class="form-label">Storage: </label>
+              </td><td class="input-column">
+                <b-form-select v-model="selectedStorage"
+                              :options="storageNames"
+                              :disabled="disableTableSelector"
+                              @input="onTableChanged()">
+                </b-form-select>
+              </td><td>
+              <label class="form-label">Table: </label>
+            </td><td class="input-column">
+              <b-form-select v-model="selectedTable"
+                              :options="tableNames"
+                              :disabled="disableTableSelector"
+                              @input="onTableChanged()">
+              </b-form-select>
+              </td><td>
+                <label class="form-label">Select: </label>
+              </td><td class="input-column">
+                <b-dropdown text="Columns" ref="dropDown">
+                  <b-dropdown-item @click.stop="">
+                    <b-form-checkbox-group v-model="selectedColumns"
+                                            :options="selectableColumns"
+                                            stacked
+                                            @change="onSelectChanged"/>
+                  </b-dropdown-item>
+                </b-dropdown>
+              </td><td>
+                <label class="form-label">Sort: </label>
+              </td><td class="input-column">
+                <b-form-select
+                              class="form-control"
+                              v-model="first_sort"
+                              @input="onTableChanged()">
+                  <b-form-select-option :value="''" key="-1">
+                    Sort Options
+                  </b-form-select-option>
+                  <b-form-select-option
+                      v-for="(value, i) in sortOptions"
+                      :key="i"
+                      :value="value.trim()">
+                    {{ value }}
+                  </b-form-select-option>
+                </b-form-select>
+              </td><td>
+                <label class="form-label">Limit: </label>
+              </td><td class="input-column">
+                <b-form-input v-model="limit"
+                              @input="onTableChanged()"/>
+              </td>
+            </tr>
+          </tbody>
         </table>
       </div>
       <br>
@@ -224,7 +228,7 @@ const dbTable = '${vm.selectedTable}'
 const AUTO = ""
 ${vm.js_code}
 const hql_param = \`${vm.make_http_param()}\`
-this.http_post(\`\${baseUrl}/\${dbSchema}/\${dbTable}/find?\${hql_param}\`, hql_filter);
+this.http_post(\`\${baseUrl}/\${dbSchema}/\${dbTable}/nodes?\${hql_param}\`, hql_filter);
 ${vm.schemaInfo}`
     },
 
@@ -310,8 +314,7 @@ ${vm.schemaInfo}`
         vm.cntTest ++;
         const header = "ex " + vm.cntTest + ") result: " + res.data.content.length + "\n\n";
         const results = JSON.stringify(res.data.content, null, 2);
-        const sql = res.data.metadata?.lastExecutedSql ? "\n\n---------------\nexecuted sql:\n" + res.data.metadata.lastExecutedSql : "";
-        vm.resultView.setValue(header + results + sql);
+        vm.resultView.setValue(header + results);
       }).catch(vm.show_http_error)
     }
   }

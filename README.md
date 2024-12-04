@@ -6,9 +6,14 @@
 * node.js version 14 or later
 * npm version 8 or later
 
-### Build tutorial sample application
+### Build tutorial sample application 
 ```sh
+# execute sample with default db(=postgres)
 sh build_and_run_tutorial.sh
+
+# execute sample with specific db
+sh build_and_run_tutorial.sh postgres
+sh build_and_run_tutorial.sh mysql
 ```
 
 ### See tutorial

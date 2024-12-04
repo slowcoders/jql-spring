@@ -18,11 +18,11 @@ import LessonView from "@/components/LessonView";
 const sample_code = `
 const hql_select = AUTO;
 
-/* 아래의 주석을 한 줄씩 해제하면서 검색 결과의 차이를 비교해 보십시오. */
+/* 아래의 주석을 한 줄씩 차례로 해제하면서 검색 결과의 차이를 비교해 보십시오. */
 const hql_filter = {
-  //  "height@gt": 1.2,
-  //  "height@lt": 2.0,
-  //  "mass@gt": 60,
+  //  "height >": 1.2,
+  //  "height <": 2.0,
+  //  "mass >": 60,
   //  "memo.homePlanet": "Tatooine",
 }
 `

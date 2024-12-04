@@ -10,6 +10,7 @@ import org.slowcoders.hyperql.parser.HqlOp;
 import org.slowcoders.hyperql.schema.QColumn;
 import org.slowcoders.hyperql.schema.QSchema;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -27,24 +28,64 @@ public class MySqlGenerator extends SqlGenerator {
 
     protected String toSqlExpression(HqlOp operator) {
         return switch (operator) {
-            case RE_ignoreCase -> " REGEXP ";
-            case NOT_RE_ignoreCase -> " NOT REGEXP ";
+            case RE, RE_ignoreCase -> " REGEXP ";
+            case NOT_RE, NOT_RE_ignoreCase -> " NOT REGEXP ";
             default -> super.toSqlExpression(operator);
         };
     }
 
     @Override
+    public void visitCompareArray(QColumn column, HqlOp operator, Collection values) {
+        boolean isNot = false;
+        switch (operator) {
+            case NOT_CONTAINS:
+                sw.write("NOT ");
+            case CONTAINS:
+                sw.write("(");
+                for (var v : values) {
+                    sw.writeValue(v);
+                    sw.write(" MEMBER OF(");
+                    writeQualifiedColumnName(column, values);
+                    sw.write(") AND ");
+                }
+                sw.shrinkLength(5);
+                sw.write(")");
+                break;
+
+            case NOT_OVERLAPS:
+                sw.write("NOT ");
+            case OVERLAPS:
+                sw.write("JSON_OVERLAPS(");
+                writeQualifiedColumnName(column, values);
+                sw.write(", JSON_ARRAY(");
+                sw.writeValues(values);
+                sw.write(")");
+                sw.write(")");
+                break;
+        }
+    }
+
+    @Override
+    protected String getJsonArrayAggregateFunction() {
+        return "JSON_ARRAYAGG";
+    }
+
+    @Override
+    protected String getJsonBuildArrayFunction() {
+        return "JSON_ARRAY";
+    }
+
+    @Override
     public void visitPredicate(QColumn column, HqlOp operator, Object value) {
         switch (operator) {
-            case RE:
-            case NOT_RE:
+            case NOT_RE: case NOT_RE_ignoreCase:
+                sw.write(" NOT");
+            case RE: case RE_ignoreCase:
                 assert (value != null);
-                if (operator == HqlOp.NOT_RE) {
-                    sw.write(" NOT");
-                }
                 sw.write(" REGEXP_LIKE(");
+                boolean ic = (operator == HqlOp.NOT_RE_ignoreCase || operator == HqlOp.RE_ignoreCase);
                 this.writeQualifiedColumnName(column, value);
-                sw.write(", ").writeQuoted(value).write(", 'c')");
+                sw.write(", ").writeQuoted(value).write(ic ? ", 'i')" : ", 'c')");
                 break;
             default:
                 super.visitPredicate(column, operator, value);
@@ -97,7 +138,7 @@ public class MySqlGenerator extends SqlGenerator {
         return sql;
     }
 
-    protected void writeJsonPath(EntityFilter node, QColumn column, JsType valueType) {
+    protected void writeQualifiedJsonPath(EntityFilter node, QColumn column, JsType valueType) {
         writeJsonPath(node);
         sw.write(column.getJsonKey()).write('\'');
     }

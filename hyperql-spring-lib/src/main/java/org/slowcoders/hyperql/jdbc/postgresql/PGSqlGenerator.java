@@ -44,15 +44,15 @@ public class PGSqlGenerator extends SqlGenerator {
         /**
          * '?&' 은 text[]를 인자로 받아 top-level object/array 의 key(array 는 value) 존재 확인용. (json 전용)
          * '@>' 은 json object 및 array 를 key/value 일치 여부 확인용. (json 이 아니면, array 전용)
-         *  && 는 두 pg-array 간의 intersect 여부 확인용 (그러나, 현재 json_array 를 pg_array 로 casting 하는 것은 불가)
+         *  && 는 두 pg-array 간의 overlap 여부 확인용 (그러나, 현재 json_array 를 pg_array 로 casting 하는 것은 불가)
          */
         return switch (operator) {
             case RE -> " ~ ";
             case NOT_RE -> " !~ ";
             case RE_ignoreCase -> " ~* ";
             case NOT_RE_ignoreCase -> " !~* ";
-            case CONTAINS -> " ?& ";
-            case INTERSECTS -> " ?| ";
+            case CONTAINS, NOT_CONTAINS -> " ?& ";
+            case OVERLAPS, NOT_OVERLAPS -> " ?| ";
             default -> super.toSqlExpression(operator);
         };
 
@@ -102,7 +102,7 @@ public class PGSqlGenerator extends SqlGenerator {
         return sql;
     }
 
-    protected void writeJsonPath(EntityFilter node, QColumn column, JsType valueType) {
+    protected void writeQualifiedJsonPath(EntityFilter node, QColumn column, JsType valueType) {
         sw.write('(');
         writeJsonPath(node);
         if (valueType == JsType.Text) {
@@ -119,12 +119,25 @@ public class PGSqlGenerator extends SqlGenerator {
 
     @Override
     public void visitCompareArray(QColumn column, HqlOp operator, Collection values) {
+        boolean isNot = (operator  == HqlOp.NOT_CONTAINS || operator == HqlOp.NOT_OVERLAPS);
+        if (isNot) sw.write("NOT (");
         writeQualifiedColumnName(column, values);
         String op = toSqlExpression(operator);
         sw.write(op);
         sw.write("ARRAY [");
         sw.writeValues(values);
         sw.write("]");
+        if (isNot) sw.write(")");
+    }
+
+    @Override
+    protected String getJsonArrayAggregateFunction() {
+        return "json_agg";
+    }
+
+    @Override
+    protected String getJsonBuildArrayFunction() {
+        return "json_build_array";
     }
 
     protected void writeTypeCast(JsType vf) {

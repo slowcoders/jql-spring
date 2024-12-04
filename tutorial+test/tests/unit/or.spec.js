@@ -11,9 +11,9 @@ describe('Or operation', () => {
   let last_count;
 
   const too_small_or_too_tall = {
-    "@or": {
-      "height@lt": normal_height[MIN],
-      "height@gt": normal_height[MAX]
+    " or": {
+      "height <": normal_height[MIN],
+      "height >": normal_height[MAX]
     }
   }
 
@@ -26,9 +26,9 @@ describe('Or operation', () => {
   });
 
   const too_light_or_too_heavy = {
-    "@or": {
-      "mass@lt": normal_mass[MIN],
-      "mass@gt": normal_mass[MAX]
+    " or": {
+      "mass <": normal_mass[MIN],
+      "mass >": normal_mass[MAX]
     }
   }
 
@@ -42,9 +42,9 @@ describe('Or operation', () => {
 
 
   const too_small_or_too_heavy = {
-    "@or": {
-      "height@lt": normal_height[MIN],
-      "mass@gt": normal_mass[MAX]
+    " or": {
+      "height <": normal_height[MIN],
+      "mass >": normal_mass[MAX]
     }
   }
 
@@ -57,7 +57,7 @@ describe('Or operation', () => {
   });
 
   const too_small_or_too_tall__AND__too_light_or_too_heavy = {
-    "@and": [
+    " and": [
       too_small_or_too_tall,
       too_light_or_too_heavy
     ]

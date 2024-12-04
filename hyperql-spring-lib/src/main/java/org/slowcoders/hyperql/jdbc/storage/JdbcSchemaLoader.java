@@ -68,11 +68,14 @@ public abstract class JdbcSchemaLoader {
         int next_key_seq = 1;
         while (rs.next()) {
             String key = rs.getString("column_name");
-            int seq = rs.getInt("key_seq");
-            if (seq != next_key_seq) {
-                throw new RuntimeException("something wrong");
+            if (false) {
+                // postgresql 에서만 동작.
+                int seq = rs.getInt("key_seq");
+                if (seq != next_key_seq) {
+                    throw new RuntimeException("something wrong");
+                }
+                next_key_seq++;
             }
-            next_key_seq ++;
             keys.add(key);
         }
         return keys;
@@ -295,7 +298,7 @@ public abstract class JdbcSchemaLoader {
     }
 
     private static String unquoteToken(String s) {
-        if (s.length() > 0) {
+        if (s != null && s.length() > 0) {
             if (s.charAt(0) == '"') {
                 assert (s.charAt(s.length() - 1) == '"');
                 s = s.substring(1, s.length() - 1);
@@ -344,7 +347,7 @@ public abstract class JdbcSchemaLoader {
         int last_dot_p = tableName.lastIndexOf('.');
         int first_dot_p = tableName.lastIndexOf('.', last_dot_p - 1);
         String simpleName = tableName.substring(last_dot_p + 1);
-        String schema = last_dot_p < 0 ? this.defaultSchema : tableName.substring(first_dot_p + 1, last_dot_p);
+        String schema = last_dot_p < 0 || !schemaSupported ? this.defaultSchema : tableName.substring(first_dot_p + 1, last_dot_p);
         String catalog = first_dot_p < 0 ? this.defaultCatalog : tableName.substring(0, first_dot_p);
         return new TablePath(catalog, schema, simpleName);
     }

@@ -30,6 +30,11 @@ public class Book implements java.io.Serializable {
 
     @Getter @Setter
     @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "publisher_id", nullable = true, referencedColumnName = "id")
+    private Publisher publisher;
+
+    @Getter @Setter
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "author_id", nullable = true, referencedColumnName = "id",
             foreignKey = @ForeignKey(name = "fk_author_id_2_pk_author__id"))
     private Author author;

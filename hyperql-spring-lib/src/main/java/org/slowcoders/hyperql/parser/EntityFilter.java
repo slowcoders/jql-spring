@@ -49,10 +49,10 @@ public abstract class EntityFilter {
 
     protected abstract String getColumnName(String key);
 
-    TableFilter asTableFilter() { return null; }
+    public TableFilter asTableFilter() { return null; }
 
 
-    final EntityFilter getFilterNode(String key, HqlParser.NodeType nodeType) {
+    public final EntityFilter getFilterNode(String key, HqlParser.NodeType nodeType) {
         if (key == null) return this;
 
         EntityFilter scope = this;

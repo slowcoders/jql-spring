@@ -1,0 +1,31 @@
+form {
+    padding-top: 2em;
+    padding-right: 2em;
+    padding-bottom: 1em;
+    display: grid;
+    grid-template-rows: auto 1fr;
+    height: 100vh;
+    max-height: 100vh;
+}
+
+/*.test-result-view .CodeMirror {*/
+/*  overflow: auto;*/
+/*  height: 100%;*/
+/*}*/
+
+td>label {
+    padding-top: 0.5em;
+}
+
+td.input-column {
+    padding-right: 2em;
+}
+
+.details {
+    padding-left: 1em;
+    margin-bottom: 0.7em;
+}
+
+table td {
+    padding: 5px
+}

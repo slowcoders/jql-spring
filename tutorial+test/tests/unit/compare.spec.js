@@ -22,7 +22,7 @@ describe('Comapre', () => {
 
   test('@is (explicit)', async () => {
     const filter = {
-      "id@is": ref.id
+      "id ==": ref.id
     }
     const res = await customerRepo.find(filter);
     const customers = res.content;
@@ -31,7 +31,7 @@ describe('Comapre', () => {
 
   test('@not', async () => {
     const filter = {
-      "id@not": ref.id
+      "id !=": ref.id
     }
     const count = await customerRepo.count();
     const res = await customerRepo.find(filter);
@@ -41,7 +41,7 @@ describe('Comapre', () => {
 
   test('@le (less or equals)', async () => {
     const filter = {
-      "id@le": ref.id
+      "id <=": ref.id
     }
     const res = await customerRepo.find(filter);
     const customers = res.content;
@@ -52,7 +52,7 @@ describe('Comapre', () => {
 
   test('@lt (less than)', async () => {
     const filter = {
-      "id@lt": ref.id
+      "id <": ref.id
     }
     const res = await customerRepo.find(filter);
     const customers = res.content;
@@ -63,7 +63,7 @@ describe('Comapre', () => {
 
   test('@ge (greater or equals)', async () => {
     const filter = {
-      "id@ge": ref.id
+      "id >=": ref.id
     }
     const res = await customerRepo.find(filter);
     const customers = res.content;
@@ -74,7 +74,7 @@ describe('Comapre', () => {
 
   test('@gt (greater than)', async () => {
     const filter = {
-      "id@gt": ref.id
+      "id >": ref.id
     }
     const res = await customerRepo.find(filter);
     const customers = res.content;
@@ -85,8 +85,8 @@ describe('Comapre', () => {
 
   test('@ge && @le', async () => {
     const filter = {
-      "id@ge": ref.id,
-      "id@le": ref.id + 1
+      "id >=": ref.id,
+      "id <=": ref.id + 1
     }
     const res = await customerRepo.find(filter);
     const customers = res.content;
@@ -98,7 +98,7 @@ describe('Comapre', () => {
 
   test('@between', async () => {
     const filter = {
-      "id@between": [ref.id, ref.id + 1]
+      "id between": [ref.id, ref.id + 1]
     }
     const res = await customerRepo.find(filter);
     const customers = res.content;
@@ -109,9 +109,9 @@ describe('Comapre', () => {
     }
   });    
 
-  test('@not between', async () => {
+  test(' !between', async () => {
     const filter = {
-      "id@not between": [ref.id, ref.id + 1]
+      "id !between": [ref.id, ref.id + 1]
     }
     const res = await customerRepo.find(filter);
     const customers = res.content;
@@ -124,7 +124,7 @@ describe('Comapre', () => {
   test('@like', async () => {
     const name_start = ref.name.substring(0, 4);
     const filter = {
-      "name@like": name_start + "%"
+      "name like": name_start + "%"
     }
     const res = await customerRepo.find(filter);
     const customers = res.content;
@@ -135,10 +135,10 @@ describe('Comapre', () => {
     }
   });    
 
-  test('@not like', async () => {
+  test(' !like', async () => {
     const name_start = ref.name.substring(0, 4);
     const filter = {
-      "name@not like": name_start + "%"
+      "name !like": name_start + "%"
     }
     const res = await customerRepo.find(filter);
     const customers = res.content;
@@ -152,7 +152,7 @@ describe('Comapre', () => {
   test('@re', async () => {
     const name_start = ref.name.substring(0, 4);
     const filter = {
-      "name@re": name_start + ".*"
+      "name re": name_start + ".*"
     }
     const res = await customerRepo.find(filter);
     const customers = res.content;
@@ -166,7 +166,7 @@ describe('Comapre', () => {
   test('@not re', async () => {
     const name_start = ref.name.substring(0, 4);
     const filter = {
-      "name@not re": name_start + ".*"
+      "name !re": name_start + ".*"
     }
     const res = await customerRepo.find(filter);
     const customers = res.content;
@@ -180,7 +180,7 @@ describe('Comapre', () => {
   test('@re/i', async () => {
     const name_start = ref.name.substring(0, 4);
     const filter = {
-      "name@re/i": name_start.toUpperCase() + ".*"
+      "name re/i": name_start.toUpperCase() + ".*"
     }
     const res = await customerRepo.find(filter);
     const customers = res.content;
@@ -194,7 +194,7 @@ describe('Comapre', () => {
   test('@not re/i', async () => {
     const name_start = ref.name.substring(0, 4);
     const filter = {
-      "name@not re/i": name_start.toUpperCase() + ".*"
+      "name !re/i": name_start.toUpperCase() + ".*"
     }
     const res = await customerRepo.find(filter);
     const customers = res.content;

@@ -28,9 +28,9 @@
     예제) bookstore.customer Table 에서 "Luke" 로 시작하는 Entity 검색하기.
     <div class="code">
       <code>
-        curl -X 'POST' 'http://localhost:7007/api/hql/bookstore/customer/find' \<br>
+        curl -X 'POST' 'http://localhost:7007/api/hql/bookstore/customer/nodes' \<br>
         -H 'Content-Type: application/json' \<br>
-        -d '{ "name@like": "Luke%" }'
+        -d '{ "name like": "Luke%" }'
       </code>
     </div>
     <p/>
