@@ -24,10 +24,12 @@ const hql_filter = { "memo" : { "shoeSize >=" : 270 } };
 
 /* 판타지와 무협 소설을 모두 좋아하는 독자 검색 */
 // const hql_filter = {  "memo" : { "favoriteGenre contains" : ["무협", "판타지"] } };
+/* 반대의 경우 */
 // const hql_filter = {  "memo" : { "favoriteGenre !contains" : ["무협", "판타지"] } };
 
 /* 판타지 또는 로맨스 소설 중 한 가지 이상을 좋아하는 독자 검색 */
 // const hql_filter = {  "memo" : { "favoriteGenre overlaps" : ["판타지", "로맨스"] } };
+/* 반대의 경우 */
 // const hql_filter = {  "memo" : { "favoriteGenre !overlaps" : ["판타지", "로맨스"] } };
 `
 

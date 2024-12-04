@@ -14,8 +14,8 @@
                 </b-form-select>
               </td><td width="50%">
               </td><td class="input-column">
-                <b-button @click="save()">
-                  Save
+                <b-button variant="success" @click="save()">
+                  Sync
                 </b-button>
               </td>
             </tr>
@@ -112,7 +112,7 @@ export default {
           for (const row of submission.data.children) {
             const org = res.content.find((r) => r.id === row.id);
             if (!org) {
-              vm.hqlRepo.insert(row);
+              vm.hqlRepo.insert(row, 'ignore');
             } else if (JSON.stringify(row) !== JSON.stringify(org)) {
               vm.hqlRepo.updateByIdList([row.id], row);
             }
