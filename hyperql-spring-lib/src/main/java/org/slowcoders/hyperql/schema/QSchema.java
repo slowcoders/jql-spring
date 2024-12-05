@@ -1,8 +1,6 @@
 package org.slowcoders.hyperql.schema;
 
-import org.slowcoders.hyperql.AutoSelectable;
-import org.slowcoders.hyperql.HyperRepository;
-import org.slowcoders.hyperql.HyperStorage;
+import org.slowcoders.hyperql.*;
 
 import java.lang.reflect.Field;
 import java.util.*;
@@ -254,5 +252,9 @@ public abstract class QSchema {
     public final boolean hasProperty(String name) {
         return this.findColumn(name) != null ||
                 this.getEntityJoinBy(name) != null;
+    }
+
+    public JqlAccessGuard getAccessGuard(JqlAccessType jqlAccessType) {
+        return null;
     }
 }

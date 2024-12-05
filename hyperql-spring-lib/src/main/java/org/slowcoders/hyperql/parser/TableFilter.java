@@ -1,6 +1,8 @@
 package org.slowcoders.hyperql.parser;
 
 import org.slowcoders.hyperql.HyperSelect;
+import org.slowcoders.hyperql.JqlAccessGuard;
+import org.slowcoders.hyperql.JqlAccessType;
 import org.slowcoders.hyperql.jdbc.storage.SqlGenerator;
 import org.slowcoders.hyperql.schema.QColumn;
 import org.slowcoders.hyperql.schema.QJoin;
@@ -158,6 +160,12 @@ public class TableFilter extends EntityFilter implements QResultMapping {
             this.selectedColumns = new ArrayList<>(this.selectedColumns);
         }
         this.selectedColumns.add(column);
+    }
+
+    public String getAccessFilterSql(JqlAccessType jqlAccessType) {
+        JqlAccessGuard acl = this.schema.getAccessGuard(jqlAccessType);
+        if (acl == null) return null;
+        return acl.getFilterSql(this.mappingAlias, this.selectedColumns);
     }
 
     @Override

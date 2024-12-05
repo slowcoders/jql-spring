@@ -1,10 +1,11 @@
 package org.slowcoders.hyperql.sample.jdbc.bookstore.controller;
 
 import jakarta.annotation.PostConstruct;
-import org.slowcoders.hyperql.HyperStorage;
 import org.slowcoders.hyperql.HyperStorageController;
+import org.slowcoders.hyperql.JqlAccessType;
 import org.slowcoders.hyperql.jdbc.JdbcStorage;
 import org.slowcoders.hyperql.jdbc.storage.JdbcColumn;
+import org.slowcoders.hyperql.jdbc.storage.JdbcSchema;
 import org.springframework.core.convert.ConversionService;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -29,6 +30,12 @@ public class BookStoreController extends HyperStorageController.CRUD implements 
             storage.addVirtualTable("bookstore.best_seller", best_seller_filter, null, new String[]{"id"});
             JdbcColumn fkCol = (JdbcColumn) this.getStorage().loadSchema("bookstore.best_seller").getColumn("author_id");
             fkCol.setJoinedPrimaryColumn_unsafe("author", "bookstore.author", "id");
+        }
+        {
+            JdbcSchema schema = (JdbcSchema) this.getStorage().loadSchema("bookstore.customer");
+            schema.setAccessGuard(JqlAccessType.Read, (alias, columns) -> {
+                return "true and true";
+            });
         }
     }
 
