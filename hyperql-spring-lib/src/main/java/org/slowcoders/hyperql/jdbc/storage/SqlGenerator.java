@@ -66,8 +66,64 @@ public abstract class SqlGenerator extends SqlConverter implements QueryGenerato
         }
         else {
             JsType valueType = value == null ? null : JsType.of(value.getClass());
-            writeQualifiedJsonPath(currentNode, column, valueType);
+            if (!isNativeQuery) {
+                writeQualifiedJsonPath_pjql(currentNode, column, valueType);
+            } else {
+                writeQualifiedJsonPath(currentNode, column, valueType);
+            }
         }
+    }
+
+    private void writeQualifiedJsonPath_pjql(EntityFilter currentNode, QColumn column, JsType valueType) {
+        sw.write("CAST(jsonb_extract_path_text(");
+        writeJsonPath_pjql(currentNode);
+        sw.writeQuoted(column.getJsonKey());
+        sw.write(") as ");
+        writeTypeText_pjql(valueType);
+        sw.write(")");
+    }
+
+    private void writeTypeText_pjql(JsType vf) {
+        switch (vf) {
+            case Boolean:
+                sw.write("Boolean");
+                break;
+            case Integer:
+                sw.write("int");
+                break;
+            case Float:
+                sw.write("Float");
+                break;
+            case Date:
+                sw.write("Date");
+                break;
+            case Time:
+                sw.write("time");
+                break;
+            case Timestamp:
+                sw.write("timestamp");
+                break;
+            case Text:
+                sw.write("text");
+                break;
+            case Object:
+            case Array:
+                sw.write("object");
+                break;
+        }
+    }
+
+    private void writeJsonPath_pjql(EntityFilter node) {
+        if (node.isJsonNode() && node.getParentNode().asTableFilter() == null) {
+            EntityFilter parent = node.getParentNode();
+            writeJsonPath_pjql(parent);
+        }
+        if (node.getParentNode().asTableFilter() == null) {
+            sw.writeQuoted(node.getMappingAlias());
+        } else {
+            sw.write(node.getMappingAlias());
+        }
+        sw.write(", ");
     }
 
     protected void writeQualifiedColumnName(QColumn column, Object value) {

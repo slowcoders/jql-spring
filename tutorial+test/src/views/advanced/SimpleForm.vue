@@ -171,7 +171,6 @@ let book_columns = [
       label: 'name'
   }),
   HqlForm.number('price', "가격"),
-  // HqlForm.text('customer_.name', "구매자"), 미구현!!
 ]
 
 let author_columns = [
