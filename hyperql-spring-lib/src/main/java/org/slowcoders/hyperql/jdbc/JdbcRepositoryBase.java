@@ -91,7 +91,7 @@ public abstract class JdbcRepositoryBase<ID> extends HyperRepository<ID> {
         }
         JdbcQuery query = (JdbcQuery) query0;
         Class jpaEntityType = query.getJpaEntityType();
-        boolean isNative = jpaEntityType == null || outputFormat != OutputFormat.Object;
+        boolean isNative = jpaEntityType == null || Map.class.isAssignableFrom(jpaEntityType) || outputFormat != OutputFormat.Object;
         boolean isRepeat = (query.getExecutedQuery() != null && query.getExtraInfo() == (Boolean)isNative);
 
         String sql = isRepeat ? query.getExecutedQuery() :
@@ -126,7 +126,7 @@ public abstract class JdbcRepositoryBase<ID> extends HyperRepository<ID> {
     protected RestTemplate.Response execute(HyperQuery query0, JdbcResultMapper<?> rsExtractor) {
         JdbcQuery query = (JdbcQuery) query0;
         Class jpaEntityType = query.getJpaEntityType();
-        boolean isNative = jpaEntityType == null;// || rsExtractor != null;
+        boolean isNative = jpaEntityType == null || Map.class.isAssignableFrom(jpaEntityType);// || rsExtractor != null;
         boolean isRepeat = (query.getExecutedQuery() != null && query.getExtraInfo() == (Boolean)isNative);
 
         String sql = isRepeat ? query.getExecutedQuery() :
