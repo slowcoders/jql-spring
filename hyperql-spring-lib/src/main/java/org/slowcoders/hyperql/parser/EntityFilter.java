@@ -1,7 +1,6 @@
 package org.slowcoders.hyperql.parser;
 
 import org.slowcoders.hyperql.HyperSelect;
-import org.slowcoders.hyperql.JqlAccessType;
 import org.slowcoders.hyperql.schema.QSchema;
 
 import java.util.HashMap;
@@ -85,7 +84,7 @@ public abstract class EntityFilter {
 
     protected void addSelection(HyperSelect.ResultMap resultMap) {}
 
-    public String getAccessFilterSql(JqlAccessType jqlAccessType) {
+    public String getSqlToCheckReadable() {
         return null;
     }
 }

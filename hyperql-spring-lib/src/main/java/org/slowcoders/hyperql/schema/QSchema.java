@@ -254,7 +254,7 @@ public abstract class QSchema {
                 this.getEntityJoinBy(name) != null;
     }
 
-    public JqlAccessGuard getAccessGuard(JqlAccessType jqlAccessType) {
+    public EntityAccessGuard getAccessGuard() {
         return null;
     }
 }

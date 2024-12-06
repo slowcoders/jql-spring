@@ -62,9 +62,9 @@ public class JdbcQuery<ENTITY> extends HyperQuery<ENTITY> {
         return table.find(this, outputType);
     }
 
-    public RestTemplate.Response execute(OutputFormat outputType) {
-        return table.execute(this, outputType);
-    }
+//    public List<ENTITY> execute(OutputFormat outputType) {
+//        return (List)table.execute(this, outputType);
+//    }
 
 
     @Override

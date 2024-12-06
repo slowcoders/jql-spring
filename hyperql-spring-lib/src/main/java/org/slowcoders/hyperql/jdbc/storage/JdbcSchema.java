@@ -2,8 +2,8 @@ package org.slowcoders.hyperql.jdbc.storage;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import org.slowcoders.hyperql.HyperRepository;
-import org.slowcoders.hyperql.JqlAccessGuard;
-import org.slowcoders.hyperql.JqlAccessType;
+import org.slowcoders.hyperql.schema.EntityAccessGuard;
+import org.slowcoders.hyperql.schema.EntityAccessType;
 import org.slowcoders.hyperql.jdbc.JdbcStorage;
 import org.slowcoders.hyperql.jpa.JpaUtils;
 import org.slowcoders.hyperql.schema.QColumn;
@@ -27,7 +27,7 @@ public class JdbcSchema extends QSchema {
     private ArrayList<QColumn> unresolvedJpaColumns;
     private Class<?> idType;
     private JoinMap importedByFkJoinMap;
-    private Map<JqlAccessType, JqlAccessGuard> accessGuards = new HashMap<>();
+    private EntityAccessGuard accessGuard;
 
     protected JdbcSchema(JdbcStorage schemaLoader, String tableName, Class<?> ormType) {
         super(tableName, ormType);
@@ -38,8 +38,12 @@ public class JdbcSchema extends QSchema {
         return schemaLoader;
     }
 
-    public JqlAccessGuard getAccessGuard(JqlAccessType jqlAccessType) {
-        return accessGuards.get(jqlAccessType);
+    public EntityAccessGuard getAccessGuard() {
+        return accessGuard;
+    }
+
+    public void setAccessGuard(EntityAccessGuard accessGuard) {
+        this.accessGuard = accessGuard;
     }
 
     protected void init(ArrayList<JdbcColumn> columns, Map<String, ArrayList<String>> uniqueConstraints, Class<?> ormType) {
@@ -489,7 +493,4 @@ public class JdbcSchema extends QSchema {
         return "select * from " + this.getTableName();
     }
 
-    public void setAccessGuard(JqlAccessType jqlAccessType, JqlAccessGuard accessGuard) {
-        this.accessGuards.put(jqlAccessType, accessGuard);
-    }
 }

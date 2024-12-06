@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
+import org.slowcoders.hyperql.parser.HyperFilter;
 import org.springframework.data.domain.Sort;
 
 import java.util.List;
@@ -33,6 +34,10 @@ public abstract class HyperQuery<ENTITY> {
 
     protected void select(HyperSelect selection) {
         this.selection = selection;
+    }
+
+    public HyperFilter getFilter() {
+        return null;
     }
 
     @JsonProperty()
@@ -80,7 +85,7 @@ public abstract class HyperQuery<ENTITY> {
 
     public final List<ENTITY> getResultList() { return getResultList(OutputFormat.Object); }
 
-    public abstract RestTemplate.Response execute(OutputFormat outputType);
+//    public abstract List<ENTITY> execute(OutputFormat outputType);
 
     public abstract long count();
 

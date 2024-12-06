@@ -2,13 +2,18 @@ package org.slowcoders.hyperql.sample.jdbc.bookstore.controller;
 
 import jakarta.annotation.PostConstruct;
 import org.slowcoders.hyperql.HyperStorageController;
-import org.slowcoders.hyperql.JqlAccessType;
+import org.slowcoders.hyperql.schema.EntityAccessGuard;
+import org.slowcoders.hyperql.schema.EntityAccessType;
 import org.slowcoders.hyperql.jdbc.JdbcStorage;
 import org.slowcoders.hyperql.jdbc.storage.JdbcColumn;
 import org.slowcoders.hyperql.jdbc.storage.JdbcSchema;
+import org.slowcoders.hyperql.schema.QColumn;
+import org.slowcoders.hyperql.schema.QSchema;
 import org.springframework.core.convert.ConversionService;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/hql/bookstore")
@@ -33,8 +38,11 @@ public class BookStoreController extends HyperStorageController.CRUD implements 
         }
         {
             JdbcSchema schema = (JdbcSchema) this.getStorage().loadSchema("bookstore.customer");
-            schema.setAccessGuard(JqlAccessType.Read, (alias, columns) -> {
-                return "true and true";
+            schema.setAccessGuard(new EntityAccessGuard() {
+                @Override
+                public String checkReadable(QSchema schema, String entityAlias, List<QColumn> columns) throws SecurityException {
+                    return "true and true";
+                }
             });
         }
     }

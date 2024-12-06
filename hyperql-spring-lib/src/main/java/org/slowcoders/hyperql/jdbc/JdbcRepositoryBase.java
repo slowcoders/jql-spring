@@ -78,7 +78,7 @@ public abstract class JdbcRepositoryBase<ID> extends HyperRepository<ID> {
         return find(query0, OutputFormat.Object);
     }
 
-    public RestTemplate.Response execute(HyperQuery query0, OutputFormat outputFormat) {
+    public List<Object> execute(HyperQuery query0, OutputFormat outputFormat) {
         if (outputFormat == null) {
             outputFormat = OutputFormat.Object;
         }
@@ -123,7 +123,7 @@ public abstract class JdbcRepositoryBase<ID> extends HyperRepository<ID> {
         return res;
     }
 
-    protected RestTemplate.Response execute(HyperQuery query0, JdbcResultMapper<?> rsExtractor) {
+    protected List<Object> execute(HyperQuery query0, JdbcResultMapper<?> rsExtractor) {
         JdbcQuery query = (JdbcQuery) query0;
         Class jpaEntityType = query.getJpaEntityType();
         boolean isNative = jpaEntityType == null || Map.class.isAssignableFrom(jpaEntityType);// || rsExtractor != null;
@@ -155,9 +155,10 @@ public abstract class JdbcRepositoryBase<ID> extends HyperRepository<ID> {
                 res = ArrayRowMapper.extractJsonData(res, query.getFilter().getColumnNameMappings());
             }
         }
-        RestTemplate.Response resp = RestTemplate.Response.of(res, query.getSelection());
-        if (rsExtractor != null) rsExtractor.setOutputMetadata(resp);
-        return resp;
+        return res;
+//        RestTemplate.Response resp = RestTemplate.Response.of(res, query.getSelection());
+//        if (rsExtractor != null) rsExtractor.setOutputMetadata(resp);
+//        return resp;
     }
 
     static String getPaginationQuery(HyperQuery query) {

@@ -2,7 +2,6 @@ package org.slowcoders.hyperql.jdbc.storage;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slowcoders.hyperql.EntitySet;
-import org.slowcoders.hyperql.JqlAccessType;
 import org.slowcoders.hyperql.jdbc.JdbcQuery;
 import org.slowcoders.hyperql.HyperQuery;
 import org.slowcoders.hyperql.jdbc.SqlWriter;
@@ -41,7 +40,7 @@ public abstract class SqlGenerator extends SqlConverter implements QueryGenerato
 
     protected void writeFilter(EntityFilter hql) {
         currentNode = hql;
-        String accessFilter = hql.getAccessFilterSql(JqlAccessType.Read);
+        String accessFilter = hql.getSqlToCheckReadable();
         if (accessFilter != null) {
             sw.write("(").write(accessFilter).writeln(")");
             sw.write(" AND ");

@@ -8,6 +8,7 @@ import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.Entity;
 import lombok.Getter;
+import org.slowcoders.hyperql.jdbc.output.ArrayRowMapper;
 import org.springframework.data.domain.Sort;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
@@ -117,8 +118,14 @@ public interface RestTemplate {
         }
         if (params.distinct != null) query.distinct((boolean) params.distinct);
         if (params.viewParams != null) query.viewParams(params.viewParams);
-//        List<Object> result = query.getResultList(params.output);
-        Response resp = query.execute(params.output);
+        var outputFormat = params.output == null ? OutputFormat.Object : params.output;
+        List<Object> result = query.getResultList(outputFormat);
+
+        RestTemplate.Response resp = RestTemplate.Response.of(result, query.getSelection());
+        if (outputFormat != OutputFormat.Object) {
+            resp.setProperty("columnNames", query.getFilter().getColumnNameMappings());
+        }
+        // = query.execute(params.output);
         resp.query = query;
         if (needPagination) {
             resp.setProperty("totalElements", query.count());
